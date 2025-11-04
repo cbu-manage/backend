@@ -1,0 +1,60 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:    # job 이름 변경
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js    # Node.js 설정 추가
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Check SERVER_IP
+      run: echo "SERVER_IP = ${{ secrets.SERVER_IP }}"
+
+    - name: Build frontend
+      run: |
+        cd frontend
+        echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" > .env.production
+        npm ci
+        npm run build
+
+    - name: Remove old dist on server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.SERVER_USER }}
+        password: ${{ secrets.SERVER_PASSWORD }}
+        script: |
+          rm -rf /root/TUK-cbu-manage/frontend/dist
+
+    - name: Upload new dist to server
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.SERVER_USER }}
+        password: ${{ secrets.SERVER_PASSWORD }}
+        source: "frontend/dist/*"
+        target: "/root/TUK-cbu-manage/frontend/dist"
+
+    - name: Restart Docker Compose
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.SERVER_USER }}
+        password: ${{ secrets.SERVER_PASSWORD }}
+        script: |
+          cd /root/TUK-cbu-manage/DevOps
+          docker-compose -f docker-compose.prod.yml up --build -d
