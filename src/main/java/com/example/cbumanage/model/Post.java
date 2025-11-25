@@ -22,9 +22,7 @@ public class Post {
     @Column(name="post_id")
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "cbu_member_id")
-    private CbuMember author;
+    private Long authorId;
 
     private String title;
 
@@ -41,16 +39,16 @@ public class Post {
     private int category;
 
     //생성자
-    public Post(CbuMember author,String title,String content,int category) {
-        this.author = author;
+    public Post(Long authorId,String title,String content,int category) {
+        this.authorId = authorId;
         this.title = title;
         this.content = content;
         this.category = category;
     }
 
     //생성 메소드 (Builder 대체)
-    public static Post create(CbuMember author,String title,String content,int category) {
-        return new Post(author,title,content,category);
+    public static Post create(Long authorId,String title,String content,int category) {
+        return new Post(authorId,title,content,category);
     }
 
     /*
