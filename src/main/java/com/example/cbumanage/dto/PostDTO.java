@@ -11,13 +11,14 @@ Post 에 관한 DTO 들은 전부 여기서 관리하고자 합니다
  */
 public class PostDTO {
 
+
     /*
-    MainPost 객체의 정보를 담는 DTO 입니다.
-    게시물 목록 형태로도 반환되고, 게시물의 내용을 자세히 확인할 때에도 해당 DTO 를 가져와 MainPost 의 내용을 반환합니다
+    Post 의 핵심 내용을 가지고 있는 DTO 입니다.
+    게시글 목록, 게시글 상세 불러오기 등을 할때  해당 DTO 를 불러옵니다
      */
     @Getter
     @NoArgsConstructor
-    public static class MainPostDTO {
+    public static class PostInfoDTO{
         private Long postId;
 
         private Long authorId;
@@ -29,75 +30,240 @@ public class PostDTO {
         private LocalDateTime createdAt;
 
         private LocalDateTime updatedAt;
+
         @Builder
-        public MainPostDTO(Long postId,
-                           Long authorId,
-                           String title,
-                           String content,
-                           LocalDateTime createdAt,
-                           LocalDateTime updatedAt) {
+        public PostInfoDTO(
+                Long postId,
+                Long authorId,
+                String title,
+                String content,
+                LocalDateTime createdAt,
+                LocalDateTime updatedAt
+        )
+        {
+            this.postId = postId;
             this.authorId = authorId;
             this.title = title;
             this.content = content;
             this.createdAt = createdAt;
             this.updatedAt = updatedAt;
+        }
 
+
+
+    }
+
+    /*
+    Post-Report 의 핵심 내용을 가지고 있는 DTO 입니다.
+    보고서 게시글 상세보기를 할때 해당 DTO 가 PostInfoDTO 와 함께 불러와 집니다
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class ReportInfoDTO{
+
+        private String location;
+
+        private String startImage;
+
+        private String endImage;
+
+        private LocalDateTime date;
+
+        @Builder
+        public ReportInfoDTO(String location, String startImage, String endImage, LocalDateTime date){
+            this.location = location;
+            this.startImage = startImage;
+            this.endImage = endImage;
+            this.date = date;
 
         }
     }
 
-
-    @NoArgsConstructor
+    /*
+    보고서 게시물을 만들때, 유저가 보내는 데이터를 담는 DTO 입니다.
+    해당 DTO 를 Controller 에서 받아와, Service 에서 PostCreateDTO, PostReportCreateDTO 를 생성하고,
+    각 DTO 를 통해 Post 데이터와 Report 데이터를 생성해 연결합니다
+     */
     @Getter
-    public static class MainPostCreateDTO {
+    @NoArgsConstructor
+    public static class PostReportCreateRequestDTO{
+
+        private Long authorId;
 
         private String title;
 
         private String content;
 
-        private int category;
-
-    }
-
-
-    @NoArgsConstructor
-    @Getter
-    public static class PostReportCreateDTO {
-
         private String location;
-
-        private LocalDateTime date;
 
         private String startImage;
 
         private String endImage;
+
+        private LocalDateTime date;
+
+
     }
 
     /*
-    보고서 포스트의 보고서 부분의 내용을 담당하는 DTO 입니다
+    보고서 게시글을 생성하고 반환하는 DTO 입니다
      */
     @Getter
     @NoArgsConstructor
-    public static class PostReportDTO {
+    public static class PostReportCreateResponseDTO{
+        private Long postId;
 
+        private Long authorId;
+
+        private String title;
+
+        private String content;
 
         private String location;
-
-        private LocalDateTime date;
 
         private String startImage;
 
         private String endImage;
 
+        private LocalDateTime date;
+
+        private LocalDateTime createdAt;
+
         @Builder
-        public PostReportDTO(String location, LocalDateTime date, String startImage, String endImage) {
+        public PostReportCreateResponseDTO(Long postId,
+                                           Long authorId,
+                                           String title,
+                                           String content,
+                                           String location,
+                                           String startImage,
+                                           String endImage,
+                                           LocalDateTime date,
+                                           LocalDateTime createdAt){
+            this.postId = postId;
+            this.authorId = authorId;
+            this.title = title;
+            this.content = content;
             this.location = location;
-            this.date = date;
             this.startImage = startImage;
             this.endImage = endImage;
+            this.date = date;
+            this.createdAt = createdAt;
+
+        }
+    }
+
+    /*
+    Post{...}CreateRequestDTO 에서 Post 를 생성할 정보만 빼내어 Post 를 생성하기 위한 DTO 입니다
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class CreatePostDTO{
+        private Long authorId;
+
+        private String title;
+
+        private String content;
+
+        @Builder
+        public CreatePostDTO( Long authorId, String title, String content ){
+            this.authorId = authorId;
+            this.title = title;
+            this.content = content;
+
         }
 
+    }
 
+
+    /*
+    PostCreateRequestDTO 에서 Report 를 생성할 데이터만을 뽑아와 Report 데이터를 생성하는데에 사용될 DTO 입니다
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class CreateReportDTO{
+        private Long postId;
+
+        private String location;
+
+        private String startImage;
+
+        private String endImage;
+
+        private LocalDateTime date;
+
+        @Builder
+        public CreateReportDTO(Long postId,String location, String startImage, String endImage, LocalDateTime date){
+            this.postId = postId;
+            this.location = location;
+            this.startImage = startImage;
+            this.endImage = endImage;
+            this.date = date;
+
+        }
+    }
+
+    /*
+    보고서 게시물을 수정하기 위해 유저쪽에서 보내는 DTO 입니다.
+    CreateRequest 와 마찬가지로 Service 계층에서 PostUpdateDTO 와  PostReportUpdateDTO 를 분리해서 사용합니다
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class PostReportUpdateRequestDTO{
+
+        private String title;
+
+        private String content;
+
+        private String location;
+
+        private String startImage;
+
+        private String endImage;
+
+        private LocalDateTime date;
 
     }
+
+    /*
+    Post{...}UpdateRequestDTO 에서 Post 를 Update 데이터만 추출하여 사용하기 위한  DTO 입니다
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class PostUpdateDTO{
+
+        private String title;
+
+        private String content;
+
+        @Builder
+        public PostUpdateDTO(String title, String content){
+            this.title = title;
+            this.content = content;
+        }
+    }
+
+    /*
+    PostReportUpdateDTO 에서 Report 데이터를 Update 시킲 데이터만 추출해서 사용하기 위한 DTO 입니다
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class PostReportUpdateDTO{
+
+        private String Location;
+
+        private String StartImage;
+
+        private String EndImage;
+
+        private LocalDateTime Date;
+
+        @Builder
+        public PostReportUpdateDTO(String Location, String StartImage, String EndImage, LocalDateTime Date){
+            this.Location = Location;
+            this.StartImage = StartImage;
+            this.EndImage = EndImage;
+            this.Date = Date;
+        }
+    }
+
 }
