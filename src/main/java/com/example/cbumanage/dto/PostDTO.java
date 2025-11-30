@@ -102,6 +102,8 @@ public class PostDTO {
 
         private LocalDateTime date;
 
+        private int category;
+
 
     }
 
@@ -129,6 +131,8 @@ public class PostDTO {
 
         private LocalDateTime createdAt;
 
+        private int category;
+
         @Builder
         public PostReportCreateResponseDTO(Long postId,
                                            Long authorId,
@@ -138,7 +142,8 @@ public class PostDTO {
                                            String startImage,
                                            String endImage,
                                            LocalDateTime date,
-                                           LocalDateTime createdAt){
+                                           LocalDateTime createdAt,
+                                           int category){
             this.postId = postId;
             this.authorId = authorId;
             this.title = title;
@@ -148,6 +153,7 @@ public class PostDTO {
             this.endImage = endImage;
             this.date = date;
             this.createdAt = createdAt;
+            this.category = category;
 
         }
     }
@@ -157,18 +163,21 @@ public class PostDTO {
      */
     @Getter
     @NoArgsConstructor
-    public static class CreatePostDTO{
+    public static class PostCreateDTO{
         private Long authorId;
 
         private String title;
 
         private String content;
 
+        private int category;
+
         @Builder
-        public CreatePostDTO( Long authorId, String title, String content ){
+        public PostCreateDTO( Long authorId, String title, String content, int category ){
             this.authorId = authorId;
             this.title = title;
             this.content = content;
+            this.category = category;
 
         }
 
@@ -180,7 +189,7 @@ public class PostDTO {
      */
     @Getter
     @NoArgsConstructor
-    public static class CreateReportDTO{
+    public static class ReportCreateDTO{
         private Long postId;
 
         private String location;
@@ -192,7 +201,7 @@ public class PostDTO {
         private LocalDateTime date;
 
         @Builder
-        public CreateReportDTO(Long postId,String location, String startImage, String endImage, LocalDateTime date){
+        public ReportCreateDTO(Long postId,String location, String startImage, String endImage, LocalDateTime date){
             this.postId = postId;
             this.location = location;
             this.startImage = startImage;
