@@ -11,11 +11,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class PostMapper {
 
-    private PostRepository postRepository;
-    @Autowired
-    public PostMapper(PostRepository postRepository, PostReportRepository postReportRepository) {
-        this.postRepository = postRepository;
-    }
 
     public PostDTO.PostInfoDTO toPostInfoDTO(Post post) {
         return  PostDTO.PostInfoDTO.builder().postId(post.getId())
@@ -26,13 +21,22 @@ public class PostMapper {
                 .updatedAt(post.getUpdatedAt()).build();
     }
 
+    public PostDTO.ReportInfoDTO toReportInfoDTO(PostReport report) {
+        return PostDTO.ReportInfoDTO.builder()
+                .location(report.getLocation())
+                .startImage(report.getStartImage())
+                .endImage(report.getEndImage())
+                .date(report.getDate())
+                .build();
+    }
+
     /*
     아래는 각 Post{...}CreateRequestDTO 가 CreatePostDTO 를 만들 수 있게 하는 메소드 입니다
     매개변수의 DTO 를 바꾸면서 오버로딩하시면서 메소드 추가 하시면 됩니다
      */
-    public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostReportCreateRequestDTO req) {
+    public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostReportCreateRequestDTO req,Long userId) {
         return PostDTO.PostCreateDTO.builder()
-                .authorId(req.getAuthorId())
+                .authorId(userId)
                 .title(req.getTitle())
                 .content(req.getContent()).build();
     }
@@ -67,6 +71,25 @@ public class PostMapper {
                 .category(post.getCategory())
                 .build();
 
+    }
+
+    /*
+    아래는 Post{...}UpdateRequestDTO 를 각 카테고리에 맞게 분리해 주는 Mapper 입니다
+     */
+
+    public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostReportUpdateRequestDTO req) {
+        return PostDTO.PostUpdateDTO.builder()
+                .title(req.getTitle())
+                .content(req.getContent()).build();
+    }
+
+    public PostDTO.ReportUpdateDTO topostReportUpdateDTO(PostDTO.PostReportUpdateRequestDTO req) {
+        return PostDTO.ReportUpdateDTO.builder()
+                .location(req.getLocation())
+                .StartImage(req.getStartImage())
+                .endImage(req.getEndImage())
+                .date(req.getDate())
+                .build();
     }
 
 

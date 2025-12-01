@@ -88,8 +88,6 @@ public class PostDTO {
     @NoArgsConstructor
     public static class PostReportCreateRequestDTO{
 
-        private Long authorId;
-
         private String title;
 
         private String content;
@@ -256,22 +254,22 @@ public class PostDTO {
      */
     @Getter
     @NoArgsConstructor
-    public static class PostReportUpdateDTO{
+    public static class ReportUpdateDTO{
 
-        private String Location;
+        private String location;
 
         private String StartImage;
 
-        private String EndImage;
+        private String endImage;
 
-        private LocalDateTime Date;
+        private LocalDateTime date;
 
         @Builder
-        public PostReportUpdateDTO(String Location, String StartImage, String EndImage, LocalDateTime Date){
-            this.Location = Location;
+        public ReportUpdateDTO(String location, String StartImage, String endImage, LocalDateTime date){
+            this.location = location;
             this.StartImage = StartImage;
-            this.EndImage = EndImage;
-            this.Date = Date;
+            this.endImage = endImage;
+            this.date = date;
         }
     }
 
