@@ -40,5 +40,4 @@ out/
 src/main/resources/*.yml
 src/main/resources/*.json
 
-# 단, application.properties는 git add
-!src/main/resources/application.properties
+src/main/resources/application.properties
