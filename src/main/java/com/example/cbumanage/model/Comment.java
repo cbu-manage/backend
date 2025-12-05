@@ -25,12 +25,17 @@ public class Comment {
     @Column(name = "comment_id")
     private Long id;
 
+    //Post와 Comment는 연관관계가 깊기에 엔티티를 넣었습니다
     @ManyToOne
     @JoinColumn(name="post_id")
     private Post post;
 
-    private Long useId;
+    //user와 Comment는 연관관계가 약하기에 userId를 외래키로 넣었습니다
+    private Long userId;
 
+    /*
+    답글 구조를 위해 댓글-댓글을 1:n 으로 묶고, 연관관계가 강하기에 엔티티로 연결했습니다
+     */
     @ManyToOne
     @JoinColumn(name="parent_comment_id",nullable = true)
     private Comment parentComment;
@@ -47,7 +52,7 @@ public class Comment {
 
     public Comment(Post post, Long userId,Comment parentComment, String content) {
         this.post = post;
-        this.useId = userId;
+        this.userId = userId;
         this.parentComment = parentComment;
         this.content = content;
     }
@@ -68,4 +73,8 @@ public class Comment {
             fetch = FetchType.LAZY)
     private List<Comment> replies = new ArrayList<>();
 
+    //편의메소드
+    public void addReply(Comment reply) {
+        replies.add(reply);
+    }
 }
