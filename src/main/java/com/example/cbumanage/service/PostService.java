@@ -49,7 +49,7 @@ public class PostService {
 
     public PostReport createReport(PostDTO.ReportCreateDTO req) {
         Post post = postRepository.findById(req.getPostId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        PostReport report = PostReport.create(post.getId(), req.getDate(), req.getLocation(), req.getStartImage(), req.getEndImage());
+        PostReport report = PostReport.create(post, req.getDate(), req.getLocation(), req.getStartImage(), req.getEndImage());
         PostReport saved = postReportRepository.save(report);
         return saved;
     }
