@@ -18,7 +18,9 @@ public class PostReport {
     @Column(name="post_report_id")
     private Long id;
 
-    private Long postId;
+    @ManyToOne
+    @JoinColumn(name="post_id")
+    private Post post;
 
     private LocalDateTime date;
 
@@ -29,8 +31,8 @@ public class PostReport {
     private String endImage;
 
     //생성자
-    public PostReport(Long postId, LocalDateTime date, String location, String startImage, String endImage) {
-        this.postId = postId;
+    public PostReport(Post post, LocalDateTime date, String location, String startImage, String endImage) {
+        this.post = post;
         this.date = date;
         this.location = location;
         this.startImage = startImage;
@@ -38,8 +40,8 @@ public class PostReport {
     }
 
     //생성 메소드
-    public static PostReport create(Long postId, LocalDateTime date, String location, String startImage, String endImage) {
-        return new PostReport(postId, date, location, startImage, endImage);
+    public static PostReport create(Post post, LocalDateTime date, String location, String startImage, String endImage) {
+        return new PostReport(post, date, location, startImage, endImage);
     }
 
     //엔티티 변경 메소드
