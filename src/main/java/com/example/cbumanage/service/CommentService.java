@@ -72,7 +72,7 @@ public class CommentService {
      */
     public List<CommentDTO.CommentInfoDTO> getComments(Long postId){
         Post post = postRepository.findById(postId).orElseThrow(()->new EntityNotFoundException("Post not found"));
-        List<Comment> comments = commentRepository.findByPostIdAndParentCommentIsNullOrderByCreatedAtAsc(postId);
+        List<Comment> comments = commentRepository.findRoots(postId);
         return comments.stream().map(comment->commentMapper.toCommentInfoDTO(comment)).toList();
     }
 
@@ -83,5 +83,11 @@ public class CommentService {
     public void updateComment(Long commentId, CommentDTO.CommentUpdateRequestDTO req){
         Comment comment = commentRepository.findById(commentId).orElseThrow(()->new EntityNotFoundException("Comment not found"));
         comment.changeContent(req.getContent());
+    }
+
+    @Transactional
+    public void deleteComment(Long commentId){
+        Comment comment=commentRepository.findById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment not found"));
+        comment.Delete();
     }
 }

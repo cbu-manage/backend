@@ -50,6 +50,8 @@ public class Comment {
 
     private LocalDateTime deletedAt;
 
+    private boolean isDeleted = false;
+
     public Comment(Post post, Long userId,Comment parentComment, String content) {
         this.post = post;
         this.userId = userId;
@@ -76,5 +78,10 @@ public class Comment {
     //편의메소드
     public void addReply(Comment reply) {
         replies.add(reply);
+    }
+
+    public void Delete(){
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
     }
 }
