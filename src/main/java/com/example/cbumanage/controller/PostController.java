@@ -58,6 +58,11 @@ public class PostController {
         postService.updatePostReport(req,postId);
     }
 
+    @DeleteMapping("post/{postId}")
+    public void deletePost(@PathVariable Long postId){
+        postService.deletePostById(postId);
+    }
+
 
 
 

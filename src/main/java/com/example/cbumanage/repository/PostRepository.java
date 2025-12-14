@@ -14,11 +14,11 @@ import java.util.List;
 public interface PostRepository extends JpaRepository<Post, Long> {
 
 
-    Page<Post> findByCategory(int category, Pageable pageable);
+    Page<Post> findByCategoryAndIsDeletedFalse(int category, Pageable pageable);
 
-    Page<Post> findByTitleContaining(String title,Pageable pageable);
+    Page<Post> findByTitleContainingAndIsDeletedFalse(String title,Pageable pageable);
 
-    Page<Post> findByContentContaining(String content,Pageable pageable);
+    Page<Post> findByContentContainingAndIsDeletedFalse(String content,Pageable pageable);
 
 
 }

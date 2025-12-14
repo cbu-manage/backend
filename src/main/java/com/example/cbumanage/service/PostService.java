@@ -72,7 +72,7 @@ public class PostService {
     게시글 목록에서 사용됩니다
      */
     public Page<PostDTO.PostInfoDTO> getPostsByCategory(Pageable pageable,int category){
-        Page<Post> posts=postRepository.findByCategory(category,pageable);
+        Page<Post> posts=postRepository.findByCategoryAndIsDeletedFalse(category,pageable);
         return posts.map(post->postMapper.toPostInfoDTO(post));
     }
 
@@ -118,5 +118,11 @@ public class PostService {
         PostReport report =postReportRepository.findByPostId(postId);
         PostDTO.ReportUpdateDTO reportUpdateDTO=postMapper.topostReportUpdateDTO(req);
         updateReport(reportUpdateDTO,report);
+    }
+
+    @Transactional
+    public void deletePostById(Long postId) {
+        Post post=postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        postRepository.delete(post);
     }
 }
