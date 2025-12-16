@@ -38,6 +38,7 @@ public class Post {
 
     private int category;
 
+    private boolean isDeleted = false;
     //생성자
     public Post(Long authorId,String title,String content,int category) {
         this.authorId = authorId;
@@ -61,6 +62,11 @@ public class Post {
 
     public void changeContent(String content) {
         this.content = content;
+    }
+
+    public void delete() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
     }
 
 }
