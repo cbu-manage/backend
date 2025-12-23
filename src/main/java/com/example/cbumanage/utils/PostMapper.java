@@ -3,6 +3,11 @@ package com.example.cbumanage.utils;
 import com.example.cbumanage.dto.PostDTO;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.PostReport;
+import com.example.cbumanage.model.PostProject;
+import com.example.cbumanage.repository.PostReportRepository;
+import com.example.cbumanage.repository.PostProjectRepository;
+import com.example.cbumanage.repository.PostRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -27,11 +32,26 @@ public class PostMapper {
                 .build();
     }
 
+    public PostDTO.ProjectInfoDTO toProjectInfoDTO(PostProject project) {
+        return PostDTO.ProjectInfoDTO.builder()
+                .recruitmentField(project.getRecruitmentField())
+                .techStack(project.getTechStack())
+                .recruiting(project.isRecruiting())
+                .build();
+    }
+
     /*
     아래는 각 Post{...}CreateRequestDTO 가 CreatePostDTO 를 만들 수 있게 하는 메소드 입니다
     매개변수의 DTO 를 바꾸면서 오버로딩하시면서 메소드 추가 하시면 됩니다
      */
-    public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostReportCreateRequestDTO req,Long userId) {
+    public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostReportCreateRequestDTO req, Long userId) {
+        return PostDTO.PostCreateDTO.builder()
+                .authorId(userId)
+                .title(req.getTitle())
+                .content(req.getContent()).build();
+    }
+
+    public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostProjectCreateRequestDTO req, Long userId) {
         return PostDTO.PostCreateDTO.builder()
                 .authorId(userId)
                 .title(req.getTitle())
@@ -49,6 +69,15 @@ public class PostMapper {
                 startImage(req.getStartImage()).
                 endImage(req.getEndImage()).
                 date(req.getDate()).build();
+    }
+
+    public PostDTO.ProjectCreateDTO toProjectCreateDTO(PostDTO.PostProjectCreateRequestDTO req,Long postId) {
+        return PostDTO.ProjectCreateDTO.builder()
+                .postId(postId)
+                .recruitmentField(req.getRecruitmentField())
+                .techStack(req.getTechStack())
+                .recruiting(req.isRecruiting())
+                .build();
     }
 
     /*
@@ -70,11 +99,31 @@ public class PostMapper {
 
     }
 
+    public PostDTO.PostProjectCreateResponseDTO toPostProjectCreateResponseDTO(Post post, PostProject project) {
+        return PostDTO.PostProjectCreateResponseDTO.builder()
+                .postId(post.getId())
+                .authorId(post.getAuthorId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .createdAt(post.getCreatedAt())
+                .recruitmentField(project.getRecruitmentField())
+                .techStack(project.getTechStack())
+                .recruiting(project.isRecruiting())
+                .category(post.getCategory())
+                .build();
+    }
+
     /*
     아래는 Post{...}UpdateRequestDTO 를 각 카테고리에 맞게 분리해 주는 Mapper 입니다
      */
 
     public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostReportUpdateRequestDTO req) {
+        return PostDTO.PostUpdateDTO.builder()
+                .title(req.getTitle())
+                .content(req.getContent()).build();
+    }
+
+    public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostProjectUpdateRequestDTO req) {
         return PostDTO.PostUpdateDTO.builder()
                 .title(req.getTitle())
                 .content(req.getContent()).build();
@@ -89,5 +138,11 @@ public class PostMapper {
                 .build();
     }
 
-
+    public PostDTO.ProjectUpdateDTO toPostProjectUpdateDTO(PostDTO.PostProjectUpdateRequestDTO req) {
+        return PostDTO.ProjectUpdateDTO.builder()
+                .recruitmentField(req.getRecruitmentField())
+                .techStack(req.getTechStack())
+                .recruiting(req.isRecruiting())
+                .build();
+    }
 }

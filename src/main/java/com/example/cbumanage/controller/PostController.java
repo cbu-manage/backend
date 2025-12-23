@@ -37,6 +37,14 @@ public class PostController {
         return ResultResponse.ok(SuccessCode.CREATED, responseDTO);
 
     }
+
+    @PostMapping("post/project")
+    public PostDTO.PostProjectCreateResponseDTO createPostProject(@RequestBody PostDTO.PostProjectCreateRequestDTO req,
+                                                                  @RequestParam Long userId) {
+        return postService.createPostProject(req, userId);
+    }
+
+
     /*
     페이징 기능 구현입니다
     page = 보고싶은 페이지
@@ -83,6 +91,12 @@ public class PostController {
             summary = "보고서 포스트 수정",
             description = "보고서 포스트를 수정합니다. 한번의 요청에 메인테이블과 서브테이블의 수정내용을 담아 처리합니다"
     )
+
+    @GetMapping("post/{postId}/project")
+    public PostDTO.ProjectInfoDTO getPostProject(@PathVariable Long postId) {
+        return postService.getProjectByPostId(postId);
+    }
+
     @PatchMapping("post/report/{postId}")
     public ResponseEntity<ResultResponse<Void>> updatePost(@PathVariable Long postId,@RequestBody PostDTO.PostReportUpdateRequestDTO req){
         postService.updatePostReport(req,postId);
@@ -93,6 +107,12 @@ public class PostController {
             summary = "보고서 포스트 단건 삭제",
             description = "포스트 단건을 softDelete해 포스트 읽어오기에서 필터링 되도록 합니다"
     )
+
+    @PatchMapping("post/project/{postId}")
+    public void updateProject(@PathVariable Long postId, @RequestBody PostDTO.PostProjectUpdateRequestDTO req) {
+        postService.updatePostProject(req, postId);
+    }
+
     @DeleteMapping("post/{postId}")
     public ResponseEntity<ResultResponse<Void>> deletePost(@PathVariable Long postId){
         postService.deletePostById(postId);
