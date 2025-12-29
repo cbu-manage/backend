@@ -84,7 +84,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 						// JWT의 클레임 정보에 대해 예상하는 타입을 지정합니다.
 						Map.of(
 								"user_id", Long.class,
-								"email", String.class,
+								"student_number", Long.class,
 								"role", JSONArray.class,
 								"permissions", JSONArray.class
 						)

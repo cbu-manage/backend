@@ -1,5 +1,8 @@
 package com.example.cbumanage.service;
 
+import com.example.cbumanage.authentication.entity.LoginEntity;
+import com.example.cbumanage.authentication.repository.LoginRepository;
+import com.example.cbumanage.authentication.repository.RefreshTokenRepository;
 import com.example.cbumanage.dto.MemberCreateDTO;
 import com.example.cbumanage.dto.MemberUpdateDTO;
 import com.example.cbumanage.exception.MemberNotExistsException;
@@ -30,6 +33,10 @@ public class CbuMemberManageService {
 	// CBU 회원 데이터 접근을 위한 리포지토리
 	private CbuMemberRepository memberRepository;
 
+	// 로그인 계정 및 리프레시 토큰 관리를 위한 리포지토리
+	private final LoginRepository loginRepository;
+	private final RefreshTokenRepository refreshTokenRepository;
+
 	// 회비 관련 데이터 접근을 위한 리포지토리 (예: 회비 미납 회원 조회 등)
 	private DuesRepository duesRepository;
 
@@ -52,11 +59,15 @@ public class CbuMemberManageService {
 	public CbuMemberManageService(CbuMemberRepository memberRepository,
 								  DuesRepository duesRepository,
 								  LogRepository logRepository,
-								  CbuMemberMapper cbuMemberMapper) {
+								  CbuMemberMapper cbuMemberMapper,
+								  LoginRepository loginRepository,
+								  RefreshTokenRepository refreshTokenRepository) {
 		this.memberRepository = memberRepository;
 		this.duesRepository = duesRepository;
 		this.logRepository = logRepository;
 		this.cbuMemberMapper = cbuMemberMapper;
+		this.loginRepository = loginRepository;
+		this.refreshTokenRepository = refreshTokenRepository;
 	}
 
 	/**
@@ -116,14 +127,31 @@ public class CbuMemberManageService {
 	}
 
 	/**
-	 * deleteMember 메서드는 주어진 회원 ID에 해당하는 회원 정보를 데이터베이스에서 삭제합니다.
+	 * deleteMember 메서드는 주어진 회원의 학번에 해당하는 회원 정보를 삭제하고,
+	 * 연관된 로그인 계정(LoginEntity) 및 RefreshToken까지 함께 정리합니다.
 	 *
-	 * @param studentNumber 삭제할 회원의 ID
+	 * @param studentNumber 삭제할 회원의 학번
 	 */
 	@Transactional
 	public void deleteMember(final Long studentNumber) {
-		// 회원 ID에 해당하는 엔티티 삭제
-		memberRepository.deleteByStudentNumber(studentNumber);
+		// 학번으로 회원을 조회 (없으면 예외)
+		CbuMember member = memberRepository.findByStudentNumber(studentNumber)
+				.orElseThrow(MemberNotExistsException::new);
+
+		// 로그인 엔티티 조회 (있으면 연관 토큰과 함께 삭제)
+		LoginEntity loginEntity = loginRepository.findLoginEntityByStudentNumber(studentNumber);
+		if (loginEntity != null) {
+			// 사용자 ID 기준으로 모든 RefreshToken 조회 후 삭제
+			var refreshTokens = refreshTokenRepository.findAllByUserId(loginEntity.getUserId());
+			if (!refreshTokens.isEmpty()) {
+				refreshTokenRepository.deleteAll(refreshTokens);
+			}
+			// 로그인 엔티티 삭제
+			loginRepository.delete(loginEntity);
+		}
+
+		// 마지막으로 회원 엔티티 삭제
+		memberRepository.delete(member);
 	}
 
 

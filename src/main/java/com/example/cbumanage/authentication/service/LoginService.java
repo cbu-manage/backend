@@ -12,7 +12,6 @@ import com.example.cbumanage.authentication.repository.RefreshTokenRepository;
 import com.example.cbumanage.exception.MemberNotExistsException;
 import com.example.cbumanage.model.CbuMember;
 import com.example.cbumanage.model.SuccessCandidate;
-import com.example.cbumanage.model.enums.Role;
 import com.example.cbumanage.repository.CbuMemberRepository;
 import com.example.cbumanage.repository.SuccessCandidateRepository;
 import com.example.cbumanage.service.CandidateAppendService;
@@ -60,8 +59,9 @@ public class LoginService {
 		this.jwtProvider = jwtProvider;
 		this.hashUtil = hashUtil;
 		this.salt = salt == null ? "p394huwtfp9q3a4" : salt;
-		this.accessTokenExpireTime = accessTokenExpireTime / 1000;
-		this.refreshTokenExpireTime = refreshTokenExpireTime / 1000;
+		// expireTime은 밀리초 단위로 전달되므로 그대로 사용
+		this.accessTokenExpireTime = accessTokenExpireTime;
+		this.refreshTokenExpireTime = refreshTokenExpireTime;
 	}
 
 	/**
@@ -83,23 +83,13 @@ public class LoginService {
 			throw new InvalidPasswordException();
 		}
 
-		// 관리자와 일반 회원에 따라 토큰 생성 로직을 분기
-		if (dto.getStudentNumber() == 8001202011L) {
-			// 관리자 계정 처리 예시
-			List<Role> adminRoles = List.of(Role.ADMIN);
-			Long exp = jwtProvider.currentTime() + 86400000;
-			RefreshToken refreshToken = new RefreshToken(login.getUserId(), exp);
-			AccessToken accessToken = new AccessToken(login.getUserId(), login.getStudentNumber(), adminRoles, login.getPermissions());
-			refreshTokenRepository.save(refreshToken);
-			return generateToken(accessToken, refreshToken);
-		} else {
-			// 일반 회원 처리: cbuMember의 역할 정보를 사용
-			Long exp = jwtProvider.currentTime() + 86400000;
-			RefreshToken refreshToken = new RefreshToken(login.getUserId(), exp);
-			AccessToken accessToken = new AccessToken(login.getUserId(), login.getStudentNumber(), cbuMember.getRole(), login.getPermissions());
-			refreshTokenRepository.save(refreshToken);
-			return generateToken(accessToken, refreshToken);
-		}
+		// DB에서 가져온 회원의 역할 정보를 사용하여 토큰 생성
+		// 관리자 여부는 CbuMember의 role 필드에서 확인
+		Long exp = jwtProvider.currentTime() + refreshTokenExpireTime;
+		RefreshToken refreshToken = new RefreshToken(login.getUserId(), exp);
+		AccessToken accessToken = new AccessToken(login.getUserId(), login.getStudentNumber(), cbuMember.getRole(), login.getPermissions());
+		refreshTokenRepository.save(refreshToken);
+		return generateToken(accessToken, refreshToken);
 	}
 
 
@@ -111,7 +101,8 @@ public class LoginService {
 		// Jwt validation check
 		Map<String, Object> tokenInfo = jwtProvider.parseJwt(refreshToken, Map.of("uuid", UUID.class));
 
-		Long exp = jwtProvider.currentTime() + 86400000;
+		// 설정된 refreshTokenExpireTime 사용
+		Long exp = jwtProvider.currentTime() + refreshTokenExpireTime;
 		RefreshToken refresh = refreshTokenRepository.findById(((UUID) tokenInfo.get("uuid"))).orElseThrow(() -> new NoSuchElementException("There is no refresh token"));
 		LoginEntity login = loginRepository.findById(refresh.getUserId()).orElseThrow(MemberNotExistsException::new);
 		CbuMember cbuMember = cbuMemberRepository.findById(refresh.getUserId()).orElseThrow(MemberNotExistsException::new);
@@ -147,11 +138,20 @@ public class LoginService {
 	public Cookie[] generateCookie(String accessToken, String refreshToken) {
 		Cookie accessTokenCookie = new Cookie("ACCESS_TOKEN", accessToken);
 		accessTokenCookie.setSecure(true);
-		accessTokenCookie.setMaxAge(((int) accessTokenExpireTime));
+		accessTokenCookie.setHttpOnly(true);
+		accessTokenCookie.setPath("/");
+		// 쿠키의 MaxAge는 초 단위이므로 밀리초를 초로 변환
+		accessTokenCookie.setMaxAge((int) (accessTokenExpireTime / 1000));
+		// SameSite 설정은 Servlet API 버전에 따라 다를 수 있지만, 최신 버전에서는 setAttribute 사용
+		// accessTokenCookie.setAttribute("SameSite", "Strict");
 
 		Cookie refreshTokenCookie = new Cookie("REFRESH_TOKEN", refreshToken);
 		refreshTokenCookie.setSecure(true);
-		refreshTokenCookie.setMaxAge(((int) this.refreshTokenExpireTime));
+		refreshTokenCookie.setHttpOnly(true);
+		refreshTokenCookie.setPath("/");
+		// 쿠키의 MaxAge는 초 단위이므로 밀리초를 초로 변환
+		refreshTokenCookie.setMaxAge((int) (this.refreshTokenExpireTime / 1000));
+		// refreshTokenCookie.setAttribute("SameSite", "Strict");
 
 		return new Cookie[]{accessTokenCookie, refreshTokenCookie};
 	}

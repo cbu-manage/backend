@@ -5,7 +5,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.MacAlgorithm;
 import jakarta.annotation.PostConstruct;
-import lombok.val;
 import org.hibernate.TypeMismatchException;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -48,20 +47,42 @@ public class JwtProvider {
 		HashMap<String, Object> result = new HashMap<>();
 		for (String key : claims.keySet()) {
 			Class<?> type = claims.get(key);
+			
+			// 필수 필드가 없으면 예외 발생
+			if (!payload.has(key)) {
+				throw new TypeMismatchException("Required claim '" + key + "' is missing in JWT token.");
+			}
+			
 			Object value = payload.get(key);
-			if (value.getClass().isAssignableFrom(Integer.class) && type == Long.class) {
+			
+			// null 체크
+			if (value == null) {
+				throw new TypeMismatchException("Claim '" + key + "' is null in JWT token.");
+			}
+			
+			// Integer를 Long으로 변환
+			if (value instanceof Integer && type == Long.class) {
 				result.put(key, payload.getLong(key));
 				continue;
 			}
+			
+			// UUID 타입 처리
 			if (type == UUID.class) {
 				result.put(key, UUID.fromString(payload.getString(key)));
 				continue;
 			}
-			if (!value.getClass().isAssignableFrom(type)) throw new TypeMismatchException("Cannot cast data (" + value + ", " + value.getClass() + ") to " + type.getName() + " type.");
+			
+			// JSONArray 타입 처리
 			if (type.isAssignableFrom(JSONArray.class)) {
 				result.put(key, payload.getJSONArray(key));
 				continue;
 			}
+			
+			// 타입 검증
+			if (!type.isAssignableFrom(value.getClass())) {
+				throw new TypeMismatchException("Cannot cast data (" + value + ", " + value.getClass() + ") to " + type.getName() + " type.");
+			}
+			
 			result.put(key, value);
 		}
 		return result;

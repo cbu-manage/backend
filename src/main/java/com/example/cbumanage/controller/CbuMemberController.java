@@ -42,7 +42,9 @@ public class CbuMemberController {
 
     @PostMapping("members/sync")
     @Operation(summary = "스프레드시트 -> 데이터베이스 데이터 연동", description = "스프레드시트의 데이터를 데이터베이스에 주입합니다.")
-    public String memberSync() {
+    public String memberSync(final AccessToken accessToken) {
+        // 멤버 동기화는 관리자만 수행 가능
+        if (!accessToken.getRole().contains(Role.ADMIN)) throw new AuthenticationException("You don't have permission");
         cbuMemberSyncService.syncMembersFromGoogleSheet();      //스프레드시트에서 데이터베이스로 데이터 값 주입
         return "멤버 저장 성공!";
     }
@@ -59,6 +61,8 @@ public class CbuMemberController {
     @Operation(summary = "회원 추가", description = "회원 정보를 데이터베이스에 추가합니다.(데이터베이스 -> 스프레드시트 연동 기능 추가 예정)")
     @ResponseStatus(HttpStatus.CREATED)
     public Long postMember(@RequestBody @Valid MemberCreateDTO memberCreateDTO, AccessToken accessToken){
+        // 회원 수동 추가도 관리자만 가능
+        if (!accessToken.getRole().contains(Role.ADMIN)) throw new AuthenticationException("You don't have permission");
         CbuMember member = cbuMemberManageService.createMember(memberCreateDTO);
         return member.getCbuMemberId();
     }
@@ -74,7 +78,9 @@ public class CbuMemberController {
 
     @DeleteMapping("member/{studentNumber}")
     @Operation(summary = "회원 정보 삭제", description = "데이터베이스의 회원 정보를 삭제합니다.(데이터베이스 -> 스프레드시트 연동 기능 추가 예정)")
-    public void deleteMember(@PathVariable Long studentNumber) {
+    public void deleteMember(@PathVariable Long studentNumber, final AccessToken accessToken) {
+        // 회원 삭제는 관리자만 가능
+        if (!accessToken.getRole().contains(Role.ADMIN)) throw new AuthenticationException("You don't have permission");
         cbuMemberManageService.deleteMember(studentNumber);
     }
 
@@ -94,7 +100,9 @@ public class CbuMemberController {
 
     @PostMapping("member/createAccount")
     @Operation(summary = "임의 계정 생성", description = "데이터베이스를 기반으로 모든 회원에 대한 임시 계정을 생성합니다.")
-    public String createLoginEntity(){
+    public String createLoginEntity(final AccessToken accessToken){
+        // 대량 계정 생성도 관리자만 가능
+        if (!accessToken.getRole().contains(Role.ADMIN)) throw new AuthenticationException("You don't have permission");
         createLoginEntity.initializeLoginEntities();
         return ("임시 계정 생성 성공!");
     }
