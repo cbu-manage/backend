@@ -121,10 +121,10 @@ public class LoginController {
 
 		// 새 회원 생성을 위한 DTO 객체 생성 및 필드 설정
 		MemberCreateDTO cbuMember = new MemberCreateDTO();
-		List<Role> adminRoles = List.of(Role.MEMBER);  // 기본 역할을 MEMBER로 설정합니다.
+		List<Role> defaultRoles = List.of(Role.MEMBER);  // 기본 역할을 MEMBER로 설정합니다.
 		cbuMember.setName(successCandidate.getName());
 		cbuMember.setStudentNumber(successCandidate.getStudentNumber());
-		cbuMember.setRole(adminRoles);
+		cbuMember.setRole(defaultRoles);
 		cbuMember.setPhoneNumber(successCandidate.getPhoneNumber());
 		cbuMember.setMajor(successCandidate.getMajor());
 		cbuMember.setGeneration(23L);
@@ -185,17 +185,22 @@ public class LoginController {
 	private void checkToken(final HttpServletRequest request, final HttpServletResponse response, final Long userId) {
 		try {
 			// 인증 인터셉터를 수동으로 호출하여, 요청의 인증 정보를 검증합니다.
-			authenticationInterceptor.preHandle(request, response, null);
+			boolean isValid = authenticationInterceptor.preHandle(request, response, null);
+			if (!isValid) {
+				throw new InvalidJwtException("Token validation failed");
+			}
+		} catch (InvalidJwtException e) {
+			// JWT 관련 예외는 그대로 재던지기
+			throw e;
 		} catch (Exception e) {
-			e.printStackTrace();
-			// 예외 발생 시 AuthenticationException을 던져 인증 실패를 알립니다.
-			throw new AuthenticationException(e.getClass().getName() + " / " + e.getMessage());
+			// 기타 예외는 AuthenticationException으로 래핑
+			throw new AuthenticationException("Authentication failed: " + e.getMessage());
 		}
 		// 요청 속성에 저장된 AccessToken을 가져옵니다.
 		AccessToken accessToken = ((AccessToken) request.getAttribute("ACCESS_TOKEN"));
 		// AccessToken이 없거나, 토큰에 저장된 사용자 ID와 요청 헤더의 userId가 일치하지 않으면 JWT가 유효하지 않다고 판단합니다.
 		if (accessToken == null || !accessToken.getUserId().equals(userId)) {
-			throw new InvalidJwtException();
+			throw new InvalidJwtException("Token user ID mismatch");
 		}
 	}
 }

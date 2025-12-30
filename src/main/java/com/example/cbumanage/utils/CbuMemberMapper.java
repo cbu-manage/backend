@@ -16,7 +16,8 @@ import java.util.List;
 public class CbuMemberMapper {
 
 	public CbuMemberMapper() {
-		if (CbuMember.class.getDeclaredFields().length != 11) {
+		// CbuMember 필드 수가 변경되면 매퍼 로직 검토 필요
+		if (CbuMember.class.getDeclaredFields().length != 12) {
 			throw new InvalidMapperSetupException("CbuMember field is changed. Edit mapper and change the size value(" + CbuMember.class.getDeclaredFields().length + ")");
 		}
 	}
