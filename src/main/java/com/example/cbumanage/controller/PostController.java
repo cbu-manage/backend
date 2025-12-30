@@ -27,6 +27,12 @@ public class PostController {
         return postService.createPostReport(req,userId);
 
     }
+
+    @PostMapping("post/study")
+    public PostDTO.PostStudyCreateResponseDTO createPostStudy(@RequestBody PostDTO.PostStudyCreateRequestDTO req,
+                                                          @RequestParam Long userId){
+        return postService.createPostStudy(req,userId);
+    }
     /*
     페이징 기능 구현입니다
     page = 보고싶은 페이지
@@ -53,9 +59,19 @@ public class PostController {
         return postService.getReportByPostId(postId);
     }
 
+    @GetMapping("post/{postId}/study")
+    public PostDTO.StudyInfoDTO getPostStudy(@PathVariable Long postId){
+        return postService.getStudyByPostId(postId);
+    }
+
     @PatchMapping("post/report/{postId}")
     public void updatePost(@PathVariable Long postId,@RequestBody PostDTO.PostReportUpdateRequestDTO req){
         postService.updatePostReport(req,postId);
+    }
+
+    @PatchMapping("post/study/{postId}")
+    public void updatePostStudy(@PathVariable Long postId,@RequestBody PostDTO.PostStudyUpdateRequestDTO req){
+        postService.updatePostStudy(req,postId);
     }
 
     @DeleteMapping("post/{postId}")
