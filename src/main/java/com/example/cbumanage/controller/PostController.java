@@ -1,6 +1,8 @@
 package com.example.cbumanage.controller;
 
 import com.example.cbumanage.dto.PostDTO;
+import com.example.cbumanage.response.ResultResponse;
+import com.example.cbumanage.response.SuccessCode;
 import com.example.cbumanage.service.PostService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,9 +25,10 @@ public class PostController {
     }
 
     @PostMapping("post/report")
-    public PostDTO.PostReportCreateResponseDTO createPostReport(@RequestBody PostDTO.PostReportCreateRequestDTO req,
-                                                          @RequestParam Long userId){
-        return postService.createPostReport(req,userId);
+    public ResponseEntity<ResultResponse<PostDTO.PostReportCreateResponseDTO>> createPostReport(@RequestBody PostDTO.PostReportCreateRequestDTO req,
+                                                                                              @RequestParam Long userId){
+        PostDTO.PostReportCreateResponseDTO responseDTO = postService.createPostReport(req,userId);
+        return ResultResponse.ok(SuccessCode.CREATED, responseDTO);
 
     }
     /*
@@ -35,32 +39,36 @@ public class PostController {
      */
 
     @GetMapping("post")
-    public Page<PostDTO.PostInfoDTO> getPosts(@RequestParam int page,@RequestParam int size,@RequestParam int category){
+    public ResponseEntity<ResultResponse<Page<PostDTO.PostInfoDTO>>> getPosts(@RequestParam int page,@RequestParam int size,@RequestParam int category){
         Pageable pageable= PageRequest.of(
                 page,size, Sort.by(Sort.Order.desc("createdAt"))
         );
         Page<PostDTO.PostInfoDTO> posts=postService.getPostsByCategory(pageable,category);
-        return posts;
+        return ResultResponse.ok(SuccessCode.SUCCESS, posts);
     }
 
     @GetMapping("post/{postId}/post")
-    public PostDTO.PostInfoDTO getPost(@PathVariable Long postId){
-        return postService.getPostById(postId);
+    public ResponseEntity<ResultResponse<PostDTO.PostInfoDTO>> getPost(@PathVariable Long postId){
+        PostDTO.PostInfoDTO postInfoDTO =  postService.getPostById(postId);
+        return ResultResponse.ok(SuccessCode.SUCCESS, postInfoDTO);
     }
 
     @GetMapping("post/{postId}/report")
-    public PostDTO.ReportInfoDTO getPostReport(@PathVariable Long postId){
-        return postService.getReportByPostId(postId);
+    public ResponseEntity<ResultResponse<PostDTO.ReportInfoDTO>> getPostReport(@PathVariable Long postId){
+        PostDTO.ReportInfoDTO reportInfoDTO =  postService.getReportByPostId(postId);
+        return ResultResponse.ok(SuccessCode.SUCCESS, reportInfoDTO);
     }
 
     @PatchMapping("post/report/{postId}")
-    public void updatePost(@PathVariable Long postId,@RequestBody PostDTO.PostReportUpdateRequestDTO req){
+    public ResponseEntity<ResultResponse<Void>> updatePost(@PathVariable Long postId,@RequestBody PostDTO.PostReportUpdateRequestDTO req){
         postService.updatePostReport(req,postId);
+        return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
 
     @DeleteMapping("post/{postId}")
-    public void deletePost(@PathVariable Long postId){
+    public ResponseEntity<ResultResponse<Void>> deletePost(@PathVariable Long postId){
         postService.deletePostById(postId);
+        return ResultResponse.ok(SuccessCode.DELETED, null);
     }
 
 
