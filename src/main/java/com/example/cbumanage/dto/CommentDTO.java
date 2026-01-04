@@ -1,5 +1,6 @@
 package com.example.cbumanage.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,6 +27,7 @@ public class CommentDTO {
 
         private LocalDateTime updatedAt;
 
+        @Schema(description = "답글 리스트")
         private List<ReplyInfoDTO>  replies;
 
         @Builder
