@@ -50,8 +50,9 @@ public class LoginService {
 
 	private final long accessTokenExpireTime;
 	private final long refreshTokenExpireTime;
+	private final boolean secureCookie;
 
-	public LoginService(EmailManager emailManager, CbuMemberRepository cbuMemberRepository, LoginRepository loginRepository, RefreshTokenRepository refreshTokenRepository, JwtProvider jwtProvider, HashUtil hashUtil, @Value("${cbu.login.salt}") String salt, @Value("${cbu.jwt.expireTime}") Long accessTokenExpireTime, @Value("${cbu.jwt.refreshExpireTime}") Long refreshTokenExpireTime) {
+	public LoginService(EmailManager emailManager, CbuMemberRepository cbuMemberRepository, LoginRepository loginRepository, RefreshTokenRepository refreshTokenRepository, JwtProvider jwtProvider, HashUtil hashUtil, @Value("${cbu.login.salt}") String salt, @Value("${cbu.jwt.expireTime}") Long accessTokenExpireTime, @Value("${cbu.jwt.refreshExpireTime}") Long refreshTokenExpireTime, @Value("${cbu.jwt.secureCookie:true}") boolean secureCookie) {
 		this.emailManager = emailManager;
 		this.cbuMemberRepository = cbuMemberRepository;
 		this.loginRepository = loginRepository;
@@ -62,6 +63,7 @@ public class LoginService {
 		// expireTime은 밀리초 단위로 전달되므로 그대로 사용
 		this.accessTokenExpireTime = accessTokenExpireTime;
 		this.refreshTokenExpireTime = refreshTokenExpireTime;
+		this.secureCookie = secureCookie;
 	}
 
 	/**
@@ -114,12 +116,21 @@ public class LoginService {
 	}
 
 	public AccessAndRefreshTokenDTO generateToken(AccessToken accessToken, RefreshToken refreshToken) {
+		// Permission 리스트를 문자열 리스트로 변환하여 JWT에 저장
+		List<String> permissionNames = accessToken.getPermission().stream()
+				.map(Permission::getName)
+				.toList();
+		// Role 리스트를 문자열 리스트로 변환하여 JWT에 저장
+		List<String> roleNames = accessToken.getRole().stream()
+				.map(role -> role.toString())
+				.toList();
+		
 		return new AccessAndRefreshTokenDTO(
 				jwtProvider.generateJwt("JWT", Map.of(
 						"user_id", accessToken.getUserId(),
 						"student_number", accessToken.getStudentNumber(),
-						"role", accessToken.getRole(),
-						"permissions", accessToken.getPermission()
+						"role", roleNames,
+						"permissions", permissionNames
 				)),
 				jwtProvider.generateJwt("JWT", Map.of(
 						"user_id", refreshToken.getUserId(),
@@ -137,7 +148,7 @@ public class LoginService {
 	 */
 	public Cookie[] generateCookie(String accessToken, String refreshToken) {
 		Cookie accessTokenCookie = new Cookie("ACCESS_TOKEN", accessToken);
-		accessTokenCookie.setSecure(true);
+		accessTokenCookie.setSecure(secureCookie);
 		accessTokenCookie.setHttpOnly(true);
 		accessTokenCookie.setPath("/");
 		// 쿠키의 MaxAge는 초 단위이므로 밀리초를 초로 변환
@@ -146,7 +157,7 @@ public class LoginService {
 		// accessTokenCookie.setAttribute("SameSite", "Strict");
 
 		Cookie refreshTokenCookie = new Cookie("REFRESH_TOKEN", refreshToken);
-		refreshTokenCookie.setSecure(true);
+		refreshTokenCookie.setSecure(secureCookie);
 		refreshTokenCookie.setHttpOnly(true);
 		refreshTokenCookie.setPath("/");
 		// 쿠키의 MaxAge는 초 단위이므로 밀리초를 초로 변환

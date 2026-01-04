@@ -11,6 +11,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -24,6 +26,8 @@ import java.util.Map;
  * 토큰이 유효하지 않거나 필요한 권한(permission)이 부족하면 요청을 차단하고 401 Unauthorized 상태를 반환합니다.
  */
 public class AuthenticationInterceptor implements HandlerInterceptor {
+
+	private static final Logger logger = LoggerFactory.getLogger(AuthenticationInterceptor.class);
 
 	// 이 인터셉터가 검사할 대상 권한. (예: MEMBER, ADMIN 등)
 	private final Permission permission;
@@ -58,6 +62,9 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 	 */
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+		String requestPath = request.getRequestURI();
+		logger.debug("인증 검증 시작 - 경로: {}, 권한: {}", requestPath, permission);
+		
 		// 요청 속성에 저장된 AccessToken 객체를 가져옵니다.
 		AccessToken accessToken = ((AccessToken) request.getAttribute("ACCESS_TOKEN"));
 		// 요청 속성에 저장된 RefreshToken 객체를 가져옵니다.
@@ -69,41 +76,72 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 			// 요청에 포함된 모든 쿠키를 가져옵니다.
 			Cookie[] cookies = request.getCookies();
 			if (cookies != null) {
+				logger.debug("쿠키 개수: {}", cookies.length);
 				// 각 쿠키를 순회하면서 "ACCESS_TOKEN" 이름의 쿠키를 찾습니다.
 				for (Cookie c : cookies) {
 					if (c.getName().equals("ACCESS_TOKEN")) {
 						cookie = c;
+						logger.debug("ACCESS_TOKEN 쿠키 발견");
 						break;
 					}
 				}
+			} else {
+				logger.debug("쿠키가 없습니다");
 			}
 			// ACCESS_TOKEN 쿠키가 존재하면, 해당 JWT 문자열을 파싱하여 토큰 정보를 얻습니다.
 			if (cookie != null) {
-				Map<String, Object> tokenInfo = jwtProvider.parseJwt(
-						cookie.getValue(),
-						// JWT의 클레임 정보에 대해 예상하는 타입을 지정합니다.
-						Map.of(
-								"user_id", Long.class,
-								"student_number", Long.class,
-								"role", JSONArray.class,
-								"permissions", JSONArray.class
-						)
-				);
-				// 파싱된 정보를 바탕으로 AccessToken 객체를 생성합니다.
-				accessToken = new AccessToken(
-						((Long) tokenInfo.get("user_id")),
-						((Long) tokenInfo.get("student_number")),
-						// Role 목록을 JSONArray에서 List<Role>로 변환합니다.
-						((JSONArray) tokenInfo.get("role")).toList().stream()
-								.map(role -> Role.getValue(role.toString()))
-								.toList(),
-						// Permission 목록을 JSONArray에서 List<Permission>로 변환합니다.
-						((JSONArray) tokenInfo.get("permissions")).toList().stream()
-								.map(permission -> Permission.getValue(permission.toString()))
-								.toList()
-				);
-				// 파싱된 AccessToken을 요청 속성에 저장하여 이후 재사용할 수 있게 합니다.
-				request.setAttribute("ACCESS_TOKEN", accessToken);
+				try {
+					Map<String, Object> tokenInfo = jwtProvider.parseJwt(
+							cookie.getValue(),
+							// JWT의 클레임 정보에 대해 예상하는 타입을 지정합니다.
+							Map.of(
+									"user_id", Long.class,
+									"student_number", Long.class,
+									"role", JSONArray.class,
+									"permissions", JSONArray.class
+							)
+					);
+					// 파싱된 정보를 바탕으로 AccessToken 객체를 생성합니다.
+					accessToken = new AccessToken(
+							((Long) tokenInfo.get("user_id")),
+							((Long) tokenInfo.get("student_number")),
+							// Role 목록을 JSONArray에서 List<Role>로 변환합니다.
+							((JSONArray) tokenInfo.get("role")).toList().stream()
+									.map(role -> {
+										// Role enum의 name은 대문자이므로 그대로 사용
+										Role r = Role.getValue(role.toString());
+										if (r == null) {
+											logger.warn("알 수 없는 역할: {}", role);
+										}
+										return r;
+									})
+									.filter(r -> r != null)
+									.toList(),
+							// Permission 목록을 JSONArray에서 List<Permission>로 변환합니다.
+							((JSONArray) tokenInfo.get("permissions")).toList().stream()
+									.map(permission -> {
+										// 대소문자 구분 없이 소문자로 변환하여 매칭
+										String permissionName = permission.toString().toLowerCase();
+										Permission p = Permission.getValue(permissionName);
+										if (p == null) {
+											logger.warn("알 수 없는 권한: {} (소문자 변환 후: {})", permission, permissionName);
+										}
+										return p;
+									})
+									.filter(p -> p != null)
+									.toList()
+					);
+					logger.debug("AccessToken 파싱 성공 - userId: {}, permissions: {}", 
+							accessToken.getUserId(), accessToken.getPermission());
+					// 파싱된 AccessToken을 요청 속성에 저장하여 이후 재사용할 수 있게 합니다.
+					request.setAttribute("ACCESS_TOKEN", accessToken);
+				} catch (Exception e) {
+					// JWT 파싱 실패 시 accessToken은 null로 유지하여 RefreshToken으로 재시도
+					logger.warn("JWT 파싱 실패: {}", e.getMessage(), e);
+					accessToken = null;
+				}
+			} else {
+				logger.debug("ACCESS_TOKEN 쿠키를 찾을 수 없습니다");
 			}
 		}
 
@@ -123,25 +161,31 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 				}
 				// REFRESH_TOKEN 쿠키가 존재하면, 로그인 서비스를 통해 재로그인을 시도합니다.
 				if (cookie != null) {
-					AccessAndRefreshTokenObjectDTO accessAndRefreshTokenObjectDTO = loginService.reLogin(cookie.getValue());
-					// 재로그인 시 새로 발급받은 AccessToken과 RefreshToken을 사용합니다.
-					accessToken = accessAndRefreshTokenObjectDTO.getAccessToken();
-					refreshToken = accessAndRefreshTokenObjectDTO.getRefreshToken();
-					// 새 토큰 값으로 생성한 쿠키들을 응답에 추가합니다.
-					Cookie[] newCookies = loginService.generateCookie(
-							accessAndRefreshTokenObjectDTO.getAccessTokenAsString(),
-							accessAndRefreshTokenObjectDTO.getRefreshTokenAsString()
-					);
-					for (int i = 0; i < newCookies.length; i++) {
-						response.addCookie(newCookies[i]);
+					try {
+						AccessAndRefreshTokenObjectDTO accessAndRefreshTokenObjectDTO = loginService.reLogin(cookie.getValue());
+						// 재로그인 시 새로 발급받은 AccessToken과 RefreshToken을 사용합니다.
+						accessToken = accessAndRefreshTokenObjectDTO.getAccessToken();
+						refreshToken = accessAndRefreshTokenObjectDTO.getRefreshToken();
+						// 새 토큰 값으로 생성한 쿠키들을 응답에 추가합니다.
+						Cookie[] newCookies = loginService.generateCookie(
+								accessAndRefreshTokenObjectDTO.getAccessTokenAsString(),
+								accessAndRefreshTokenObjectDTO.getRefreshTokenAsString()
+						);
+						for (int i = 0; i < newCookies.length; i++) {
+							response.addCookie(newCookies[i]);
+						}
+						// 새로 생성한 토큰을 요청 속성에 저장합니다.
+						request.setAttribute("ACCESS_TOKEN", accessToken);
+						request.setAttribute("REFRESH_TOKEN", refreshToken);
+					} catch (Exception e) {
+						// RefreshToken으로 재로그인 실패 시 accessToken은 null로 유지
+						accessToken = null;
 					}
-					// 새로 생성한 토큰을 요청 속성에 저장합니다.
-					request.setAttribute("ACCESS_TOKEN", accessToken);
-					request.setAttribute("REFRESH_TOKEN", refreshToken);
 				}
 			}
 			// 그래도 AccessToken이 생성되지 않았다면, 인증 실패로 처리하여 401 상태를 반환합니다.
 			if (accessToken == null) {
+				logger.warn("AccessToken을 생성할 수 없습니다 - 경로: {}, 권한: {}", requestPath, permission);
 				response.setStatus(HttpStatus.UNAUTHORIZED.value());
 				return false;
 			}
@@ -149,11 +193,14 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 		// 마지막으로, 파싱된 AccessToken이 요청에 필요한 권한(permission)을 포함하고 있는지 확인합니다.
 		if (!accessToken.getPermission().contains(this.permission)) {
 			// 권한이 부족한 경우 401 Unauthorized 상태를 설정하고 요청 처리를 중단합니다.
+			logger.warn("권한 부족 - 경로: {}, 필요 권한: {}, 사용자 권한: {}", 
+					requestPath, permission, accessToken.getPermission());
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			return false;
 		}
 
 		// 모든 검증이 통과되면, 요청 처리를 계속 진행합니다.
+		logger.debug("인증 검증 성공 - 경로: {}, 권한: {}", requestPath, permission);
 		return true;
 	}
 }
