@@ -4,6 +4,8 @@ import com.example.cbumanage.dto.PostDTO;
 import com.example.cbumanage.response.ResultResponse;
 import com.example.cbumanage.response.SuccessCode;
 import com.example.cbumanage.service.PostService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,6 +26,10 @@ public class PostController {
         this.postService = postService;
     }
 
+    @Operation(
+            summary = "보고서 게시글 생성",
+            description = "한번의 요청에 게시글 생성과, 게시글-보고서 생성을 처리합니다"
+    )
     @PostMapping("post/report")
     public ResponseEntity<ResultResponse<PostDTO.PostReportCreateResponseDTO>> createPostReport(@RequestBody PostDTO.PostReportCreateRequestDTO req,
                                                                                               @RequestParam Long userId){
@@ -38,8 +44,14 @@ public class PostController {
     Sort.by(Sort.Order.desc("createdAt")) = 최신 순 정렬
      */
 
+    @Operation(
+            summary = "카테고리 별 포스트 목록 페이징 조회",
+            description = "포스트 목록을 페이징으로 불러옵니다. 공통테이블인 Post만 읽습니다"
+    )
     @GetMapping("post")
-    public ResponseEntity<ResultResponse<Page<PostDTO.PostInfoDTO>>> getPosts(@RequestParam int page,@RequestParam int size,@RequestParam int category){
+    public ResponseEntity<ResultResponse<Page<PostDTO.PostInfoDTO>>> getPosts(@Parameter(description = "페이지번호") @RequestParam int page,
+                                                                              @Parameter(description = "페이지당 post갯수") @RequestParam int size,
+                                                                              @Parameter(description = "카테고리") @RequestParam int category){
         Pageable pageable= PageRequest.of(
                 page,size, Sort.by(Sort.Order.desc("createdAt"))
         );
@@ -47,24 +59,40 @@ public class PostController {
         return ResultResponse.ok(SuccessCode.SUCCESS, posts);
     }
 
+    @Operation(
+            summary = "포스트 메인테이블 단건조회",
+            description = "제목, 내용, userId등을 포함한 게시글의 메인테이블의 단건을 조회합니다. 카테고리에 맞는 서브테이블을 불러와야합니다"
+    )
     @GetMapping("post/{postId}/post")
     public ResponseEntity<ResultResponse<PostDTO.PostInfoDTO>> getPost(@PathVariable Long postId){
         PostDTO.PostInfoDTO postInfoDTO =  postService.getPostById(postId);
         return ResultResponse.ok(SuccessCode.SUCCESS, postInfoDTO);
     }
 
+    @Operation(
+            summary = "포스트-보고서 서브테이블 단건조회",
+            description = "포스트의 카테고리에 맞는 보고서 서브테이블을 불러옵니다"
+    )
     @GetMapping("post/{postId}/report")
     public ResponseEntity<ResultResponse<PostDTO.ReportInfoDTO>> getPostReport(@PathVariable Long postId){
         PostDTO.ReportInfoDTO reportInfoDTO =  postService.getReportByPostId(postId);
         return ResultResponse.ok(SuccessCode.SUCCESS, reportInfoDTO);
     }
 
+    @Operation(
+            summary = "보고서 포스트 수정",
+            description = "보고서 포스트를 수정합니다. 한번의 요청에 메인테이블과 서브테이블의 수정내용을 담아 처리합니다"
+    )
     @PatchMapping("post/report/{postId}")
     public ResponseEntity<ResultResponse<Void>> updatePost(@PathVariable Long postId,@RequestBody PostDTO.PostReportUpdateRequestDTO req){
         postService.updatePostReport(req,postId);
         return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
 
+    @Operation(
+            summary = "보고서 포스트 단건 삭제",
+            description = "포스트 단건을 softDelete해 포스트 읽어오기에서 필터링 되도록 합니다"
+    )
     @DeleteMapping("post/{postId}")
     public ResponseEntity<ResultResponse<Void>> deletePost(@PathVariable Long postId){
         postService.deletePostById(postId);
