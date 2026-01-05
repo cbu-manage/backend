@@ -60,7 +60,8 @@ public class DataInitializer implements CommandLineRunner {
                     new Language("Java"),
                     new Language("Python"),
                     new Language("C++"),
-                    new Language("JavaScript")
+                    new Language("JavaScript"),
+                    new Language("C")
             );
             languageRepository.saveAll(languages);
         }

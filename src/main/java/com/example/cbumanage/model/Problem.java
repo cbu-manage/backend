@@ -50,20 +50,19 @@ public class Problem {
     /**
      * 문제 본문 내용
      */
-    @Lob
-    @Column(nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
     /**
      * 입력에 대한 설명
      */
-    @Lob
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String inputDescription;
 
     /**
      * 출력에 대한 설명
      */
-    @Lob
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String outputDescription;
 
     @Enumerated(EnumType.STRING)
