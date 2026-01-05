@@ -3,9 +3,6 @@ package com.example.cbumanage.utils;
 import com.example.cbumanage.dto.PostDTO;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.PostReport;
-import com.example.cbumanage.repository.PostReportRepository;
-import com.example.cbumanage.repository.PostRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component

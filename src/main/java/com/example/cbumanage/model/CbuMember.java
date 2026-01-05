@@ -8,7 +8,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -16,6 +19,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "cbu_member")
+@SQLDelete(sql = "UPDATE cbu_member SET deleted_at = CURRENT_TIMESTAMP WHERE cbu_member_id = ?")
+@SQLRestriction("deleted_at IS NULL")
 public class CbuMember {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,4 +42,8 @@ public class CbuMember {
     private String  note;                         //비고
     private Boolean  due;
     private String email;
+
+    // 소프트 삭제 일시 (null이 아니면 삭제된 것으로 간주)
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }

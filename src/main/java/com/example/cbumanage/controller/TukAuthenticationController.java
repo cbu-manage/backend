@@ -4,7 +4,7 @@ import com.example.cbumanage.service.LogService;
 import com.example.cbumanage.service.TukAuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,7 +18,7 @@ public class TukAuthenticationController {
     TukAuthenticationService tukAuthenticationService;      //로그인 서비스 선언
     LogService logService;          //로그 서비스 선언
 
-    @GetMapping("/api/v1/getLoginKey")
+    @PostMapping("/api/v1/getLoginKey")
     @Operation(summary = "학교 로그인 키 취득")
     public List<String> getLoginKey(@RequestBody HashMap<String, Object> map){      //학교 로그인 키 전달 함수
         String studentId = (String) map.get("studentId");                           //클라이언트로부터 받아온 아이디

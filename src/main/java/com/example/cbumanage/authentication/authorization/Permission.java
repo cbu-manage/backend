@@ -24,12 +24,12 @@ public enum Permission {
 
 	/**
 	 * 관리자 권한.
-	 * - path: 아직 설정되지 않음
-	 * - exclusivePath: 아직 설정되지 않음
+	 * - path: 관리자만 접근 가능한 경로
+	 * - exclusivePath: 관리자 권한에서 제외할 경로
 	 */
 	ADMIN(
-			Set.of(), // 인증이 필요한 경로(비어 있음)
-			Set.of("/api/*")  // 인증이 필요하지 않은 경로(비어 있음)
+			Set.of("/api/v1/member", "/api/v1/members"), // 관리자만 접근 가능한 경로
+			Set.of()  // 관리자 권한에서 제외할 경로
 	);
 
 	@Getter
