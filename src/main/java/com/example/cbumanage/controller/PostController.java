@@ -37,6 +37,17 @@ public class PostController {
         return ResultResponse.ok(SuccessCode.CREATED, responseDTO);
 
     }
+
+    @Operation(
+            summary = "스터디 모집 게시글 생성",
+            description = "한번의 요청에 게시글 생성과, 게시글-스터디 생성을 처리합니다"
+    )
+    @PostMapping("post/study")
+    public ResponseEntity<ResultResponse<PostDTO.PostStudyCreateResponseDTO>> createPostStudy(@RequestBody PostDTO.PostStudyCreateRequestDTO req,
+                                                                                              @RequestParam Long userId){
+        PostDTO.PostStudyCreateResponseDTO responseDTO = postService.createPostStudy(req, userId);
+        return ResultResponse.ok(SuccessCode.CREATED, responseDTO);
+    }
     /*
     페이징 기능 구현입니다
     page = 보고싶은 페이지
@@ -80,12 +91,33 @@ public class PostController {
     }
 
     @Operation(
+            summary = "포스트-스터디 서브테이블 단건조회",
+            description = "포스트의 카테고리에 맞는 스터디 서브테이블을 불러옵니다"
+    )
+    @GetMapping("post/{postId}/study")
+    public ResponseEntity<ResultResponse<PostDTO.StudyInfoDTO>> getPostStudy(@Parameter(description = "포스트 ID") @PathVariable Long postId){
+        PostDTO.StudyInfoDTO studyInfoDTO = postService.getStudyByPostId(postId);
+        return ResultResponse.ok(SuccessCode.SUCCESS, studyInfoDTO);
+    }
+
+    @Operation(
             summary = "보고서 포스트 수정",
             description = "보고서 포스트를 수정합니다. 한번의 요청에 메인테이블과 서브테이블의 수정내용을 담아 처리합니다"
     )
     @PatchMapping("post/report/{postId}")
     public ResponseEntity<ResultResponse<Void>> updatePost(@PathVariable Long postId,@RequestBody PostDTO.PostReportUpdateRequestDTO req){
         postService.updatePostReport(req,postId);
+        return ResultResponse.ok(SuccessCode.UPDATED, null);
+    }
+
+    @Operation(
+            summary = "스터디 모집 포스트 수정",
+            description = "스터디 모집 포스트를 수정합니다. 한번의 요청에 메인테이블과 서브테이블의 수정내용을 담아 처리합니다"
+    )
+    @PatchMapping("post/study/{postId}")
+    public ResponseEntity<ResultResponse<Void>> updatePostStudy(@Parameter(description = "포스트 ID") @PathVariable Long postId,
+                                                                 @RequestBody PostDTO.PostStudyUpdateRequestDTO req){
+        postService.updatePostStudy(req, postId);
         return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
 
