@@ -55,7 +55,9 @@ public class PostMapper {
         return PostDTO.PostCreateDTO.builder()
                 .authorId(userId)
                 .title(req.getTitle())
-                .content(req.getContent()).build();
+                .content(req.getContent())
+                .category(req.getCategory())
+                .build();
     }
 
 

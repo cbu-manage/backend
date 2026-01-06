@@ -122,7 +122,6 @@ public class PostService {
     public void updatePost(PostDTO.PostUpdateDTO postUpdateDTO,Post post) {
         post.changeTitle(postUpdateDTO.getTitle());
         post.changeContent(postUpdateDTO.getContent());
-
     }
 
     public void updateReport(PostDTO.ReportUpdateDTO postUpdateDTO,PostReport postReport) {
@@ -166,5 +165,11 @@ public class PostService {
     public void deletePostById(Long postId) {
         Post post=postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         postRepository.delete(post);
+    }
+
+    @Transactional
+    public void softDeletePost(Long postId) {
+        Post post=postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        post.delete();
     }
 }
