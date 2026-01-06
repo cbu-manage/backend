@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 /**
- * 문제 목록의 개별 항목을 나타내는 DTO입니다.
+ * 문제 목록의 개별 항목을 나타내는 DTO.
  */
 @Getter
 public class ProblemListItemDTO {

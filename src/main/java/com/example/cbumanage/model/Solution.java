@@ -13,7 +13,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 /**
- * 문제 풀이 정보를 저장하는 엔티티입니다.
+ * 문제 풀이 정보를 저장하는 엔티티.
  */
 @Entity
 @Getter

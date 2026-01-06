@@ -1,6 +1,7 @@
 package com.example.cbumanage.service;
 
 import com.example.cbumanage.dto.*;
+import com.example.cbumanage.exception.MemberDoesntHavePermissionException;
 import com.example.cbumanage.exception.MemberNotExistsException;
 import com.example.cbumanage.model.Category;
 import com.example.cbumanage.model.CbuMember;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -71,6 +73,68 @@ public class ProblemService {
         Problem savedProblem = problemRepository.save(problem);
 
         return ProblemResponseDTO.from(savedProblem);
+    }
+
+    /**
+     * 특정 ID의 문제를 수정합니다.
+     *
+     * @param problemId 수정할 문제의 ID
+     * @param memberId 수정 요청을 한 회원의 ID
+     * @param request 수정할 내용이 담긴 DTO
+     * @return 수정된 문제 정보 DTO
+     * @throws EntityNotFoundException 문제를 찾을 수 없는 경우
+     * @throws MemberDoesntHavePermissionException 수정 권한이 없는 경우
+     */
+    @Transactional
+    public ProblemResponseDTO updateProblem(Integer problemId, Long memberId, ProblemUpdateRequestDTO request) {
+        Problem problem = problemRepository.findById(problemId)
+                .orElseThrow(() -> new EntityNotFoundException("ID가 " + problemId + "인 문제를 찾을 수 없습니다."));
+
+        if (!Objects.equals(problem.getMember().getCbuMemberId(), memberId)) {
+            throw new MemberDoesntHavePermissionException("이 문제를 수정할 권한이 없습니다.");
+        }
+
+        Category category = (request.getCategoryId() != null)
+                ? categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new EntityNotFoundException("ID가 " + request.getCategoryId() + "인 카테고리를 찾을 수 없습니다."))
+                : null;
+
+        Platform platform = (request.getPlatformId() != null)
+                ? platformRepository.findById(request.getPlatformId())
+                .orElseThrow(() -> new EntityNotFoundException("ID가 " + request.getPlatformId() + "인 플랫폼을 찾을 수 없습니다."))
+                : null;
+
+        problem.update(
+                category,
+                platform,
+                request.getTitle(),
+                request.getContent(),
+                request.getInputDescription(),
+                request.getOutputDescription(),
+                request.getGrade()
+        );
+
+        return ProblemResponseDTO.from(problem);
+    }
+
+    /**
+     * 특정 ID의 문제를 삭제합니다.
+     *
+     * @param problemId 삭제할 문제의 ID
+     * @param memberId 삭제 요청을 한 회원의 ID
+     * @throws EntityNotFoundException 문제를 찾을 수 없는 경우
+     * @throws MemberDoesntHavePermissionException 삭제 권한이 없는 경우
+     */
+    @Transactional
+    public void deleteProblem(Integer problemId, Long memberId) {
+        Problem problem = problemRepository.findById(problemId)
+                .orElseThrow(() -> new EntityNotFoundException("ID가 " + problemId + "인 문제를 찾을 수 없습니다."));
+
+        if (!Objects.equals(problem.getMember().getCbuMemberId(), memberId)) {
+            throw new MemberDoesntHavePermissionException("이 문제를 삭제할 권한이 없습니다.");
+        }
+
+        problemRepository.delete(problem);
     }
 
     /**

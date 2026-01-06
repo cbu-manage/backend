@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 /**
- * 플랫폼 정보 응답에 사용하는 DTO입니다.
+ * 플랫폼 정보 응답에 사용하는 DTO.
  */
 @Getter
 public class PlatformResponseDTO {

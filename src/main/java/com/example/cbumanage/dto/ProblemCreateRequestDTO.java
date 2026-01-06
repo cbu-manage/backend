@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 문제 생성을 요청할 때 사용하는 DTO입니다.
+ * 문제 생성할 때 사용하는 DTO.
  */
 @Getter
 @NoArgsConstructor

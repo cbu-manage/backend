@@ -1,10 +1,10 @@
 package com.example.cbumanage.controller;
 
-import com.example.cbumanage.authentication.dto.AccessToken;
 import com.example.cbumanage.dto.*;
 import com.example.cbumanage.service.ProblemService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,20 +32,50 @@ public class ProblemController {
     /**
      * 새로운 코딩 테스트 문제를 등록합니다.
      *
-     * @param accessToken 인증된 사용자의 토큰 정보
+     * @param userId 문제를 등록하는 회원의 ID
      * @param request 문제 생성 요청 데이터
      * @return 생성된 문제 정보
      */
     @PostMapping("/problems")
     @Operation(summary = "새 코딩 테스트 문제 등록", description = "새로운 코딩 테스트 문제를 등록합니다.")
-    public ResponseEntity<ProblemResponseDTO> createProblem(AccessToken accessToken, @Valid @RequestBody ProblemCreateRequestDTO request) {
-        Long memberId = accessToken.getUserId();
-        ProblemResponseDTO response = problemService.createProblem(request, memberId);
+    public ResponseEntity<ProblemResponseDTO> createProblem(@RequestParam Long userId, @Valid @RequestBody ProblemCreateRequestDTO request) {
+        ProblemResponseDTO response = problemService.createProblem(request, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**
-     * 코딩 테스트 문제 목록을 조회합니다.
+     * 특정 ID의 문제를 수정하는 메소드.
+     *
+     * @param id 수정할 문제의 ID
+     * @param userId 수정 요청을 한 회원의 ID
+     * @param request 수정할 문제 내용
+     * @return 수정된 문제 정보
+     */
+    @PatchMapping("/problems/{id}")
+    @Operation(summary = "문제 정보 수정", description = "ID에 해당하는 문제의 정보를 수정합니다.")
+    public ResponseEntity<ProblemResponseDTO> updateProblem(@PathVariable Integer id,
+                                                            @RequestParam Long userId,
+                                                            @RequestBody ProblemUpdateRequestDTO request) {
+        ProblemResponseDTO response = problemService.updateProblem(id, userId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 특정 ID의 문제를 삭제하는 메소드.
+     *
+     * @param id 삭제할 문제의 ID
+     * @param userId 삭제 요청을 한 회원의 ID
+     */
+    @DeleteMapping("/problems/{id}")
+    @Operation(summary = "문제 삭제", description = "ID에 해당하는 문제를 삭제합니다.")
+    public ResponseEntity<Void> deleteProblem(@PathVariable Integer id,
+                                              @RequestParam Long userId) {
+        problemService.deleteProblem(id, userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 코딩 테스트 문제 목록을 조회하는 메소드.
      *
      * @param pageable 페이지네이션 정보 (예: ?page=0&size=10&sort=createdAt,desc)
      * @return 페이지네이션된 문제 목록
@@ -58,7 +88,7 @@ public class ProblemController {
     }
 
     /**
-     * 특정 ID의 문제 상세 정보를 조회합니다.
+     * 특정 ID의 문제 상세 정보를 조회하는 메소드.
      *
      * @param id 조회할 문제의 ID
      * @return 문제 상세 정보
@@ -71,7 +101,7 @@ public class ProblemController {
     }
 
     /**
-     * 모든 카테고리 목록을 조회합니다.
+     * 모든 카테고리 목록을 조회하는 메소드.
      *
      * @return 카테고리 목록
      */
@@ -83,7 +113,7 @@ public class ProblemController {
     }
 
     /**
-     * 모든 플랫폼 목록을 조회합니다.
+     * 모든 플랫폼 목록을 조회하는 메소드.
      *
      * @return 플랫폼 목록
      */
@@ -95,7 +125,7 @@ public class ProblemController {
     }
 
     /**
-     * 모든 언어 목록을 조회합니다.
+     * 모든 언어 목록을 조회하는 메소드.
      *
      * @return 언어 목록
      */
@@ -106,3 +136,5 @@ public class ProblemController {
         return ResponseEntity.ok(languages);
     }
 }
+
+

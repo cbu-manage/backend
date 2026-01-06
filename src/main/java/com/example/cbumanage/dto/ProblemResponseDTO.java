@@ -8,7 +8,7 @@ import lombok.Getter;
 import java.time.LocalDateTime;
 
 /**
- * 문제 정보 응답에 사용하는 DTO입니다.
+ * 문제 정보 응답에 사용하는 DTO.
  */
 @Getter
 public class ProblemResponseDTO {
