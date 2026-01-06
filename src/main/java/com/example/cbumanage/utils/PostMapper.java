@@ -3,6 +3,7 @@ package com.example.cbumanage.utils;
 import com.example.cbumanage.dto.PostDTO;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.PostReport;
+import com.example.cbumanage.model.PostStudy;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -27,6 +28,12 @@ public class PostMapper {
                 .build();
     }
 
+    public PostDTO.StudyInfoDTO toStudyInfoDTO(PostStudy study) {
+        return PostDTO.StudyInfoDTO.builder()
+                .status(study.getStatus())
+                .build();
+    }
+
     /*
     아래는 각 Post{...}CreateRequestDTO 가 CreatePostDTO 를 만들 수 있게 하는 메소드 입니다
     매개변수의 DTO 를 바꾸면서 오버로딩하시면서 메소드 추가 하시면 됩니다
@@ -35,7 +42,18 @@ public class PostMapper {
         return PostDTO.PostCreateDTO.builder()
                 .authorId(userId)
                 .title(req.getTitle())
-                .content(req.getContent()).build();
+                .content(req.getContent())
+                .category(req.getCategory())
+                .build();
+    }
+
+    public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostStudyCreateRequestDTO req, Long userId) {
+        return PostDTO.PostCreateDTO.builder()
+                .authorId(userId)
+                .title(req.getTitle())
+                .content(req.getContent())
+                .category(req.getCategory())
+                .build();
     }
 
 
@@ -49,6 +67,13 @@ public class PostMapper {
                 startImage(req.getStartImage()).
                 endImage(req.getEndImage()).
                 date(req.getDate()).build();
+    }
+
+    public PostDTO.StudyCreateDTO toStudyCreateDTO(PostDTO.PostStudyCreateRequestDTO req, Long postId) {
+        return PostDTO.StudyCreateDTO.builder()
+                .postId(postId)
+                .status(req.getStatus())
+                .build();
     }
 
     /*
@@ -70,11 +95,29 @@ public class PostMapper {
 
     }
 
+    public PostDTO.PostStudyCreateResponseDTO toPostStudyCreateResponseDTO(Post post, PostStudy study) {
+        return PostDTO.PostStudyCreateResponseDTO.builder()
+                .postId(post.getId())
+                .authorId(post.getAuthorId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .status(study.getStatus())
+                .createdAt(post.getCreatedAt())
+                .category(post.getCategory())
+                .build();
+    }
+
     /*
     아래는 Post{...}UpdateRequestDTO 를 각 카테고리에 맞게 분리해 주는 Mapper 입니다
      */
 
     public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostReportUpdateRequestDTO req) {
+        return PostDTO.PostUpdateDTO.builder()
+                .title(req.getTitle())
+                .content(req.getContent()).build();
+    }
+
+    public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostStudyUpdateRequestDTO req) {
         return PostDTO.PostUpdateDTO.builder()
                 .title(req.getTitle())
                 .content(req.getContent()).build();
@@ -86,6 +129,12 @@ public class PostMapper {
                 .StartImage(req.getStartImage())
                 .endImage(req.getEndImage())
                 .date(req.getDate())
+                .build();
+    }
+
+    public PostDTO.StudyUpdateDTO toStudyUpdateDTO(PostDTO.PostStudyUpdateRequestDTO req) {
+        return PostDTO.StudyUpdateDTO.builder()
+                .status(req.getStatus())
                 .build();
     }
 
