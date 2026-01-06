@@ -273,4 +273,125 @@ public class PostDTO {
         }
     }
 
+    /*
+    Post-Study 의 핵심 내용을 가지고 있는 DTO 입니다.
+    스터디 모집 게시글 상세보기를 할때 해당 DTO 가 PostInfoDTO 와 함께 불러와 집니다
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class StudyInfoDTO{
+
+        private Boolean status;
+
+        @Builder
+        public StudyInfoDTO(Boolean status){
+            this.status = status;
+        }
+    }
+
+    /*
+    스터디 모집 게시물을 만들때, 유저가 보내는 데이터를 담는 DTO 입니다.
+    해당 DTO 를 Controller 에서 받아와, Service 에서 PostCreateDTO, PostStudyCreateDTO 를 생성하고,
+    각 DTO 를 통해 Post 데이터와 Study 데이터를 생성해 연결합니다
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class PostStudyCreateRequestDTO{
+
+        private String title;
+
+        private String content;
+
+        private Boolean status;
+
+        private int category;
+
+    }
+
+    /*
+    스터디 모집 게시글을 생성하고 반환하는 DTO 입니다
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class PostStudyCreateResponseDTO{
+        private Long postId;
+
+        private Long authorId;
+
+        private String title;
+
+        private String content;
+
+        private Boolean status;
+
+        private LocalDateTime createdAt;
+
+        private int category;
+
+        @Builder
+        public PostStudyCreateResponseDTO(Long postId,
+                                           Long authorId,
+                                           String title,
+                                           String content,
+                                           Boolean status,
+                                           LocalDateTime createdAt,
+                                           int category){
+            this.postId = postId;
+            this.authorId = authorId;
+            this.title = title;
+            this.content = content;
+            this.status = status;
+            this.createdAt = createdAt;
+            this.category = category;
+        }
+    }
+
+    /*
+    PostCreateRequestDTO 에서 Study 를 생성할 데이터만을 뽑아와 Study 데이터를 생성하는데에 사용될 DTO 입니다
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class StudyCreateDTO{
+        private Long postId;
+
+        private Boolean status;
+
+        @Builder
+        public StudyCreateDTO(Long postId, Boolean status){
+            this.postId = postId;
+            this.status = status;
+        }
+    }
+
+    /*
+    스터디 모집 게시물을 수정하기 위해 유저쪽에서 보내는 DTO 입니다.
+    CreateRequest 와 마찬가지로 Service 계층에서 PostUpdateDTO 와 PostStudyUpdateDTO 를 분리해서 사용합니다
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class PostStudyUpdateRequestDTO{
+
+        private String title;
+
+        private String content;
+
+        private Boolean status;
+
+    }
+
+    /*
+    PostStudyUpdateDTO 에서 Study 데이터를 Update 시킨 데이터만 추출해서 사용하기 위한 DTO 입니다
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class StudyUpdateDTO{
+
+        private Boolean status;
+
+        @Builder
+        public StudyUpdateDTO(Boolean status){
+            this.status = status;
+        }
+    }
+
 }
