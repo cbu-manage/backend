@@ -4,9 +4,11 @@ import com.example.cbumanage.dto.*;
 import com.example.cbumanage.model.CbuMember;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.PostReport;
+import com.example.cbumanage.model.PostStudy;
 import com.example.cbumanage.repository.CbuMemberRepository;
 import com.example.cbumanage.repository.PostReportRepository;
 import com.example.cbumanage.repository.PostRepository;
+import com.example.cbumanage.repository.PostStudyRepository;
 import com.example.cbumanage.utils.PostMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -25,13 +27,15 @@ public class PostService {
 
     private PostRepository postRepository;
     private PostReportRepository postReportRepository;
+    private PostStudyRepository postStudyRepository;
     private PostMapper postMapper;
     private CbuMemberRepository cbuMemberRepository;
 
     @Autowired
-    public PostService(PostRepository postRepository, PostReportRepository postReportRepository, PostMapper postMapper, CbuMemberRepository cbuMemberRepository) {
+    public PostService(PostRepository postRepository, PostReportRepository postReportRepository, PostStudyRepository postStudyRepository, PostMapper postMapper, CbuMemberRepository cbuMemberRepository) {
         this.postRepository = postRepository;
         this.postReportRepository = postReportRepository;
+        this.postStudyRepository = postStudyRepository;
         this.postMapper = postMapper;
         this.cbuMemberRepository = cbuMemberRepository;
     }
@@ -54,6 +58,13 @@ public class PostService {
         return saved;
     }
 
+    public PostStudy createStudy(PostDTO.StudyCreateDTO req) {
+        Post post = postRepository.findById(req.getPostId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        PostStudy study = PostStudy.create(post, req.getStatus());
+        PostStudy saved = postStudyRepository.save(study);
+        return saved;
+    }
+
     /*
     컨트롤러로 부터 req 을 받아 각 DTO 로 나눈 후 알맞는 메소드를 불러와 저장시키는 메소드입니다
     실제로 컨트롤러에서 사용되는 메소드는 이 메소드이기에, 여기에 Transactional 를 사용했습니다
@@ -65,6 +76,15 @@ public class PostService {
         PostDTO.ReportCreateDTO reportCreateDTO = postMapper.toReportCreateDTO(req, post.getId());
         PostReport report = createReport(reportCreateDTO);
         return postMapper.toPostReportCreateResponseDTO(post, report);
+    }
+
+    @Transactional
+    public PostDTO.PostStudyCreateResponseDTO createPostStudy(PostDTO.PostStudyCreateRequestDTO req,Long userId) {
+        PostDTO.PostCreateDTO postCreateDTO = postMapper.toPostCreateDTO(req,userId);
+        Post post = createPost(postCreateDTO);
+        PostDTO.StudyCreateDTO studyCreateDTO = postMapper.toStudyCreateDTO(req, post.getId());
+        PostStudy study = createStudy(studyCreateDTO);
+        return postMapper.toPostStudyCreateResponseDTO(post, study);
     }
 
     /*
@@ -88,6 +108,15 @@ public class PostService {
         return postMapper.toReportInfoDTO(report);
     }
 
+    //PostId로 알맞는 Study를 불러와 DTO로 변환시켜 반환하는 메소드입니다
+    public PostDTO.StudyInfoDTO getStudyByPostId(Long postId){
+        PostStudy study = postStudyRepository.findByPostId(postId);
+        if (study == null) {
+            throw new EntityNotFoundException("PostStudy Not Found");
+        }
+        return postMapper.toStudyInfoDTO(study);
+    }
+
     /*
     updatePostReport 하나의 메소드에 들어온 req 을 각각의 엔티티에 맞춰
     두개의 DTO 로 분리해 각 엔티티의 update 를 수행합니다
@@ -106,6 +135,10 @@ public class PostService {
         postReport.changeEndImage(postUpdateDTO.getEndImage());
     }
 
+    public void updateStudy(PostDTO.StudyUpdateDTO studyUpdateDTO,PostStudy postStudy) {
+        postStudy.changeStatus(studyUpdateDTO.getStatus());
+    }
+
     /*
     컨트롤러에서 요청을 받아 각 DTO 로 나누고 알맞는 메소드를 호출합니다
     Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소드이기에, 해당 메소드에 Transactional 를 추가했습니다
@@ -118,6 +151,16 @@ public class PostService {
         PostReport report =postReportRepository.findByPostId(postId);
         PostDTO.ReportUpdateDTO reportUpdateDTO=postMapper.topostReportUpdateDTO(req);
         updateReport(reportUpdateDTO,report);
+    }
+
+    @Transactional
+    public void updatePostStudy(PostDTO.PostStudyUpdateRequestDTO req,Long postId) {
+        Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        PostDTO.PostUpdateDTO postUpdateDTO = postMapper.toPostUpdateDTO(req);
+        updatePost(postUpdateDTO, post);
+        PostStudy study = postStudyRepository.findByPostId(postId);
+        PostDTO.StudyUpdateDTO studyUpdateDTO = postMapper.toStudyUpdateDTO(req);
+        updateStudy(studyUpdateDTO, study);
     }
 
     @Transactional
