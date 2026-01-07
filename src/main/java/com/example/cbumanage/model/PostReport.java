@@ -22,6 +22,11 @@ public class PostReport {
     @JoinColumn(name="post_id")
     private Post post;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    private Group group;
+
+
     private LocalDateTime date;
 
     private String location;
@@ -31,8 +36,9 @@ public class PostReport {
     private String endImage;
 
     //생성자
-    public PostReport(Post post, LocalDateTime date, String location, String startImage, String endImage) {
+    public PostReport(Post post, Group group,LocalDateTime date, String location, String startImage, String endImage) {
         this.post = post;
+        this.group = group;
         this.date = date;
         this.location = location;
         this.startImage = startImage;
@@ -40,14 +46,16 @@ public class PostReport {
     }
 
     //생성 메소드
-    public static PostReport create(Post post, LocalDateTime date, String location, String startImage, String endImage) {
-        return new PostReport(post, date, location, startImage, endImage);
+    public static PostReport create(Post post,Group group ,LocalDateTime date, String location, String startImage, String endImage) {
+        return new PostReport(post,group,date, location, startImage, endImage);
     }
 
     //엔티티 변경 메소드
     public void changeDate(LocalDateTime date) {
         this.date = date;
     }
+
+    public void changeGroup(Group group) {this.group = group;}
 
     public void changeLocation(String location) {
         this.location = location;
