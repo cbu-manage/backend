@@ -6,11 +6,17 @@ import com.example.cbumanage.model.enums.GroupMemberStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor
 @Table(name = "group_member")
 @Getter
+@EntityListeners(AuditingEntityListener.class)
 public class GroupMember {
 
     @Id
@@ -24,6 +30,12 @@ public class GroupMember {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cbumember_id",nullable = false)
     private CbuMember cbuMember;
+
+    @CreatedDate
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
 
     @Enumerated(EnumType.STRING)
     private GroupMemberStatus groupMemberStatus;
