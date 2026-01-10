@@ -48,7 +48,9 @@ public class PostMapper {
         return PostDTO.PostCreateDTO.builder()
                 .authorId(userId)
                 .title(req.getTitle())
-                .content(req.getContent()).build();
+                .content(req.getContent())
+                .category(req.getCategory())
+                .build();
     }
 
     public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostProjectCreateRequestDTO req, Long userId) {
@@ -70,7 +72,9 @@ public class PostMapper {
                 location(req.getLocation()).
                 startImage(req.getStartImage()).
                 endImage(req.getEndImage()).
-                date(req.getDate()).build();
+                date(req.getDate())
+                .groupId(req.getGroupId())
+                .build();
     }
 
     public PostDTO.ProjectCreateDTO toProjectCreateDTO(PostDTO.PostProjectCreateRequestDTO req,Long postId) {

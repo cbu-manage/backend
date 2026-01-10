@@ -1,14 +1,8 @@
 package com.example.cbumanage.service;
 
 import com.example.cbumanage.dto.*;
-import com.example.cbumanage.model.CbuMember;
-import com.example.cbumanage.model.Post;
-import com.example.cbumanage.model.PostReport;
-import com.example.cbumanage.model.PostProject;
-import com.example.cbumanage.repository.CbuMemberRepository;
-import com.example.cbumanage.repository.PostReportRepository;
-import com.example.cbumanage.repository.PostProjectRepository;
-import com.example.cbumanage.repository.PostRepository;
+import com.example.cbumanage.model.*;
+import com.example.cbumanage.repository.*;
 import com.example.cbumanage.utils.PostMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -30,16 +24,18 @@ public class PostService {
     private PostProjectRepository postProjectRepository;
     private PostMapper postMapper;
     private CbuMemberRepository cbuMemberRepository;
+    private GroupRepository groupRepository;
 
 
     @Autowired
     public PostService(PostRepository postRepository, PostReportRepository postReportRepository, PostMapper postMapper, CbuMemberRepository cbuMemberRepository,
-                       PostProjectRepository postProjectRepository) {
+                       PostProjectRepository postProjectRepository, GroupRepository groupRepository) {
         this.postRepository = postRepository;
         this.postReportRepository = postReportRepository;
         this.postProjectRepository = postProjectRepository;
         this.postMapper = postMapper;
         this.cbuMemberRepository = cbuMemberRepository;
+        this.groupRepository = groupRepository;
     }
 
     /*
@@ -55,7 +51,8 @@ public class PostService {
 
     public PostReport createReport(PostDTO.ReportCreateDTO req) {
         Post post = postRepository.findById(req.getPostId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        PostReport report = PostReport.create(post, req.getDate(), req.getLocation(), req.getStartImage(), req.getEndImage());
+        Group group = groupRepository.findById(req.getGroupId());
+        PostReport report = PostReport.create(post, group,req.getDate(), req.getLocation(), req.getStartImage(), req.getEndImage());
         PostReport saved = postReportRepository.save(report);
         return saved;
     }

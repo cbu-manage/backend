@@ -2,6 +2,8 @@ package com.example.cbumanage.model;
 
 import com.example.cbumanage.model.enums.GroupMemberRole;
 import com.example.cbumanage.model.enums.GroupMemberStatus;
+import com.example.cbumanage.model.enums.GroupRecruitmentStatus;
+import com.example.cbumanage.model.enums.GroupStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,18 +28,31 @@ public class Group {
     @Column(name = "group_name",unique = true, nullable = false)
     private String groupName;
 
+    public int minActiveMembers;
+
+    public int maxActiveMembers;
+
     @CreatedDate
     public LocalDateTime createdAt;
 
     @LastModifiedDate
     public LocalDateTime updatedAt;
 
-    public Group(String groupName) {
+    @Enumerated(EnumType.STRING)
+    public GroupRecruitmentStatus recruitmentStatus;
+
+    @Enumerated(EnumType.STRING)
+    public GroupStatus status;
+
+    public Group(String groupName, int minActiveMembers, int maxActiveMembers) {
+
         this.groupName = groupName;
+        this.minActiveMembers = minActiveMembers;
+        this.maxActiveMembers = maxActiveMembers;
     }
 
-    public static Group create(String groupName,CbuMember cbuMember) {
-        Group  group = new Group(groupName);
+    public static Group create(String groupName,CbuMember cbuMember,int minActiveMembers,int maxActiveMembers) {
+        Group  group = new Group(groupName,minActiveMembers,maxActiveMembers);
         GroupMember leader = GroupMember.create(group,cbuMember,GroupMemberStatus.ACTIVE,GroupMemberRole.LEADER);
         group.members.add(leader);
         return group;
@@ -46,6 +61,7 @@ public class Group {
     public void changeGroupName(String groupName) {
         this.groupName = groupName;
     }
+
 
     @OneToMany(mappedBy = "group" ,
             cascade = CascadeType.ALL,
@@ -56,5 +72,33 @@ public class Group {
     public void addMember(CbuMember cbuMember) {
        this.members.add(GroupMember.create(this,cbuMember,GroupMemberStatus.PENDING,GroupMemberRole.MEMBER));
     }
+
+    /*
+    그룹의 활동 상황을 바꾸는 메소드 입니다
+     */
+    public void activate() {
+        if( this.status == GroupStatus.ACTIVE) return ;
+        this.status = GroupStatus.ACTIVE;
+    }
+
+    public void deactivate() {
+        if( this.status == GroupStatus.INACTIVE) return ;
+        this.status = GroupStatus.INACTIVE;
+    }
+
+    /*
+    그룹의 모집 상태를 변경시키는 메소드 입니다
+     */
+
+    public void openRecruitment() {
+        if (this.recruitmentStatus == GroupRecruitmentStatus.OPEN) return;
+        this.recruitmentStatus = GroupRecruitmentStatus.OPEN;
+    }
+
+    public void closeRecruitment() {
+        if (this.recruitmentStatus == GroupRecruitmentStatus.CLOSED) return;
+        this.recruitmentStatus = GroupRecruitmentStatus.CLOSED;
+    }
+
 
 }

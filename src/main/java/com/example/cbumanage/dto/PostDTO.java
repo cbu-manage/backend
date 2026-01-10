@@ -69,12 +69,15 @@ public class PostDTO {
 
         private LocalDateTime date;
 
+        private GroupDTO.GroupInfoDTO groupInfoDTO;
+
         @Builder
-        public ReportInfoDTO(String location, String startImage, String endImage, LocalDateTime date){
+        public ReportInfoDTO(String location, String startImage, String endImage, LocalDateTime date, GroupDTO.GroupInfoDTO groupInfoDTO) {
             this.location = location;
             this.startImage = startImage;
             this.endImage = endImage;
             this.date = date;
+            this.groupInfoDTO = groupInfoDTO;
 
         }
     }
@@ -121,6 +124,8 @@ public class PostDTO {
         private LocalDateTime date;
 
         private int category;
+
+        private long groupId;
 
 
     }
@@ -261,14 +266,16 @@ public class PostDTO {
 
         private LocalDateTime date;
 
+        private long groupId;
+
         @Builder
-        public ReportCreateDTO(Long postId,String location, String startImage, String endImage, LocalDateTime date){
+        public ReportCreateDTO(Long postId,String location, String startImage, String endImage, LocalDateTime date, long groupId){
             this.postId = postId;
             this.location = location;
             this.startImage = startImage;
             this.endImage = endImage;
             this.date = date;
-
+            this.groupId = groupId;
         }
     }
 
