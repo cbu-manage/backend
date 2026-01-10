@@ -19,7 +19,7 @@ import java.util.List;
  * 코딩 테스트 문제 관련 API를 제공하는 컨트롤러입니다.
  */
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/post")
 @Tag(name = "코딩 테스트 문제 컨트롤러", description = "코딩 테스트 문제 CRUD 및 목록 조회 API")
 public class ProblemController {
 
