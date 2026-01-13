@@ -5,8 +5,10 @@ import com.example.cbumanage.model.CbuMember;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.PostReport;
 import com.example.cbumanage.model.PostStudy;
+import com.example.cbumanage.model.PostProject;
 import com.example.cbumanage.repository.CbuMemberRepository;
 import com.example.cbumanage.repository.PostReportRepository;
+import com.example.cbumanage.repository.PostProjectRepository;
 import com.example.cbumanage.repository.PostRepository;
 import com.example.cbumanage.repository.PostStudyRepository;
 import com.example.cbumanage.utils.PostMapper;
@@ -28,14 +30,18 @@ public class PostService {
     private PostRepository postRepository;
     private PostReportRepository postReportRepository;
     private PostStudyRepository postStudyRepository;
+    private PostProjectRepository postProjectRepository;
     private PostMapper postMapper;
     private CbuMemberRepository cbuMemberRepository;
 
+
     @Autowired
-    public PostService(PostRepository postRepository, PostReportRepository postReportRepository, PostStudyRepository postStudyRepository, PostMapper postMapper, CbuMemberRepository cbuMemberRepository) {
+    public PostService(PostRepository postRepository, PostReportRepository postReportRepository, PostStudyRepository postStudyRepository, PostMapper postMapper, CbuMemberRepository cbuMemberRepository,
+                       PostProjectRepository postProjectRepository) {
         this.postRepository = postRepository;
         this.postReportRepository = postReportRepository;
         this.postStudyRepository = postStudyRepository;
+        this.postProjectRepository = postProjectRepository;
         this.postMapper = postMapper;
         this.cbuMemberRepository = cbuMemberRepository;
     }
@@ -60,15 +66,20 @@ public class PostService {
 
     public PostStudy createStudy(PostDTO.StudyCreateDTO req) {
         Post post = postRepository.findById(req.getPostId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        PostStudy study = PostStudy.create(post, req.getStatus());
-        PostStudy saved = postStudyRepository.save(study);
-        return saved;
+        PostStudy study = PostStudy.create(post, req.isStatus());
+        return postStudyRepository.save(study);
+    }
+
+    public PostProject createProject(PostDTO.ProjectCreateDTO req){
+        Post post = postRepository.findById(req.getPostId()).orElseThrow(() ->new EntityNotFoundException("Post Not Found"));
+        PostProject project=PostProject.create(post, req.getRecruitmentField(), req.getTechStack(), req.isRecruiting());
+        return postProjectRepository.save(project);
     }
 
     /*
-    컨트롤러로 부터 req 을 받아 각 DTO 로 나눈 후 알맞는 메소드를 불러와 저장시키는 메소드입니다
-    실제로 컨트롤러에서 사용되는 메소드는 이 메소드이기에, 여기에 Transactional 를 사용했습니다
-     */
+        컨트롤러로 부터 req 을 받아 각 DTO 로 나눈 후 알맞는 메소드를 불러와 저장시키는 메소드입니다
+        실제로 컨트롤러에서 사용되는 메소드는 이 메소드이기에, 여기에 Transactional 를 사용했습니다
+         */
     @Transactional
     public PostDTO.PostReportCreateResponseDTO createPostReport(PostDTO.PostReportCreateRequestDTO req,Long userId) {
         PostDTO.PostCreateDTO postCreateDTO = postMapper.toPostCreateDTO(req,userId);
@@ -87,6 +98,15 @@ public class PostService {
         return postMapper.toPostStudyCreateResponseDTO(post, study);
     }
 
+    @Transactional
+    public PostDTO.PostProjectCreateResponseDTO createPostProject(PostDTO.PostProjectCreateRequestDTO req, Long userId) {
+        PostDTO.PostCreateDTO postCreateDTO = postMapper.toPostCreateDTO(req,userId);
+        Post post = createPost(postCreateDTO);
+        PostDTO.ProjectCreateDTO projectCreateDTO = postMapper.toProjectCreateDTO(req, post.getId());
+        PostProject project = createProject(projectCreateDTO);
+        return postMapper.toPostProjectCreateResponseDTO(post, project);
+    }
+
     /*
     카테고리를 입력받아 페이지로 받아오고, Mapper 를 통해 PostInfoDTO 로 반환되게 만들었습니다
     게시글 목록에서 사용됩니다
@@ -102,19 +122,19 @@ public class PostService {
         return postMapper.toPostInfoDTO(post);
     }
 
-    //PostId로  알맞는 Report 를 불러와 DTO 로 변환시켜 반환하는 메소드 입니다
     public PostDTO.ReportInfoDTO getReportByPostId(Long PostId){
         PostReport report = postReportRepository.findByPostId(PostId);
         return postMapper.toReportInfoDTO(report);
     }
 
-    //PostId로 알맞는 Study를 불러와 DTO로 변환시켜 반환하는 메소드입니다
-    public PostDTO.StudyInfoDTO getStudyByPostId(Long postId){
-        PostStudy study = postStudyRepository.findByPostId(postId);
-        if (study == null) {
-            throw new EntityNotFoundException("PostStudy Not Found");
-        }
+    public PostDTO.StudyInfoDTO getStudyByPostId(Long PostId){
+        PostStudy study = postStudyRepository.findByPostId(PostId);
         return postMapper.toStudyInfoDTO(study);
+    }
+
+    public PostDTO.ProjectInfoDTO getProjectByPostId(Long PostId){
+        PostProject project = postProjectRepository.findByPostId(PostId);
+        return postMapper.toProjectInfoDTO(project);
     }
 
     /*
@@ -125,7 +145,6 @@ public class PostService {
     public void updatePost(PostDTO.PostUpdateDTO postUpdateDTO,Post post) {
         post.changeTitle(postUpdateDTO.getTitle());
         post.changeContent(postUpdateDTO.getContent());
-
     }
 
     public void updateReport(PostDTO.ReportUpdateDTO postUpdateDTO,PostReport postReport) {
@@ -136,7 +155,13 @@ public class PostService {
     }
 
     public void updateStudy(PostDTO.StudyUpdateDTO studyUpdateDTO,PostStudy postStudy) {
-        postStudy.changeStatus(studyUpdateDTO.getStatus());
+        postStudy.changeStatus(studyUpdateDTO.isStatus());
+    }
+
+    public void updateProject(PostDTO.ProjectUpdateDTO dto, PostProject project) {
+        project.changeRecruitmentField(dto.getRecruitmentField());
+        project.changeTechStack(dto.getTechStack());
+        project.changeRecruiting(dto.isRecruiting());
     }
 
     /*
@@ -164,8 +189,24 @@ public class PostService {
     }
 
     @Transactional
+    public void updatePostProject(PostDTO.PostProjectUpdateRequestDTO req, Long postId) {
+        Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        PostDTO.PostUpdateDTO postUpdateDTO = postMapper.toPostUpdateDTO(req);
+        updatePost(postUpdateDTO, post);
+        PostProject project = postProjectRepository.findByPostId(postId);
+        PostDTO.ProjectUpdateDTO projectUpdateDTO = postMapper.toPostProjectUpdateDTO(req);
+        updateProject(projectUpdateDTO, project);
+    }
+
+    @Transactional
     public void deletePostById(Long postId) {
         Post post=postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         postRepository.delete(post);
+    }
+
+    @Transactional
+    public void softDeletePost(Long postId) {
+        Post post=postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        post.delete();
     }
 }

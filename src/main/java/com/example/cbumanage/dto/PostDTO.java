@@ -80,6 +80,26 @@ public class PostDTO {
     }
 
     /*
+    Project 게시글 상세 조회에 사용되는 DTO
+    PostInfo DTO와 같이 호출
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class ProjectInfoDTO {
+
+        private String recruitmentField;
+        private String techStack;
+        private boolean recruiting;
+
+        @Builder
+        public ProjectInfoDTO(String recruitmentField, String techStack, boolean recruiting) {
+            this.recruitmentField = recruitmentField;
+            this.techStack = techStack;
+            this.recruiting = recruiting;
+        }
+    }
+
+    /*
     보고서 게시물을 만들때, 유저가 보내는 데이터를 담는 DTO 입니다.
     해당 DTO 를 Controller 에서 받아와, Service 에서 PostCreateDTO, PostReportCreateDTO 를 생성하고,
     각 DTO 를 통해 Post 데이터와 Report 데이터를 생성해 연결합니다
@@ -103,6 +123,18 @@ public class PostDTO {
         private int category;
 
 
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class PostProjectCreateRequestDTO{
+
+        private String title;
+        private String content;
+        private String recruitmentField;
+        private String techStack;
+        private boolean recruiting;
+        private int category;
     }
 
     /*
@@ -156,6 +188,41 @@ public class PostDTO {
         }
     }
 
+    @Getter
+    @NoArgsConstructor
+    public static class PostProjectCreateResponseDTO{
+        private Long postId;
+        private Long authorId;
+        private String title;
+        private String content;
+        private String recruitmentField;
+        private String techStack;
+        private boolean recruiting;
+        private LocalDateTime createdAt;
+        private int category;
+
+        @Builder
+        public PostProjectCreateResponseDTO(Long postId,
+                                           Long authorId,
+                                           String title,
+                                           String content,
+                                           String recruitmentField,
+                                           String techStack,
+                                           boolean recruiting,
+                                           LocalDateTime createdAt,
+                                           int category){
+            this.postId = postId;
+            this.authorId = authorId;
+            this.title = title;
+            this.content = content;
+            this.recruitmentField = recruitmentField;
+            this.techStack = techStack;
+            this.recruiting = recruiting;
+            this.createdAt = createdAt;
+            this.category = category;
+        }
+    }
+
     /*
     Post{...}CreateRequestDTO 에서 Post 를 생성할 정보만 빼내어 Post 를 생성하기 위한 DTO 입니다
      */
@@ -181,10 +248,6 @@ public class PostDTO {
 
     }
 
-
-    /*
-    PostCreateRequestDTO 에서 Report 를 생성할 데이터만을 뽑아와 Report 데이터를 생성하는데에 사용될 DTO 입니다
-     */
     @Getter
     @NoArgsConstructor
     public static class ReportCreateDTO{
@@ -209,6 +272,23 @@ public class PostDTO {
         }
     }
 
+    @Getter
+    @NoArgsConstructor
+    public static class ProjectCreateDTO{
+        private Long postId;
+        private String recruitmentField;
+        private String techStack;
+        private boolean recruiting;
+
+        @Builder
+        public ProjectCreateDTO(Long postId,String recruitmentField, String techStack, boolean recruiting){
+            this.postId = postId;
+            this.recruitmentField = recruitmentField;
+            this.techStack = techStack;
+            this.recruiting = recruiting;
+        }
+    }
+
     /*
     보고서 게시물을 수정하기 위해 유저쪽에서 보내는 DTO 입니다.
     CreateRequest 와 마찬가지로 Service 계층에서 PostUpdateDTO 와  PostReportUpdateDTO 를 분리해서 사용합니다
@@ -229,6 +309,16 @@ public class PostDTO {
 
         private LocalDateTime date;
 
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class PostProjectUpdateRequestDTO{
+        private String title;
+        private String content;
+        private String recruitmentField;
+        private String techStack;
+        private boolean recruiting;
     }
 
     /*
@@ -264,12 +354,12 @@ public class PostDTO {
 
         private LocalDateTime date;
 
-        @Builder
-        public ReportUpdateDTO(String location, String StartImage, String endImage, LocalDateTime date){
-            this.location = location;
-            this.StartImage = StartImage;
-            this.endImage = endImage;
-            this.date = date;
+    @Builder
+    public ReportUpdateDTO(String location, String StartImage, String endImage, LocalDateTime date){
+        this.location = location;
+        this.StartImage = StartImage;
+        this.endImage = endImage;
+        this.date = date;
         }
     }
 
@@ -281,10 +371,10 @@ public class PostDTO {
     @NoArgsConstructor
     public static class StudyInfoDTO{
 
-        private Boolean status;
+        private boolean status;
 
         @Builder
-        public StudyInfoDTO(Boolean status){
+        public StudyInfoDTO(boolean status){
             this.status = status;
         }
     }
@@ -302,7 +392,7 @@ public class PostDTO {
 
         private String content;
 
-        private Boolean status;
+        private boolean status;
 
         private int category;
 
@@ -322,7 +412,7 @@ public class PostDTO {
 
         private String content;
 
-        private Boolean status;
+        private boolean status;
 
         private LocalDateTime createdAt;
 
@@ -333,7 +423,7 @@ public class PostDTO {
                                            Long authorId,
                                            String title,
                                            String content,
-                                           Boolean status,
+                                           boolean status,
                                            LocalDateTime createdAt,
                                            int category){
             this.postId = postId;
@@ -354,10 +444,10 @@ public class PostDTO {
     public static class StudyCreateDTO{
         private Long postId;
 
-        private Boolean status;
+        private boolean status;
 
         @Builder
-        public StudyCreateDTO(Long postId, Boolean status){
+        public StudyCreateDTO(Long postId, boolean status){
             this.postId = postId;
             this.status = status;
         }
@@ -375,7 +465,7 @@ public class PostDTO {
 
         private String content;
 
-        private Boolean status;
+        private boolean status;
 
     }
 
@@ -386,12 +476,27 @@ public class PostDTO {
     @NoArgsConstructor
     public static class StudyUpdateDTO{
 
-        private Boolean status;
+        private boolean status;
 
         @Builder
-        public StudyUpdateDTO(Boolean status){
+        public StudyUpdateDTO(boolean status){
             this.status = status;
         }
     }
 
+    @Getter
+    @NoArgsConstructor
+    public static class ProjectUpdateDTO{
+
+        private String recruitmentField;
+        private String techStack;
+        private boolean recruiting;
+
+        @Builder
+        public ProjectUpdateDTO(String recruitmentField, String techStack, boolean recruiting){
+            this.recruitmentField = recruitmentField;
+            this.techStack = techStack;
+            this.recruiting = recruiting;
+        }
+    }
 }

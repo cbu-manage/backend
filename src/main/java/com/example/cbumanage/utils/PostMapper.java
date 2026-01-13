@@ -4,6 +4,7 @@ import com.example.cbumanage.dto.PostDTO;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.PostReport;
 import com.example.cbumanage.model.PostStudy;
+import com.example.cbumanage.model.PostProject;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -30,7 +31,15 @@ public class PostMapper {
 
     public PostDTO.StudyInfoDTO toStudyInfoDTO(PostStudy study) {
         return PostDTO.StudyInfoDTO.builder()
-                .status(study.getStatus())
+                .status(study.isStatus())
+                .build();
+    }
+
+    public PostDTO.ProjectInfoDTO toProjectInfoDTO(PostProject project) {
+        return PostDTO.ProjectInfoDTO.builder()
+                .recruitmentField(project.getRecruitmentField())
+                .techStack(project.getTechStack())
+                .recruiting(project.isRecruiting())
                 .build();
     }
 
@@ -38,7 +47,7 @@ public class PostMapper {
     아래는 각 Post{...}CreateRequestDTO 가 CreatePostDTO 를 만들 수 있게 하는 메소드 입니다
     매개변수의 DTO 를 바꾸면서 오버로딩하시면서 메소드 추가 하시면 됩니다
      */
-    public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostReportCreateRequestDTO req,Long userId) {
+    public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostReportCreateRequestDTO req, Long userId) {
         return PostDTO.PostCreateDTO.builder()
                 .authorId(userId)
                 .title(req.getTitle())
@@ -48,6 +57,15 @@ public class PostMapper {
     }
 
     public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostStudyCreateRequestDTO req, Long userId) {
+        return PostDTO.PostCreateDTO.builder()
+                .authorId(userId)
+                .title(req.getTitle())
+                .content(req.getContent())
+                .category(req.getCategory())
+                .build();
+    }
+
+    public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostProjectCreateRequestDTO req, Long userId) {
         return PostDTO.PostCreateDTO.builder()
                 .authorId(userId)
                 .title(req.getTitle())
@@ -72,7 +90,16 @@ public class PostMapper {
     public PostDTO.StudyCreateDTO toStudyCreateDTO(PostDTO.PostStudyCreateRequestDTO req, Long postId) {
         return PostDTO.StudyCreateDTO.builder()
                 .postId(postId)
-                .status(req.getStatus())
+                .status(req.isStatus())
+                .build();
+    }
+
+    public PostDTO.ProjectCreateDTO toProjectCreateDTO(PostDTO.PostProjectCreateRequestDTO req,Long postId) {
+        return PostDTO.ProjectCreateDTO.builder()
+                .postId(postId)
+                .recruitmentField(req.getRecruitmentField())
+                .techStack(req.getTechStack())
+                .recruiting(req.isRecruiting())
                 .build();
     }
 
@@ -101,8 +128,22 @@ public class PostMapper {
                 .authorId(post.getAuthorId())
                 .title(post.getTitle())
                 .content(post.getContent())
-                .status(study.getStatus())
+                .status(study.isStatus())
                 .createdAt(post.getCreatedAt())
+                .category(post.getCategory())
+                .build();
+    }
+
+    public PostDTO.PostProjectCreateResponseDTO toPostProjectCreateResponseDTO(Post post, PostProject project) {
+        return PostDTO.PostProjectCreateResponseDTO.builder()
+                .postId(post.getId())
+                .authorId(post.getAuthorId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .createdAt(post.getCreatedAt())
+                .recruitmentField(project.getRecruitmentField())
+                .techStack(project.getTechStack())
+                .recruiting(project.isRecruiting())
                 .category(post.getCategory())
                 .build();
     }
@@ -123,6 +164,12 @@ public class PostMapper {
                 .content(req.getContent()).build();
     }
 
+    public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostProjectUpdateRequestDTO req) {
+        return PostDTO.PostUpdateDTO.builder()
+                .title(req.getTitle())
+                .content(req.getContent()).build();
+    }
+
     public PostDTO.ReportUpdateDTO topostReportUpdateDTO(PostDTO.PostReportUpdateRequestDTO req) {
         return PostDTO.ReportUpdateDTO.builder()
                 .location(req.getLocation())
@@ -134,9 +181,15 @@ public class PostMapper {
 
     public PostDTO.StudyUpdateDTO toStudyUpdateDTO(PostDTO.PostStudyUpdateRequestDTO req) {
         return PostDTO.StudyUpdateDTO.builder()
-                .status(req.getStatus())
+                .status(req.isStatus())
                 .build();
     }
 
-
+    public PostDTO.ProjectUpdateDTO toPostProjectUpdateDTO(PostDTO.PostProjectUpdateRequestDTO req) {
+        return PostDTO.ProjectUpdateDTO.builder()
+                .recruitmentField(req.getRecruitmentField())
+                .techStack(req.getTechStack())
+                .recruiting(req.isRecruiting())
+                .build();
+    }
 }
