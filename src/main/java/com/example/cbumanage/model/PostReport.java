@@ -35,6 +35,8 @@ public class PostReport {
 
     private String endImage;
 
+    private boolean isAccepted;
+
     //생성자
     public PostReport(Post post, Group group,LocalDateTime date, String location, String startImage, String endImage) {
         this.post = post;
@@ -43,6 +45,7 @@ public class PostReport {
         this.location = location;
         this.startImage = startImage;
         this.endImage = endImage;
+        this.isAccepted = false;
     }
 
     //생성 메소드
@@ -67,6 +70,10 @@ public class PostReport {
 
     public void changeEndImage(String endImage) {
         this.endImage = endImage;
+    }
+
+    public void Accept() {
+        this.isAccepted = true;
     }
 
 

@@ -128,7 +128,7 @@ public class PostController {
     )
     @DeleteMapping("post/{postId}")
     public ResponseEntity<ResultResponse<Void>> deletePost(@PathVariable Long postId){
-        postService.deletePostById(postId);
+        postService.softDeletePost(postId);
         return ResultResponse.ok(SuccessCode.DELETED, null);
     }
 

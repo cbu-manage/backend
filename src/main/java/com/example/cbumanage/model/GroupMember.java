@@ -37,6 +37,7 @@ public class GroupMember {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
+    //그룹멤버이 상태를 표현합니다. 대기,활동,비활동으로 구분됩니다
     @Enumerated(EnumType.STRING)
     private GroupMemberStatus groupMemberStatus;
 
@@ -53,9 +54,10 @@ public class GroupMember {
         this.groupMemberRole = groupMemberRole;
     }
 
-    public static GroupMember create(Group group, CbuMember cbuMember, GroupMemberStatus groupMemberStatus, GroupMemberRole groupMemberRole) {
-        return  new GroupMember(group, cbuMember, groupMemberStatus, groupMemberRole);
+    public static GroupMember create(Group group,CbuMember cbuMember, GroupMemberStatus groupMemberStatus, GroupMemberRole groupMemberRole) {
+        return  new GroupMember(group,cbuMember, groupMemberStatus, groupMemberRole);
     }
+
 
     public void changeStatus(GroupMemberStatus groupMemberStatus) {
         this.groupMemberStatus = groupMemberStatus;

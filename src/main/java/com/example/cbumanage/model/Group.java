@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name="groups")
+@Table(name="cbu_groups")
 @Getter
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
@@ -28,6 +28,7 @@ public class Group {
     @Column(name = "group_name",unique = true, nullable = false)
     private String groupName;
 
+    //그룹의 최소활동인원과 최대 활동 인원을 표기합니다
     public int minActiveMembers;
 
     public int maxActiveMembers;
@@ -38,30 +39,33 @@ public class Group {
     @LastModifiedDate
     public LocalDateTime updatedAt;
 
+    //그룹의 모집상태를 표기하는 enum입니다 모집중/모집종료로 구분됩니다
     @Enumerated(EnumType.STRING)
     public GroupRecruitmentStatus recruitmentStatus;
 
+    //그룹의 상태를 표기하는 enum입니다. 활동/비활동으로 구분됩니다
     @Enumerated(EnumType.STRING)
-    public GroupStatus status;
+    public GroupStatus status ;
 
+    //그룹의 생성자, 상태들은 기본적으로 모집 안함, 비활성 상태로 시작
     public Group(String groupName, int minActiveMembers, int maxActiveMembers) {
 
         this.groupName = groupName;
         this.minActiveMembers = minActiveMembers;
         this.maxActiveMembers = maxActiveMembers;
+        this.recruitmentStatus = GroupRecruitmentStatus.CLOSED;
+        this.status = GroupStatus.INACTIVE;
     }
 
-    public static Group create(String groupName,CbuMember cbuMember,int minActiveMembers,int maxActiveMembers) {
-        Group  group = new Group(groupName,minActiveMembers,maxActiveMembers);
-        GroupMember leader = GroupMember.create(group,cbuMember,GroupMemberStatus.ACTIVE,GroupMemberRole.LEADER);
-        group.members.add(leader);
-        return group;
+    public static Group create(String groupName,int minActiveMembers,int maxActiveMembers) {
+        return new Group(groupName,minActiveMembers,maxActiveMembers);
     }
 
     public void changeGroupName(String groupName) {
         this.groupName = groupName;
     }
-
+    public void changeMinActiveMembers(int minActiveMembers) {this.minActiveMembers = minActiveMembers;}
+    public void changeMaxActiveMembers(int maxActiveMembers) {this.maxActiveMembers = maxActiveMembers;}
 
     @OneToMany(mappedBy = "group" ,
             cascade = CascadeType.ALL,
@@ -69,8 +73,8 @@ public class Group {
             fetch = FetchType.LAZY)
     private List<GroupMember> members = new ArrayList<>();
 
-    public void addMember(CbuMember cbuMember) {
-       this.members.add(GroupMember.create(this,cbuMember,GroupMemberStatus.PENDING,GroupMemberRole.MEMBER));
+    public void addMember(GroupMember member) {
+       this.members.add(member);
     }
 
     /*
