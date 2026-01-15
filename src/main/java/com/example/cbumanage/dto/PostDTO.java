@@ -49,8 +49,6 @@ public class PostDTO {
             this.updatedAt = updatedAt;
         }
 
-
-
     }
 
     /*
@@ -79,25 +77,7 @@ public class PostDTO {
         }
     }
 
-    /*
-    Project 게시글 상세 조회에 사용되는 DTO
-    PostInfo DTO와 같이 호출
-     */
-    @Getter
-    @NoArgsConstructor
-    public static class ProjectInfoDTO {
 
-        private String recruitmentField;
-        private String techStack;
-        private boolean recruiting;
-
-        @Builder
-        public ProjectInfoDTO(String recruitmentField, String techStack, boolean recruiting) {
-            this.recruitmentField = recruitmentField;
-            this.techStack = techStack;
-            this.recruiting = recruiting;
-        }
-    }
 
     /*
     보고서 게시물을 만들때, 유저가 보내는 데이터를 담는 DTO 입니다.
@@ -125,17 +105,7 @@ public class PostDTO {
 
     }
 
-    @Getter
-    @NoArgsConstructor
-    public static class PostProjectCreateRequestDTO{
 
-        private String title;
-        private String content;
-        private String recruitmentField;
-        private String techStack;
-        private boolean recruiting;
-        private int category;
-    }
 
     /*
     보고서 게시글을 생성하고 반환하는 DTO 입니다
@@ -188,41 +158,6 @@ public class PostDTO {
         }
     }
 
-    @Getter
-    @NoArgsConstructor
-    public static class PostProjectCreateResponseDTO{
-        private Long postId;
-        private Long authorId;
-        private String title;
-        private String content;
-        private String recruitmentField;
-        private String techStack;
-        private boolean recruiting;
-        private LocalDateTime createdAt;
-        private int category;
-
-        @Builder
-        public PostProjectCreateResponseDTO(Long postId,
-                                           Long authorId,
-                                           String title,
-                                           String content,
-                                           String recruitmentField,
-                                           String techStack,
-                                           boolean recruiting,
-                                           LocalDateTime createdAt,
-                                           int category){
-            this.postId = postId;
-            this.authorId = authorId;
-            this.title = title;
-            this.content = content;
-            this.recruitmentField = recruitmentField;
-            this.techStack = techStack;
-            this.recruiting = recruiting;
-            this.createdAt = createdAt;
-            this.category = category;
-        }
-    }
-
     /*
     Post{...}CreateRequestDTO 에서 Post 를 생성할 정보만 빼내어 Post 를 생성하기 위한 DTO 입니다
      */
@@ -272,23 +207,6 @@ public class PostDTO {
         }
     }
 
-    @Getter
-    @NoArgsConstructor
-    public static class ProjectCreateDTO{
-        private Long postId;
-        private String recruitmentField;
-        private String techStack;
-        private boolean recruiting;
-
-        @Builder
-        public ProjectCreateDTO(Long postId,String recruitmentField, String techStack, boolean recruiting){
-            this.postId = postId;
-            this.recruitmentField = recruitmentField;
-            this.techStack = techStack;
-            this.recruiting = recruiting;
-        }
-    }
-
     /*
     보고서 게시물을 수정하기 위해 유저쪽에서 보내는 DTO 입니다.
     CreateRequest 와 마찬가지로 Service 계층에서 PostUpdateDTO 와  PostReportUpdateDTO 를 분리해서 사용합니다
@@ -309,16 +227,6 @@ public class PostDTO {
 
         private LocalDateTime date;
 
-    }
-
-    @Getter
-    @NoArgsConstructor
-    public static class PostProjectUpdateRequestDTO{
-        private String title;
-        private String content;
-        private String recruitmentField;
-        private String techStack;
-        private boolean recruiting;
     }
 
     /*
@@ -363,19 +271,154 @@ public class PostDTO {
         }
     }
 
+
+    //--------------------------PROJECT 관련 DTO---------------------//
+    /*
+    Project 게시글 상세 조회에 사용되는 DTO
+    PostInfo DTO와 같이 호출
+    */
+    @Getter
+    @NoArgsConstructor
+    public static class ProjectInfoDTO {
+
+        private String recruitmentField;
+        private boolean recruiting;
+
+        @Builder
+        public ProjectInfoDTO(String recruitmentField, boolean recruiting) {
+            this.recruitmentField = recruitmentField;
+            this.recruiting = recruiting;
+        }
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class PostProjectCreateRequestDTO{
+
+        private String title;
+        private String content;
+        private String recruitmentField;
+        private boolean recruiting;
+        private int category;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class PostProjectCreateResponseDTO{
+        private Long postId;
+        private Long authorId;
+        private String title;
+        private String content;
+        private String recruitmentField;
+        private boolean recruiting;
+        private LocalDateTime createdAt;
+        private int category;
+
+        @Builder
+        public PostProjectCreateResponseDTO(Long postId,
+                                            Long authorId,
+                                            String title,
+                                            String content,
+                                            String recruitmentField,
+                                            boolean recruiting,
+                                            LocalDateTime createdAt,
+                                            int category){
+            this.postId = postId;
+            this.authorId = authorId;
+            this.title = title;
+            this.content = content;
+            this.recruitmentField = recruitmentField;
+            this.recruiting = recruiting;
+            this.createdAt = createdAt;
+            this.category = category;
+        }
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class ProjectCreateDTO{
+        private Long postId;
+        private String recruitmentField;
+        private boolean recruiting;
+
+        @Builder
+        public ProjectCreateDTO(Long postId,String recruitmentField, boolean recruiting){
+            this.postId = postId;
+            this.recruitmentField = recruitmentField;
+            this.recruiting = recruiting;
+        }
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class PostProjectUpdateRequestDTO{
+        private String title;
+        private String content;
+        private String recruitmentField;
+        private boolean recruiting;
+    }
+
     @Getter
     @NoArgsConstructor
     public static class ProjectUpdateDTO{
 
         private String recruitmentField;
-        private String techStack;
         private boolean recruiting;
 
         @Builder
-        public ProjectUpdateDTO(String recruitmentField, String techStack, boolean recruiting){
+        public ProjectUpdateDTO(String recruitmentField, boolean recruiting){
             this.recruitmentField = recruitmentField;
-            this.techStack = techStack;
             this.recruiting = recruiting;
         }
     }
+
+    /*
+    Project 게시글 목록 조회에 사용되는 DTO
+    제목, 분야, 작성자, 생성시간, 모집여부를 포함합니다
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class ProjectInfoDetailDTO {
+        private Long postId;
+        private String title;
+        private String content;
+        private String recruitmentField;
+        private Long authorId;
+        private LocalDateTime createdAt;
+        private boolean recruiting;
+
+        @Builder
+        public ProjectInfoDetailDTO(Long postId, String title, String content,String recruitmentField, Long authorId, LocalDateTime createdAt, boolean recruiting) {
+            this.postId = postId;
+            this.title = title;
+            this.content=content;
+            this.recruitmentField = recruitmentField;
+            this.authorId = authorId;
+            this.createdAt = createdAt;
+            this.recruiting = recruiting;
+        }
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class ProjectListDTO {
+        private Long postId;
+        private String title;
+        private String recruitmentField;
+        private Long authorId;
+        private LocalDateTime createdAt;
+        private boolean recruiting;
+
+        @Builder
+        public ProjectListDTO(Long postId, String title,String recruitmentField, Long authorId, LocalDateTime createdAt, boolean recruiting) {
+            this.postId = postId;
+            this.title = title;
+            this.recruitmentField = recruitmentField;
+            this.authorId = authorId;
+            this.createdAt = createdAt;
+            this.recruiting = recruiting;
+        }
+    }
+
+
 }

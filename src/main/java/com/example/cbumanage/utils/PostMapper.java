@@ -3,11 +3,7 @@ package com.example.cbumanage.utils;
 import com.example.cbumanage.dto.PostDTO;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.PostReport;
-import com.example.cbumanage.model.PostProject;
-import com.example.cbumanage.repository.PostReportRepository;
-import com.example.cbumanage.repository.PostProjectRepository;
-import com.example.cbumanage.repository.PostRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.cbumanage.model.Project;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -32,10 +28,9 @@ public class PostMapper {
                 .build();
     }
 
-    public PostDTO.ProjectInfoDTO toProjectInfoDTO(PostProject project) {
+    public PostDTO.ProjectInfoDTO toProjectInfoDTO(Project project) {
         return PostDTO.ProjectInfoDTO.builder()
                 .recruitmentField(project.getRecruitmentField())
-                .techStack(project.getTechStack())
                 .recruiting(project.isRecruiting())
                 .build();
     }
@@ -77,7 +72,6 @@ public class PostMapper {
         return PostDTO.ProjectCreateDTO.builder()
                 .postId(postId)
                 .recruitmentField(req.getRecruitmentField())
-                .techStack(req.getTechStack())
                 .recruiting(req.isRecruiting())
                 .build();
     }
@@ -101,7 +95,7 @@ public class PostMapper {
 
     }
 
-    public PostDTO.PostProjectCreateResponseDTO toPostProjectCreateResponseDTO(Post post, PostProject project) {
+    public PostDTO.PostProjectCreateResponseDTO toPostProjectCreateResponseDTO(Post post, Project project) {
         return PostDTO.PostProjectCreateResponseDTO.builder()
                 .postId(post.getId())
                 .authorId(post.getAuthorId())
@@ -109,7 +103,6 @@ public class PostMapper {
                 .content(post.getContent())
                 .createdAt(post.getCreatedAt())
                 .recruitmentField(project.getRecruitmentField())
-                .techStack(project.getTechStack())
                 .recruiting(project.isRecruiting())
                 .category(post.getCategory())
                 .build();
@@ -143,8 +136,31 @@ public class PostMapper {
     public PostDTO.ProjectUpdateDTO toPostProjectUpdateDTO(PostDTO.PostProjectUpdateRequestDTO req) {
         return PostDTO.ProjectUpdateDTO.builder()
                 .recruitmentField(req.getRecruitmentField())
-                .techStack(req.getTechStack())
                 .recruiting(req.isRecruiting())
                 .build();
     }
+
+    public PostDTO.ProjectInfoDetailDTO toProjectInfoDetailDTO(Project project) {
+        return PostDTO.ProjectInfoDetailDTO.builder()
+                .postId(project.getPost().getId())
+                .title(project.getPost().getTitle())
+                .content(project.getPost().getContent())
+                .recruitmentField(project.getRecruitmentField())
+                .authorId(project.getPost().getAuthorId())
+                .createdAt(project.getPost().getCreatedAt())
+                .recruiting(project.isRecruiting())
+                .build();
+    }
+
+    public PostDTO.ProjectListDTO toProjectListDTO(Project project) {
+        return PostDTO.ProjectListDTO.builder()
+                .postId(project.getPost().getId())
+                .title(project.getPost().getTitle())
+                .recruitmentField(project.getRecruitmentField())
+                .authorId(project.getPost().getAuthorId())
+                .createdAt(project.getPost().getCreatedAt())
+                .recruiting(project.isRecruiting())
+                .build();
+    }
+
 }
