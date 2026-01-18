@@ -26,17 +26,17 @@ public class PostController {
         this.postService = postService;
     }
 
-    @Operation(
-            summary = "보고서 게시글 생성",
-            description = "한번의 요청에 게시글 생성과, 게시글-보고서 생성을 처리합니다"
-    )
-    @PostMapping("post/report")
-    public ResponseEntity<ResultResponse<PostDTO.PostReportCreateResponseDTO>> createPostReport(@RequestBody PostDTO.PostReportCreateRequestDTO req,
-                                                                                              @RequestParam Long userId){
-        PostDTO.PostReportCreateResponseDTO responseDTO = postService.createPostReport(req,userId);
-        return ResultResponse.ok(SuccessCode.CREATED, responseDTO);
-
-    }
+//    @Operation(
+//            summary = "보고서 게시글 생성",
+//            description = "한번의 요청에 게시글 생성과, 게시글-보고서 생성을 처리합니다"
+//    )
+//    @PostMapping("post/report")
+//    public ResponseEntity<ResultResponse<PostDTO.PostReportCreateResponseDTO>> createPostReport(@RequestBody PostDTO.PostReportCreateRequestDTO req,
+//                                                                                              @RequestParam Long userId){
+//        PostDTO.PostReportCreateResponseDTO responseDTO = postService.createPostReport(req,userId);
+//        return ResultResponse.ok(SuccessCode.CREATED, responseDTO);
+//
+//    }
     @Operation(
             summary = "프로젝트 게시글 생성",
             description = "프로젝트 관련 정보를 입력받아 새로운 프로젝트 게시글을 생성합니다."
@@ -81,15 +81,15 @@ public class PostController {
         return ResultResponse.ok(SuccessCode.SUCCESS, postInfoDTO);
     }
 
-    @Operation(
-            summary = "포스트-보고서 서브테이블 단건조회",
-            description = "포스트의 카테고리에 맞는 보고서 서브테이블을 불러옵니다"
-    )
-    @GetMapping("post/{postId}/report")
-    public ResponseEntity<ResultResponse<PostDTO.ReportInfoDTO>> getPostReport(@PathVariable Long postId){
-        PostDTO.ReportInfoDTO reportInfoDTO =  postService.getReportByPostId(postId);
-        return ResultResponse.ok(SuccessCode.SUCCESS, reportInfoDTO);
-    }
+//    @Operation(
+//            summary = "포스트-보고서 서브테이블 단건조회",
+//            description = "포스트의 카테고리에 맞는 보고서 서브테이블을 불러옵니다"
+//    )
+//    @GetMapping("post/{postId}/report")
+//    public ResponseEntity<ResultResponse<PostDTO.ReportInfoDTO>> getPostReport(@PathVariable Long postId){
+//        PostDTO.ReportInfoDTO reportInfoDTO =  postService.getReportByPostId(postId);
+//        return ResultResponse.ok(SuccessCode.SUCCESS, reportInfoDTO);
+//    }
 
     @Operation(
             summary = "포스트-프로젝트 서브테이블 단건 조회",
@@ -102,15 +102,15 @@ public class PostController {
     }
 
 
-    @Operation(
-            summary = "보고서 포스트 수정",
-            description = "보고서 포스트를 수정합니다. 한번의 요청에 메인테이블과 서브테이블의 수정내용을 담아 처리합니다"
-    )
-    @PatchMapping("post/report/{postId}")
-    public ResponseEntity<ResultResponse<Void>> updatePost(@PathVariable Long postId,@RequestBody PostDTO.PostReportUpdateRequestDTO req){
-        postService.updatePostReport(req,postId);
-        return ResultResponse.ok(SuccessCode.UPDATED, null);
-    }
+//    @Operation(
+//            summary = "보고서 포스트 수정",
+//            description = "보고서 포스트를 수정합니다. 한번의 요청에 메인테이블과 서브테이블의 수정내용을 담아 처리합니다"
+//    )
+//    @PatchMapping("post/report/{postId}")
+//    public ResponseEntity<ResultResponse<Void>> updatePost(@PathVariable Long postId,@RequestBody PostDTO.PostReportUpdateRequestDTO req){
+//        postService.updatePostReport(req,postId);
+//        return ResultResponse.ok(SuccessCode.UPDATED, null);
+//    }
 
     @Operation(
             summary = "프로젝트 게시글 수정",

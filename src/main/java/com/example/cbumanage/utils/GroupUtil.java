@@ -68,6 +68,13 @@ public class GroupUtil {
                 .build();
     }
 
+    public GroupDTO.GroupPreviewDTO toGroupPreviewDTO(Group group) {
+        return GroupDTO.GroupPreviewDTO.builder().
+                groupId(group.getId())
+                .groupName(group.getGroupName())
+                .build();
+    }
+
 
 
 

@@ -1,5 +1,6 @@
 package com.example.cbumanage.dto;
 
+import com.example.cbumanage.model.enums.PostReportGroupType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -63,21 +64,30 @@ public class PostDTO {
 
         private String location;
 
-        private String startImage;
-
-        private String endImage;
+        private String reportImage;
 
         private LocalDateTime date;
 
+        //그룹의 정보를 담고 있습니다
         private GroupDTO.GroupInfoDTO groupInfoDTO;
 
+        private PostReportGroupType type;
+
+        private boolean isAccepted;
+
         @Builder
-        public ReportInfoDTO(String location, String startImage, String endImage, LocalDateTime date, GroupDTO.GroupInfoDTO groupInfoDTO) {
+        public ReportInfoDTO(String location,
+                             String reportImage,
+                             LocalDateTime date,
+                             GroupDTO.GroupInfoDTO groupInfoDTO,
+                             PostReportGroupType type,
+                             boolean isAccepted) {
             this.location = location;
-            this.startImage = startImage;
-            this.endImage = endImage;
+            this.reportImage = reportImage;
             this.date = date;
             this.groupInfoDTO = groupInfoDTO;
+            this.type = type;
+            this.isAccepted = isAccepted;
 
         }
     }
@@ -117,15 +127,16 @@ public class PostDTO {
 
         private String location;
 
-        private String startImage;
-
-        private String endImage;
+        private String reportImage;
 
         private LocalDateTime date;
 
         private int category;
 
+        //보고서에 그룹을 연결합니다
         private long groupId;
+
+        private PostReportGroupType type;
 
 
     }
@@ -152,15 +163,15 @@ public class PostDTO {
 
         private Long authorId;
 
+        private GroupDTO.GroupInfoDTO groupInfoDTO;
+
         private String title;
 
         private String content;
 
         private String location;
 
-        private String startImage;
-
-        private String endImage;
+        private String reportImage;
 
         private LocalDateTime date;
 
@@ -168,27 +179,31 @@ public class PostDTO {
 
         private int category;
 
+        private PostReportGroupType type;
+
         @Builder
         public PostReportCreateResponseDTO(Long postId,
                                            Long authorId,
+                                           GroupDTO.GroupInfoDTO groupInfoDTO,
                                            String title,
                                            String content,
                                            String location,
-                                           String startImage,
-                                           String endImage,
+                                           String reportImage,
                                            LocalDateTime date,
                                            LocalDateTime createdAt,
-                                           int category){
+                                           int category,
+                                           PostReportGroupType type) {
             this.postId = postId;
             this.authorId = authorId;
+            this.groupInfoDTO = groupInfoDTO;
             this.title = title;
             this.content = content;
             this.location = location;
-            this.startImage = startImage;
-            this.endImage = endImage;
+            this.reportImage = reportImage;
             this.date = date;
             this.createdAt = createdAt;
             this.category = category;
+            this.type = type;
 
         }
     }
@@ -260,22 +275,22 @@ public class PostDTO {
 
         private String location;
 
-        private String startImage;
-
-        private String endImage;
+        private String reportImage;
 
         private LocalDateTime date;
 
         private long groupId;
 
+        private PostReportGroupType type;
+
         @Builder
-        public ReportCreateDTO(Long postId,String location, String startImage, String endImage, LocalDateTime date, long groupId){
+        public ReportCreateDTO(Long postId,String location, String reportImage, LocalDateTime date, long groupId, PostReportGroupType type) {
             this.postId = postId;
             this.location = location;
-            this.startImage = startImage;
-            this.endImage = endImage;
+            this.reportImage = reportImage;
             this.date = date;
             this.groupId = groupId;
+            this.type = type;
         }
     }
 
@@ -310,11 +325,13 @@ public class PostDTO {
 
         private String location;
 
-        private String startImage;
-
-        private String endImage;
+        private String reportImage;
 
         private LocalDateTime date;
+
+        private long groupId;
+
+        private PostReportGroupType type;
 
     }
 
@@ -355,18 +372,21 @@ public class PostDTO {
 
         private String location;
 
-        private String StartImage;
-
-        private String endImage;
+        private String reportImage;
 
         private LocalDateTime date;
 
+        private long groupId;
+
+        private PostReportGroupType type;
+
         @Builder
-        public ReportUpdateDTO(String location, String StartImage, String endImage, LocalDateTime date){
+        public ReportUpdateDTO(String location, String reportImage, LocalDateTime date, long groupId, PostReportGroupType type) {
             this.location = location;
-            this.StartImage = StartImage;
-            this.endImage = endImage;
+            this.reportImage = reportImage;
             this.date = date;
+            this.groupId = groupId;
+            this.type = type;
         }
     }
 
@@ -384,5 +404,49 @@ public class PostDTO {
             this.techStack = techStack;
             this.recruiting = recruiting;
         }
+    }
+
+    //보고서 게시글 미리보기 DTO의 보고서 관련 내용을 담고있는 DTO입니다
+    @Getter
+    @NoArgsConstructor
+    public static class ReportPreviewDTO{
+        private PostReportGroupType type;
+        private boolean isAccepted;
+
+        @Builder
+        public ReportPreviewDTO(PostReportGroupType type, boolean isAccepted){
+            this.type = type;
+            this.isAccepted = isAccepted;
+        }
+    }
+
+    //보고서 게시글 미리보기입니다 보고서미리보기/게시글정보/그룹미리보기 를 담고있습니다
+    @Getter
+    @NoArgsConstructor
+    public static class PostReportPreviewDTO{
+        private ReportPreviewDTO reportPreviewDTO;
+        private PostInfoDTO postInfoDTO;
+        private GroupDTO.GroupPreviewDTO groupPreviewDTO;
+
+        @Builder
+        public PostReportPreviewDTO(ReportPreviewDTO reportPreviewDTO, PostInfoDTO postInfoDTO, GroupDTO.GroupPreviewDTO groupPreviewDTO){
+            this.reportPreviewDTO = reportPreviewDTO;
+            this.postInfoDTO = postInfoDTO;
+            this.groupPreviewDTO=groupPreviewDTO;
+        }
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class PostReportViewDTO{
+        private PostInfoDTO postInfoDTO;
+        private ReportInfoDTO reportInfoDTO;
+
+        @Builder
+        public PostReportViewDTO(PostInfoDTO postInfoDTO, ReportInfoDTO reportInfoDTO){
+            this.postInfoDTO = postInfoDTO;
+            this.reportInfoDTO = reportInfoDTO;
+        }
+
     }
 }

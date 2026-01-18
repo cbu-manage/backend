@@ -27,7 +27,7 @@ public class PostReportController {
 
     @Operation(
             summary = "보고서 게시글 생성",
-            description = "한번의 요청에 게시글 생성,게시글-보고서 생성 처리."
+            description = "한번의 요청에 게시글 생성,게시글-보고서 생성 처리. 테스트 중에는 카테고리를 7로 "
     )
     @PostMapping()
     public ResponseEntity<ResultResponse<PostDTO.PostReportCreateResponseDTO>> createPostReport(@Parameter(description = "현재 게시글에서 테스트 할때는 category를 7로하고 테스트합니다") @RequestBody PostDTO.PostReportCreateRequestDTO req,
@@ -39,7 +39,7 @@ public class PostReportController {
 
     @Operation(
             summary = "보고서 게시글 미리보기 페이징 조회",
-            description = "보고서 게시글 목록을 페이징으로 불러옵니다. post,report,group의 정보를 통합해 가져옵니다"
+            description = "보고서 게시글 목록을 페이징으로 불러옵니다. post,report,group의 정보를 통합해 가져옵니다.테스트 중에는 카테고리가 7인 게시글만 불러옵니다"
     )
 
     @GetMapping

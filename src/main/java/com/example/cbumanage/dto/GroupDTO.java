@@ -160,4 +160,18 @@ public class GroupDTO {
             this.createdAt = createdAt;
         }
     }
+
+    //보고서 리스트에 사용할 PostReportPreview에 조합할 DTO입니다
+    @Getter
+    @NoArgsConstructor
+    public static class GroupPreviewDTO{
+        private Long groupId;
+        private String groupName;
+
+        @Builder
+        public GroupPreviewDTO(Long groupId, String groupName) {
+            this.groupId = groupId;
+            this.groupName = groupName;
+        }
+    }
 }
