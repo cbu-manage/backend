@@ -17,10 +17,10 @@ public class CommentMapper {
         return CommentDTO.CommentInfoDTO.builder()
                 .id(comment.getId())
                 .userId(comment.getUserId())
-                .content(comment.isDeleted() ?"삭제된 댓글입니다" : comment.getContent())
+                .content(comment.isDeleted() ? "삭제된 댓글입니다" : comment.getContent())
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
-                .replies(comment.getReplies().stream().map(reply->toReplyInfoDTO(reply)).toList())
+                .replies(comment.getReplies().stream().map(reply -> toReplyInfoDTO(reply)).toList())
                 .build();
     }
 
@@ -33,17 +33,20 @@ public class CommentMapper {
         return CommentDTO.ReplyInfoDTO.builder()
                 .id(comment.getId())
                 .userId(comment.getUserId())
-                .content(comment.isDeleted() ? "삭제된 답글입니다" :  comment.getContent())
+                .content(comment.isDeleted() ? "삭제된 답글입니다" : comment.getContent())
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .build();
     }
 
+    // 삼항 연산자를 사용하여 comment 객체의 post 필드가 null이 아니면 postId를,
+    // problem 필드가 null이 아니면 problemId를 DTO에 담도록 로직을 수정했습니다.
     public CommentDTO.CommentCreateResponseDTO toCommentCreateResponseDTO(Comment comment) {
         return CommentDTO.CommentCreateResponseDTO.builder()
                 .commentId(comment.getId())
                 .userId(comment.getUserId())
-                .postId(comment.getPost().getId())
+                .postId(comment.getPost() != null ? comment.getPost().getId() : null)
+                .problemId(Long.valueOf(comment.getProblem() != null ? comment.getProblem().getProblemId() : null))
                 .content(comment.getContent())
                 .createdAt(comment.getCreatedAt())
                 .build();

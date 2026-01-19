@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "problem")
-@SQLDelete(sql = "UPDATE proble SET deleted_at = CURRENT_TIMESTAMP WHERE problem_id = ?")
+@SQLDelete(sql = "UPDATE problem SET deleted_at = CURRENT_TIMESTAMP WHERE problem_id = ?")
 @SQLRestriction("deleted_at IS NULL")
 public class Problem {
 

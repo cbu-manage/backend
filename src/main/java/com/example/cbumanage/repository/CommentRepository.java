@@ -32,4 +32,20 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 """)
     List<Comment> findRoots(Long postId);
 
+    // Problem 댓글 기능을 위해 새로 추가하는 메소드
+    @Query("""
+    select c
+    from Comment c
+    where c.problem.problemId = :problemId
+      and c.parentComment is null
+      and (
+            c.isDeleted = false
+            or exists (
+                select 1 from Comment r
+                where r.parentComment = c
+            )
+          )
+    order by c.createdAt asc
+""")
+    List<Comment> findRootsProblemId(Integer problemId);
 }
