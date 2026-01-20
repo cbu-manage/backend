@@ -89,7 +89,7 @@ public class ProjectController {
                     "포함이 된다면 조회가 가능합니다."
     )
     @GetMapping("/post/project/filter")
-    public ResponseEntity<Page<PostDTO.ProjectListDTO>> filterProjectsByFields(
+    public ResponseEntity<ResultResponse<Page<PostDTO.ProjectListDTO>>> filterProjectsByFields(
             @io.swagger.v3.oas.annotations.Parameter(description = "페이지번호") @RequestParam int page,
             @io.swagger.v3.oas.annotations.Parameter(description = "페이지당 project 게시글 갯수") @RequestParam int size,
             @RequestParam(name = "fields") ProjectFieldType fields) {
@@ -97,6 +97,6 @@ public class ProjectController {
         Pageable pageable= PageRequest.of(page,size, Sort.by(Sort.Order.desc("id")));
         Page<PostDTO.ProjectListDTO> result = projectService.searchByField(fields, pageable);
 
-        return ResponseEntity.ok(result);
+        return ResultResponse.ok(SuccessCode.SUCCESS,result);
     }
 }
