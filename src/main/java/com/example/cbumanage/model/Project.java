@@ -1,8 +1,12 @@
 package com.example.cbumanage.model;
 
+import com.example.cbumanage.model.enums.ProjectFieldType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "project")
@@ -15,35 +19,45 @@ public class Project {
     @Column(name = "project_id")
     private Long id;
 
-    // 게시글 기본 정보와 1:1로 연결해 확장 필드를 저장
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
     private Post post;
 
-    // 모집 분야(예: 프론트엔드, 백엔드)
-    private String recruitmentField;
+    @ElementCollection(targetClass = ProjectFieldType.class)
+    @CollectionTable(name = "project_recruitment_field", joinColumns = @JoinColumn(name = "project_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "field_name")
+    private List<ProjectFieldType> recruitmentFields = new ArrayList<>();
 
-    // 모집 진행 여부
     private boolean recruiting;
 
-    // 생성자
-    public Project(Post post, String recruitmentField, boolean recruiting) {
+    // String 리스트를 받아서 Enum으로 변환해 저장
+    public Project(Post post, List<String> fields, boolean recruiting) {
         this.post = post;
-        this.recruitmentField = recruitmentField;
         this.recruiting = recruiting;
+        if (fields != null) {
+            fields.forEach(f -> this.addRecruitmentField(ProjectFieldType.valueOf(f)));
+        }
     }
 
-    // 생성 메서드
-    public static Project create(Post post, String recruitmentField, boolean recruiting) {
-        return new Project(post, recruitmentField, recruiting);
+    public static Project create(Post post, List<String> fields, boolean recruiting) {
+        return new Project(post, fields, recruiting);
     }
 
-    //변경 메소드
-    public void changeRecruitmentField(String recruitmentField) {
-        this.recruitmentField = recruitmentField;
+    // 분야 추가 메서드
+    public void addRecruitmentField(ProjectFieldType fieldType) {
+        this.recruitmentFields.add(fieldType);
     }
 
-    public void changeRecruiting(boolean recruiting) {
+    // 수정 메서드
+    public void updateRecruitmentFields(List<String> newFields) {
+        this.recruitmentFields.clear();
+        if (newFields != null) {
+            newFields.forEach(f -> this.addRecruitmentField(ProjectFieldType.valueOf(f)));
+        }
+    }
+
+    public void updateRecruiting(boolean recruiting) {
         this.recruiting = recruiting;
     }
 }
