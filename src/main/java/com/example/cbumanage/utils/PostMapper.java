@@ -4,7 +4,10 @@ import com.example.cbumanage.dto.PostDTO;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.PostReport;
 import com.example.cbumanage.model.Project;
+import com.example.cbumanage.model.enums.ProjectFieldType;
 import org.springframework.stereotype.Component;
+
+import java.util.stream.Collectors;
 
 @Component
 public class PostMapper {
@@ -25,13 +28,6 @@ public class PostMapper {
                 .startImage(report.getStartImage())
                 .endImage(report.getEndImage())
                 .date(report.getDate())
-                .build();
-    }
-
-    public PostDTO.ProjectInfoDTO toProjectInfoDTO(Project project) {
-        return PostDTO.ProjectInfoDTO.builder()
-                .recruitmentField(project.getRecruitmentField())
-                .recruiting(project.isRecruiting())
                 .build();
     }
 
@@ -68,13 +64,6 @@ public class PostMapper {
                 date(req.getDate()).build();
     }
 
-    public PostDTO.ProjectCreateDTO toProjectCreateDTO(PostDTO.PostProjectCreateRequestDTO req,Long postId) {
-        return PostDTO.ProjectCreateDTO.builder()
-                .postId(postId)
-                .recruitmentField(req.getRecruitmentField())
-                .recruiting(req.isRecruiting())
-                .build();
-    }
 
     /*
     아래는 각 게시물에 맞는 CreateResponseDTO 를 반환해 주는 메소드 입니다
@@ -95,6 +84,15 @@ public class PostMapper {
 
     }
 
+    public PostDTO.ProjectCreateDTO toProjectCreateDTO(PostDTO.PostProjectCreateRequestDTO req,Long postId) {
+        return PostDTO.ProjectCreateDTO.builder()
+                .postId(postId)
+                .recruitmentFields(req.getRecruitmentFields())
+                .recruiting(req.isRecruiting())
+                .build();
+    }
+
+    // 프로젝트 생성 응답 DTO 변환
     public PostDTO.PostProjectCreateResponseDTO toPostProjectCreateResponseDTO(Post post, Project project) {
         return PostDTO.PostProjectCreateResponseDTO.builder()
                 .postId(post.getId())
@@ -102,7 +100,9 @@ public class PostMapper {
                 .title(post.getTitle())
                 .content(post.getContent())
                 .createdAt(post.getCreatedAt())
-                .recruitmentField(project.getRecruitmentField())
+                .recruitmentFields(project.getRecruitmentFields().stream()
+                        .map(ProjectFieldType::getDescription) // Enum의 이름(BACKEND 등)을 String으로 변환
+                        .collect(Collectors.toList()))
                 .recruiting(project.isRecruiting())
                 .category(post.getCategory())
                 .build();
@@ -135,28 +135,34 @@ public class PostMapper {
 
     public PostDTO.ProjectUpdateDTO toPostProjectUpdateDTO(PostDTO.PostProjectUpdateRequestDTO req) {
         return PostDTO.ProjectUpdateDTO.builder()
-                .recruitmentField(req.getRecruitmentField())
+                .recruitmentFields(req.getRecruitmentFields())
                 .recruiting(req.isRecruiting())
                 .build();
     }
 
+    // 프로젝트 게시글 상세 조회 DTO 변환
     public PostDTO.ProjectInfoDetailDTO toProjectInfoDetailDTO(Project project) {
         return PostDTO.ProjectInfoDetailDTO.builder()
                 .postId(project.getPost().getId())
                 .title(project.getPost().getTitle())
                 .content(project.getPost().getContent())
-                .recruitmentField(project.getRecruitmentField())
+                .recruitmentFields(project.getRecruitmentFields().stream()
+                        .map(ProjectFieldType::getDescription)
+                        .collect(Collectors.toList()))
                 .authorId(project.getPost().getAuthorId())
                 .createdAt(project.getPost().getCreatedAt())
                 .recruiting(project.isRecruiting())
                 .build();
     }
 
+    // 프로젝트 게시글 목록 조회 DTO 변환
     public PostDTO.ProjectListDTO toProjectListDTO(Project project) {
         return PostDTO.ProjectListDTO.builder()
                 .postId(project.getPost().getId())
                 .title(project.getPost().getTitle())
-                .recruitmentField(project.getRecruitmentField())
+                .recruitmentFields(project.getRecruitmentFields().stream()
+                        .map(ProjectFieldType::getDescription)
+                        .collect(Collectors.toList()))
                 .authorId(project.getPost().getAuthorId())
                 .createdAt(project.getPost().getCreatedAt())
                 .recruiting(project.isRecruiting())
