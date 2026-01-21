@@ -11,11 +11,16 @@ import com.example.cbumanage.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.jpa.domain.Specification;
 
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import jakarta.persistence.criteria.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -138,12 +143,24 @@ public class ProblemService {
     }
 
     /**
-     * 전체 문제 목록을 페이지네이션하여 조회합니다.
+     * 전체 문제 목록을 페이지네이션하여 조회합니다. +)추가 : categoryIds와 platformIds 리스트를 파라미터로 받도록 수정합니다
      *
      * @param pageable 페이지네이션 정보
      * @return 페이지네이션된 문제 목록 DTO
      */
-    public Page<ProblemListItemDTO> getProblems(Pageable pageable) {
+    public Page<ProblemListItemDTO> getProblems(Pageable pageable, List<Integer> categoryId, List<Integer> platformId) {
+        Specification<Problem> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if ((categoryId != null) && !categoryId.isEmpty()){
+                predicates.add(root.get("category").get(categoryId.toString()).in(categoryId));
+            }
+            if ((platformId != null) && !platformId.isEmpty()){
+                predicates.add(root.get("platform").get(platformId.toString()).in(platformId));
+            }
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
         return problemRepository.findAll(pageable).map(ProblemListItemDTO::from);
     }
 

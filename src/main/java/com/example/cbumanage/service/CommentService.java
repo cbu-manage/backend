@@ -3,8 +3,10 @@ package com.example.cbumanage.service;
 import com.example.cbumanage.dto.CommentDTO;
 import com.example.cbumanage.model.Comment;
 import com.example.cbumanage.model.Post;
+import com.example.cbumanage.model.Problem;
 import com.example.cbumanage.repository.CommentRepository;
 import com.example.cbumanage.repository.PostRepository;
+import com.example.cbumanage.repository.ProblemRepository;
 import com.example.cbumanage.utils.CommentMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -19,11 +21,15 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final CommentMapper commentMapper;
     private final PostRepository postRepository;
+    private final ProblemRepository problemRepository;
+
     @Autowired
-    public CommentService(CommentRepository commentRepository, CommentMapper commentMapper, PostRepository postRepository) {
+    public CommentService(CommentRepository commentRepository, CommentMapper commentMapper, PostRepository postRepository,
+                          ProblemRepository problemRepository) {
         this.commentRepository = commentRepository;
         this.commentMapper = commentMapper;
         this.postRepository = postRepository;
+        this.problemRepository = problemRepository;
     }
 
 
@@ -31,9 +37,9 @@ public class CommentService {
     public CommentDTO.CommentCreateResponseDTO createComment(CommentDTO.CommentCreateRequestDTO req,
                                                              Long userId,
                                                              Long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(()->new EntityNotFoundException("Post not found"));
-        Comment comment=Comment.create(post,userId,null,req.getContent());
-        Comment saved=commentRepository.save(comment);
+        Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post not found"));
+        Comment comment = new Comment(post, userId, null, req.getContent());
+        Comment saved = commentRepository.save(comment);
         return commentMapper.toCommentCreateResponseDTO(saved);
     }
 
@@ -60,7 +66,7 @@ public class CommentService {
             parent = target.getParentComment();
         }
 
-        Comment reply = Comment.create(parent.getPost(),userId,parent,req.getContent());
+        Comment reply = new Comment(parent.getPost(), userId, parent, req.getContent());
         parent.addReply(reply);
         Comment saved = commentRepository.save(reply);
         return commentMapper.toReplyCreateResponseDTO(saved);
@@ -70,24 +76,44 @@ public class CommentService {
     포스트에 달린 댓글을 모두 불러오는 메소드입니다.
     답글은 댓글에 붙어서 오기에, 답글이 아닌댓글(부모댓글이 없는 댓글)만 불러온후, 답글 목록을 포함한 댓글의 DTO로 변환시킨후 반환합니다
      */
-    public List<CommentDTO.CommentInfoDTO> getComments(Long postId){
-        Post post = postRepository.findById(postId).orElseThrow(()->new EntityNotFoundException("Post not found"));
+    public List<CommentDTO.CommentInfoDTO> getComments(Long postId) {
+        Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post not found"));
         List<Comment> comments = commentRepository.findRoots(postId);
-        return comments.stream().map(comment->commentMapper.toCommentInfoDTO(comment)).toList();
+        return comments.stream().map(comment -> commentMapper.toCommentInfoDTO(comment)).toList();
+    }
+
+    // Problem(코딩테스트 페이지) 댓글 생성을 위한 메소드
+    @Transactional
+    public CommentDTO.CommentCreateResponseDTO createCommentProblem(CommentDTO.CommentCreateRequestDTO req,
+                                                                    Long userId,
+                                                                    Integer problemId) {
+        Problem problem = problemRepository.findById(problemId).orElseThrow(() -> new EntityNotFoundException(
+                "Problem not found"));
+        Comment comment = new Comment(problem, userId, null, req.getContent());
+        Comment saved = commentRepository.save(comment);
+        return commentMapper.toCommentCreateResponseDTO(saved);
     }
 
     /*
     댓글과 답글의 엔티티는 같기에, update에서는 다르게 취급하지 않습니다
      */
     @Transactional
-    public void updateComment(Long commentId, CommentDTO.CommentUpdateRequestDTO req){
-        Comment comment = commentRepository.findById(commentId).orElseThrow(()->new EntityNotFoundException("Comment not found"));
+    public void updateComment(Long commentId, CommentDTO.CommentUpdateRequestDTO req) {
+        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment not found"));
         comment.changeContent(req.getContent());
     }
 
+    // Problem(코딩테스트 페이지) 댓글 조회를 위한 메소드
+    public List<CommentDTO.CommentInfoDTO> getCommentsProblemId(Integer problemId) {
+        Problem problem = problemRepository.findById(problemId).orElseThrow(() -> new EntityNotFoundException(
+                "Problem not found"));
+        List<Comment> comments = commentRepository.findRootsProblemId(problemId);
+        return comments.stream().map(commentMapper::toCommentInfoDTO).toList();
+    }
+
     @Transactional
-    public void deleteComment(Long commentId){
-        Comment comment=commentRepository.findById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment not found"));
+    public void deleteComment(Long commentId) {
+        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment not found"));
         comment.Delete();
     }
 }

@@ -1,16 +1,30 @@
 package com.example.cbumanage.utils;
 
 import com.example.cbumanage.dto.PostDTO;
+import com.example.cbumanage.model.Group;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.PostReport;
 import com.example.cbumanage.model.Project;
 import com.example.cbumanage.model.enums.ProjectFieldType;
+import com.example.cbumanage.repository.GroupRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
 
 @Component
 public class PostMapper {
+
+    private final GroupUtil groupUtil;
+    private final GroupRepository groupRepository;
+
+    @Autowired
+    public PostMapper(GroupUtil groupUtil, GroupRepository groupRepository) {
+        this.groupUtil = groupUtil;
+        this.groupRepository = groupRepository;
+    }
 
 
     public PostDTO.PostInfoDTO toPostInfoDTO(Post post) {
@@ -23,11 +37,15 @@ public class PostMapper {
     }
 
     public PostDTO.ReportInfoDTO toReportInfoDTO(PostReport report) {
+        Group group = groupRepository.findById(report.getGroupId()).orElseThrow(EntityNotFoundException::new);
+
         return PostDTO.ReportInfoDTO.builder()
                 .location(report.getLocation())
-                .startImage(report.getStartImage())
-                .endImage(report.getEndImage())
+                .reportImage(report.getReportImage())
                 .date(report.getDate())
+                .type(report.getType())
+                .groupInfoDTO(groupUtil.toGroupInfoDTO(group))
+                .isAccepted(report.isAccepted())
                 .build();
     }
 
@@ -39,7 +57,9 @@ public class PostMapper {
         return PostDTO.PostCreateDTO.builder()
                 .authorId(userId)
                 .title(req.getTitle())
-                .content(req.getContent()).build();
+                .content(req.getContent())
+                .category(req.getCategory())
+                .build();
     }
 
     public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostProjectCreateRequestDTO req, Long userId) {
@@ -59,9 +79,11 @@ public class PostMapper {
         return PostDTO.ReportCreateDTO.builder().
                 postId(postId).
                 location(req.getLocation()).
-                startImage(req.getStartImage()).
-                endImage(req.getEndImage()).
-                date(req.getDate()).build();
+                reportImage(req.getReportImage()).
+                date(req.getDate()).
+                groupId(req.getGroupId()).
+                type(req.getType()).
+                build();
     }
 
 
@@ -69,17 +91,20 @@ public class PostMapper {
     아래는 각 게시물에 맞는 CreateResponseDTO 를 반환해 주는 메소드 입니다
      */
     public PostDTO.PostReportCreateResponseDTO toPostReportCreateResponseDTO(Post post, PostReport report) {
+        Group group = groupRepository.findById(report.getGroupId()).orElseThrow(() -> new EntityNotFoundException("Group not found"));
+
         return PostDTO.PostReportCreateResponseDTO.builder()
                 .postId(post.getId())
                 .authorId(post.getAuthorId())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .location(report.getLocation())
-                .startImage(report.getStartImage())
-                .endImage(report.getEndImage())
+                .reportImage(report.getReportImage())
                 .createdAt(post.getCreatedAt())
                 .date(report.getDate())
                 .category(post.getCategory())
+                .groupInfoDTO(groupUtil.toGroupInfoDTO(group))
+                .type(report.getType())
                 .build();
 
     }
@@ -127,9 +152,10 @@ public class PostMapper {
     public PostDTO.ReportUpdateDTO topostReportUpdateDTO(PostDTO.PostReportUpdateRequestDTO req) {
         return PostDTO.ReportUpdateDTO.builder()
                 .location(req.getLocation())
-                .StartImage(req.getStartImage())
-                .endImage(req.getEndImage())
+                .reportImage(req.getReportImage())
                 .date(req.getDate())
+                .groupId(req.getGroupId())
+                .type(req.getType())
                 .build();
     }
 
@@ -168,5 +194,35 @@ public class PostMapper {
                 .recruiting(project.isRecruiting())
                 .build();
     }
+
+
+    //보고서 미리보기를 만들 Mapper입니더
+    public PostDTO.ReportPreviewDTO toReportPreviewDTO(PostReport report) {
+        return PostDTO.ReportPreviewDTO.builder().
+                type(report.getType()).
+                isAccepted(report.isAccepted()).
+                build();
+    }
+
+    //보고서 게시글 리스트에서 사용할 보고서 게시글 미리보기 DTO의 Mapper입니다
+    public PostDTO.PostReportPreviewDTO toPostReportPreviewDTO(Post post,PostReport report) {
+        Group group = groupRepository.findById(report.getGroupId()).orElseThrow(() -> new EntityNotFoundException("Group not found"));
+
+        return PostDTO.PostReportPreviewDTO.builder()
+                .postInfoDTO(toPostInfoDTO(post))
+                .reportPreviewDTO(toReportPreviewDTO(report))
+                .groupPreviewDTO(groupUtil.toGroupPreviewDTO(group))
+                .build();
+
+    }
+
+    public PostDTO.PostReportViewDTO toPostReportViewDTO(Post post, PostReport report) {
+        return PostDTO.PostReportViewDTO
+                .builder()
+                .postInfoDTO(toPostInfoDTO(post))
+                .reportInfoDTO(toReportInfoDTO(report))
+                .build();
+    }
+
 
 }

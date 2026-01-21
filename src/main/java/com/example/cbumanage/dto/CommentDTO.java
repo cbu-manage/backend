@@ -90,15 +90,18 @@ public class CommentDTO {
 
         private Long postId;
 
+        private Long problemId; // problemId 필드 추가
+
         private String content;
 
         private LocalDateTime createdAt;
 
         @Builder
-        public  CommentCreateResponseDTO(Long commentId,Long userId,Long postId,String content,LocalDateTime createdAt){
+        public  CommentCreateResponseDTO(Long commentId,Long userId,Long postId, Long problemId, String content,LocalDateTime createdAt){
             this.commentId = commentId;
             this.userId = userId;
             this.postId = postId;
+            this.problemId = problemId;
             this.content = content;
             this.createdAt = createdAt;
         }
