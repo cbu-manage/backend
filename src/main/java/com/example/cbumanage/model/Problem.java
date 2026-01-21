@@ -6,6 +6,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.Where;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -20,6 +23,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "problem")
+@SQLDelete(sql = "UPDATE problem SET deleted_at = CURRENT_TIMESTAMP WHERE problem_id = ?")
+@SQLRestriction("deleted_at IS NULL")
 public class Problem {
 
     /**
@@ -78,6 +83,8 @@ public class Problem {
      */
     @LastModifiedDate
     private LocalDateTime updatedAt;
+
+    private LocalDateTime deletedAt;
 
     @Builder
     public Problem(CbuMember member, Category category, Platform platform, String title, String content, String inputDescription, String outputDescription, ProblemGrade grade) {

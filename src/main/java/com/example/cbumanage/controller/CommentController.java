@@ -18,6 +18,7 @@ import java.util.List;
 @RequestMapping("/api/v1/")
 public class CommentController {
     private final CommentService commentService;
+
     @Autowired
     public CommentController(CommentService commentService) {
         this.commentService = commentService;
@@ -29,8 +30,8 @@ public class CommentController {
     )
     @PostMapping("post/{postId}/comment")
     public ResponseEntity<ResultResponse<CommentDTO.CommentCreateResponseDTO>> createComment(@RequestBody CommentDTO.CommentCreateRequestDTO req,
-                                                                                           @PathVariable Long postId,
-                                                                                           @RequestParam Long userId){
+                                                                                             @PathVariable Long postId,
+                                                                                             @RequestParam Long userId) {
         CommentDTO.CommentCreateResponseDTO responseDTO = commentService.createComment(req, userId, postId);
         return ResultResponse.ok(SuccessCode.CREATED, responseDTO);
     }
@@ -40,9 +41,31 @@ public class CommentController {
             description = "postId를 통해 댓글 목록을 불러옵니다. 댓글-답글 트리가 1계층으로 반환됩니다"
     )
     @GetMapping("post/{postId}/comment")
-    public  ResponseEntity<ResultResponse<List<CommentDTO.CommentInfoDTO>>> getComments(@PathVariable Long postId){
-        List<CommentDTO.CommentInfoDTO> commentLists =  commentService.getComments(postId);
-        return  ResultResponse.ok(SuccessCode.SUCCESS, commentLists);
+    public ResponseEntity<ResultResponse<List<CommentDTO.CommentInfoDTO>>> getComments(@PathVariable Long postId) {
+        List<CommentDTO.CommentInfoDTO> commentLists = commentService.getComments(postId);
+        return ResultResponse.ok(SuccessCode.SUCCESS, commentLists);
+    }
+
+    @Operation(
+            summary = "코딩테스트 문제 댓글 작성",
+            description= "problemId를 통해 코딩테스트 문제에 댓글 추가"
+    )
+    @PostMapping("problems/{problemId}/comment")
+    public ResponseEntity<ResultResponse<CommentDTO.CommentCreateResponseDTO>> createProblemComment(@RequestBody CommentDTO.CommentCreateRequestDTO req,
+                                                                                                    @PathVariable Integer problemId,
+                                                                                                    @RequestParam Long userId) {
+        CommentDTO.CommentCreateResponseDTO responseDTO = commentService.createCommentProblem(req, userId, problemId);
+        return ResultResponse.ok(SuccessCode.CREATED, responseDTO);
+    }
+
+    @Operation(
+            summary = "코딩테스트 문제 댓글 목록 작성",
+            description= "problemId를 통해 문제의 댓글 목록을 불러온다. 댓글-답글 트리가 1계층으로 반환된다."
+    )
+    @GetMapping("problems/{problemId}/comment")
+    public ResponseEntity<ResultResponse<List<CommentDTO.CommentInfoDTO>>> getProblemComments(@PathVariable Integer problemId) {
+        List<CommentDTO.CommentInfoDTO> commentLists = commentService.getCommentsProblemId(problemId);
+        return ResultResponse.ok(SuccessCode.SUCCESS, commentLists);
     }
 
     /*
@@ -56,9 +79,9 @@ public class CommentController {
     )
     @PostMapping("comment/{commentId}/reply")
     public ResponseEntity<ResultResponse<CommentDTO.ReplyCreateResponseDTO>> createReply(@RequestBody CommentDTO.ReplyCreateRequestDTO req,
-                                                         @Parameter(description = "답글을 추가할 댓글의 ID. 답글을 넣을경우 해당 답글의 부모댓글과 자동으로 연결됩니다") @PathVariable Long commentId,
-                                                         @RequestParam Long userId){
-        CommentDTO.ReplyCreateResponseDTO replyCreateResponseDTO = commentService.createReply(req,userId,commentId);
+                                                                                         @Parameter(description = "답글을 추가할 댓글의 ID. 답글을 넣을경우 해당 답글의 부모댓글과 자동으로 연결됩니다") @PathVariable Long commentId,
+                                                                                         @RequestParam Long userId) {
+        CommentDTO.ReplyCreateResponseDTO replyCreateResponseDTO = commentService.createReply(req, userId, commentId);
         return ResultResponse.ok(SuccessCode.CREATED, replyCreateResponseDTO);
     }
 
@@ -68,7 +91,7 @@ public class CommentController {
     )
     @PatchMapping("comment/{commentId}")
     public ResponseEntity<ResultResponse<Void>> updateComment(@RequestBody CommentDTO.CommentUpdateRequestDTO req,
-                              @PathVariable Long commentId){
+                                                              @PathVariable Long commentId) {
         commentService.updateComment(commentId, req);
         return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
@@ -78,7 +101,7 @@ public class CommentController {
             description = "댓글을 삭제 합니다. 댓글과 답글을 구분하지 않으며, softDelete를 사용하여 데이터를 지우지않고 삭제된 댓글로 표기되게만 합니다"
     )
     @DeleteMapping("comment/{commentId}")
-    public ResponseEntity<ResultResponse<Void>> deleteComment(@PathVariable Long commentId){
+    public ResponseEntity<ResultResponse<Void>> deleteComment(@PathVariable Long commentId) {
         commentService.deleteComment(commentId);
         return ResultResponse.ok(SuccessCode.DELETED, null);
     }
