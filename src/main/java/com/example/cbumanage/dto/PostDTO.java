@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /*
 Post 에 관한 DTO 들은 전부 여기서 관리하고자 합니다
@@ -298,33 +299,17 @@ public class PostDTO {
         }
     }
 
-
     //--------------------------PROJECT 관련 DTO---------------------//
     /*
     Project 게시글 상세 조회에 사용되는 DTO
-    PostInfo DTO와 같이 호출
     */
-    @Getter
-    @NoArgsConstructor
-    public static class ProjectInfoDTO {
-
-        private String recruitmentField;
-        private boolean recruiting;
-
-        @Builder
-        public ProjectInfoDTO(String recruitmentField, boolean recruiting) {
-            this.recruitmentField = recruitmentField;
-            this.recruiting = recruiting;
-        }
-    }
-
     @Getter
     @NoArgsConstructor
     public static class PostProjectCreateRequestDTO{
 
         private String title;
         private String content;
-        private String recruitmentField;
+        private List<String> recruitmentFields;
         private boolean recruiting;
         private int category;
     }
@@ -336,7 +321,7 @@ public class PostDTO {
         private Long authorId;
         private String title;
         private String content;
-        private String recruitmentField;
+        private List<String> recruitmentFields;
         private boolean recruiting;
         private LocalDateTime createdAt;
         private int category;
@@ -346,7 +331,7 @@ public class PostDTO {
                                             Long authorId,
                                             String title,
                                             String content,
-                                            String recruitmentField,
+                                            List<String> recruitmentFields,
                                             boolean recruiting,
                                             LocalDateTime createdAt,
                                             int category){
@@ -354,7 +339,7 @@ public class PostDTO {
             this.authorId = authorId;
             this.title = title;
             this.content = content;
-            this.recruitmentField = recruitmentField;
+            this.recruitmentFields = recruitmentFields;
             this.recruiting = recruiting;
             this.createdAt = createdAt;
             this.category = category;
@@ -365,13 +350,13 @@ public class PostDTO {
     @NoArgsConstructor
     public static class ProjectCreateDTO{
         private Long postId;
-        private String recruitmentField;
+        private List<String> recruitmentFields;
         private boolean recruiting;
 
         @Builder
-        public ProjectCreateDTO(Long postId,String recruitmentField, boolean recruiting){
+        public ProjectCreateDTO(Long postId,List<String> recruitmentFields, boolean recruiting){
             this.postId = postId;
-            this.recruitmentField = recruitmentField;
+            this.recruitmentFields = recruitmentFields;
             this.recruiting = recruiting;
         }
     }
@@ -381,7 +366,7 @@ public class PostDTO {
     public static class PostProjectUpdateRequestDTO{
         private String title;
         private String content;
-        private String recruitmentField;
+        private List<String> recruitmentFields;
         private boolean recruiting;
     }
 
@@ -389,19 +374,19 @@ public class PostDTO {
     @NoArgsConstructor
     public static class ProjectUpdateDTO{
 
-        private String recruitmentField;
+        private List<String> recruitmentFields;
         private boolean recruiting;
 
         @Builder
-        public ProjectUpdateDTO(String recruitmentField, boolean recruiting){
-            this.recruitmentField = recruitmentField;
+        public ProjectUpdateDTO(List<String> recruitmentFields, boolean recruiting){
+            this.recruitmentFields = recruitmentFields;
             this.recruiting = recruiting;
         }
     }
 
     /*
     Project 게시글 목록 조회에 사용되는 DTO
-    제목, 분야, 작성자, 생성시간, 모집여부를 포함합니다
+    제목, 모집분야, 작성자, 생성시간, 모집여부를 포함합니다
      */
     @Getter
     @NoArgsConstructor
@@ -409,17 +394,17 @@ public class PostDTO {
         private Long postId;
         private String title;
         private String content;
-        private String recruitmentField;
+        private List<String> recruitmentFields;
         private Long authorId;
         private LocalDateTime createdAt;
         private boolean recruiting;
 
         @Builder
-        public ProjectInfoDetailDTO(Long postId, String title, String content,String recruitmentField, Long authorId, LocalDateTime createdAt, boolean recruiting) {
+        public ProjectInfoDetailDTO(Long postId, String title, String content, List<String> recruitmentFields, Long authorId, LocalDateTime createdAt, boolean recruiting) {
             this.postId = postId;
             this.title = title;
             this.content=content;
-            this.recruitmentField = recruitmentField;
+            this.recruitmentFields = recruitmentFields;
             this.authorId = authorId;
             this.createdAt = createdAt;
             this.recruiting = recruiting;
@@ -431,16 +416,16 @@ public class PostDTO {
     public static class ProjectListDTO {
         private Long postId;
         private String title;
-        private String recruitmentField;
+        private List<String> recruitmentFields;
         private Long authorId;
         private LocalDateTime createdAt;
         private boolean recruiting;
 
         @Builder
-        public ProjectListDTO(Long postId, String title,String recruitmentField, Long authorId, LocalDateTime createdAt, boolean recruiting) {
+        public ProjectListDTO(Long postId, String title,List<String> recruitmentFields, Long authorId, LocalDateTime createdAt, boolean recruiting) {
             this.postId = postId;
             this.title = title;
-            this.recruitmentField = recruitmentField;
+            this.recruitmentFields = recruitmentFields;
             this.authorId = authorId;
             this.createdAt = createdAt;
             this.recruiting = recruiting;
@@ -490,6 +475,7 @@ public class PostDTO {
         }
 
     }
+
 
 
 }

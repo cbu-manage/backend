@@ -3,6 +3,7 @@ package com.example.cbumanage.service;
 import com.example.cbumanage.dto.PostDTO;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.Project;
+import com.example.cbumanage.model.enums.ProjectFieldType;
 import com.example.cbumanage.repository.ProjectRepository;
 import com.example.cbumanage.repository.PostRepository;
 import com.example.cbumanage.utils.PostMapper;
@@ -12,6 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class ProjectService {
@@ -35,7 +39,10 @@ public class ProjectService {
     //프로젝트 게시글 생성 메서드
     public Project createProject(PostDTO.ProjectCreateDTO req) {
         Post post = postRepository.findById(req.getPostId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        Project project = Project.create(post, req.getRecruitmentField(), req.isRecruiting());
+        List<String> fields = (req.getRecruitmentFields() != null)
+                ? req.getRecruitmentFields()
+                : new ArrayList<>();
+        Project project = Project.create(post, fields, req.isRecruiting());
         return projectRepository.save(project);
     }
 
@@ -47,14 +54,14 @@ public class ProjectService {
 
     //프로젝트 게시글 전체 조회 메서드
     public Page<PostDTO.ProjectListDTO> getPostsByCategory(Pageable pageable,int category){
-        Page<Project> projects= projectRepository.findAllWithPostByCategory(category,pageable);
+        Page<Project> projects= projectRepository.findByPostCategoryAndPostIsDeletedFalse(category,pageable);
         return projects.map(project->postMapper.toProjectListDTO(project));
     }
 
     //프로젝트 게시글 수정 메서드
     public void updateProject(PostDTO.ProjectUpdateDTO dto, Project project) {
-        project.changeRecruitmentField(dto.getRecruitmentField());
-        project.changeRecruiting(dto.isRecruiting());
+        project.updateRecruitmentFields(dto.getRecruitmentFields());
+        project.updateRecruiting(dto.isRecruiting());
     }
 
     //프로젝트 게시글 수정 트랜잭션
@@ -81,7 +88,14 @@ public class ProjectService {
     //프로젝트 게시글 삭제 트랜잭션
     @Transactional
     public void softDeletePost(Long postId) {
-        Post post=postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        Post post=postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Project Not Found"));
         post.delete();
+    }
+
+    //프로젝트 모집분야로 조회 트랜잭션
+    @Transactional
+    public Page<PostDTO.ProjectListDTO> searchByField(ProjectFieldType fields, Pageable pageable) {
+        Page<Project> projects = projectRepository.findByRecruitmentFieldsAndPostIsDeletedFalse(fields, pageable);
+        return projects.map(project -> postMapper.toProjectListDTO(project));
     }
 }
