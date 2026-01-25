@@ -29,11 +29,11 @@ import java.util.Map;
 @RequestMapping("/api/v1")
 @Tag(name="그룹 컨트롤러")
 public class GroupController {
-    private GroupService groupService;
-    private JwtProvider jwtProvider;
+    private final GroupService groupService;
+    private final JwtProvider jwtProvider;
 
     @Autowired
-    public void setGroupService(GroupService groupService, JwtProvider jwtProvider) {
+    public GroupController(GroupService groupService, JwtProvider jwtProvider) {
         this.groupService = groupService;
         this.jwtProvider = jwtProvider;
     }
