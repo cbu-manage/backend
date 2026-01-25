@@ -4,27 +4,78 @@ import com.example.cbumanage.dto.GroupDTO;
 import com.example.cbumanage.model.enums.GroupMemberStatus;
 import com.example.cbumanage.model.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.model.enums.GroupStatus;
+import com.example.cbumanage.response.ErrorCode;
 import com.example.cbumanage.response.ResultResponse;
 import com.example.cbumanage.response.SuccessCode;
 import com.example.cbumanage.service.GroupService;
+import com.example.cbumanage.utils.JwtProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name="그룹 컨트롤러")
 public class GroupController {
     private GroupService groupService;
+    private JwtProvider jwtProvider;
 
     @Autowired
-    public void setGroupService(GroupService groupService) {
+    public void setGroupService(GroupService groupService, JwtProvider jwtProvider) {
         this.groupService = groupService;
+        this.jwtProvider = jwtProvider;
+    }
+
+
+    //쿠키에서 userId를 추출하는 코드 입니다
+    private Long extractUserIdFromCookie(HttpServletRequest httpServletRequest) {
+        String token = null;
+
+        Cookie[] cookies = httpServletRequest.getCookies();
+        if (cookies != null) {
+            for (Cookie c : cookies) {
+                if ("ACCESS_TOKEN".equals(c.getName())) {
+                    token = c.getValue();
+                    break;
+                }
+            }
+        }
+
+        if (token == null || token.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "ACCESS_TOKEN not found");
+        }
+
+        Map<String, Object> tokenInfo;
+        try {
+            tokenInfo = jwtProvider.parseJwt(
+                    token,
+                    Map.of(
+                            "user_id", Long.class,
+                            "student_number", Long.class,
+                            "role", JSONArray.class,
+                            "permissions", JSONArray.class
+                    )
+            );
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid JWT token");
+        }
+
+        Long user_id = (Long) tokenInfo.get("user_id");
+
+        return user_id;
+
     }
 
     @Operation(
@@ -33,7 +84,8 @@ public class GroupController {
     )
     @PostMapping("/group")
     public ResponseEntity<ResultResponse<GroupDTO.GroupCreateResponseDTO>> createGroup(@RequestBody GroupDTO.GroupCreateRequestDTO req,
-                                                                                       @Parameter(description = "그룹을 생성하는 팀장의 id입니다 자동으로 팀장으로 추가되며, 추후에 토큰을 통한 자동 주입으로 수정할 예정입니다") @RequestParam Long userId){
+                                                                                       HttpServletRequest httpServletRequest) {
+        Long userId = extractUserIdFromCookie(httpServletRequest);
         GroupDTO.GroupCreateResponseDTO groupCreateResponseDTO = groupService.createGroup(req,userId);
         return ResultResponse.ok(SuccessCode.CREATED, groupCreateResponseDTO);
     }
@@ -44,7 +96,8 @@ public class GroupController {
     )
     @PostMapping("/group/{groupId}")
     public ResponseEntity<ResultResponse<GroupDTO.GroupMemberInfoDTO>> applyGroupMember(@PathVariable Long groupId,
-                                                                                        @Parameter(description ="그룹에 참가신청하는 유저의 id입니다. status가 pending인 멤버로 멤버에 추가됩니다. 추후 토큰을 통한 자동 주입으로 수정할 예정입니다" )@RequestParam Long memberId){
+                                                                                        HttpServletRequest httpServletRequest) {
+        Long memberId = extractUserIdFromCookie(httpServletRequest);
         GroupDTO.GroupMemberInfoDTO groupMemberInfoDTO = groupService.addGroupMember(groupId,memberId);
         return ResultResponse.ok(SuccessCode.CREATED, groupMemberInfoDTO);
     }
@@ -90,13 +143,31 @@ public class GroupController {
     )
     @PatchMapping("/group/{groupId}/recruitment")
     public ResponseEntity<ResultResponse<Void>> changeGroupRecruitmentStatus(@PathVariable Long groupId ,
-                                                                             @Parameter(description = "OPEN,CLOSE 중 원하는 상태를 보냅니다.") @RequestBody GroupDTO.GroupRecruitmentStatusRequestDTO req){
-        if (req.getGroupRecruitmentStatus() == GroupRecruitmentStatus.CLOSED){
-            groupService.closeGroupRecruitment(groupId);
+                                                                             @Parameter(description = "OPEN,CLOSE 중 원하는 상태를 보냅니다.") @RequestBody GroupDTO.GroupRecruitmentStatusRequestDTO req,
+                                                                             HttpServletRequest httpServletRequest) {
+        Long userId = extractUserIdFromCookie(httpServletRequest);
+        try {
+            if (req.getGroupRecruitmentStatus() == GroupRecruitmentStatus.CLOSED){
+                groupService.closeGroupRecruitment(groupId,userId);
+            }
+            if(req.getGroupRecruitmentStatus() == GroupRecruitmentStatus.OPEN){
+                groupService.openGroupRecruitment(groupId,userId);
+            }
         }
-        if(req.getGroupRecruitmentStatus() == GroupRecruitmentStatus.OPEN){
-            groupService.openGroupRecruitment(groupId);
+        catch (ResponseStatusException e){
+            return ResultResponse.error(ErrorCode.FORBIDDEN);
         }
+        catch (EntityNotFoundException e) {
+            ErrorCode code = ErrorCode.NOT_FOUND;
+            return ResponseEntity
+                    .status(code.getHttpStatus())
+                    .body(new ResultResponse<>(
+                            code.getCode(),
+                            code.getMessage() + ": " + e.getMessage(),
+                            null
+                    ));
+        }
+
         return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
 
@@ -105,13 +176,25 @@ public class GroupController {
             description = "그룹의 활성/비활성 상태를 변경시키는 메소드입니다. 운영자가 관리합니다"
     )
     @PatchMapping("/group/{groupId}/status")
-    public ResponseEntity<ResultResponse<Void>> changeGroupStatus(@PathVariable Long groupId ,@Parameter(description = "ACTIVE,INACTIVE로 구분되며 원하는 상태를 보냅니다") @RequestBody GroupDTO.GroupStatusRequestDTO req){
-        if (req.getGroupStatus() == GroupStatus.ACTIVE){
-            groupService.activateGroupStatus(groupId);
+    public ResponseEntity<ResultResponse<Void>> changeGroupStatus(@PathVariable Long groupId ,
+                                                                  @Parameter(description = "ACTIVE,INACTIVE로 구분되며 원하는 상태를 보냅니다") @RequestBody GroupDTO.GroupStatusRequestDTO req,
+                                                                  HttpServletRequest httpServletRequest) {
+        Long userId = extractUserIdFromCookie(httpServletRequest);
+        try {
+            if (req.getGroupStatus() == GroupStatus.ACTIVE){
+                groupService.activateGroupStatus(groupId,userId);
+            }
+            if(req.getGroupStatus() == GroupStatus.INACTIVE){
+                groupService.deactivateGroupStatus(groupId,userId);
+            }
         }
-        if(req.getGroupStatus() == GroupStatus.INACTIVE){
-            groupService.deactivateGroupStatus(groupId);
+        catch (ResponseStatusException e){
+            return ResultResponse.error(ErrorCode.FORBIDDEN);
         }
+        catch (EntityNotFoundException e){
+            return ResultResponse.error(ErrorCode.NOT_FOUND);
+        }
+
         return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
 
@@ -120,13 +203,25 @@ public class GroupController {
             description = "멤버의 상태를 변경시키는 메소드입니다. 가입신청하여PENDING상태인 member를 ACTIVE상태로 변경시키거나, 그만둔 멤버를 INACTIVE상태로 변경시킵니다. 팀장이 관리합니다"
     )
     @PatchMapping("/groupMember/{groupMemberId}/status")
-    public ResponseEntity<ResultResponse<Void>> changeGroupMemberStatus(@PathVariable Long groupMemberId , @RequestBody GroupDTO.GroupMemberStatusRequestDTO req){
-        if (req.getGroupMemberStatus() == GroupMemberStatus.ACTIVE){
-            groupService.activateGroupMember(groupMemberId);
+    public ResponseEntity<ResultResponse<Void>> changeGroupMemberStatus(@PathVariable Long groupMemberId ,
+                                                                        @RequestBody GroupDTO.GroupMemberStatusRequestDTO req,
+                                                                        HttpServletRequest httpServletRequest) {
+        Long userId = extractUserIdFromCookie(httpServletRequest);
+        try {
+            if (req.getGroupMemberStatus() == GroupMemberStatus.ACTIVE){
+                groupService.activateGroupMember(groupMemberId,userId);
+            }
+            if(req.getGroupMemberStatus() == GroupMemberStatus.INACTIVE){
+                groupService.deactivateGroupMember(groupMemberId,userId);
+            }
         }
-        if(req.getGroupMemberStatus() == GroupMemberStatus.INACTIVE){
-            groupService.deactivateGroupMember(groupMemberId);
+        catch (ResponseStatusException e){
+            return ResultResponse.error(ErrorCode.FORBIDDEN);
         }
+        catch (EntityNotFoundException e){
+            return ResultResponse.error(ErrorCode.NOT_FOUND);
+        }
+
         return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
 
