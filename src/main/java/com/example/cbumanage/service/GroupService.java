@@ -4,10 +4,7 @@ import com.example.cbumanage.dto.GroupDTO;
 import com.example.cbumanage.model.CbuMember;
 import com.example.cbumanage.model.Group;
 import com.example.cbumanage.model.GroupMember;
-import com.example.cbumanage.model.enums.GroupMemberRole;
-import com.example.cbumanage.model.enums.GroupMemberStatus;
-import com.example.cbumanage.model.enums.GroupRecruitmentStatus;
-import com.example.cbumanage.model.enums.GroupStatus;
+import com.example.cbumanage.model.enums.*;
 import com.example.cbumanage.repository.CbuMemberRepository;
 import com.example.cbumanage.repository.CommentRepository;
 import com.example.cbumanage.repository.GroupMemberRepository;
@@ -15,8 +12,11 @@ import com.example.cbumanage.repository.GroupRepository;
 import com.example.cbumanage.utils.GroupUtil;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -99,43 +99,52 @@ public class GroupService {
     }
     //그룹의 모집을 시작시키는 메소드입니다
     @Transactional
-    public void openGroupRecruitment(Long groupId){
+    public void openGroupRecruitment(Long groupId,Long userId){
         Group group = groupRepository.findById(groupId).orElseThrow(()-> new EntityNotFoundException("Group not found"));
+        assertIsGroupLeader(groupId,userId);
         group.openRecruitment();
     }
 
     //그룹의 모집을 종료시키는 메소드입니다
     @Transactional
-    public void closeGroupRecruitment(Long groupId){
+    public void closeGroupRecruitment(Long groupId, Long userId){
         Group group = groupRepository.findById(groupId).orElseThrow(()-> new EntityNotFoundException("Group not found"));
+        assertIsGroupLeader(groupId,userId);
         group.closeRecruitment();
     }
 
     //그룹을 활동상태로 변경시키는 메소드 입니다
     @Transactional
-    public void activateGroupStatus(Long groupId){
+    public void activateGroupStatus(Long groupId,Long userId){
         Group group = groupRepository.findById(groupId).orElseThrow(()-> new EntityNotFoundException("Group not found"));
+        assertIsAdmin(userId);
         group.activate();;
     }
 
     //그룹을 비활동 상태로 변경시키는 메소드 입니다
     @Transactional
-    public void deactivateGroupStatus(Long groupId){
+    public void deactivateGroupStatus(Long groupId,Long userId){
         Group group = groupRepository.findById(groupId).orElseThrow(()-> new EntityNotFoundException("Group not found"));
+        assertIsAdmin(userId);
         group.deactivate();
     }
 
     //멤버를 Active상태로 변경시키는 메소드 입니다(팀장이 가입 신청한 멤버를 활동 멤버로 변경시킬때 사용합니다)
     @Transactional
-    public void activateGroupMember(Long groupMemberId){
+    public void activateGroupMember(Long groupMemberId,Long userId){
         GroupMember groupMember = groupMemberRepository.findById(groupMemberId).orElseThrow(()-> new EntityNotFoundException("Member not found"));
+        Group group = groupMember.getGroup();
+        assertIsGroupLeader(group.getId(),userId);
         groupMember.changeStatus(GroupMemberStatus.ACTIVE);
+
 
     }
 
     @Transactional
-    public void deactivateGroupMember(Long groupMemberId){
+    public void deactivateGroupMember(Long groupMemberId,Long userId){
         GroupMember groupMember = groupMemberRepository.findById(groupMemberId).orElseThrow(()-> new EntityNotFoundException("Member not found"));
+        Group group = groupMember.getGroup();
+        assertIsGroupLeader(group.getId(),userId);
         groupMember.changeStatus(GroupMemberStatus.INACTIVE);
     }
 
@@ -145,6 +154,23 @@ public class GroupService {
         group.changeGroupName(req.getGroupName());
         group.changeMinActiveMembers(req.getMinActiveMembers());
         group.changeMaxActiveMembers(req.getMaxActiveMembers());
+    }
+
+    //시전한 user가 리더가 맞는지 확인하는 메소드
+    private void assertIsGroupLeader(Long groupId, Long userId){
+        Group g = groupRepository.findById(groupId).orElseThrow(()-> new EntityNotFoundException("Group not found"));
+        CbuMember cbuMember =  cbuMemberRepository.findById(userId).orElseThrow(()-> new EntityNotFoundException("User not found"));
+        GroupMember groupMember = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, userId);
+        if(!groupMember.getGroupMemberRole().equals(GroupMemberRole.LEADER)){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+    }
+
+    private void assertIsAdmin(Long userId){
+        CbuMember cbuMember = cbuMemberRepository.findById(userId).orElseThrow(()-> new EntityNotFoundException("User not found"));
+        if(!cbuMember.getRole().equals(Role.ADMIN)){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
     }
 
 

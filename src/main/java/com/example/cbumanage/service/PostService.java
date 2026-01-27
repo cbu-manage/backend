@@ -2,7 +2,10 @@ package com.example.cbumanage.service;
 
 import com.example.cbumanage.dto.*;
 import com.example.cbumanage.model.*;
+import com.example.cbumanage.model.enums.GroupMemberRole;
+import com.example.cbumanage.model.enums.GroupMemberStatus;
 import com.example.cbumanage.model.enums.PostReportGroupType;
+import com.example.cbumanage.model.enums.Role;
 import com.example.cbumanage.repository.*;
 import com.example.cbumanage.model.CbuMember;
 import com.example.cbumanage.model.Post;
@@ -14,10 +17,13 @@ import com.example.cbumanage.utils.PostMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.Getter;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class PostService {
@@ -27,15 +33,17 @@ public class PostService {
     private PostMapper postMapper;
     private CbuMemberRepository cbuMemberRepository;
     private GroupRepository groupRepository;
+    private GroupMemberRepository groupMemberRepository;
 
 
     @Autowired
-    public PostService(PostRepository postRepository, PostReportRepository postReportRepository, PostMapper postMapper, CbuMemberRepository cbuMemberRepository,GroupRepository groupRepository) {
+    public PostService(PostRepository postRepository, PostReportRepository postReportRepository, PostMapper postMapper, CbuMemberRepository cbuMemberRepository,GroupRepository groupRepository, GroupMemberRepository groupMemberRepository) {
         this.postRepository = postRepository;
         this.postReportRepository = postReportRepository;
         this.postMapper = postMapper;
         this.cbuMemberRepository = cbuMemberRepository;
         this.groupRepository = groupRepository;
+        this.groupMemberRepository = groupMemberRepository;
     }
 
     /*
@@ -106,9 +114,22 @@ public class PostService {
     /*
     보고서 포스트 자세히 보기 메소드입니다. post와 report를 한번에 가져옵니다
      */
-    public PostDTO.PostReportViewDTO getPostReportViewDTO(Long postId){
+    public PostDTO.PostReportViewDTO getPostReportViewDTO(Long postId,Long userId){
         PostReport report = postReportRepository.findByPostId(postId);
         Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        CbuMember user = cbuMemberRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        boolean isAdmin = user.getRole().equals(Role.ADMIN);
+        boolean isAuthor = post.getAuthorId().equals(userId);
+        boolean isActiveMember =
+                groupMemberRepository.existsActiveMember(
+                        userId,
+                        report.getGroupId(),
+                        GroupMemberStatus.ACTIVE
+                );
+
+        if (!(isAdmin || isAuthor || isActiveMember)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
         return postMapper.toPostReportViewDTO(post, report);
     }
 
@@ -134,8 +155,11 @@ public class PostService {
     Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소드이기에, 해당 메소드에 Transactional 를 추가했습니다
      */
     @Transactional
-    public void updatePostReport(PostDTO.PostReportUpdateRequestDTO req,Long postId) {
+    public void updatePostReport(PostDTO.PostReportUpdateRequestDTO req,Long postId,Long userId) {
         Post post=postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        if(!post.getAuthorId().equals(userId)){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,"NOT POST OWNER");
+        }
         PostDTO.PostUpdateDTO postUpdateDTO = postMapper.toPostUpdateDTO(req);
         updatePost(postUpdateDTO,post);
         PostReport report =postReportRepository.findByPostId(postId);
@@ -156,7 +180,11 @@ public class PostService {
     }
 
     @Transactional
-    public void acceptReport(Long reportId){
+    public void acceptReport(Long reportId,Long userId) {
+        CbuMember cbuMember = cbuMemberRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        if (!cbuMember.getRole().equals(Role.ADMIN)){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
         PostReport report = postReportRepository.findByPostId(reportId);
         report.Accept();
     }

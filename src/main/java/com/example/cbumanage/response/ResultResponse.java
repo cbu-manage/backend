@@ -32,7 +32,7 @@ public class ResultResponse<T>{
     /*
     에러를 처리합니다
      */
-    public static <T> ResponseEntity<ResultResponse<Void>> error (ErrorCode errorCode) {
+    public static <T> ResponseEntity<ResultResponse<T>> error (ErrorCode errorCode) {
         return ResponseEntity.status(errorCode.getHttpStatus()).
                 body(new ResultResponse<>(errorCode.getCode(), errorCode.getMessage(),null ));
     }
