@@ -432,6 +432,137 @@ public class PostDTO {
         }
     }
 
+    //--------------------------STUDY 관련 DTO---------------------//
+    /*
+    Study(스터디 모집) 게시글 생성 요청 DTO
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class PostStudyCreateRequestDTO {
+        private String title;
+        private String content;
+        private List<String> studyTags;
+        private boolean recruiting;
+        private int category;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class PostStudyCreateResponseDTO {
+        private Long postId;
+        private Long authorId;
+        private String title;
+        private String content;
+        private List<String> studyTags;
+        private boolean recruiting;
+        private LocalDateTime createdAt;
+        private int category;
+
+        @Builder
+        public PostStudyCreateResponseDTO(Long postId, Long authorId, String title, String content,
+                                          List<String> studyTags, boolean recruiting,
+                                          LocalDateTime createdAt, int category) {
+            this.postId = postId;
+            this.authorId = authorId;
+            this.title = title;
+            this.content = content;
+            this.studyTags = studyTags;
+            this.recruiting = recruiting;
+            this.createdAt = createdAt;
+            this.category = category;
+        }
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class StudyCreateDTO {
+        private Long postId;
+        private List<String> studyTags;
+        private boolean recruiting;
+
+        @Builder
+        public StudyCreateDTO(Long postId, List<String> studyTags, boolean recruiting) {
+            this.postId = postId;
+            this.studyTags = studyTags;
+            this.recruiting = recruiting;
+        }
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class PostStudyUpdateRequestDTO {
+        private String title;
+        private String content;
+        private List<String> studyTags;
+        private boolean recruiting;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class StudyUpdateDTO {
+        private List<String> studyTags;
+        private boolean recruiting;
+
+        @Builder
+        public StudyUpdateDTO(List<String> studyTags, boolean recruiting) {
+            this.studyTags = studyTags;
+            this.recruiting = recruiting;
+        }
+    }
+
+    /*
+    Study 게시글 상세 조회 DTO
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class StudyInfoDetailDTO {
+        private Long postId;
+        private String title;
+        private String content;
+        private List<String> studyTags;
+        private Long authorId;
+        private LocalDateTime createdAt;
+        private boolean recruiting;
+
+        @Builder
+        public StudyInfoDetailDTO(Long postId, String title, String content, List<String> studyTags,
+                                  Long authorId, LocalDateTime createdAt, boolean recruiting) {
+            this.postId = postId;
+            this.title = title;
+            this.content = content;
+            this.studyTags = studyTags;
+            this.authorId = authorId;
+            this.createdAt = createdAt;
+            this.recruiting = recruiting;
+        }
+    }
+
+    /*
+    Study 게시글 목록 조회 DTO
+    제목, 태그, 작성자, 생성시간, 모집여부를 포함합니다
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class StudyListDTO {
+        private Long postId;
+        private String title;
+        private List<String> studyTags;
+        private Long authorId;
+        private LocalDateTime createdAt;
+        private boolean recruiting;
+
+        @Builder
+        public StudyListDTO(Long postId, String title, List<String> studyTags, Long authorId,
+                            LocalDateTime createdAt, boolean recruiting) {
+            this.postId = postId;
+            this.title = title;
+            this.studyTags = studyTags;
+            this.authorId = authorId;
+            this.createdAt = createdAt;
+            this.recruiting = recruiting;
+        }
+    }
+
     //보고서 게시글 미리보기 DTO의 보고서 관련 내용을 담고있는 DTO입니다
     @Getter
     @NoArgsConstructor
