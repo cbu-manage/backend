@@ -1,6 +1,10 @@
 package com.example.cbumanage.dto;
 
+import com.example.cbumanage.model.enums.ProjectFieldType;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -281,14 +285,18 @@ public class PostDTO {
     @NoArgsConstructor
     public static class PostProjectCreateRequestDTO{
 
+        @NotBlank(message = "제목은 필수입니다")
         private String title;
+
+        @Size(max = 500, message = "내용은 500자 이내여야 합니다")
         private String content;
+
         @Schema(
                 description = "모집 분야 (복수 입력 가능, 대문자 영어만 허용)",
-                example = "[\"BACKEND\", \"FRONTEND\"]",
-                allowableValues = {"BACKEND","FRONTEND","DEV","PLANNING","DESIGN","ETC"}
+                example = "[\"BACKEND\", \"FRONTEND\"]"
         )
-        private List<String> recruitmentFields;
+        @NotEmpty(message = "모집 분야는 최소 1개 이상이어야 합니다")
+        private List<ProjectFieldType> recruitmentFields;
         private boolean recruiting;
         private int category;
     }
@@ -329,11 +337,11 @@ public class PostDTO {
     @NoArgsConstructor
     public static class ProjectCreateDTO{
         private Long postId;
-        private List<String> recruitmentFields;
+        private List<ProjectFieldType> recruitmentFields;
         private boolean recruiting;
 
         @Builder
-        public ProjectCreateDTO(Long postId,List<String> recruitmentFields, boolean recruiting){
+        public ProjectCreateDTO(Long postId,List<ProjectFieldType> recruitmentFields, boolean recruiting){
             this.postId = postId;
             this.recruitmentFields = recruitmentFields;
             this.recruiting = recruiting;
@@ -343,9 +351,16 @@ public class PostDTO {
     @Getter
     @NoArgsConstructor
     public static class PostProjectUpdateRequestDTO{
+        @Size(min = 1, message = "제목은 1자 이상이어야 합니다")
         private String title;
+        @Size(max = 500, message = "내용은 500자 이내여야 합니다")
         private String content;
-        private List<String> recruitmentFields;
+
+        @Schema(
+                description = "모집 분야 (복수 입력 가능, 대문자 영어만 허용)",
+                example = "[\"BACKEND\", \"FRONTEND\"]"
+        )
+        private List<ProjectFieldType> recruitmentFields;
         private boolean recruiting;
     }
 
@@ -353,11 +368,11 @@ public class PostDTO {
     @NoArgsConstructor
     public static class ProjectUpdateDTO{
 
-        private List<String> recruitmentFields;
+        private List<ProjectFieldType> recruitmentFields;
         private boolean recruiting;
 
         @Builder
-        public ProjectUpdateDTO(List<String> recruitmentFields, boolean recruiting){
+        public ProjectUpdateDTO(List<ProjectFieldType> recruitmentFields, boolean recruiting){
             this.recruitmentFields = recruitmentFields;
             this.recruiting = recruiting;
         }
