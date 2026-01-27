@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -97,7 +98,7 @@ public class ProjectController {
     )
     @PostMapping("/post/project")
     public ResponseEntity<ResultResponse<PostDTO.PostProjectCreateResponseDTO>> createPostProject(
-            @RequestBody PostDTO.PostProjectCreateRequestDTO req, HttpServletRequest request) {
+            @Valid @RequestBody PostDTO.PostProjectCreateRequestDTO req, HttpServletRequest request) {
         Long userId = userIdFromCookie(request);
         PostDTO.PostProjectCreateResponseDTO responseDTO =
                 projectService.createPostProject(req, userId);
@@ -136,7 +137,7 @@ public class ProjectController {
     @PatchMapping("/post/project/{postId}")
     public ResponseEntity<ResultResponse<Void>> updateProject(
             @PathVariable Long postId,
-            @RequestBody PostDTO.PostProjectUpdateRequestDTO req,
+            @Valid @RequestBody PostDTO.PostProjectUpdateRequestDTO req,
             HttpServletRequest request) {
 
         Long userId = userIdFromCookie(request);

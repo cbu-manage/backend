@@ -32,15 +32,15 @@ public class Project {
     private boolean recruiting;
 
     // String 리스트를 받아서 Enum으로 변환해 저장
-    public Project(Post post, List<String> fields, boolean recruiting) {
+    public Project(Post post, List<ProjectFieldType> fields, boolean recruiting) {
         this.post = post;
         this.recruiting = recruiting;
         if (fields != null) {
-            fields.forEach(f -> this.addRecruitmentField(ProjectFieldType.valueOf(f)));
+            fields.forEach(this::addRecruitmentField);
         }
     }
 
-    public static Project create(Post post, List<String> fields, boolean recruiting) {
+    public static Project create(Post post, List<ProjectFieldType> fields, boolean recruiting) {
         return new Project(post, fields, recruiting);
     }
 
@@ -50,10 +50,10 @@ public class Project {
     }
 
     // 수정 메서드
-    public void updateRecruitmentFields(List<String> newFields) {
+    public void updateRecruitmentFields(List<ProjectFieldType> newFields) {
         this.recruitmentFields.clear();
         if (newFields != null) {
-            newFields.forEach(f -> this.addRecruitmentField(ProjectFieldType.valueOf(f)));
+            newFields.forEach(this::addRecruitmentField);
         }
     }
 

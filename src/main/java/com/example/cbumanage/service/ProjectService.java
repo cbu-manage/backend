@@ -41,7 +41,7 @@ public class ProjectService {
     //프로젝트 게시글 생성 메서드
     public Project createProject(PostDTO.ProjectCreateDTO req) {
         Post post = postRepository.findById(req.getPostId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        List<String> fields = (req.getRecruitmentFields() != null)
+        List<ProjectFieldType> fields = (req.getRecruitmentFields() != null)
                 ? req.getRecruitmentFields()
                 : new ArrayList<>();
         Project project = Project.create(post, fields, req.isRecruiting());
