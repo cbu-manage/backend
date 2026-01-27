@@ -12,7 +12,9 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,8 +68,11 @@ public class ProjectService {
 
     //프로젝트 게시글 수정 트랜잭션
     @Transactional
-    public void updatePostProject(PostDTO.PostProjectUpdateRequestDTO req, Long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+    public void updatePostProject(PostDTO.PostProjectUpdateRequestDTO req, Long postId, Long userId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        //권한 확인
+        validateProjectOwner(post, userId);
         PostDTO.PostUpdateDTO postUpdateDTO = postMapper.toPostUpdateDTO(req);
         postService.updatePost(postUpdateDTO, post);
         Project project = projectRepository.findByPostId(postId);
@@ -87,8 +92,11 @@ public class ProjectService {
 
     //프로젝트 게시글 삭제 트랜잭션
     @Transactional
-    public void softDeletePost(Long postId) {
-        Post post=postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Project Not Found"));
+    public void softDeletePost(Long postId,Long userId) {
+        Post post=postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Project Not Found"));
+        //권한 확인
+        validateProjectOwner(post, userId);
         post.delete();
     }
 
@@ -97,5 +105,15 @@ public class ProjectService {
     public Page<PostDTO.ProjectListDTO> searchByField(ProjectFieldType fields, Pageable pageable) {
         Page<Project> projects = projectRepository.findByRecruitmentFieldsAndPostIsDeletedFalse(fields, pageable);
         return projects.map(project -> postMapper.toProjectListDTO(project));
+    }
+
+    //유효 권한 확인 메서드
+    private void validateProjectOwner(Post post, Long userId) {
+        if (!post.getAuthorId().equals(userId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "게시글에 대한 권한이 없습니다."
+            );
+        }
     }
 }

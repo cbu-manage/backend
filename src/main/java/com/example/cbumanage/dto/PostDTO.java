@@ -1,5 +1,6 @@
 package com.example.cbumanage.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -282,6 +283,11 @@ public class PostDTO {
 
         private String title;
         private String content;
+        @Schema(
+                description = "모집 분야 (복수 입력 가능, 대문자 영어만 허용)",
+                example = "[\"BACKEND\", \"FRONTEND\"]",
+                allowableValues = {"BACKEND","FRONTEND","DEV","PLANNING","DESIGN","ETC"}
+        )
         private List<String> recruitmentFields;
         private boolean recruiting;
         private int category;
