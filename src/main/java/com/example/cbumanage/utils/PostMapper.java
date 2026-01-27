@@ -5,6 +5,7 @@ import com.example.cbumanage.model.Group;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.PostReport;
 import com.example.cbumanage.model.Project;
+import com.example.cbumanage.model.Study;
 import com.example.cbumanage.model.enums.ProjectFieldType;
 import com.example.cbumanage.repository.GroupRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -70,6 +71,14 @@ public class PostMapper {
                 .build();
     }
 
+    public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostStudyCreateRequestDTO req, Long userId) {
+        return PostDTO.PostCreateDTO.builder()
+                .authorId(userId)
+                .title(req.getTitle())
+                .content(req.getContent())
+                .category(req.getCategory())
+                .build();
+    }
 
     /*
     아래는 게시물의 맞게 CreateDTO 를 반환해주는 메소드 입니다.Post 생성후에 postId를 매개변숯로 추가합니다
@@ -132,6 +141,27 @@ public class PostMapper {
                 .build();
     }
 
+    public PostDTO.StudyCreateDTO toStudyCreateDTO(PostDTO.PostStudyCreateRequestDTO req, Long postId) {
+        return PostDTO.StudyCreateDTO.builder()
+                .postId(postId)
+                .studyTags(req.getStudyTags())
+                .recruiting(req.isRecruiting())
+                .build();
+    }
+
+    public PostDTO.PostStudyCreateResponseDTO toPostStudyCreateResponseDTO(Post post, Study study) {
+        return PostDTO.PostStudyCreateResponseDTO.builder()
+                .postId(post.getId())
+                .authorId(post.getAuthorId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .studyTags(study.getStudyTags())
+                .recruiting(study.isRecruiting())
+                .createdAt(post.getCreatedAt())
+                .category(post.getCategory())
+                .build();
+    }
+
     /*
     아래는 Post{...}UpdateRequestDTO 를 각 카테고리에 맞게 분리해 주는 Mapper 입니다
      */
@@ -146,6 +176,20 @@ public class PostMapper {
         return PostDTO.PostUpdateDTO.builder()
                 .title(req.getTitle())
                 .content(req.getContent()).build();
+    }
+
+    public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostStudyUpdateRequestDTO req) {
+        return PostDTO.PostUpdateDTO.builder()
+                .title(req.getTitle())
+                .content(req.getContent())
+                .build();
+    }
+
+    public PostDTO.StudyUpdateDTO toStudyUpdateDTO(PostDTO.PostStudyUpdateRequestDTO req) {
+        return PostDTO.StudyUpdateDTO.builder()
+                .studyTags(req.getStudyTags())
+                .recruiting(req.isRecruiting())
+                .build();
     }
 
     public PostDTO.ReportUpdateDTO topostReportUpdateDTO(PostDTO.PostReportUpdateRequestDTO req) {
@@ -194,6 +238,30 @@ public class PostMapper {
                 .build();
     }
 
+    // 스터디 게시글 상세 조회 DTO 변환
+    public PostDTO.StudyInfoDetailDTO toStudyInfoDetailDTO(Study study) {
+        return PostDTO.StudyInfoDetailDTO.builder()
+                .postId(study.getPost().getId())
+                .title(study.getPost().getTitle())
+                .content(study.getPost().getContent())
+                .studyTags(study.getStudyTags())
+                .authorId(study.getPost().getAuthorId())
+                .createdAt(study.getPost().getCreatedAt())
+                .recruiting(study.isRecruiting())
+                .build();
+    }
+
+    // 스터디 게시글 목록 조회 DTO 변환
+    public PostDTO.StudyListDTO toStudyListDTO(Study study) {
+        return PostDTO.StudyListDTO.builder()
+                .postId(study.getPost().getId())
+                .title(study.getPost().getTitle())
+                .studyTags(study.getStudyTags())
+                .authorId(study.getPost().getAuthorId())
+                .createdAt(study.getPost().getCreatedAt())
+                .recruiting(study.isRecruiting())
+                .build();
+    }
 
     //보고서 미리보기를 만들 Mapper입니더
     public PostDTO.ReportPreviewDTO toReportPreviewDTO(PostReport report) {
