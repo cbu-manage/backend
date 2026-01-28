@@ -32,13 +32,14 @@ public class ProblemController {
     /**
      * 새로운 코딩 테스트 문제를 등록합니다.
      *
-     * @param userId 문제를 등록하는 회원의 ID
+     * @param userId  문제를 등록하는 회원의 ID
      * @param request 문제 생성 요청 데이터
      * @return 생성된 문제 정보
      */
     @PostMapping("/problems")
     @Operation(summary = "새 코딩 테스트 문제 등록", description = "새로운 코딩 테스트 문제를 등록합니다.")
-    public ResponseEntity<ProblemResponseDTO> createProblem(@RequestParam Long userId, @Valid @RequestBody ProblemCreateRequestDTO request) {
+    public ResponseEntity<ProblemResponseDTO> createProblem(@RequestParam Long userId,
+                                                            @Valid @RequestBody ProblemCreateRequestDTO request) {
         ProblemResponseDTO response = problemService.createProblem(request, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -46,8 +47,8 @@ public class ProblemController {
     /**
      * 특정 ID의 문제를 수정하는 메소드.
      *
-     * @param id 수정할 문제의 ID
-     * @param userId 수정 요청을 한 회원의 ID
+     * @param id      수정할 문제의 ID
+     * @param userId  수정 요청을 한 회원의 ID
      * @param request 수정할 문제 내용
      * @return 수정된 문제 정보
      */
@@ -55,7 +56,7 @@ public class ProblemController {
     @Operation(summary = "문제 정보 수정", description = "ID에 해당하는 문제의 정보를 수정합니다.")
     public ResponseEntity<ProblemResponseDTO> updateProblem(@PathVariable Integer id,
                                                             @RequestParam Long userId,
-                                                            @RequestBody ProblemUpdateRequestDTO request) {
+                                                            @Valid @RequestBody ProblemUpdateRequestDTO request) {
         ProblemResponseDTO response = problemService.updateProblem(id, userId, request);
         return ResponseEntity.ok(response);
     }
@@ -63,7 +64,7 @@ public class ProblemController {
     /**
      * 특정 ID의 문제를 삭제하는 메소드.
      *
-     * @param id 삭제할 문제의 ID
+     * @param id     삭제할 문제의 ID
      * @param userId 삭제 요청을 한 회원의 ID
      */
     @DeleteMapping("/problems/{id}")
@@ -82,8 +83,11 @@ public class ProblemController {
      */
     @GetMapping("/problems")
     @Operation(summary = "코딩 테스트 문제 목록 조회", description = "문제 목록을 조회합니다.")
-    public ResponseEntity<Page<ProblemListItemDTO>> getProblems(@PageableDefault(size = 10) Pageable pageable) {
-        Page<ProblemListItemDTO> problems = problemService.getProblems(pageable);
+    public ResponseEntity<Page<ProblemListItemDTO>> getProblems(
+            @PageableDefault(size = 10) Pageable pageable,
+            @RequestParam(required = false) List<Integer> categoryId,
+            @RequestParam(required = false) List<Integer> platformId) {
+        Page<ProblemListItemDTO> problems = problemService.getProblems(pageable, categoryId, platformId);
         return ResponseEntity.ok(problems);
     }
 
