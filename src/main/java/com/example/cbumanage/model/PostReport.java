@@ -1,5 +1,6 @@
 package com.example.cbumanage.model;
 
+import com.example.cbumanage.model.enums.PostReportGroupType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,26 +23,35 @@ public class PostReport {
     @JoinColumn(name="post_id")
     private Post post;
 
+    //보고서를 작성한 그룹
+    private Long groupId;
+
+    @Enumerated(EnumType.STRING)
+    private PostReportGroupType type;
+
     private LocalDateTime date;
 
     private String location;
 
-    private String startImage;
+    private String reportImage;
 
-    private String endImage;
+    //운영진의 승인 여부
+    private boolean isAccepted;
 
     //생성자
-    public PostReport(Post post, LocalDateTime date, String location, String startImage, String endImage) {
+    public PostReport(Post post, Long groupId,PostReportGroupType type,LocalDateTime date, String location, String reportImage) {
         this.post = post;
+        this.groupId = groupId;
+        this.type = type;
         this.date = date;
         this.location = location;
-        this.startImage = startImage;
-        this.endImage = endImage;
+        this.reportImage = reportImage;
+        this.isAccepted = false;
     }
 
     //생성 메소드
-    public static PostReport create(Post post, LocalDateTime date, String location, String startImage, String endImage) {
-        return new PostReport(post, date, location, startImage, endImage);
+    public static PostReport create(Post post,Long groupId,PostReportGroupType type ,LocalDateTime date, String location, String reportImage) {
+        return new PostReport(post,groupId,type,date, location, reportImage);
     }
 
     //엔티티 변경 메소드
@@ -49,16 +59,18 @@ public class PostReport {
         this.date = date;
     }
 
+    public void changeGroup(Group group) {this.groupId = groupId;}
+
+    public void changeType(PostReportGroupType type) {this.type = type;}
+
     public void changeLocation(String location) {
         this.location = location;
     }
 
-    public void changeStartImage(String startImage) {
-        this.startImage = startImage;
-    }
+    public void changeReportImage(String reportImage) {}
 
-    public void changeEndImage(String endImage) {
-        this.endImage = endImage;
+    public void Accept() {
+        this.isAccepted = true;
     }
 
 

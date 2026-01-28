@@ -1,21 +1,118 @@
 package com.example.cbumanage.service;
 
-import com.example.cbumanage.dto.StudyCreateDTO;
+import com.example.cbumanage.dto.PostDTO;
+import com.example.cbumanage.model.Post;
+import com.example.cbumanage.model.Study;
+import com.example.cbumanage.repository.PostRepository;
 import com.example.cbumanage.repository.StudyRepository;
+import com.example.cbumanage.utils.PostMapper;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class StudyService {
-	private StudyRepository studyRepository;
 
-	@Autowired
-	public StudyService(StudyRepository studyRepository) {
-		this.studyRepository = studyRepository;
-	}
+    private final StudyRepository studyRepository;
+    private final PostRepository postRepository;
+    private final PostMapper postMapper;
+    private final PostService postService;
 
-	public void createStudy(StudyCreateDTO createDTO) {
+    @Autowired
+    public StudyService(StudyRepository studyRepository,
+                        PostRepository postRepository,
+                        PostMapper postMapper,
+                        PostService postService) {
+        this.studyRepository = studyRepository;
+        this.postRepository = postRepository;
+        this.postMapper = postMapper;
+        this.postService = postService;
+    }
 
-	}
+    /**
+     * 스터디 게시글 생성 (Study 서브 테이블만)
+     */
+    public Study createStudy(PostDTO.StudyCreateDTO req) {
+        Post post = postRepository.findById(req.getPostId())
+                .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        List<String> tags = (req.getStudyTags() != null) ? req.getStudyTags() : new ArrayList<>();
+        Study study = Study.create(post, tags, req.isRecruiting());
+        return studyRepository.save(study);
+    }
 
+    /**
+     * 스터디 게시글 상세 조회
+     */
+    public PostDTO.StudyInfoDetailDTO getStudyByPostId(Long postId) {
+        Study study = studyRepository.findByPostId(postId);
+        return postMapper.toStudyInfoDetailDTO(study);
+    }
+
+    /**
+     * 스터디 게시글 목록 페이징 조회 (카테고리 기준)
+     */
+    public Page<PostDTO.StudyListDTO> getPostsByCategory(Pageable pageable, int category) {
+        Page<Study> studies = studyRepository.findByPostCategoryAndPostIsDeletedFalse(category, pageable);
+        return studies.map(study -> postMapper.toStudyListDTO(study));
+    }
+
+    /**
+     * 스터디 게시글 수정 (Study 필드만)
+     */
+    public void updateStudy(PostDTO.StudyUpdateDTO dto, Study study) {
+        study.updateStudyTags(dto.getStudyTags());
+        study.updateRecruiting(dto.isRecruiting());
+    }
+
+    /**
+     * 스터디 게시글 생성 (Post + Study 트랜잭션)
+     */
+    @Transactional
+    public PostDTO.PostStudyCreateResponseDTO createPostStudy(PostDTO.PostStudyCreateRequestDTO req, Long userId) {
+        PostDTO.PostCreateDTO postCreateDTO = postMapper.toPostCreateDTO(req, userId);
+        Post post = postService.createPost(postCreateDTO);
+        PostDTO.StudyCreateDTO studyCreateDTO = postMapper.toStudyCreateDTO(req, post.getId());
+        Study study = createStudy(studyCreateDTO);
+        return postMapper.toPostStudyCreateResponseDTO(post, study);
+    }
+
+    /**
+     * 스터디 게시글 수정 (Post + Study 트랜잭션)
+     */
+    @Transactional
+    public void updatePostStudy(PostDTO.PostStudyUpdateRequestDTO req, Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        PostDTO.PostUpdateDTO postUpdateDTO = postMapper.toPostUpdateDTO(req);
+        postService.updatePost(postUpdateDTO, post);
+        Study study = studyRepository.findByPostId(postId);
+        PostDTO.StudyUpdateDTO studyUpdateDTO = postMapper.toStudyUpdateDTO(req);
+        updateStudy(studyUpdateDTO, study);
+    }
+
+    /**
+     * 스터디 게시글 소프트 삭제
+     */
+    @Transactional
+    public void softDeletePost(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Study Not Found"));
+        post.delete();
+    }
+
+    /**
+     * 스터디 태그별 목록 조회.
+     * 사용자가 추가한 태그 문자열로 검색.
+     */
+    @Transactional
+    public Page<PostDTO.StudyListDTO> searchByTag(String tag, Pageable pageable) {
+        Page<Study> studies = studyRepository.findByStudyTagsContainingAndPostIsDeletedFalse(tag, pageable);
+        return studies.map(study -> postMapper.toStudyListDTO(study));
+    }
 }

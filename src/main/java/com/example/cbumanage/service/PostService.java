@@ -1,6 +1,12 @@
 package com.example.cbumanage.service;
 
 import com.example.cbumanage.dto.*;
+import com.example.cbumanage.model.*;
+import com.example.cbumanage.model.enums.GroupMemberRole;
+import com.example.cbumanage.model.enums.GroupMemberStatus;
+import com.example.cbumanage.model.enums.PostReportGroupType;
+import com.example.cbumanage.model.enums.Role;
+import com.example.cbumanage.repository.*;
 import com.example.cbumanage.model.CbuMember;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.PostReport;
@@ -10,10 +16,14 @@ import com.example.cbumanage.repository.PostRepository;
 import com.example.cbumanage.utils.PostMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import lombok.Getter;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class PostService {
@@ -22,14 +32,18 @@ public class PostService {
     private PostReportRepository postReportRepository;
     private PostMapper postMapper;
     private CbuMemberRepository cbuMemberRepository;
+    private GroupRepository groupRepository;
+    private GroupMemberRepository groupMemberRepository;
 
 
     @Autowired
-    public PostService(PostRepository postRepository, PostReportRepository postReportRepository, PostMapper postMapper, CbuMemberRepository cbuMemberRepository) {
+    public PostService(PostRepository postRepository, PostReportRepository postReportRepository, PostMapper postMapper, CbuMemberRepository cbuMemberRepository,GroupRepository groupRepository, GroupMemberRepository groupMemberRepository) {
         this.postRepository = postRepository;
         this.postReportRepository = postReportRepository;
         this.postMapper = postMapper;
         this.cbuMemberRepository = cbuMemberRepository;
+        this.groupRepository = groupRepository;
+        this.groupMemberRepository = groupMemberRepository;
     }
 
     /*
@@ -45,7 +59,8 @@ public class PostService {
 
     public PostReport createReport(PostDTO.ReportCreateDTO req) {
         Post post = postRepository.findById(req.getPostId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        PostReport report = PostReport.create(post, req.getDate(), req.getLocation(), req.getStartImage(), req.getEndImage());
+        Group group = groupRepository.findById(req.getGroupId());
+        PostReport report = PostReport.create(post, req.getGroupId(), req.getType(),req.getDate(),req.getLocation(),req.getReportImage());
         PostReport saved = postReportRepository.save(report);
         return saved;
     }
@@ -85,6 +100,40 @@ public class PostService {
     }
 
     /*
+    보고서 게시글 미리보기 리스트 입니다. 테스트를위해 카테고리는 7로 자동주입해서 사용합니다
+     */
+    public Page<PostDTO.PostReportPreviewDTO> getPostReportPreviewDTOList(Pageable pageable){
+        Page<Post> posts = postRepository.findByCategoryAndIsDeletedFalse(7,pageable);
+        return posts.map(post -> {
+            PostReport report = postReportRepository.findByPostId(post.getId());
+
+            return postMapper.toPostReportPreviewDTO(post, report);
+        });
+    }
+
+    /*
+    보고서 포스트 자세히 보기 메소드입니다. post와 report를 한번에 가져옵니다
+     */
+    public PostDTO.PostReportViewDTO getPostReportViewDTO(Long postId,Long userId){
+        PostReport report = postReportRepository.findByPostId(postId);
+        Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        CbuMember user = cbuMemberRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        boolean isAdmin = user.getRole().equals(Role.ADMIN);
+        boolean isAuthor = post.getAuthorId().equals(userId);
+        boolean isActiveMember =
+                groupMemberRepository.existsActiveMember(
+                        userId,
+                        report.getGroupId(),
+                        GroupMemberStatus.ACTIVE
+                );
+
+        if (!(isAdmin || isAuthor || isActiveMember)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        return postMapper.toPostReportViewDTO(post, report);
+    }
+
+    /*
     updatePostReport 하나의 메소드에 들어온 req 을 각각의 엔티티에 맞춰
     두개의 DTO 로 분리해 각 엔티티의 update 를 수행합니다
      Setter 를 사용하지 않고 클래스 내부에 변환메소드를 만들어 사용합니다
@@ -97,8 +146,8 @@ public class PostService {
     public void updateReport(PostDTO.ReportUpdateDTO postUpdateDTO,PostReport postReport) {
         postReport.changeDate(postUpdateDTO.getDate());
         postReport.changeLocation(postUpdateDTO.getLocation());
-        postReport.changeStartImage(postUpdateDTO.getStartImage());
-        postReport.changeEndImage(postUpdateDTO.getEndImage());
+        postReport.changeReportImage(postUpdateDTO.getReportImage());
+        postReport.changeType(postUpdateDTO.getType());
     }
 
     /*
@@ -106,8 +155,11 @@ public class PostService {
     Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소드이기에, 해당 메소드에 Transactional 를 추가했습니다
      */
     @Transactional
-    public void updatePostReport(PostDTO.PostReportUpdateRequestDTO req,Long postId) {
+    public void updatePostReport(PostDTO.PostReportUpdateRequestDTO req,Long postId,Long userId) {
         Post post=postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        if(!post.getAuthorId().equals(userId)){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,"NOT POST OWNER");
+        }
         PostDTO.PostUpdateDTO postUpdateDTO = postMapper.toPostUpdateDTO(req);
         updatePost(postUpdateDTO,post);
         PostReport report =postReportRepository.findByPostId(postId);
@@ -126,4 +178,17 @@ public class PostService {
         Post post=postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         post.delete();
     }
+
+    @Transactional
+    public void acceptReport(Long reportId,Long userId) {
+        CbuMember cbuMember = cbuMemberRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        if (!cbuMember.getRole().equals(Role.ADMIN)){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        PostReport report = postReportRepository.findByPostId(reportId);
+        report.Accept();
+    }
+
+
+
 }
