@@ -3,6 +3,8 @@ package com.example.cbumanage.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
+import org.hibernate.annotations.Comment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,15 +13,20 @@ import java.util.List;
 @Table(name = "study")
 @NoArgsConstructor
 @Getter
+@Schema(description = "스터디 모집 서브 엔티티. 공통 Post와 1:1로 연결되며 태그와 모집 여부를 저장합니다.")
 public class Study {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "study_id")
+    @Schema(description = "스터디 식별자")
+    @Comment("스터디 식별자")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
+    @Schema(description = "연결된 공통 Post 엔티티")
+    @Comment("공통 Post 테이블 FK")
     private Post post;
 
     /**
@@ -29,8 +36,12 @@ public class Study {
     @ElementCollection
     @CollectionTable(name = "study_tag", joinColumns = @JoinColumn(name = "study_id"))
     @Column(name = "tag_name", length = 50)
+    @Schema(description = "사용자가 자유롭게 입력한 스터디 태그 목록")
+    @Comment("사용자가 입력한 스터디 태그 목록")
     private List<String> studyTags = new ArrayList<>();
 
+    @Schema(description = "모집 중 여부 (true=모집 중, false=모집 완료)")
+    @Comment("모집 중 여부 (true=모집 중, false=모집 완료)")
     private boolean recruiting;
 
     public Study(Post post, List<String> tags, boolean recruiting) {
