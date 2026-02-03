@@ -111,11 +111,13 @@ public class ProjectController {
     @GetMapping("/post/project")
     public ResponseEntity<ResultResponse<Page<PostDTO.ProjectListDTO>>> getProjects(@io.swagger.v3.oas.annotations.Parameter(description = "페이지번호") @RequestParam int page,
                                                                               @io.swagger.v3.oas.annotations.Parameter(description = "페이지당 project 게시글 갯수") @RequestParam int size,
-                                                                              @Parameter(description = "카테고리") @RequestParam int category){
+                                                                              @Parameter(description = "카테고리") @RequestParam int category,
+                                                                                    @Parameter(description = "모집여부") @RequestParam(required = false) Boolean recruiting){
+
         Pageable pageable= PageRequest.of(
                 page,size, Sort.by(Sort.Order.desc("post.createdAt"))
         );
-        Page<PostDTO.ProjectListDTO> posts=projectService.getPostsByCategory(pageable,category);
+        Page<PostDTO.ProjectListDTO> posts=projectService.getPostsByCategory(pageable,recruiting,category);
         return ResultResponse.ok(SuccessCode.SUCCESS, posts);
     }
 
@@ -171,10 +173,10 @@ public class ProjectController {
     public ResponseEntity<ResultResponse<Page<PostDTO.ProjectListDTO>>> filterProjectsByFields(
             @io.swagger.v3.oas.annotations.Parameter(description = "페이지번호") @RequestParam int page,
             @io.swagger.v3.oas.annotations.Parameter(description = "페이지당 project 게시글 갯수") @RequestParam int size,
-            @RequestParam(name = "fields") ProjectFieldType fields) {
-
+            @RequestParam(name = "fields") ProjectFieldType fields,
+            @RequestParam(required = false) Boolean recruiting) {
         Pageable pageable= PageRequest.of(page,size, Sort.by(Sort.Order.desc("id")));
-        Page<PostDTO.ProjectListDTO> result = projectService.searchByField(fields, pageable);
+        Page<PostDTO.ProjectListDTO> result = projectService.searchByField(fields, recruiting, pageable);
 
         return ResultResponse.ok(SuccessCode.SUCCESS,result);
     }
