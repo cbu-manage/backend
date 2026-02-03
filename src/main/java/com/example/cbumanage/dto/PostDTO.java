@@ -5,6 +5,7 @@ import com.example.cbumanage.model.enums.PostReportGroupType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -444,24 +445,39 @@ public class PostDTO {
      */
     @Getter
     @NoArgsConstructor
+    @Schema(description = "스터디 모집 게시글 생성 요청 DTO")
     public static class PostStudyCreateRequestDTO {
+        @Schema(description = "스터디 게시글 제목")
         private String title;
+        @Schema(description = "스터디 게시글 내용")
         private String content;
+        @Schema(description = "스터디 태그 목록")
         private List<String> studyTags;
+        @Schema(description = "모집 중 여부 (true=모집 중, false=모집 완료)")
         private boolean recruiting;
+        @Schema(description = "게시글 카테고리 코드")
         private int category;
     }
 
     @Getter
     @NoArgsConstructor
+    @Schema(description = "스터디 모집 게시글 생성 응답 DTO")
     public static class PostStudyCreateResponseDTO {
+        @Schema(description = "생성된 게시글 ID")
         private Long postId;
+        @Schema(description = "작성자 회원 ID")
         private Long authorId;
+        @Schema(description = "스터디 게시글 제목")
         private String title;
+        @Schema(description = "스터디 게시글 내용")
         private String content;
+        @Schema(description = "스터디 태그 목록")
         private List<String> studyTags;
+        @Schema(description = "모집 중 여부")
         private boolean recruiting;
+        @Schema(description = "게시글 생성 시각")
         private LocalDateTime createdAt;
+        @Schema(description = "게시글 카테고리 코드")
         private int category;
 
         @Builder
@@ -481,9 +497,13 @@ public class PostDTO {
 
     @Getter
     @NoArgsConstructor
+    @Schema(description = "스터디 서브 테이블 생성용 내부 DTO")
     public static class StudyCreateDTO {
+        @Schema(description = "연결된 Post ID")
         private Long postId;
+        @Schema(description = "스터디 태그 목록")
         private List<String> studyTags;
+        @Schema(description = "모집 중 여부")
         private boolean recruiting;
 
         @Builder
@@ -496,17 +516,25 @@ public class PostDTO {
 
     @Getter
     @NoArgsConstructor
+    @Schema(description = "스터디 게시글 수정 요청 DTO")
     public static class PostStudyUpdateRequestDTO {
+        @Schema(description = "수정할 제목")
         private String title;
+        @Schema(description = "수정할 내용")
         private String content;
+        @Schema(description = "수정할 태그 목록")
         private List<String> studyTags;
+        @Schema(description = "모집 중 여부")
         private boolean recruiting;
     }
 
     @Getter
     @NoArgsConstructor
+    @Schema(description = "Study 엔티티 수정용 내부 DTO")
     public static class StudyUpdateDTO {
+        @Schema(description = "수정할 태그 목록")
         private List<String> studyTags;
+        @Schema(description = "모집 중 여부")
         private boolean recruiting;
 
         @Builder
@@ -521,13 +549,21 @@ public class PostDTO {
      */
     @Getter
     @NoArgsConstructor
+    @Schema(description = "스터디 게시글 상세 조회 DTO")
     public static class StudyInfoDetailDTO {
+        @Schema(description = "게시글 ID")
         private Long postId;
+        @Schema(description = "게시글 제목")
         private String title;
+        @Schema(description = "게시글 내용")
         private String content;
+        @Schema(description = "스터디 태그 목록")
         private List<String> studyTags;
+        @Schema(description = "작성자 회원 ID")
         private Long authorId;
+        @Schema(description = "게시글 생성 시각")
         private LocalDateTime createdAt;
+        @Schema(description = "모집 중 여부")
         private boolean recruiting;
 
         @Builder
@@ -549,12 +585,19 @@ public class PostDTO {
      */
     @Getter
     @NoArgsConstructor
+    @Schema(description = "스터디 게시글 목록 조회 DTO")
     public static class StudyListDTO {
+        @Schema(description = "게시글 ID")
         private Long postId;
+        @Schema(description = "게시글 제목")
         private String title;
+        @Schema(description = "스터디 태그 목록")
         private List<String> studyTags;
+        @Schema(description = "작성자 회원 ID")
         private Long authorId;
+        @Schema(description = "게시글 생성 시각")
         private LocalDateTime createdAt;
+        @Schema(description = "모집 중 여부")
         private boolean recruiting;
 
         @Builder
