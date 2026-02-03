@@ -11,7 +11,9 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,9 +88,10 @@ public class StudyService {
      * 스터디 게시글 수정 (Post + Study 트랜잭션)
      */
     @Transactional
-    public void updatePostStudy(PostDTO.PostStudyUpdateRequestDTO req, Long postId) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+    public void updatePostStudy(PostDTO.PostStudyUpdateRequestDTO req, Long postId, Long userId) {
+        Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        // 권한 확인
+        validateStudyOwner(post, userId);
         PostDTO.PostUpdateDTO postUpdateDTO = postMapper.toPostUpdateDTO(req);
         postService.updatePost(postUpdateDTO, post);
         Study study = studyRepository.findByPostId(postId);
@@ -100,9 +103,10 @@ public class StudyService {
      * 스터디 게시글 소프트 삭제
      */
     @Transactional
-    public void softDeletePost(Long postId) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new EntityNotFoundException("Study Not Found"));
+    public void softDeletePost(Long postId, Long userId) {
+        Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Study Not Found"));
+        // 권한 확인
+        validateStudyOwner(post, userId);
         post.delete();
     }
 
@@ -114,5 +118,17 @@ public class StudyService {
     public Page<PostDTO.StudyListDTO> searchByTag(String tag, Pageable pageable) {
         Page<Study> studies = studyRepository.findByStudyTagsContainingAndPostIsDeletedFalse(tag, pageable);
         return studies.map(study -> postMapper.toStudyListDTO(study));
+    }
+
+    /**
+     * 유효 권한 확인 메서드
+     */
+    private void validateStudyOwner(Post post, Long userId) {
+        if (!post.getAuthorId().equals(userId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "게시글에 대한 권한이 없습니다."
+            );
+        }
     }
 }
