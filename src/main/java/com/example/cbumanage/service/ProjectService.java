@@ -55,11 +55,16 @@ public class ProjectService {
     }
 
     //프로젝트 게시글 전체 조회 메서드
-    public Page<PostDTO.ProjectListDTO> getPostsByCategory(Pageable pageable,Boolean recruiting, int category){
-        Page<Project> projects= projectRepository.findByCategory(category,recruiting,pageable);
-        return projects.map(project->postMapper.toProjectListDTO(project));
+    public Page<PostDTO.ProjectListDTO> getPostsByCategory(Pageable pageable, Boolean recruiting, int category) {
+        Page<Project> projects = projectRepository.findByCategory(category, recruiting, pageable);
+        return projects.map(project -> postMapper.toProjectListDTO(project));
     }
 
+    //내가 작성한 프로젝트 게시글 전체 조회 메서드
+    public Page<PostDTO.ProjectListDTO> getMyProjectsByUserId(Pageable pageable, Long userId, int category) {
+        Page<Project> projects = projectRepository.findByUserIdAndCategory(userId,category, pageable);
+        return projects.map(project -> postMapper.toProjectListDTO(project));
+    }
     //프로젝트 게시글 수정 메서드
     public void updateProject(PostDTO.ProjectUpdateDTO dto, Project project) {
         project.updateRecruitmentFields(dto.getRecruitmentFields());

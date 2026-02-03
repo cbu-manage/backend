@@ -122,6 +122,24 @@ public class ProjectController {
     }
 
     @Operation(
+            summary = "내가 작성한 프로젝트 게시글 목록 조회",
+            description = "쿠키에서 userId를 가져와서 자신이 작성한 프로젝트 게시글만 조회 합니다."
+    )
+    @GetMapping("/post/project/me")
+    public ResponseEntity<ResultResponse<Page<PostDTO.ProjectListDTO>>> getMyProjects(@io.swagger.v3.oas.annotations.Parameter(description = "페이지번호") @RequestParam int page,
+                                                                                    @io.swagger.v3.oas.annotations.Parameter(description = "페이지당 project 게시글 갯수") @RequestParam int size,
+                                                                                    @Parameter(description = "카테고리") @RequestParam int category,
+    HttpServletRequest request){
+        Pageable pageable= PageRequest.of(
+                page,size, Sort.by(Sort.Order.desc("post.createdAt"))
+        );
+
+        Long userId = userIdFromCookie(request);
+        Page<PostDTO.ProjectListDTO> posts=projectService.getMyProjectsByUserId(pageable, userId,category);
+        return ResultResponse.ok(SuccessCode.SUCCESS, posts);
+    }
+
+    @Operation(
             summary = "프로젝트 게시글 상세 조회",
             description = "post id를 이용하여 프로젝트 게시글 상세 정보를 조회합니다."
     )
