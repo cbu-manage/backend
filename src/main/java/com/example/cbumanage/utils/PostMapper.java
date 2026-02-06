@@ -195,26 +195,6 @@ public class PostMapper {
     }
 
 
-    //보고서 미리보기를 만들 Mapper입니더
-    public PostDTO.ReportPreviewDTO toReportPreviewDTO(PostReport report) {
-        return PostDTO.ReportPreviewDTO.builder().
-                type(report.getType()).
-                isAccepted(report.isAccepted()).
-                build();
-    }
-
-    //보고서 게시글 리스트에서 사용할 보고서 게시글 미리보기 DTO의 Mapper입니다
-    public PostDTO.PostReportPreviewDTO toPostReportPreviewDTO(Post post,PostReport report) {
-        Group group = groupRepository.findById(report.getGroupId()).orElseThrow(() -> new EntityNotFoundException("Group not found"));
-
-        return PostDTO.PostReportPreviewDTO.builder()
-                .postInfoDTO(toPostInfoDTO(post))
-                .reportPreviewDTO(toReportPreviewDTO(report))
-                .groupPreviewDTO(groupUtil.toGroupPreviewDTO(group))
-                .build();
-
-    }
-
     public PostDTO.PostReportViewDTO toPostReportViewDTO(Post post, PostReport report) {
         return PostDTO.PostReportViewDTO
                 .builder()

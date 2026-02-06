@@ -108,9 +108,9 @@ public class PostDTO {
 
         private String location;
 
-        private String reportImage;
-
         private LocalDateTime date;
+
+        private String reportImage;
 
         private int category;
 
@@ -432,34 +432,34 @@ public class PostDTO {
         }
     }
 
-    //보고서 게시글 미리보기 DTO의 보고서 관련 내용을 담고있는 DTO입니다
-    @Getter
-    @NoArgsConstructor
-    public static class ReportPreviewDTO{
-        private PostReportGroupType type;
-        private boolean isAccepted;
-
-        @Builder
-        public ReportPreviewDTO(PostReportGroupType type, boolean isAccepted){
-            this.type = type;
-            this.isAccepted = isAccepted;
-        }
-    }
-
     //보고서 게시글 미리보기입니다 보고서미리보기/게시글정보/그룹미리보기 를 담고있습니다
     @Getter
     @NoArgsConstructor
     public static class PostReportPreviewDTO{
-        private ReportPreviewDTO reportPreviewDTO;
-        private PostInfoDTO postInfoDTO;
-        private GroupDTO.GroupPreviewDTO groupPreviewDTO;
+        private Long postId;
+        private String title;
+        private LocalDateTime createdAt;
+        private Long authorId;
+
+        private PostReportGroupType type;
+        private boolean isAccepted;
+
+        private Long groupId;
+        private String groupName;
 
         @Builder
-        public PostReportPreviewDTO(ReportPreviewDTO reportPreviewDTO, PostInfoDTO postInfoDTO, GroupDTO.GroupPreviewDTO groupPreviewDTO){
-            this.reportPreviewDTO = reportPreviewDTO;
-            this.postInfoDTO = postInfoDTO;
-            this.groupPreviewDTO=groupPreviewDTO;
+        public PostReportPreviewDTO(Long postId,String title,LocalDateTime createdAt,Long authorId,PostReportGroupType type,boolean isAccepted,Long groupId,String groupName){
+            this.postId = postId;
+            this.title = title;
+            this.createdAt = createdAt;
+            this.authorId = authorId;
+            this.type = type;
+            this.isAccepted = isAccepted;
+            this.groupId = groupId;
+            this.groupName = groupName;
         }
+
+
     }
 
     @Getter

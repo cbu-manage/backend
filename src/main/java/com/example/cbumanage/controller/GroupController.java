@@ -12,6 +12,7 @@ import com.example.cbumanage.utils.JwtProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -98,8 +99,14 @@ public class GroupController {
     public ResponseEntity<ResultResponse<GroupDTO.GroupMemberInfoDTO>> applyGroupMember(@PathVariable Long groupId,
                                                                                         HttpServletRequest httpServletRequest) {
         Long memberId = extractUserIdFromCookie(httpServletRequest);
-        GroupDTO.GroupMemberInfoDTO groupMemberInfoDTO = groupService.addGroupMember(groupId,memberId);
-        return ResultResponse.ok(SuccessCode.CREATED, groupMemberInfoDTO);
+        try {
+            GroupDTO.GroupMemberInfoDTO groupMemberInfoDTO = groupService.addGroupMember(groupId, memberId);
+            return ResultResponse.ok(SuccessCode.CREATED, groupMemberInfoDTO);
+        }catch (EntityExistsException e){
+            return ResultResponse.error(ErrorCode.ALREADY_JOINED_MEMBER);
+        }
+
+
     }
 
     @Operation(

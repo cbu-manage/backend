@@ -10,9 +10,9 @@ import com.example.cbumanage.repository.CommentRepository;
 import com.example.cbumanage.repository.GroupMemberRepository;
 import com.example.cbumanage.repository.GroupRepository;
 import com.example.cbumanage.utils.GroupUtil;
+import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -51,6 +51,15 @@ public class GroupService {
                                                       Long memberId) {
         Group group = groupRepository.findById(groupId).orElseThrow(()-> new EntityNotFoundException("Group not found"));
         CbuMember member = cbuMemberRepository.findById(memberId).orElseThrow(()-> new EntityNotFoundException("Member not found"));
+        boolean isActiveMember =
+                groupMemberRepository.existsActiveMember(
+                        memberId,
+                        groupId,
+                        GroupMemberStatus.ACTIVE
+                );
+        if (isActiveMember){
+            throw new EntityExistsException("이미 가입된 멤버입니다");
+        }
 
         GroupMember groupMember = GroupMember.create(group,member,GroupMemberStatus.PENDING,GroupMemberRole.MEMBER);
         group.addMember(groupMember);
@@ -118,7 +127,7 @@ public class GroupService {
     public void activateGroupStatus(Long groupId,Long userId){
         Group group = groupRepository.findById(groupId).orElseThrow(()-> new EntityNotFoundException("Group not found"));
         assertIsAdmin(userId);
-        group.activate();;
+        group.activate();
     }
 
     //그룹을 비활동 상태로 변경시키는 메소드 입니다
@@ -156,7 +165,7 @@ public class GroupService {
         group.changeMaxActiveMembers(req.getMaxActiveMembers());
     }
 
-    //시전한 user가 리더가 맞는지 확인하는 메소드
+    //시전한 user가 리더가 맞는지 확인하는 메소드 - 변수정리
     private void assertIsGroupLeader(Long groupId, Long userId){
         Group g = groupRepository.findById(groupId).orElseThrow(()-> new EntityNotFoundException("Group not found"));
         CbuMember cbuMember =  cbuMemberRepository.findById(userId).orElseThrow(()-> new EntityNotFoundException("User not found"));

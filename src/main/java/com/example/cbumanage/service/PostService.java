@@ -101,14 +101,12 @@ public class PostService {
 
     /*
     보고서 게시글 미리보기 리스트 입니다. 테스트를위해 카테고리는 7로 자동주입해서 사용합니다
+
+    fetch join -> 해결
      */
     public Page<PostDTO.PostReportPreviewDTO> getPostReportPreviewDTOList(Pageable pageable){
-        Page<Post> posts = postRepository.findByCategoryAndIsDeletedFalse(7,pageable);
-        return posts.map(post -> {
-            PostReport report = postReportRepository.findByPostId(post.getId());
-
-            return postMapper.toPostReportPreviewDTO(post, report);
-        });
+        Page<PostDTO.PostReportPreviewDTO> reportPreviewDTOS = postReportRepository.findPostReportPreviews(pageable,7);
+        return reportPreviewDTOS;
     }
 
     /*
@@ -185,7 +183,7 @@ public class PostService {
         if (!cbuMember.getRole().equals(Role.ADMIN)){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
-        PostReport report = postReportRepository.findByPostId(reportId);
+        PostReport report = postReportRepository.findById(reportId).orElseThrow(()->new EntityNotFoundException("Report Not Found")); //확인->변경했습니다
         report.Accept();
     }
 
