@@ -190,8 +190,10 @@ public class StudyController {
     )
     @GetMapping("/post/study/{postId}/apply")
     public ResponseEntity<ResultResponse<List<StudyApplyDTO.StudyApplyInfoDTO>>> getApplicants(
-            @PathVariable Long postId) {
-        List<StudyApplyDTO.StudyApplyInfoDTO> result = studyService.getApplicants(postId);
+            @PathVariable Long postId,
+            HttpServletRequest request) {
+        Long userId = userIdFromCookie(request);
+        List<StudyApplyDTO.StudyApplyInfoDTO> result = studyService.getApplicants(postId, userId);
         return ResultResponse.ok(SuccessCode.SUCCESS, result);
     }
 

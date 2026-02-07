@@ -8,10 +8,10 @@ import com.example.cbumanage.model.Group;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.Study;
 import com.example.cbumanage.model.StudyApply;
-import com.example.cbumanage.model.enums.GroupMemberStatus;
 import com.example.cbumanage.model.enums.StudyApplyStatus;
 import com.example.cbumanage.repository.CbuMemberRepository;
 import com.example.cbumanage.repository.PostRepository;
+import com.example.cbumanage.repository.GroupRepository;
 import com.example.cbumanage.repository.StudyApplyRepository;
 import com.example.cbumanage.repository.StudyRepository;
 import com.example.cbumanage.utils.PostMapper;
@@ -37,6 +37,7 @@ public class StudyService {
     private final StudyApplyRepository studyApplyRepository;
     private final CbuMemberRepository cbuMemberRepository;
     private final GroupService groupService;
+    private final GroupRepository groupRepository;
 
     @Autowired
     public StudyService(StudyRepository studyRepository,
@@ -45,7 +46,8 @@ public class StudyService {
                         PostService postService,
                         StudyApplyRepository studyApplyRepository,
                         CbuMemberRepository cbuMemberRepository,
-                        GroupService groupService) {
+                        GroupService groupService,
+                        GroupRepository groupRepository) {
         this.studyRepository = studyRepository;
         this.postRepository = postRepository;
         this.postMapper = postMapper;
@@ -53,6 +55,7 @@ public class StudyService {
         this.studyApplyRepository = studyApplyRepository;
         this.cbuMemberRepository = cbuMemberRepository;
         this.groupService = groupService;
+        this.groupRepository = groupRepository;
     }
 
     /**
@@ -185,14 +188,16 @@ public class StudyService {
     }
 
     /**
-     * 스터디 신청 목록 조회
+     * 스터디 신청 목록 조회 (팀장만 가능)
      */
     @Transactional
-    public List<StudyApplyDTO.StudyApplyInfoDTO> getApplicants(Long postId) {
+    public List<StudyApplyDTO.StudyApplyInfoDTO> getApplicants(Long postId, Long userId) {
         Study study = studyRepository.findByPostId(postId);
         if (study == null) {
             throw new EntityNotFoundException("Study Not Found");
         }
+
+        validateStudyOwner(study.getPost(), userId);
 
         List<StudyApply> applies = studyApplyRepository.findByStudyId(study.getId());
         return applies.stream()
@@ -204,14 +209,12 @@ public class StudyService {
      * 스터디 신청 수락/거절
      */
     @Transactional
-    public StudyApplyDTO.StudyApplyInfoDTO updateApplyStatus(Long postId, Long applyId, 
+    public StudyApplyDTO.StudyApplyInfoDTO updateApplyStatus(Long postId, Long applyId,
                                                               StudyApplyStatus status, Long userId) {
         Study study = studyRepository.findByPostId(postId);
         if (study == null) {
             throw new EntityNotFoundException("Study Not Found");
         }
-
-        // 권한 확인 (스터디 개설자=팀장만 가능)
         validateStudyOwner(study.getPost(), userId);
 
         StudyApply apply = studyApplyRepository.findByIdAndStudyId(applyId, study.getId())
@@ -234,41 +237,31 @@ public class StudyService {
 
         Post post = study.getPost();
 
-        // 권한 확인 (스터디 개설자=팀장만 가능)
         validateStudyOwner(post, userId);
 
-        // 이미 마감된 스터디인지 확인
         if (!study.isRecruiting()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 모집이 마감된 스터디입니다.");
         }
 
-        // 모집 상태 변경
         study.updateRecruiting(false);
 
-        // Group 생성 (개설자가 Leader)
-        GroupDTO.GroupCreateRequestDTO groupReq = new GroupDTO.GroupCreateRequestDTO();
-        // Reflection으로 필드 설정 (DTO에 setter가 없으므로)
-        setGroupCreateRequestDTO(groupReq, studyName, 1, 10);
-
-        GroupDTO.GroupCreateResponseDTO groupResponse = groupService.createGroup(groupReq, userId);
+        // Group 생성 (개설자가 팀장)
+        GroupDTO.GroupCreateResponseDTO groupResponse = groupService.createGroupInternal(studyName, 1, 10, userId);
 
         // 수락된 신청자들을 GroupMember로 등록
         List<StudyApply> acceptedApplies = studyApplyRepository.findByStudyIdAndStatus(
                 study.getId(), StudyApplyStatus.ACCEPTED);
 
         for (StudyApply apply : acceptedApplies) {
-            // 그룹에 멤버 추가 + 활성화
             GroupDTO.GroupMemberInfoDTO memberInfo = groupService.addGroupMember(
-                    groupResponse.getGroupId(), 
+                    groupResponse.getGroupId(),
                     apply.getApplicant().getCbuMemberId());
             groupService.activateGroupMember(memberInfo.getGroupMemberId(), userId);
         }
 
-        // Study와 Group 연결
-        Group group = new Group();
-        // GroupRepository를 직접 호출하지 않고 linkGroup에서 처리
-        // groupId로 조회하여 연결 필요 - 여기서는 간단히 처리
-        study.linkGroup(null); // 추후 개선 필요
+        Group group = groupRepository.findById(groupResponse.getGroupId())
+                .orElseThrow(() -> new EntityNotFoundException("생성된 그룹을 찾을 수 없습니다."));
+        study.linkGroup(group);
 
         return groupResponse;
     }
@@ -287,27 +280,5 @@ public class StudyService {
                 .status(apply.getStatus())
                 .createdAt(apply.getCreatedAt())
                 .build();
-    }
-
-    /**
-     * GroupCreateRequestDTO 필드 설정 헬퍼
-     */
-    private void setGroupCreateRequestDTO(GroupDTO.GroupCreateRequestDTO dto, 
-                                           String groupName, int min, int max) {
-        try {
-            var nameField = dto.getClass().getDeclaredField("groupName");
-            nameField.setAccessible(true);
-            nameField.set(dto, groupName);
-
-            var minField = dto.getClass().getDeclaredField("minActiveMembers");
-            minField.setAccessible(true);
-            minField.set(dto, min);
-
-            var maxField = dto.getClass().getDeclaredField("maxActiveMembers");
-            maxField.setAccessible(true);
-            maxField.set(dto, max);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to set GroupCreateRequestDTO fields", e);
-        }
     }
 }
