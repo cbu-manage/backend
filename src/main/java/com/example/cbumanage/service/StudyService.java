@@ -132,12 +132,12 @@ public class StudyService {
     }
 
     /**
-     * 스터디 태그별 목록 조회.
+     * 스터디 태그별 목록 조회 (정확히 일치).
      * 사용자가 추가한 태그 문자열로 검색.
      */
     @Transactional
     public Page<PostDTO.StudyListDTO> searchByTag(String tag, Pageable pageable) {
-        Page<Study> studies = studyRepository.findByStudyTagsContainingAndPostIsDeletedFalse(tag, pageable);
+        Page<Study> studies = studyRepository.findByExactTagAndPostIsDeletedFalse(tag, pageable);
         return studies.map(study -> postMapper.toStudyListDTO(study));
     }
 
