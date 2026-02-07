@@ -44,6 +44,12 @@ public class Study {
     @Comment("모집 중 여부 (true=모집 중, false=모집 완료)")
     private boolean recruiting;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    @Schema(description = "모집 마감 후 생성된 그룹")
+    @Comment("모집 마감 후 생성된 그룹 FK")
+    private Group group;
+
     public Study(Post post, List<String> tags, boolean recruiting) {
         this.post = post;
         this.recruiting = recruiting;
@@ -69,5 +75,9 @@ public class Study {
 
     public void updateRecruiting(boolean recruiting) {
         this.recruiting = recruiting;
+    }
+
+    public void linkGroup(Group group) {
+        this.group = group;
     }
 }
