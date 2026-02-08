@@ -13,7 +13,12 @@ import org.hibernate.annotations.Comment;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "study_apply")
+@Table(name = "study_apply", uniqueConstraints = {
+    @UniqueConstraint(
+        name = "uk_study_apply_study_applicant",
+        columnNames = {"study_id", "applicant_id"}
+    )
+})
 @NoArgsConstructor
 @Getter
 @EntityListeners(AuditingEntityListener.class)
