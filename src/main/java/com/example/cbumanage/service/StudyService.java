@@ -163,17 +163,18 @@ public class StudyService {
             throw new EntityNotFoundException("Study Not Found");
         }
 
-        // 모집 중인지 확인
+        if (study.getPost().isDeleted()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "삭제된 게시글입니다.");
+        }
+
         if (!study.isRecruiting()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "모집이 종료된 스터디입니다.");
         }
 
-        // 중복 신청 확인
         if (studyApplyRepository.existsByStudyIdAndApplicantCbuMemberId(study.getId(), applicantId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 신청한 스터디입니다.");
         }
 
-        // 본인 스터디에 신청 불가
         if (study.getPost().getAuthorId().equals(applicantId)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "본인이 개설한 스터디에는 신청할 수 없습니다.");
         }
@@ -217,6 +218,19 @@ public class StudyService {
         }
         validateStudyOwner(study.getPost(), userId);
 
+        if (status == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "상태 값은 필수입니다.");
+        }
+        if (status != StudyApplyStatus.ACCEPTED && status != StudyApplyStatus.REJECTED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                "ACCEPTED 또는 REJECTED만 허용됩니다.");
+        }
+
+        if (!study.isRecruiting()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                "모집이 마감된 스터디입니다.");
+        }
+
         StudyApply apply = studyApplyRepository.findByIdAndStudyId(applyId, study.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Apply Not Found"));
 
@@ -245,12 +259,19 @@ public class StudyService {
 
         study.updateRecruiting(false);
 
-        // Group 생성 (개설자가 팀장)
-        GroupDTO.GroupCreateResponseDTO groupResponse = groupService.createGroupInternal(studyName, 1, 10, userId);
-
-        // 수락된 신청자들을 GroupMember로 등록
         List<StudyApply> acceptedApplies = studyApplyRepository.findByStudyIdAndStatus(
                 study.getId(), StudyApplyStatus.ACCEPTED);
+
+        if (acceptedApplies.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                "수락된 신청자가 없습니다. 최소 1명 이상 수락해야 합니다.");
+        }
+
+        int totalMembers = acceptedApplies.size() + 1;
+
+        // Group 생성 (개설자가 팀장)
+        GroupDTO.GroupCreateResponseDTO groupResponse = 
+            groupService.createGroupInternal(studyName, 1, totalMembers, userId);
 
         for (StudyApply apply : acceptedApplies) {
             GroupDTO.GroupMemberInfoDTO memberInfo = groupService.addGroupMember(
