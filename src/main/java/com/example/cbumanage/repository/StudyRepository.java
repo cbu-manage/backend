@@ -17,6 +17,7 @@ public interface StudyRepository extends JpaRepository<Study, Long> {
     @EntityGraph(attributePaths = {"post"})
     Page<Study> findByPostCategoryAndPostIsDeletedFalse(int category, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"post"})
     @Query("""
                 SELECT s
                 FROM Study s

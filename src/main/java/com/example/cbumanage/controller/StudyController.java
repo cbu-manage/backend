@@ -159,7 +159,7 @@ public class StudyController {
 
     @Operation(
             summary = "스터디 태그별 목록 페이징 조회",
-            description = "사용자가 추가한 태그 문자열로 스터디 목록을 조회합니다. 태그가 여러 개인 경우 그중 하나라도 포함되면 조회됩니다."
+            description = "정확히 일치하는 태그로 스터디 목록을 조회합니다."
     )
     @GetMapping("/post/study/filter")
     public ResponseEntity<ResultResponse<Page<PostDTO.StudyListDTO>>> filterStudiesByTag(
