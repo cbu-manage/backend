@@ -19,7 +19,7 @@ public interface StudyRepository extends JpaRepository<Study, Long> {
 
     @EntityGraph(attributePaths = {"post"})
     @Query("""
-                SELECT s
+                SELECT DISTINCT s
                 FROM Study s
                 JOIN s.studyTags t
                 WHERE t = :tag
