@@ -15,8 +15,10 @@ import com.example.cbumanage.repository.GroupRepository;
 import com.example.cbumanage.repository.StudyApplyRepository;
 import com.example.cbumanage.repository.StudyRepository;
 import com.example.cbumanage.utils.PostMapper;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -62,7 +64,7 @@ public class StudyService {
      */
     public Study createStudy(PostDTO.StudyCreateDTO req) {
         Post post = postRepository.findById(req.getPostId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post Not Found"));
+                .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         List<String> tags = (req.getStudyTags() != null) ? req.getStudyTags() : new ArrayList<>();
         Study study = Study.create(post, tags, req.isRecruiting());
         return studyRepository.save(study);
@@ -110,7 +112,7 @@ public class StudyService {
     @Transactional
     public void updatePostStudy(PostDTO.PostStudyUpdateRequestDTO req, Long postId, Long userId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post Not Found"));
+                .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         // 권한 확인
         validateStudyOwner(post, userId);
         PostDTO.PostUpdateDTO postUpdateDTO = postMapper.toPostUpdateDTO(req);
@@ -126,7 +128,7 @@ public class StudyService {
     @Transactional
     public void softDeletePost(Long postId, Long userId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Study Not Found"));
+                .orElseThrow(() -> new EntityNotFoundException("Study Not Found"));
         // 권한 확인
         validateStudyOwner(post, userId);
         post.delete();
@@ -161,7 +163,7 @@ public class StudyService {
     public StudyApplyDTO.StudyApplyInfoDTO applyStudy(Long postId, Long applicantId) {
         Study study = studyRepository.findByPostId(postId);
         if (study == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Study Not Found");
+            throw new EntityNotFoundException("Study Not Found");
         }
 
         if (study.getPost().isDeleted()) {
@@ -181,10 +183,14 @@ public class StudyService {
         }
 
         CbuMember applicant = cbuMemberRepository.findById(applicantId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Member Not Found"));
+                .orElseThrow(() -> new EntityNotFoundException("Member Not Found"));
 
         StudyApply apply = StudyApply.create(study, applicant);
-        studyApplyRepository.save(apply);
+        try {
+            studyApplyRepository.save(apply);
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 신청한 스터디입니다.");
+        }
 
         return toStudyApplyInfoDTO(apply);
     }
@@ -196,7 +202,11 @@ public class StudyService {
     public List<StudyApplyDTO.StudyApplyInfoDTO> getApplicants(Long postId, Long userId) {
         Study study = studyRepository.findByPostId(postId);
         if (study == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Study Not Found");
+            throw new EntityNotFoundException("Study Not Found");
+        }
+
+        if (study.getPost().isDeleted()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "삭제된 게시글입니다.");
         }
 
         validateStudyOwner(study.getPost(), userId);
@@ -215,8 +225,13 @@ public class StudyService {
                                                               StudyApplyStatus status, Long userId) {
         Study study = studyRepository.findByPostId(postId);
         if (study == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Study Not Found");
+            throw new EntityNotFoundException("Study Not Found");
         }
+
+        if (study.getPost().isDeleted()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "삭제된 게시글입니다.");
+        }
+
         validateStudyOwner(study.getPost(), userId);
 
         if (status == null) {
@@ -233,7 +248,7 @@ public class StudyService {
         }
 
         StudyApply apply = studyApplyRepository.findByIdAndStudyId(applyId, study.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Apply Not Found"));
+                .orElseThrow(() -> new EntityNotFoundException("Apply Not Found"));
 
         apply.changeStatus(status);
 
@@ -249,9 +264,13 @@ public class StudyService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "스터디 이름은 필수입니다.");
         }
 
-        Study study = studyRepository.findByPostId(postId);
+        Study study = studyRepository.findByPostIdForUpdate(postId);
         if (study == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Study Not Found");
+            throw new EntityNotFoundException("Study Not Found");
+        }
+
+        if (study.getPost().isDeleted()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "삭제된 게시글입니다.");
         }
 
         Post post = study.getPost();
@@ -286,7 +305,7 @@ public class StudyService {
         }
 
         Group group = groupRepository.findById(groupResponse.getGroupId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "생성된 그룹을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("생성된 그룹을 찾을 수 없습니다."));
         study.linkGroup(group);
 
         return groupResponse;
