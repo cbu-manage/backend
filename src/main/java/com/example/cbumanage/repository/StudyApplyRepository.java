@@ -27,6 +27,9 @@ public interface StudyApplyRepository extends JpaRepository<StudyApply, Long> {
     @EntityGraph(attributePaths = {"applicant"})
     Optional<StudyApply> findByIdAndStudyId(Long applyId, Long studyId);
 
+    // 특정 스터디의 상태별 신청 수 카운트
+    long countByStudyIdAndStatus(Long studyId, StudyApplyStatus status);
+
     // 특정 사용자가 수락된 스터디 신청 목록
     List<StudyApply> findByApplicantCbuMemberIdAndStatus(Long applicantId, StudyApplyStatus status);
 }
