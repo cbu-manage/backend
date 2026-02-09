@@ -145,7 +145,9 @@ public class PostMapper {
         return PostDTO.StudyCreateDTO.builder()
                 .postId(postId)
                 .studyTags(req.getStudyTags())
+                .studyName(req.getStudyName())
                 .recruiting(req.isRecruiting())
+                .maxMembers(req.getMaxMembers())
                 .build();
     }
 
@@ -156,7 +158,9 @@ public class PostMapper {
                 .title(post.getTitle())
                 .content(post.getContent())
                 .studyTags(study.getStudyTags())
+                .studyName(study.getStudyName())
                 .recruiting(study.isRecruiting())
+                .maxMembers(study.getMaxMembers())
                 .createdAt(post.getCreatedAt())
                 .category(post.getCategory())
                 .build();
@@ -245,9 +249,11 @@ public class PostMapper {
                 .title(study.getPost().getTitle())
                 .content(study.getPost().getContent())
                 .studyTags(study.getStudyTags())
+                .studyName(study.getStudyName())
                 .authorId(study.getPost().getAuthorId())
                 .createdAt(study.getPost().getCreatedAt())
                 .recruiting(study.isRecruiting())
+                .maxMembers(study.getMaxMembers())
                 .build();
     }
 
@@ -257,9 +263,11 @@ public class PostMapper {
                 .postId(study.getPost().getId())
                 .title(study.getPost().getTitle())
                 .studyTags(study.getStudyTags())
+                .studyName(study.getStudyName())
                 .authorId(study.getPost().getAuthorId())
                 .createdAt(study.getPost().getCreatedAt())
                 .recruiting(study.isRecruiting())
+                .maxMembers(study.getMaxMembers())
                 .build();
     }
 
