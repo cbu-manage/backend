@@ -70,14 +70,4 @@ public class StudyApplyDTO {
         private StudyApplyStatus status;
     }
 
-    /**
-     * 스터디 마감 요청 DTO
-     */
-    @Getter
-    @NoArgsConstructor
-    @Schema(description = "스터디 모집 마감 요청")
-    public static class StudyCloseRequestDTO {
-        @Schema(description = "생성할 그룹(팀) 이름", example = "Spring 스터디")
-        private String studyName;
-    }
 }
