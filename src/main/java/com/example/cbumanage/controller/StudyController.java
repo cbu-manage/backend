@@ -186,7 +186,7 @@ public class StudyController {
 
     @Operation(
             summary = "스터디 신청 목록 조회",
-            description = "해당 스터디에 신청한 사용자 목록을 조회합니다."
+            description = "해당 스터디에 신청한 사용자 목록을 조회합니다. 팀장(스터디 개설자)만 조회 가능합니다."
     )
     @GetMapping("/post/study/{postId}/apply")
     public ResponseEntity<ResultResponse<List<StudyApplyDTO.StudyApplyInfoDTO>>> getApplicants(
