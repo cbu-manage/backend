@@ -453,8 +453,12 @@ public class PostDTO {
         private String content;
         @Schema(description = "스터디 태그 목록")
         private List<String> studyTags;
+        @Schema(description = "스터디 이름 (마감 시 그룹 이름으로 사용)", example = "Spring 스터디")
+        private String studyName;
         @Schema(description = "모집 중 여부 (true=모집 중, false=모집 완료)")
         private boolean recruiting;
+        @Schema(description = "최대 모집 인원 (팀장 포함)")
+        private int maxMembers;
         @Schema(description = "게시글 카테고리 코드")
         private int category;
     }
@@ -473,8 +477,12 @@ public class PostDTO {
         private String content;
         @Schema(description = "스터디 태그 목록")
         private List<String> studyTags;
+        @Schema(description = "스터디 이름")
+        private String studyName;
         @Schema(description = "모집 중 여부")
         private boolean recruiting;
+        @Schema(description = "최대 모집 인원 (팀장 포함)")
+        private int maxMembers;
         @Schema(description = "게시글 생성 시각")
         private LocalDateTime createdAt;
         @Schema(description = "게시글 카테고리 코드")
@@ -482,14 +490,16 @@ public class PostDTO {
 
         @Builder
         public PostStudyCreateResponseDTO(Long postId, Long authorId, String title, String content,
-                                          List<String> studyTags, boolean recruiting,
-                                          LocalDateTime createdAt, int category) {
+                                          List<String> studyTags, String studyName, boolean recruiting,
+                                          int maxMembers, LocalDateTime createdAt, int category) {
             this.postId = postId;
             this.authorId = authorId;
             this.title = title;
             this.content = content;
             this.studyTags = studyTags;
+            this.studyName = studyName;
             this.recruiting = recruiting;
+            this.maxMembers = maxMembers;
             this.createdAt = createdAt;
             this.category = category;
         }
@@ -503,14 +513,20 @@ public class PostDTO {
         private Long postId;
         @Schema(description = "스터디 태그 목록")
         private List<String> studyTags;
+        @Schema(description = "스터디 이름")
+        private String studyName;
         @Schema(description = "모집 중 여부")
         private boolean recruiting;
+        @Schema(description = "최대 모집 인원 (팀장 포함)")
+        private int maxMembers;
 
         @Builder
-        public StudyCreateDTO(Long postId, List<String> studyTags, boolean recruiting) {
+        public StudyCreateDTO(Long postId, List<String> studyTags, String studyName, boolean recruiting, int maxMembers) {
             this.postId = postId;
             this.studyTags = studyTags;
+            this.studyName = studyName;
             this.recruiting = recruiting;
+            this.maxMembers = maxMembers;
         }
     }
 
@@ -559,23 +575,30 @@ public class PostDTO {
         private String content;
         @Schema(description = "스터디 태그 목록")
         private List<String> studyTags;
+        @Schema(description = "스터디 이름")
+        private String studyName;
         @Schema(description = "작성자 회원 ID")
         private Long authorId;
         @Schema(description = "게시글 생성 시각")
         private LocalDateTime createdAt;
         @Schema(description = "모집 중 여부")
         private boolean recruiting;
+        @Schema(description = "최대 모집 인원 (팀장 포함)")
+        private int maxMembers;
 
         @Builder
         public StudyInfoDetailDTO(Long postId, String title, String content, List<String> studyTags,
-                                  Long authorId, LocalDateTime createdAt, boolean recruiting) {
+                                  String studyName, Long authorId, LocalDateTime createdAt,
+                                  boolean recruiting, int maxMembers) {
             this.postId = postId;
             this.title = title;
             this.content = content;
             this.studyTags = studyTags;
+            this.studyName = studyName;
             this.authorId = authorId;
             this.createdAt = createdAt;
             this.recruiting = recruiting;
+            this.maxMembers = maxMembers;
         }
     }
 
@@ -593,22 +616,28 @@ public class PostDTO {
         private String title;
         @Schema(description = "스터디 태그 목록")
         private List<String> studyTags;
+        @Schema(description = "스터디 이름")
+        private String studyName;
         @Schema(description = "작성자 회원 ID")
         private Long authorId;
         @Schema(description = "게시글 생성 시각")
         private LocalDateTime createdAt;
         @Schema(description = "모집 중 여부")
         private boolean recruiting;
+        @Schema(description = "최대 모집 인원 (팀장 포함)")
+        private int maxMembers;
 
         @Builder
-        public StudyListDTO(Long postId, String title, List<String> studyTags, Long authorId,
-                            LocalDateTime createdAt, boolean recruiting) {
+        public StudyListDTO(Long postId, String title, List<String> studyTags, String studyName,
+                            Long authorId, LocalDateTime createdAt, boolean recruiting, int maxMembers) {
             this.postId = postId;
             this.title = title;
             this.studyTags = studyTags;
+            this.studyName = studyName;
             this.authorId = authorId;
             this.createdAt = createdAt;
             this.recruiting = recruiting;
+            this.maxMembers = maxMembers;
         }
     }
 
