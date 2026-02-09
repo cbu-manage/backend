@@ -215,16 +215,14 @@ public class StudyController {
 
     @Operation(
             summary = "스터디 모집 마감",
-            description = "스터디 모집을 마감하고 그룹을 생성합니다. 수락된 신청자들이 자동으로 그룹 멤버로 등록됩니다."
+            description = "스터디 모집을 마감하고 그룹을 생성합니다. 스터디 생성 시 입력한 이름이 그룹 이름으로 사용되며, 수락된 신청자들이 자동으로 그룹 멤버로 등록됩니다."
     )
     @PostMapping("/post/study/{postId}/close")
     public ResponseEntity<ResultResponse<GroupDTO.GroupCreateResponseDTO>> closeStudyRecruitment(
             @PathVariable Long postId,
-            @RequestBody StudyApplyDTO.StudyCloseRequestDTO req,
             HttpServletRequest request) {
         Long userId = userIdFromCookie(request);
-        GroupDTO.GroupCreateResponseDTO result = studyService.closeStudyRecruitment(
-                postId, req.getStudyName(), userId);
+        GroupDTO.GroupCreateResponseDTO result = studyService.closeStudyRecruitment(postId, userId);
         return ResultResponse.ok(SuccessCode.CREATED, result);
     }
 }

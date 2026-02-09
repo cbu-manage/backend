@@ -66,7 +66,7 @@ public class StudyService {
         Post post = postRepository.findById(req.getPostId())
                 .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         List<String> tags = (req.getStudyTags() != null) ? req.getStudyTags() : new ArrayList<>();
-        Study study = Study.create(post, tags, req.isRecruiting());
+        Study study = Study.create(post, tags, req.getStudyName(), req.getMaxMembers(), req.isRecruiting());
         return studyRepository.save(study);
     }
 
@@ -247,6 +247,15 @@ public class StudyService {
                 "모집이 마감된 스터디입니다.");
         }
 
+        if (status == StudyApplyStatus.ACCEPTED) {
+            long acceptedCount = studyApplyRepository.countByStudyIdAndStatus(
+                    study.getId(), StudyApplyStatus.ACCEPTED);
+            if (acceptedCount + 1 >= study.getMaxMembers()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "모집 인원이 가득 찼습니다. (최대 " + study.getMaxMembers() + "명, 팀장 포함)");
+            }
+        }
+
         StudyApply apply = studyApplyRepository.findByIdAndStudyId(applyId, study.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Apply Not Found"));
 
@@ -259,11 +268,7 @@ public class StudyService {
      * 스터디 모집 마감 + Group 생성
      */
     @Transactional
-    public GroupDTO.GroupCreateResponseDTO closeStudyRecruitment(Long postId, String studyName, Long userId) {
-        if (studyName == null || studyName.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "스터디 이름은 필수입니다.");
-        }
-
+    public GroupDTO.GroupCreateResponseDTO closeStudyRecruitment(Long postId, Long userId) {
         Study study = studyRepository.findByPostIdForUpdate(postId);
         if (study == null) {
             throw new EntityNotFoundException("Study Not Found");
@@ -291,11 +296,9 @@ public class StudyService {
                 "수락된 신청자가 없습니다. 최소 1명 이상 수락해야 합니다.");
         }
 
-        int totalMembers = acceptedApplies.size() + 1;
-
-        // Group 생성 (개설자가 팀장)
-        GroupDTO.GroupCreateResponseDTO groupResponse = 
-            groupService.createGroupInternal(studyName, 1, totalMembers, userId);
+        // Group 생성 (개설자가 팀장, Study에 저장된 이름과 maxMembers 사용)
+        GroupDTO.GroupCreateResponseDTO groupResponse =
+            groupService.createGroupInternal(study.getStudyName(), 1, study.getMaxMembers(), userId);
 
         for (StudyApply apply : acceptedApplies) {
             GroupDTO.GroupMemberInfoDTO memberInfo = groupService.addGroupMember(
