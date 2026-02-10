@@ -14,7 +14,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.data.jpa.domain.Specification;
 
 
 import java.util.ArrayList;
@@ -153,15 +152,15 @@ public class ProblemService {
             List<Predicate> predicates = new ArrayList<>();
 
             if ((categoryId != null) && !categoryId.isEmpty()){
-                predicates.add(root.get("category").get(categoryId.toString()).in(categoryId));
+                predicates.add(root.get("category").get("id").in(categoryId));
             }
             if ((platformId != null) && !platformId.isEmpty()){
-                predicates.add(root.get("platform").get(platformId.toString()).in(platformId));
+                predicates.add(root.get("platform").get("id").in(platformId));
             }
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
 
-        return problemRepository.findAll(pageable).map(ProblemListItemDTO::from);
+        return problemRepository.findAll(spec, pageable).map(ProblemListItemDTO::from);
     }
 
     /**
