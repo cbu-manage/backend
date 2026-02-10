@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Getter
 public class ProblemResponseDTO {
 
-    private final Integer problemId;
+    private final Long problemId;
     private final String authorName;
     private final String categoryName;
     private final String platformName;
@@ -26,7 +26,7 @@ public class ProblemResponseDTO {
     private final LocalDateTime updatedAt;
 
     @Builder
-    public ProblemResponseDTO(Integer problemId, String authorName, String categoryName, String platformName, String title, String content, String inputDescription, String outputDescription, ProblemGrade grade, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public ProblemResponseDTO(Long problemId, String authorName, String categoryName, String platformName, String title, String content, String inputDescription, String outputDescription, ProblemGrade grade, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.problemId = problemId;
         this.authorName = authorName;
         this.categoryName = categoryName;
