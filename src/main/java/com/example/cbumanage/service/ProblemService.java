@@ -170,7 +170,7 @@ public class ProblemService {
      * @return 문제 상세 정보 DTO
      * @throws EntityNotFoundException 해당 ID의 문제를 찾을 수 없는 경우
      */
-    public ProblemResponseDTO getProblem(Integer problemId) {
+    public ProblemResponseDTO getProblem(Long problemId) {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new EntityNotFoundException("ID가 " + problemId + "인 문제를 찾을 수 없습니다."));
         return ProblemResponseDTO.from(problem);

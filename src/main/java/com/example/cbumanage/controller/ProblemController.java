@@ -97,7 +97,7 @@ public class ProblemController {
      */
     @GetMapping("/problems/{id}")
     @Operation(summary = "문제 상세 정보 조회", description = "ID를 사용하여 특정 문제의 상세 정보를 조회합니다.")
-    public ResponseEntity<ResultResponse<ProblemResponseDTO>> getProblem(@PathVariable Integer id) {
+    public ResponseEntity<ResultResponse<ProblemResponseDTO>> getProblem(@PathVariable Long id) {
         ProblemResponseDTO problem = problemService.getProblem(id);
         return ResultResponse.ok(SuccessCode.SUCCESS, problem);
     }
