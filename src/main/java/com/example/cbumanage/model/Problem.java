@@ -32,6 +32,7 @@ public class Problem {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @org.hibernate.annotations.Comment("고유 식별자")
     private Long problemId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -50,12 +51,14 @@ public class Problem {
      * 문제 제목
      */
     @Column(nullable = false)
+    @org.hibernate.annotations.Comment("문제 제목")
     private String title;
 
     /**
      * 문제 본문 내용
      */
     @Column(columnDefinition = "TEXT", nullable = false)
+    @org.hibernate.annotations.Comment("본문 내용")
     private String content;
 
     /**

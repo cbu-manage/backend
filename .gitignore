@@ -5,6 +5,7 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 /Users/junmin/Documents/04_Projects/cbu-manage/.claude
+.claude/
 
 ### STS ###
 .apt_generated
