@@ -91,7 +91,7 @@ public class ProblemService {
      * @throws MemberDoesntHavePermissionException 수정 권한이 없는 경우
      */
     @Transactional
-    public ProblemResponseDTO updateProblem(Integer problemId, Long memberId, ProblemUpdateRequestDTO request) {
+    public ProblemResponseDTO updateProblem(Long problemId, Long memberId, ProblemUpdateRequestDTO request) {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new EntityNotFoundException("ID가 " + problemId + "인 문제를 찾을 수 없습니다."));
 
@@ -131,7 +131,7 @@ public class ProblemService {
      * @throws MemberDoesntHavePermissionException 삭제 권한이 없는 경우
      */
     @Transactional
-    public void deleteProblem(Integer problemId, Long memberId) {
+    public void deleteProblem(Long problemId, Long memberId) {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new EntityNotFoundException("ID가 " + problemId + "인 문제를 찾을 수 없습니다."));
 

@@ -1,12 +1,12 @@
 package com.example.cbumanage.controller;
 
+import com.example.cbumanage.authentication.dto.AccessToken;
 import com.example.cbumanage.dto.*;
 import com.example.cbumanage.response.ResultResponse;
 import com.example.cbumanage.response.SuccessCode;
 import com.example.cbumanage.service.ProblemService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,15 +33,14 @@ public class ProblemController {
     /**
      * 새로운 코딩 테스트 문제를 등록합니다.
      *
-     * @param userId  문제를 등록하는 회원의 ID
      * @param request 문제 생성 요청 데이터
      * @return 생성된 문제 정보
      */
     @PostMapping("/problems")
     @Operation(summary = "새 코딩 테스트 문제 등록", description = "새로운 코딩 테스트 문제를 등록합니다.")
-    public ResponseEntity<ResultResponse<ProblemResponseDTO>> createProblem(@RequestParam Long userId,
+    public ResponseEntity<ResultResponse<ProblemResponseDTO>> createProblem(AccessToken accessToken,
                                                                             @Valid @RequestBody ProblemCreateRequestDTO request) {
-        ProblemResponseDTO response = problemService.createProblem(request, userId);
+        ProblemResponseDTO response = problemService.createProblem(request, accessToken.getUserId());
         return ResultResponse.ok(SuccessCode.CREATED, response);
     }
 
@@ -49,16 +48,15 @@ public class ProblemController {
      * 특정 ID의 문제를 수정하는 메소드.
      *
      * @param id      수정할 문제의 ID
-     * @param userId  수정 요청을 한 회원의 ID
      * @param request 수정할 문제 내용
      * @return 수정된 문제 정보
      */
     @PatchMapping("/problems/{id}")
     @Operation(summary = "문제 정보 수정", description = "ID에 해당하는 문제의 정보를 수정합니다.")
     public ResponseEntity<ResultResponse<ProblemResponseDTO>> updateProblem(@PathVariable Long id,
-                                                            @RequestParam Long userId,
+                                                                            AccessToken accessToken,
                                                             @Valid @RequestBody ProblemUpdateRequestDTO request) {
-        ProblemResponseDTO response = problemService.updateProblem(id, userId, request);
+        ProblemResponseDTO response = problemService.updateProblem(id, accessToken.getUserId(), request);
         return ResultResponse.ok(SuccessCode.UPDATED, response);
     }
 
@@ -66,13 +64,12 @@ public class ProblemController {
      * 특정 ID의 문제를 삭제하는 메소드.
      *
      * @param id     삭제할 문제의 ID
-     * @param userId 삭제 요청을 한 회원의 ID
      */
     @DeleteMapping("/problems/{id}")
     @Operation(summary = "문제 삭제", description = "ID에 해당하는 문제를 삭제합니다.")
     public ResponseEntity<ResultResponse<Void>> deleteProblem(@PathVariable Long id,
-                                              @RequestParam Long userId) {
-        problemService.deleteProblem(id, userId);
+                                                              AccessToken accessToken) {
+        problemService.deleteProblem(id, accessToken.getUserId());
         return ResultResponse.ok(SuccessCode.DELETED);
     }
 

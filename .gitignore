@@ -4,6 +4,7 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+/Users/junmin/Documents/04_Projects/cbu-manage/.claude
 
 ### STS ###
 .apt_generated

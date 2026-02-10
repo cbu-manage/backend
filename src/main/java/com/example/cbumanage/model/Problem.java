@@ -32,7 +32,7 @@ public class Problem {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer problemId;
+    private Long problemId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
