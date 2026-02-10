@@ -17,11 +17,32 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     // Post ID 로 프로젝트 확장 필드 조회
     Project findByPostId(Long postId);
 
-    // category 번호를 이용하여 프로젝트 게시글 조회
-    @EntityGraph(attributePaths = {"post"})
-    Page<Project> findByPostCategoryAndPostIsDeletedFalse(int category, Pageable pageable);
+    // 프로젝트 게시글 전체 조회 및 모집여부 필터
+    @Query("SELECT p FROM Project p " +
+            "JOIN FETCH p.post " +
+            "WHERE p.post.isDeleted = false " +
+            "AND p.post.category = :category " +
+            "AND (:recruiting IS NULL OR p.recruiting = :recruiting)")
+    Page<Project> findByCategory(@Param("category") int category,
+                                            @Param("recruiting") Boolean recruiting,
+                                            Pageable pageable);
 
-    // 프로젝트 모집분야 별로 프로젝트 게시글 조회
-    Page<Project> findByRecruitmentFieldsAndPostIsDeletedFalse(ProjectFieldType fields, Pageable pageable);
+    // 프로젝트 게시글 모집분야별로 조회 및 모집여부 필터
+    @Query("SELECT p FROM Project p WHERE p.post.isDeleted = false " +
+            "AND :fields MEMBER OF p.recruitmentFields " +
+            "AND (:recruiting IS NULL OR p.recruiting = :recruiting)")
+    Page<Project> findByFilters(@Param("fields") ProjectFieldType fields,
+                                @Param("recruiting") Boolean recruiting,
+                                Pageable pageable);
+
+    // 내가 작성한 프로젝트 게시글 전체 조회
+    @Query("SELECT p FROM Project p " +
+            "JOIN FETCH p.post " +
+            "WHERE p.post.isDeleted = false " +
+            "AND p.post.authorId = :userId " +
+            "AND p.post.category = :category")
+    Page<Project> findByUserIdAndCategory(@Param("userId") Long userId,
+                                          @Param("category") int category,
+                                          Pageable pageable);
 }
 
