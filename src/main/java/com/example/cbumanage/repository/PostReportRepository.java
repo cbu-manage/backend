@@ -19,15 +19,20 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
      */
     @Query(value = """
     select new com.example.cbumanage.dto.PostDTO$PostReportPreviewDTO(
-    p.id,p.title,p.createdAt,p.authorId,
-    
+    p.id,p.title,p.createdAt,p.authorId,m.name,
     r.type,r.isAccepted,
     
-    g.id,g.groupName
+    g.id,g.groupName, (
+    select count(gm)
+    from GroupMember gm
+    where gm.group.id = g.id
+    and gm.groupMemberStatus=com.example.cbumanage.model.enums.GroupMemberStatus.ACTIVE
+    )
     )
     from Post p
     left join PostReport r on r.post = p
     left join Group g on r.groupId = g.id
+    left join CbuMember m on m.cbuMemberId = p.authorId
     where p.category = :category
     and p.isDeleted = false
 """,

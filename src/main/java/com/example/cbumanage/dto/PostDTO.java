@@ -440,23 +440,27 @@ public class PostDTO {
         private String title;
         private LocalDateTime createdAt;
         private Long authorId;
+        private String authorName;
 
         private PostReportGroupType type;
         private boolean isAccepted;
 
         private Long groupId;
         private String groupName;
+        private Long groupMemberCount;
 
         @Builder
-        public PostReportPreviewDTO(Long postId,String title,LocalDateTime createdAt,Long authorId,PostReportGroupType type,boolean isAccepted,Long groupId,String groupName){
+        public PostReportPreviewDTO(Long postId,String title,LocalDateTime createdAt,Long authorId,String authorName,PostReportGroupType type,boolean isAccepted,Long groupId,String groupName,Long groupMemberCount){
             this.postId = postId;
             this.title = title;
             this.createdAt = createdAt;
             this.authorId = authorId;
+            this.authorName = authorName;
             this.type = type;
             this.isAccepted = isAccepted;
             this.groupId = groupId;
             this.groupName = groupName;
+            this.groupMemberCount = groupMemberCount;
         }
 
 
