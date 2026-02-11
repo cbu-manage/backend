@@ -14,7 +14,10 @@ public enum ErrorCode implements ResultCode {
     UNAUTHORIZED("E-AUTH-0001", HttpStatus.UNAUTHORIZED, "인증 필요"),
     FORBIDDEN("E-AUTH-0002", HttpStatus.FORBIDDEN, "권한 없음"),
     NOT_FOUND("E-COMMON-0002", HttpStatus.NOT_FOUND, "리소스를 찾을 수 없음"),
-    DUPLICATE_RESOURCE("E-COMMON-0003", HttpStatus.CONFLICT, "중복 리소스");
+    DUPLICATE_RESOURCE("E-COMMON-0003", HttpStatus.CONFLICT, "중복 리소스"),
+    NOT_ALLOWED_FILETYPE("E-COMMON-0004",HttpStatus.BAD_REQUEST,"잘못된 파일 타입"),
+    ALREADY_JOINED_MEMBER("E-COMMON-0005",HttpStatus.CONFLICT,"이미 가입된 멤버");
+
 
     private final String code;
     private final HttpStatus httpStatus;

@@ -110,9 +110,9 @@ public class PostDTO {
 
         private String location;
 
-        private String reportImage;
-
         private LocalDateTime date;
+
+        private String reportImage;
 
         private int category;
 
@@ -439,6 +439,7 @@ public class PostDTO {
         }
     }
 
+    //보고서 게시글 미리보기입니다 보고서미리보기/게시글정보/그룹미리보기 를 담고있습니다
     //--------------------------STUDY 관련 DTO---------------------//
     /*
     Study(스터디 모집) 게시글 생성 요청 DTO
@@ -644,31 +645,35 @@ public class PostDTO {
     //보고서 게시글 미리보기 DTO의 보고서 관련 내용을 담고있는 DTO입니다
     @Getter
     @NoArgsConstructor
-    public static class ReportPreviewDTO{
+    public static class PostReportPreviewDTO{
+        private Long postId;
+        private String title;
+        private LocalDateTime createdAt;
+        private Long authorId;
+        private String authorName;
+
         private PostReportGroupType type;
         private boolean isAccepted;
 
+        private Long groupId;
+        private String groupName;
+        private Long groupMemberCount;
+
         @Builder
-        public ReportPreviewDTO(PostReportGroupType type, boolean isAccepted){
+        public PostReportPreviewDTO(Long postId,String title,LocalDateTime createdAt,Long authorId,String authorName,PostReportGroupType type,boolean isAccepted,Long groupId,String groupName,Long groupMemberCount){
+            this.postId = postId;
+            this.title = title;
+            this.createdAt = createdAt;
+            this.authorId = authorId;
+            this.authorName = authorName;
             this.type = type;
             this.isAccepted = isAccepted;
+            this.groupId = groupId;
+            this.groupName = groupName;
+            this.groupMemberCount = groupMemberCount;
         }
-    }
 
-    //보고서 게시글 미리보기입니다 보고서미리보기/게시글정보/그룹미리보기 를 담고있습니다
-    @Getter
-    @NoArgsConstructor
-    public static class PostReportPreviewDTO{
-        private ReportPreviewDTO reportPreviewDTO;
-        private PostInfoDTO postInfoDTO;
-        private GroupDTO.GroupPreviewDTO groupPreviewDTO;
 
-        @Builder
-        public PostReportPreviewDTO(ReportPreviewDTO reportPreviewDTO, PostInfoDTO postInfoDTO, GroupDTO.GroupPreviewDTO groupPreviewDTO){
-            this.reportPreviewDTO = reportPreviewDTO;
-            this.postInfoDTO = postInfoDTO;
-            this.groupPreviewDTO=groupPreviewDTO;
-        }
     }
 
     @Getter
