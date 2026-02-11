@@ -31,7 +31,6 @@ public class Problem {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @org.hibernate.annotations.Comment("고유 식별자")
     private Long problemId;
 
     @ManyToOne(fetch = FetchType.LAZY)
