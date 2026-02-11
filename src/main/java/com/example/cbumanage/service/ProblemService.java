@@ -14,7 +14,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.data.jpa.domain.Specification;
 
 
 import java.util.ArrayList;
@@ -91,7 +90,7 @@ public class ProblemService {
      * @throws MemberDoesntHavePermissionException 수정 권한이 없는 경우
      */
     @Transactional
-    public ProblemResponseDTO updateProblem(Integer problemId, Long memberId, ProblemUpdateRequestDTO request) {
+    public ProblemResponseDTO updateProblem(Long problemId, Long memberId, ProblemUpdateRequestDTO request) {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new EntityNotFoundException("ID가 " + problemId + "인 문제를 찾을 수 없습니다."));
 
@@ -131,7 +130,7 @@ public class ProblemService {
      * @throws MemberDoesntHavePermissionException 삭제 권한이 없는 경우
      */
     @Transactional
-    public void deleteProblem(Integer problemId, Long memberId) {
+    public void deleteProblem(Long problemId, Long memberId) {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new EntityNotFoundException("ID가 " + problemId + "인 문제를 찾을 수 없습니다."));
 
@@ -153,15 +152,15 @@ public class ProblemService {
             List<Predicate> predicates = new ArrayList<>();
 
             if ((categoryId != null) && !categoryId.isEmpty()){
-                predicates.add(root.get("category").get(categoryId.toString()).in(categoryId));
+                predicates.add(root.get("category").get("id").in(categoryId));
             }
             if ((platformId != null) && !platformId.isEmpty()){
-                predicates.add(root.get("platform").get(platformId.toString()).in(platformId));
+                predicates.add(root.get("platform").get("id").in(platformId));
             }
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
 
-        return problemRepository.findAll(pageable).map(ProblemListItemDTO::from);
+        return problemRepository.findAll(spec, pageable).map(ProblemListItemDTO::from);
     }
 
     /**
@@ -171,7 +170,7 @@ public class ProblemService {
      * @return 문제 상세 정보 DTO
      * @throws EntityNotFoundException 해당 ID의 문제를 찾을 수 없는 경우
      */
-    public ProblemResponseDTO getProblem(Integer problemId) {
+    public ProblemResponseDTO getProblem(Long problemId) {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new EntityNotFoundException("ID가 " + problemId + "인 문제를 찾을 수 없습니다."));
         return ProblemResponseDTO.from(problem);
