@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
-import org.hibernate.annotations.Where;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -51,14 +50,12 @@ public class Problem {
      * 문제 제목
      */
     @Column(nullable = false)
-    @org.hibernate.annotations.Comment("문제 제목")
     private String title;
 
     /**
      * 문제 본문 내용
      */
     @Column(columnDefinition = "TEXT", nullable = false)
-    @org.hibernate.annotations.Comment("본문 내용")
     private String content;
 
     /**
