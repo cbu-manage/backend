@@ -27,26 +27,32 @@ public class Project {
     @JoinColumn(name = "post_id")
     private Post post;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @Comment("연관된 프로젝트 모집 그룹 ID (Group 테이블 참조)")
+    @JoinColumn(name = "group_id",nullable = false)
+    private Group group;
+
     @ElementCollection(targetClass = ProjectFieldType.class)
     @CollectionTable(name = "project_recruitment_field", joinColumns = @JoinColumn(name = "project_id"))
     @Enumerated(EnumType.STRING)
-    @Comment("현재 프로젝트 모집 여부 (true: 모집중 / false: 마감)")
+    @Comment("현재 프로젝트 모집 여부 (true: 모집중 / false: 모집완료)")
     @Column(name = "field_name")
     private List<ProjectFieldType> recruitmentFields = new ArrayList<>();
 
     private boolean recruiting;
 
     // String 리스트를 받아서 Enum으로 변환해 저장
-    public Project(Post post, List<String> fields, boolean recruiting) {
+    public Project(Post post, List<String> fields, boolean recruiting,Group group) {
         this.post = post;
         this.recruiting = recruiting;
         if (fields != null) {
             fields.forEach(f -> this.addRecruitmentField(ProjectFieldType.valueOf(f)));
         }
+        this.group=group;
     }
 
-    public static Project create(Post post, List<String> fields, boolean recruiting) {
-        return new Project(post, fields, recruiting);
+    public static Project create(Post post, List<String> fields, boolean recruiting, Group group) {
+        return new Project(post, fields, recruiting, group);
     }
 
     // 분야 추가 메서드
