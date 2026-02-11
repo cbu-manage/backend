@@ -38,7 +38,8 @@ public class ProblemController {
      */
     @PostMapping("/problems")
     @Operation(summary = "새 코딩 테스트 문제 등록", description = "새로운 코딩 테스트 문제를 등록합니다.")
-    public ResponseEntity<ProblemResponseDTO> createProblem(@RequestParam Long userId, @Valid @RequestBody ProblemCreateRequestDTO request) {
+    public ResponseEntity<ProblemResponseDTO> createProblem(@RequestParam Long userId,
+                                                            @Valid @RequestBody ProblemCreateRequestDTO request) {
         ProblemResponseDTO response = problemService.createProblem(request, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -55,7 +56,7 @@ public class ProblemController {
     @Operation(summary = "문제 정보 수정", description = "ID에 해당하는 문제의 정보를 수정합니다.")
     public ResponseEntity<ProblemResponseDTO> updateProblem(@PathVariable Integer id,
                                                             @RequestParam Long userId,
-                                                            @RequestBody ProblemUpdateRequestDTO request) {
+                                                            @Valid @RequestBody ProblemUpdateRequestDTO request) {
         ProblemResponseDTO response = problemService.updateProblem(id, userId, request);
         return ResponseEntity.ok(response);
     }

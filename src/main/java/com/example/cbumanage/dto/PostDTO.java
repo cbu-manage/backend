@@ -1,9 +1,11 @@
 package com.example.cbumanage.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import com.example.cbumanage.model.enums.PostReportGroupType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -309,6 +311,11 @@ public class PostDTO {
 
         private String title;
         private String content;
+        @Schema(
+                description = "모집 분야 (복수 입력 가능, 대문자 영어만 허용)",
+                example = "[\"BACKEND\", \"FRONTEND\"]",
+                allowableValues = {"BACKEND","FRONTEND","DEV","PLANNING","DESIGN","ETC"}
+        )
         private List<String> recruitmentFields;
         private boolean recruiting;
         private int category;
@@ -433,6 +440,209 @@ public class PostDTO {
     }
 
     //보고서 게시글 미리보기입니다 보고서미리보기/게시글정보/그룹미리보기 를 담고있습니다
+    //--------------------------STUDY 관련 DTO---------------------//
+    /*
+    Study(스터디 모집) 게시글 생성 요청 DTO
+     */
+    @Getter
+    @NoArgsConstructor
+    @Schema(description = "스터디 모집 게시글 생성 요청 DTO")
+    public static class PostStudyCreateRequestDTO {
+        @Schema(description = "스터디 게시글 제목")
+        private String title;
+        @Schema(description = "스터디 게시글 내용")
+        private String content;
+        @Schema(description = "스터디 태그 목록")
+        private List<String> studyTags;
+        @Schema(description = "스터디 이름 (마감 시 그룹 이름으로 사용)", example = "Spring 스터디")
+        private String studyName;
+        @Schema(description = "모집 중 여부 (true=모집 중, false=모집 완료)")
+        private boolean recruiting;
+        @Schema(description = "최대 모집 인원 (팀장 포함)")
+        private int maxMembers;
+        @Schema(description = "게시글 카테고리 코드")
+        private int category;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @Schema(description = "스터디 모집 게시글 생성 응답 DTO")
+    public static class PostStudyCreateResponseDTO {
+        @Schema(description = "생성된 게시글 ID")
+        private Long postId;
+        @Schema(description = "작성자 회원 ID")
+        private Long authorId;
+        @Schema(description = "스터디 게시글 제목")
+        private String title;
+        @Schema(description = "스터디 게시글 내용")
+        private String content;
+        @Schema(description = "스터디 태그 목록")
+        private List<String> studyTags;
+        @Schema(description = "스터디 이름")
+        private String studyName;
+        @Schema(description = "모집 중 여부")
+        private boolean recruiting;
+        @Schema(description = "최대 모집 인원 (팀장 포함)")
+        private int maxMembers;
+        @Schema(description = "게시글 생성 시각")
+        private LocalDateTime createdAt;
+        @Schema(description = "게시글 카테고리 코드")
+        private int category;
+
+        @Builder
+        public PostStudyCreateResponseDTO(Long postId, Long authorId, String title, String content,
+                                          List<String> studyTags, String studyName, boolean recruiting,
+                                          int maxMembers, LocalDateTime createdAt, int category) {
+            this.postId = postId;
+            this.authorId = authorId;
+            this.title = title;
+            this.content = content;
+            this.studyTags = studyTags;
+            this.studyName = studyName;
+            this.recruiting = recruiting;
+            this.maxMembers = maxMembers;
+            this.createdAt = createdAt;
+            this.category = category;
+        }
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @Schema(description = "스터디 서브 테이블 생성용 내부 DTO")
+    public static class StudyCreateDTO {
+        @Schema(description = "연결된 Post ID")
+        private Long postId;
+        @Schema(description = "스터디 태그 목록")
+        private List<String> studyTags;
+        @Schema(description = "스터디 이름")
+        private String studyName;
+        @Schema(description = "모집 중 여부")
+        private boolean recruiting;
+        @Schema(description = "최대 모집 인원 (팀장 포함)")
+        private int maxMembers;
+
+        @Builder
+        public StudyCreateDTO(Long postId, List<String> studyTags, String studyName, boolean recruiting, int maxMembers) {
+            this.postId = postId;
+            this.studyTags = studyTags;
+            this.studyName = studyName;
+            this.recruiting = recruiting;
+            this.maxMembers = maxMembers;
+        }
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @Schema(description = "스터디 게시글 수정 요청 DTO")
+    public static class PostStudyUpdateRequestDTO {
+        @Schema(description = "수정할 제목")
+        private String title;
+        @Schema(description = "수정할 내용")
+        private String content;
+        @Schema(description = "수정할 태그 목록")
+        private List<String> studyTags;
+        @Schema(description = "모집 중 여부")
+        private boolean recruiting;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @Schema(description = "Study 엔티티 수정용 내부 DTO")
+    public static class StudyUpdateDTO {
+        @Schema(description = "수정할 태그 목록")
+        private List<String> studyTags;
+        @Schema(description = "모집 중 여부")
+        private boolean recruiting;
+
+        @Builder
+        public StudyUpdateDTO(List<String> studyTags, boolean recruiting) {
+            this.studyTags = studyTags;
+            this.recruiting = recruiting;
+        }
+    }
+
+    /*
+    Study 게시글 상세 조회 DTO
+     */
+    @Getter
+    @NoArgsConstructor
+    @Schema(description = "스터디 게시글 상세 조회 DTO")
+    public static class StudyInfoDetailDTO {
+        @Schema(description = "게시글 ID")
+        private Long postId;
+        @Schema(description = "게시글 제목")
+        private String title;
+        @Schema(description = "게시글 내용")
+        private String content;
+        @Schema(description = "스터디 태그 목록")
+        private List<String> studyTags;
+        @Schema(description = "스터디 이름")
+        private String studyName;
+        @Schema(description = "작성자 회원 ID")
+        private Long authorId;
+        @Schema(description = "게시글 생성 시각")
+        private LocalDateTime createdAt;
+        @Schema(description = "모집 중 여부")
+        private boolean recruiting;
+        @Schema(description = "최대 모집 인원 (팀장 포함)")
+        private int maxMembers;
+
+        @Builder
+        public StudyInfoDetailDTO(Long postId, String title, String content, List<String> studyTags,
+                                  String studyName, Long authorId, LocalDateTime createdAt,
+                                  boolean recruiting, int maxMembers) {
+            this.postId = postId;
+            this.title = title;
+            this.content = content;
+            this.studyTags = studyTags;
+            this.studyName = studyName;
+            this.authorId = authorId;
+            this.createdAt = createdAt;
+            this.recruiting = recruiting;
+            this.maxMembers = maxMembers;
+        }
+    }
+
+    /*
+    Study 게시글 목록 조회 DTO
+    제목, 태그, 작성자, 생성시간, 모집여부를 포함합니다
+     */
+    @Getter
+    @NoArgsConstructor
+    @Schema(description = "스터디 게시글 목록 조회 DTO")
+    public static class StudyListDTO {
+        @Schema(description = "게시글 ID")
+        private Long postId;
+        @Schema(description = "게시글 제목")
+        private String title;
+        @Schema(description = "스터디 태그 목록")
+        private List<String> studyTags;
+        @Schema(description = "스터디 이름")
+        private String studyName;
+        @Schema(description = "작성자 회원 ID")
+        private Long authorId;
+        @Schema(description = "게시글 생성 시각")
+        private LocalDateTime createdAt;
+        @Schema(description = "모집 중 여부")
+        private boolean recruiting;
+        @Schema(description = "최대 모집 인원 (팀장 포함)")
+        private int maxMembers;
+
+        @Builder
+        public StudyListDTO(Long postId, String title, List<String> studyTags, String studyName,
+                            Long authorId, LocalDateTime createdAt, boolean recruiting, int maxMembers) {
+            this.postId = postId;
+            this.title = title;
+            this.studyTags = studyTags;
+            this.studyName = studyName;
+            this.authorId = authorId;
+            this.createdAt = createdAt;
+            this.recruiting = recruiting;
+            this.maxMembers = maxMembers;
+        }
+    }
+
+    //보고서 게시글 미리보기 DTO의 보고서 관련 내용을 담고있는 DTO입니다
     @Getter
     @NoArgsConstructor
     public static class PostReportPreviewDTO{

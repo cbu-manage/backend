@@ -12,7 +12,9 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,11 +55,16 @@ public class ProjectService {
     }
 
     //프로젝트 게시글 전체 조회 메서드
-    public Page<PostDTO.ProjectListDTO> getPostsByCategory(Pageable pageable,int category){
-        Page<Project> projects= projectRepository.findByPostCategoryAndPostIsDeletedFalse(category,pageable);
-        return projects.map(project->postMapper.toProjectListDTO(project));
+    public Page<PostDTO.ProjectListDTO> getPostsByCategory(Pageable pageable, Boolean recruiting, int category) {
+        Page<Project> projects = projectRepository.findByCategory(category, recruiting, pageable);
+        return projects.map(project -> postMapper.toProjectListDTO(project));
     }
 
+    //내가 작성한 프로젝트 게시글 전체 조회 메서드
+    public Page<PostDTO.ProjectListDTO> getMyProjectsByUserId(Pageable pageable, Long userId, int category) {
+        Page<Project> projects = projectRepository.findByUserIdAndCategory(userId,category, pageable);
+        return projects.map(project -> postMapper.toProjectListDTO(project));
+    }
     //프로젝트 게시글 수정 메서드
     public void updateProject(PostDTO.ProjectUpdateDTO dto, Project project) {
         project.updateRecruitmentFields(dto.getRecruitmentFields());
@@ -66,8 +73,11 @@ public class ProjectService {
 
     //프로젝트 게시글 수정 트랜잭션
     @Transactional
-    public void updatePostProject(PostDTO.PostProjectUpdateRequestDTO req, Long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+    public void updatePostProject(PostDTO.PostProjectUpdateRequestDTO req, Long postId, Long userId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        //권한 확인
+        validateProjectOwner(post, userId);
         PostDTO.PostUpdateDTO postUpdateDTO = postMapper.toPostUpdateDTO(req);
         postService.updatePost(postUpdateDTO, post);
         Project project = projectRepository.findByPostId(postId);
@@ -87,15 +97,28 @@ public class ProjectService {
 
     //프로젝트 게시글 삭제 트랜잭션
     @Transactional
-    public void softDeletePost(Long postId) {
-        Post post=postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Project Not Found"));
+    public void softDeletePost(Long postId,Long userId) {
+        Post post=postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Project Not Found"));
+        //권한 확인
+        validateProjectOwner(post, userId);
         post.delete();
     }
 
     //프로젝트 모집분야로 조회 트랜잭션
     @Transactional
-    public Page<PostDTO.ProjectListDTO> searchByField(ProjectFieldType fields, Pageable pageable) {
-        Page<Project> projects = projectRepository.findByRecruitmentFieldsAndPostIsDeletedFalse(fields, pageable);
+    public Page<PostDTO.ProjectListDTO> searchByField(ProjectFieldType fields, Boolean recruiting, Pageable pageable) {
+        Page<Project> projects = projectRepository.findByFilters(fields, recruiting,pageable);
         return projects.map(project -> postMapper.toProjectListDTO(project));
+    }
+
+    //유효 권한 확인 메서드
+    private void validateProjectOwner(Post post, Long userId) {
+        if (!post.getAuthorId().equals(userId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "게시글에 대한 권한이 없습니다."
+            );
+        }
     }
 }

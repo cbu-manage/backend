@@ -86,6 +86,24 @@ public class GroupService {
 
     }
 
+     // 서비스 내부 호출용 그룹 생성 메서드
+     // DTO 없이 파라미터로 직접 값을 받아 그룹을 생성합니다.
+    @Transactional
+    public GroupDTO.GroupCreateResponseDTO createGroupInternal(String groupName,
+                                                                int minActiveMembers,
+                                                                int maxActiveMembers,
+                                                                Long leaderId) {
+        Group group = Group.create(groupName, minActiveMembers, maxActiveMembers);
+        groupRepository.save(group);
+        CbuMember member = cbuMemberRepository.findById(leaderId)
+                .orElseThrow(() -> new EntityNotFoundException("Member not found"));
+
+        GroupMember leader = GroupMember.create(group, member, GroupMemberStatus.ACTIVE, GroupMemberRole.LEADER);
+        group.addMember(leader);
+        groupMemberRepository.save(leader);
+        return groupUtil.toGroupCreateResponseDTO(group);
+    }
+
     //그룹을 id로 찾아오는 기능입니다
     //포스트목록을 불러올때 연결되어있는 그룹의 정보를 불러올때 사용합니다
     public GroupDTO.GroupInfoDTO getGroupById(Long groupId){
