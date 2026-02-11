@@ -1,6 +1,8 @@
 package com.example.cbumanage.controller;
 
+import com.example.cbumanage.dto.GroupDTO;
 import com.example.cbumanage.dto.PostDTO;
+import com.example.cbumanage.dto.StudyApplyDTO;
 import com.example.cbumanage.response.ResultResponse;
 import com.example.cbumanage.response.SuccessCode;
 import com.example.cbumanage.service.StudyService;
@@ -21,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -156,7 +159,7 @@ public class StudyController {
 
     @Operation(
             summary = "스터디 태그별 목록 페이징 조회",
-            description = "사용자가 추가한 태그 문자열로 스터디 목록을 조회합니다. 태그가 여러 개인 경우 그중 하나라도 포함되면 조회됩니다."
+            description = "정확히 일치하는 태그로 스터디 목록을 조회합니다."
     )
     @GetMapping("/post/study/filter")
     public ResponseEntity<ResultResponse<Page<PostDTO.StudyListDTO>>> filterStudiesByTag(
@@ -166,5 +169,60 @@ public class StudyController {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("id")));
         Page<PostDTO.StudyListDTO> result = studyService.searchByTag(tag, pageable);
         return ResultResponse.ok(SuccessCode.SUCCESS, result);
+    }
+
+    @Operation(
+            summary = "스터디 참가 신청",
+            description = "스터디에 참가 신청합니다. 모집 중인 스터디에만 신청 가능하며, 중복 신청 및 본인 스터디 신청은 불가합니다."
+    )
+    @PostMapping("/post/study/{postId}/apply")
+    public ResponseEntity<ResultResponse<StudyApplyDTO.StudyApplyInfoDTO>> applyStudy(
+            @PathVariable Long postId,
+            HttpServletRequest request) {
+        Long userId = userIdFromCookie(request);
+        StudyApplyDTO.StudyApplyInfoDTO result = studyService.applyStudy(postId, userId);
+        return ResultResponse.ok(SuccessCode.CREATED, result);
+    }
+
+    @Operation(
+            summary = "스터디 신청 목록 조회",
+            description = "해당 스터디에 신청한 사용자 목록을 조회합니다. 팀장(스터디 개설자)만 조회 가능합니다."
+    )
+    @GetMapping("/post/study/{postId}/apply")
+    public ResponseEntity<ResultResponse<List<StudyApplyDTO.StudyApplyInfoDTO>>> getApplicants(
+            @PathVariable Long postId,
+            HttpServletRequest request) {
+        Long userId = userIdFromCookie(request);
+        List<StudyApplyDTO.StudyApplyInfoDTO> result = studyService.getApplicants(postId, userId);
+        return ResultResponse.ok(SuccessCode.SUCCESS, result);
+    }
+
+    @Operation(
+            summary = "스터디 신청 수락/거절",
+            description = "팀장(스터디 개설자)이 신청자를 수락하거나 거절합니다."
+    )
+    @PatchMapping("/post/study/{postId}/apply/{applyId}")
+    public ResponseEntity<ResultResponse<StudyApplyDTO.StudyApplyInfoDTO>> updateApplyStatus(
+            @PathVariable Long postId,
+            @PathVariable Long applyId,
+            @RequestBody StudyApplyDTO.StudyApplyStatusRequestDTO req,
+            HttpServletRequest request) {
+        Long userId = userIdFromCookie(request);
+        StudyApplyDTO.StudyApplyInfoDTO result = studyService.updateApplyStatus(
+                postId, applyId, req.getStatus(), userId);
+        return ResultResponse.ok(SuccessCode.UPDATED, result);
+    }
+
+    @Operation(
+            summary = "스터디 모집 마감",
+            description = "스터디 모집을 마감하고 그룹을 생성합니다. 스터디 생성 시 입력한 이름이 그룹 이름으로 사용되며, 수락된 신청자들이 자동으로 그룹 멤버로 등록됩니다."
+    )
+    @PostMapping("/post/study/{postId}/close")
+    public ResponseEntity<ResultResponse<GroupDTO.GroupCreateResponseDTO>> closeStudyRecruitment(
+            @PathVariable Long postId,
+            HttpServletRequest request) {
+        Long userId = userIdFromCookie(request);
+        GroupDTO.GroupCreateResponseDTO result = studyService.closeStudyRecruitment(postId, userId);
+        return ResultResponse.ok(SuccessCode.CREATED, result);
     }
 }

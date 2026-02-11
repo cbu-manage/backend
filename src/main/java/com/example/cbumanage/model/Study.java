@@ -40,20 +40,37 @@ public class Study {
     @Comment("사용자가 입력한 스터디 태그 목록")
     private List<String> studyTags = new ArrayList<>();
 
+    @Column(nullable = false)
+    @Schema(description = "스터디 이름 (마감 시 그룹 이름으로 사용)")
+    @Comment("스터디 이름")
+    private String studyName;
+
+    @Schema(description = "최대 모집 인원 (팀장 포함)")
+    @Comment("최대 모집 인원 (팀장 포함)")
+    private int maxMembers;
+
     @Schema(description = "모집 중 여부 (true=모집 중, false=모집 완료)")
     @Comment("모집 중 여부 (true=모집 중, false=모집 완료)")
     private boolean recruiting;
 
-    public Study(Post post, List<String> tags, boolean recruiting) {
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    @Schema(description = "모집 마감 후 생성된 그룹")
+    @Comment("모집 마감 후 생성된 그룹 FK")
+    private Group group;
+
+    public Study(Post post, List<String> tags, String studyName, int maxMembers, boolean recruiting) {
         this.post = post;
+        this.studyName = studyName;
+        this.maxMembers = maxMembers;
         this.recruiting = recruiting;
         if (tags != null) {
             this.studyTags.addAll(tags);
         }
     }
 
-    public static Study create(Post post, List<String> tags, boolean recruiting) {
-        return new Study(post, tags, recruiting);
+    public static Study create(Post post, List<String> tags, String studyName, int maxMembers, boolean recruiting) {
+        return new Study(post, tags, studyName, maxMembers, recruiting);
     }
 
     public void addStudyTag(String tag) {
@@ -69,5 +86,9 @@ public class Study {
 
     public void updateRecruiting(boolean recruiting) {
         this.recruiting = recruiting;
+    }
+
+    public void linkGroup(Group group) {
+        this.group = group;
     }
 }
