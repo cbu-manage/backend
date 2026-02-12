@@ -1,6 +1,5 @@
 package com.example.cbumanage.service;
 
-import com.example.cbumanage.dto.GroupDTO;
 import com.example.cbumanage.dto.PostDTO;
 import com.example.cbumanage.exception.CustomException;
 import com.example.cbumanage.model.Group;
@@ -11,14 +10,11 @@ import com.example.cbumanage.repository.ProjectRepository;
 import com.example.cbumanage.repository.PostRepository;
 import com.example.cbumanage.response.ErrorCode;
 import com.example.cbumanage.utils.PostMapper;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,11 +22,11 @@ import java.util.List;
 @Service
 public class ProjectService {
 
-    private ProjectRepository projectRepository;
-    private PostRepository postRepository;
-    private PostMapper postMapper;
-    private PostService postService;
-    private GroupService groupService;
+    private final ProjectRepository projectRepository;
+    private final PostRepository postRepository;
+    private final PostMapper postMapper;
+    private final PostService postService;
+    private final GroupService groupService;
 
     @Autowired
     public ProjectService(ProjectRepository projectRepository,
