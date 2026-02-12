@@ -227,7 +227,7 @@ public class GroupController {
             summary = "그룹 전체 조회 하기 (관리자 전용)",
             description = "개설된 그룹들을 활성화 시키기 위해 현재 개설 되어 있는 그룹을 조회 할 수 있도록 합니다."
     )
-    @GetMapping("/admin/group")
+    @GetMapping("/group/admin")
     public ResponseEntity<ResultResponse<List<GroupDTO.GroupListDTO>>> getAllGroups(HttpServletRequest httpServletRequest) {
         Long userId = extractUserIdFromCookie(httpServletRequest);
         List<GroupDTO.GroupListDTO> groupAllList = groupService.getAllGroups(userId);
@@ -238,7 +238,7 @@ public class GroupController {
             summary = "그룹 상태 변경하기(관리자 전용)",
             description = "개설된 그룹의 활성/비활성 상태를 변경합니다. 운영자가 관리합니다"
     )
-    @PatchMapping("/admin/group/{groupId}/status")
+    @PatchMapping("/group/admin/{groupId}/status")
     public ResponseEntity<ResultResponse<Void>> changeGroupStatus(
             @PathVariable Long groupId ,
             @Parameter(description = "ACTIVE,INACTIVE로 구분되며 원하는 상태를 보냅니다") @RequestBody GroupDTO.GroupStatusRequestDTO req,
