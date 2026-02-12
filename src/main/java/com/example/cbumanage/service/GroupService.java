@@ -11,11 +11,8 @@ import com.example.cbumanage.response.ErrorCode;
 import com.example.cbumanage.utils.GroupUtil;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -79,13 +76,6 @@ public class GroupService {
         return groupUtil.toGroupMemberInfoDTO(groupMember);
     }
 
-
-    /**
-    그룹을 id로 찾아오는 기능입니다
-    그룹 상세보기에 사용되는 메서드 입니다.
-     **/
-    }
-
      // 서비스 내부 호출용 그룹 생성 메서드
      // DTO 없이 파라미터로 직접 값을 받아 그룹을 생성합니다.
     @Transactional
@@ -104,8 +94,10 @@ public class GroupService {
         return groupUtil.toGroupCreateResponseDTO(group);
     }
 
-    //그룹을 id로 찾아오는 기능입니다
-    //포스트목록을 불러올때 연결되어있는 그룹의 정보를 불러올때 사용합니다
+    /**
+    그룹을 id로 찾아오는 기능입니다
+    그룹 상세보기에 사용되는 메서드 입니다.
+    **/
     public GroupDTO.GroupInfoDTO getGroupById(Long groupId){
         Group group = groupRepository.findById(groupId).orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND));
         return groupUtil.toGroupInfoDTO(group);
@@ -161,7 +153,9 @@ public class GroupService {
     //시전한 user가 관리자가 맞는지 확인하는 메서드
     private void assertIsAdmin(Long userId){
         CbuMember cbuMember = cbuMemberRepository.findById(userId).orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND));
-        if(!cbuMember.getRole().equals(Role.ADMIN)){
+        boolean isAdmin = cbuMember.getRole().stream()
+                .anyMatch(role -> role==Role.ADMIN);
+        if (!isAdmin) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
     }
@@ -244,19 +238,15 @@ public class GroupService {
         return groups.stream().map(group->groupUtil.toGroupListDTO(group)).toList();
     }
 
-
-
-    //그룹을 검색하는 기능입니다.
-    public List<GroupDTO.GroupInfoDTO> getGroupByGroupNameAndStatus(String groupName ) {
-        List<Group> groups = groupRepository.findByGroupNameContaining(groupName);
+    //자신이 속한 그룹들을 조회하기 위한 메서드 입니다.
+    public List<GroupDTO.GroupInfoDTO> getGroupByMemberId(Long userId){
+        List<Group> groups = groupRepository.findByUserId(userId);
         return groups.stream().map(group -> groupUtil.toGroupInfoDTO(group)).toList();
     }
 
-    /*
-
-     */
-    public List<GroupDTO.GroupInfoDTO> getGroupByMemberId(Long userId){
-        List<Group> groups = groupRepository.findByUserId(userId);
+    //그룹을 이름으로 검색하는 기능입니다.
+    public List<GroupDTO.GroupInfoDTO> getGroupByGroupNameAndStatus(String groupName ) {
+        List<Group> groups = groupRepository.findByGroupNameContaining(groupName);
         return groups.stream().map(group -> groupUtil.toGroupInfoDTO(group)).toList();
     }
 
