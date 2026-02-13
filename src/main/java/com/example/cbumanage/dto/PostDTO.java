@@ -305,37 +305,65 @@ public class PostDTO {
     /*
     Project 게시글 상세 조회에 사용되는 DTO
     */
+    @Schema(description = "프로젝트 게시글 생성 요청 데이터")
     @Getter
     @NoArgsConstructor
     public static class PostProjectCreateRequestDTO{
-
+        @Schema(description = "게시글 제목", example = "스프링부트 기반 커뮤니티 개발 프로젝트")
         private String title;
+
+        @Schema(description = "게시글 상세 내용", example = "함께 협업하며 성장할 팀원을 모집합니다...")
         private String content;
+
         @Schema(
-                description = "모집 분야 (복수 입력 가능, 대문자 영어만 허용)",
+                description = "모집 분야 (복수 입력 가능)",
                 example = "[\"BACKEND\", \"FRONTEND\"]",
-                allowableValues = {"BACKEND","FRONTEND","DEV","PLANNING","DESIGN","ETC"}
+                allowableValues = {"BACKEND", "FRONTEND", "DEV", "PLANNING", "DESIGN", "ETC"}
         )
         private List<String> recruitmentFields;
+
+        @Schema(description = "현재 모집 여부 (true: 모집중, false: 모집마감)", example = "true")
         private boolean recruiting;
+
+        @Schema(description = "게시글 카테고리 식별 번호", example = "2")
         private int category;
     }
 
+    @Schema(description = "프로젝트 게시글 생성 응답 데이터")
     @Getter
     @NoArgsConstructor
     public static class PostProjectCreateResponseDTO{
+        @Schema(description = "생성된 포스트 ID", example = "101")
         private Long postId;
+
+        @Schema(description = "작성자 유저 ID", example = "15")
         private Long authorId;
+
+        @Schema(description = "자동 생성된 프로젝트 그룹 ID", example = "50")
+        private Long groupId;
+
+        @Schema(description = "게시글 제목")
         private String title;
+
+        @Schema(description = "게시글 내용")
         private String content;
+
+        @Schema(description = "설정된 모집 분야")
         private List<String> recruitmentFields;
+
+        @Schema(description = "모집 여부")
         private boolean recruiting;
+
+        @Schema(description = "생성 일시")
         private LocalDateTime createdAt;
+
+        @Schema(description = "카테고리 번호")
         private int category;
 
         @Builder
         public PostProjectCreateResponseDTO(Long postId,
                                             Long authorId,
+                                            Long groupId,
                                             String title,
                                             String content,
                                             List<String> recruitmentFields,
@@ -344,6 +372,7 @@ public class PostDTO {
                                             int category){
             this.postId = postId;
             this.authorId = authorId;
+            this.groupId = groupId;
             this.title = title;
             this.content = content;
             this.recruitmentFields = recruitmentFields;
@@ -352,6 +381,7 @@ public class PostDTO {
             this.category = category;
         }
     }
+
 
     @Getter
     @NoArgsConstructor
@@ -368,12 +398,20 @@ public class PostDTO {
         }
     }
 
+    @Schema(description = "프로젝트 게시글 수정 요청 데이터")
     @Getter
     @NoArgsConstructor
     public static class PostProjectUpdateRequestDTO{
+        @Schema(description = "수정할 제목", example = "[수정] 스프링부트 프로젝트")
         private String title;
+
+        @Schema(description = "수정할 내용", example = "프로젝트 내용이 변경되었습니다.")
         private String content;
+
+        @Schema(description = "수정할 모집 분야", example = "[\"BACKEND\", \"DESIGN\"]")
         private List<String> recruitmentFields;
+
+        @Schema(description = "모집 여부 상태 변경", example = "false")
         private boolean recruiting;
     }
 
@@ -381,7 +419,10 @@ public class PostDTO {
     @NoArgsConstructor
     public static class ProjectUpdateDTO{
 
+        @Schema(description = "모집 분야 변경")
         private List<String> recruitmentFields;
+
+        @Schema(description = "모집 여부 상태 변경")
         private boolean recruiting;
 
         @Builder
@@ -392,40 +433,93 @@ public class PostDTO {
     }
 
     /*
-    Project 게시글 목록 조회에 사용되는 DTO
+    Project 게시글 상제 조회에 사용되는 DTO
     제목, 모집분야, 작성자, 생성시간, 모집여부를 포함합니다
      */
+    @Schema(description = "프로젝트 게시글 상세 정보 (조회 유저의 권한 정보 포함)")
     @Getter
     @NoArgsConstructor
     public static class ProjectInfoDetailDTO {
+        @Schema(description = "포스트 ID", example = "101")
         private Long postId;
+
+        @Schema(description = "게시글 제목")
         private String title;
+
+        @Schema(description = "게시글 상세 내용")
         private String content;
+
+        @Schema(description = "모집 분야 리스트")
         private List<String> recruitmentFields;
+
+        @Schema(description = "작성자 ID", example = "15")
         private Long authorId;
+
+        @Schema(description = "연결된 그룹 ID", example = "50")
+        private Long groupId;
+
+        @Schema(description = "조회한 유저가 해당 프로젝트의 팀장(작성자)인지 여부. " +
+                "true일 경우: '신청 인원 확인' 버튼 노출", example = "false")
+        private boolean isLeader;
+
+        @Schema(description = "조회한 유저의 가입 신청 상태. " +
+                "1. true: 이미 신청함 -> '신청 취소하기' 버튼 노출 " +
+                "2. false: 신청 이력 없음 -> '신청하기' 버튼 노출 " +
+                "3. null: 이미 그룹 멤버(승인됨) -> '가입 완료' 표시(버튼 비활성)", example = "false")
+        private Boolean hasApplied;
+
+        @Schema(description = "작성 일시")
         private LocalDateTime createdAt;
+
+        @Schema(description = "모집 여부 (모집 중:true, 모집 완료:false)", example = "true")
         private boolean recruiting;
 
         @Builder
-        public ProjectInfoDetailDTO(Long postId, String title, String content, List<String> recruitmentFields, Long authorId, LocalDateTime createdAt, boolean recruiting) {
+        public ProjectInfoDetailDTO(
+                Long postId,
+                String title,
+                String content,
+                List<String> recruitmentFields,
+                Long authorId,
+                Long groupId,
+                boolean isLeader,
+                Boolean hasApplied,
+                LocalDateTime createdAt,
+                boolean recruiting
+        ) {
             this.postId = postId;
             this.title = title;
-            this.content=content;
+            this.content = content;
             this.recruitmentFields = recruitmentFields;
             this.authorId = authorId;
+            this.groupId = groupId;
+            this.isLeader = isLeader;
+            this.hasApplied = hasApplied;
             this.createdAt = createdAt;
             this.recruiting = recruiting;
         }
     }
 
+    @Schema(description = "프로젝트 목록 조회용 요약 데이터")
     @Getter
     @NoArgsConstructor
     public static class ProjectListDTO {
+        @Schema(description = "포스트 ID", example = "101")
         private Long postId;
+
+        @Schema(description = "게시글 제목")
         private String title;
+
+        @Schema(description = "모집 분야")
         private List<String> recruitmentFields;
+
+        @Schema(description = "작성자 ID")
         private Long authorId;
+
+        @Schema(description = "작성 일시")
         private LocalDateTime createdAt;
+
+        @Schema(description = "모집 여부 (모집 중:true, 모집 완료:false)", example = "true")
         private boolean recruiting;
 
         @Builder

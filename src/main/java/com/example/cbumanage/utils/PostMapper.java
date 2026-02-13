@@ -126,10 +126,11 @@ public class PostMapper {
     }
 
     // 프로젝트 생성 응답 DTO 변환
-    public PostDTO.PostProjectCreateResponseDTO toPostProjectCreateResponseDTO(Post post, Project project) {
+    public PostDTO.PostProjectCreateResponseDTO toPostProjectCreateResponseDTO(Post post, Project project, Group group) {
         return PostDTO.PostProjectCreateResponseDTO.builder()
                 .postId(post.getId())
                 .authorId(post.getAuthorId())
+                .groupId(group.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .createdAt(post.getCreatedAt())
@@ -213,8 +214,9 @@ public class PostMapper {
                 .build();
     }
 
-    // 프로젝트 게시글 상세 조회 DTO 변환
-    public PostDTO.ProjectInfoDetailDTO toProjectInfoDetailDTO(Project project) {
+    // 프로젝트 게시글 상세 조회 DTO 변환 (로그인 사용자 기준 isLeader, hasApplied 포함)
+    public PostDTO.ProjectInfoDetailDTO toProjectInfoDetailDTO(Project project, Long userId, boolean isLeader, Boolean hasApplied) {
+        Long groupId = project.getGroup() != null ? project.getGroup().getId() : null;
         return PostDTO.ProjectInfoDetailDTO.builder()
                 .postId(project.getPost().getId())
                 .title(project.getPost().getTitle())
@@ -223,6 +225,9 @@ public class PostMapper {
                         .map(ProjectFieldType::getDescription)
                         .collect(Collectors.toList()))
                 .authorId(project.getPost().getAuthorId())
+                .groupId(groupId)
+                .isLeader(isLeader)
+                .hasApplied(hasApplied)
                 .createdAt(project.getPost().getCreatedAt())
                 .recruiting(project.isRecruiting())
                 .build();
@@ -278,6 +283,8 @@ public class PostMapper {
                 .reportInfoDTO(toReportInfoDTO(report))
                 .build();
     }
+
+
 
 
 }

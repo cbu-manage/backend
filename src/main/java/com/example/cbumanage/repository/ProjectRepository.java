@@ -11,11 +11,15 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
-    // Post ID 로 프로젝트 확장 필드 조회
+
     Project findByPostId(Long postId);
+
+    @Query("select p from Project p where p.group.id = :groupId")
+    Optional<Project> findByGroupId(@Param("groupId") Long groupId);
 
     // 프로젝트 게시글 전체 조회 및 모집여부 필터
     @Query("SELECT p FROM Project p " +

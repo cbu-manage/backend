@@ -8,6 +8,11 @@ import com.example.cbumanage.service.ProjectService;
 import com.example.cbumanage.utils.JwtProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -93,7 +98,8 @@ public class ProjectController {
 
     @Operation(
             summary = "프로젝트 게시글 생성",
-            description = "프로젝트 관련 정보를 입력받아 새로운 프로젝트 게시글을 생성합니다."
+            description = "프로젝트 정보를 입력받아 새 게시글을 생성합니다. " +
+                    "생성 시 해당 프로젝트를 관리할 그룹이 자동으로 생성되며, 작성자는 그룹장이 됩니다."
     )
     @PostMapping("/post/project")
     public ResponseEntity<ResultResponse<PostDTO.PostProjectCreateResponseDTO>> createPostProject(
@@ -106,14 +112,21 @@ public class ProjectController {
 
     @Operation(
             summary = "프로젝트 게시글 전체 목록 페이징 조회",
-            description = "프로젝트 전체 목록을 페이징으로 불러옵니다"
+            description = "프로젝트 전체 목록을 페이징으로 불러옵니다, 최신순으로 정렬됩니다."
     )
+    @Parameters({
+            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
+            @Parameter(name = "size", description = "한 페이지당 출력 개수", example = "10"),
+            @Parameter(name = "category", description = "카테고리 번호", example = "1"),
+            @Parameter(name = "recruiting", description = "모집 중 여부 (true: 모집 중, false: 전체/마감 포함)")
+    })
     @GetMapping("/post/project")
-    public ResponseEntity<ResultResponse<Page<PostDTO.ProjectListDTO>>> getProjects(@io.swagger.v3.oas.annotations.Parameter(description = "페이지번호") @RequestParam int page,
-                                                                              @io.swagger.v3.oas.annotations.Parameter(description = "페이지당 project 게시글 갯수") @RequestParam int size,
-                                                                              @Parameter(description = "카테고리") @RequestParam int category,
-                                                                                    @Parameter(description = "모집여부") @RequestParam(required = false) Boolean recruiting){
-
+    public ResponseEntity<ResultResponse<Page<PostDTO.ProjectListDTO>>> getProjects(
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam int category,
+            @RequestParam(required = false) Boolean recruiting
+    ){
         Pageable pageable= PageRequest.of(
                 page,size, Sort.by(Sort.Order.desc("post.createdAt"))
         );
@@ -125,15 +138,21 @@ public class ProjectController {
             summary = "내가 작성한 프로젝트 게시글 목록 조회",
             description = "쿠키에서 userId를 가져와서 자신이 작성한 프로젝트 게시글만 조회 합니다."
     )
+    @Parameters({
+            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
+            @Parameter(name = "size", description = "한 페이지당 출력 개수", example = "10"),
+            @Parameter(name = "category", description = "카테고리 번호", example = "1")
+    })
     @GetMapping("/post/project/me")
-    public ResponseEntity<ResultResponse<Page<PostDTO.ProjectListDTO>>> getMyProjects(@io.swagger.v3.oas.annotations.Parameter(description = "페이지번호") @RequestParam int page,
-                                                                                    @io.swagger.v3.oas.annotations.Parameter(description = "페이지당 project 게시글 갯수") @RequestParam int size,
-                                                                                    @Parameter(description = "카테고리") @RequestParam int category,
-    HttpServletRequest request){
+    public ResponseEntity<ResultResponse<Page<PostDTO.ProjectListDTO>>> getMyProjects(
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam int category,
+            HttpServletRequest request
+    ){
         Pageable pageable= PageRequest.of(
                 page,size, Sort.by(Sort.Order.desc("post.createdAt"))
         );
-
         Long userId = userIdFromCookie(request);
         Page<PostDTO.ProjectListDTO> posts=projectService.getMyProjectsByUserId(pageable, userId,category);
         return ResultResponse.ok(SuccessCode.SUCCESS, posts);
@@ -141,11 +160,15 @@ public class ProjectController {
 
     @Operation(
             summary = "프로젝트 게시글 상세 조회",
-            description = "post id를 이용하여 프로젝트 게시글 상세 정보를 조회합니다."
+            description = "프로젝트 정보를 상세 조회합니다. 응답 데이터의 **isLeader**와 **hasApplied** 값에 따라 " +
+                    "프론트엔드에서 '신청 인원 확인','신청하기', '취소하기', '가입완료' 등 버튼을 분기 처리합니다."+
+                    "(버튼 분기 로직은 응답 DTO 필드 설명 참조)"
     )
     @GetMapping("/post/project/{postId}")
-    public ResponseEntity<ResultResponse<PostDTO.ProjectInfoDetailDTO>> getPostProject(@PathVariable Long postId) {
-        PostDTO.ProjectInfoDetailDTO projectInfoDetailDTO = projectService.getProjectByPostId(postId);
+    public ResponseEntity<ResultResponse<PostDTO.ProjectInfoDetailDTO>> getPostProject(
+            @Parameter(description = "게시글 ID", example = "100") @PathVariable Long postId, HttpServletRequest request) {
+        Long userId = userIdFromCookie(request);
+        PostDTO.ProjectInfoDetailDTO projectInfoDetailDTO = projectService.getProjectByPostId(postId, userId);
         return ResultResponse.ok(SuccessCode.SUCCESS, projectInfoDetailDTO);
     }
 
@@ -168,7 +191,7 @@ public class ProjectController {
 
     @Operation(
             summary = "프로젝트 게시글 삭제",
-            description = "프로젝트 게시글을 softDelete해 포스트 읽어오기에서 필터링 되도록 합니다"
+            description = "게시글을 Soft Delete 처리합니다. 실제 데이터는 남으나 목록 및 상세 조회에서 제외됩니다."
     )
     @DeleteMapping("/post/project/{postId}")
     public ResponseEntity<ResultResponse<Void>> deletePost(
@@ -189,8 +212,9 @@ public class ProjectController {
     )
     @GetMapping("/post/project/filter")
     public ResponseEntity<ResultResponse<Page<PostDTO.ProjectListDTO>>> filterProjectsByFields(
-            @io.swagger.v3.oas.annotations.Parameter(description = "페이지번호") @RequestParam int page,
-            @io.swagger.v3.oas.annotations.Parameter(description = "페이지당 project 게시글 갯수") @RequestParam int size,
+            @Parameter(description = "페이지번호") @RequestParam int page,
+            @Parameter(description = "페이지당 project 게시글 갯수") @RequestParam int size,
+            @Parameter(description = "필터링할 모집 분야", schema = @Schema(implementation = ProjectFieldType.class))
             @RequestParam(name = "fields") ProjectFieldType fields,
             @RequestParam(required = false) Boolean recruiting) {
         Pageable pageable= PageRequest.of(page,size, Sort.by(Sort.Order.desc("id")));
