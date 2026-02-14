@@ -22,6 +22,7 @@ public class PostDTO {
      */
     @Getter
     @NoArgsConstructor
+    @Schema(description = "포스트 메인테이블의 정보를 담는 DTO입니다")
     public static class PostInfoDTO{
         private Long postId;
 
@@ -61,19 +62,24 @@ public class PostDTO {
      */
     @Getter
     @NoArgsConstructor
+    @Schema(description = "보고서 테이블의 정보를 담는 DTO입니다")
     public static class ReportInfoDTO{
 
         private String location;
 
+        @Schema(description = "s3버킷 url을 통해 이미지를 보여줍니다")
         private String reportImage;
 
         private LocalDateTime date;
 
         //그룹의 정보를 담고 있습니다
+        @Schema(description = "보고서를 작성한 그룹의 정보를 담고 있습니다")
         private GroupDTO.GroupInfoDTO groupInfoDTO;
 
+        @Schema(description = "보고서에 기록할 활동의 타입입니다" , example = "STUDY / PROJECT / MENTORING")
         private PostReportGroupType type;
 
+        @Schema(description = "보고서의 승인 여부입니다")
         private boolean isAccepted;
 
         @Builder
@@ -102,6 +108,7 @@ public class PostDTO {
      */
     @Getter
     @NoArgsConstructor
+    @Schema(description = "보고서 게시글을 생성하는 requestDTO 입니다. 포스트 메인테이블과 포스트-보고서 서브테이블의 정보를 한번에 생성합니다")
     public static class PostReportCreateRequestDTO{
 
         private String title;
@@ -112,13 +119,16 @@ public class PostDTO {
 
         private LocalDateTime date;
 
+        @Schema(description = "s3버킷에 사진을 업로드 하고 반환받은 url을 넣습니다")
         private String reportImage;
 
         private int category;
 
         //보고서에 그룹을 연결합니다
+        @Schema(description = "보고서와 연결될 그룹의 ID(글을 쓰고있는 활동의 그룹 ID)를 넣습니다")
         private long groupId;
 
+        @Schema(description = "보고서에 기록할 활동의 타입입니다" , example = "STUDY / PROJECT / MENTORING")
         private PostReportGroupType type;
 
 
@@ -186,6 +196,7 @@ public class PostDTO {
      */
     @Getter
     @NoArgsConstructor
+    @Schema(description = "포스트 메인테이블을 만드는 DTO입니다.")
     public static class PostCreateDTO{
         private Long authorId;
 
@@ -208,6 +219,7 @@ public class PostDTO {
 
     @Getter
     @NoArgsConstructor
+    @Schema(description = "보고서 서브 테이블을 생성하는 코드입니다. postReportCreateRequestDTO에서 분리됩니다")
     public static class ReportCreateDTO{
         private Long postId;
 
@@ -238,6 +250,7 @@ public class PostDTO {
      */
     @Getter
     @NoArgsConstructor
+    @Schema(description = "보고서 게시글을 수정하는 DTO입니다. 포스트 메인테이블과 보고서 서브테이블의 수정을 한번에 처리합니다 ")
     public static class PostReportUpdateRequestDTO{
 
         private String title;
@@ -261,6 +274,7 @@ public class PostDTO {
      */
     @Getter
     @NoArgsConstructor
+    @Schema(description = "포스트 메인테이블의 정보들을 수정하는 DTO입니다")
     public static class PostUpdateDTO{
 
         private String title;
@@ -279,6 +293,7 @@ public class PostDTO {
      */
     @Getter
     @NoArgsConstructor
+    @Schema(description = "보고서 서브 테이블을 수정하는 DTO입니다. PostReportUpdateRequestDTO에서 분리됩니다")
     public static class ReportUpdateDTO{
 
         private String location;
@@ -739,6 +754,7 @@ public class PostDTO {
     //보고서 게시글 미리보기 DTO의 보고서 관련 내용을 담고있는 DTO입니다
     @Getter
     @NoArgsConstructor
+    @Schema(description = "보고서 목록에서 보고서 게시글을 미리보기 하기위한 DTO입니다")
     public static class PostReportPreviewDTO{
         private Long postId;
         private String title;
@@ -747,10 +763,14 @@ public class PostDTO {
         private String authorName;
 
         private PostReportGroupType type;
+        @Schema(description = "보고서 승인 여부 입니다")
         private boolean isAccepted;
 
+        @Schema(description = "보고서를 작성한 그룹의 ID입니다")
         private Long groupId;
+        @Schema(description = "보고서를 작성한 그룹의 이름입니다")
         private String groupName;
+        @Schema(description = "그룹의 활동인원 (status가 ACTIVE인 인원)의 수를 표기합니다")
         private Long groupMemberCount;
 
         @Builder
@@ -772,6 +792,7 @@ public class PostDTO {
 
     @Getter
     @NoArgsConstructor
+    @Schema(description = "보고서 게시글을 단건조회 할때 포스트+보고서의 정보를 종합적으로 담은 게시글 입니다")
     public static class PostReportViewDTO{
         private PostInfoDTO postInfoDTO;
         private ReportInfoDTO reportInfoDTO;
