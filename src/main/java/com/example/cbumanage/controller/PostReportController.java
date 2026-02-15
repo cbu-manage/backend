@@ -138,7 +138,7 @@ public class PostReportController {
         return ResultResponse.ok(SuccessCode.UPDATED,null);
     }
 
-    @Operation(summary = "보고서 승인 메소드",description = "보고서 승인 메소드 입니다. 추후 권한 기능 추가하여 운영자만 허용 가능하게 수정할 예정입니다")
+    @Operation(summary = "보고서 승인 메소드",description = "보고서 승인 메소드 입니다. post의 id를 통해 report를 허용상태로 바꿉니다")
     @PatchMapping("/{postId}/accept")
     public ResponseEntity<ResultResponse<Void>> acceptPostReport(@PathVariable Long postId,HttpServletRequest httpServletRequest){
         Long userId = extractUserIdFromCookie(httpServletRequest);

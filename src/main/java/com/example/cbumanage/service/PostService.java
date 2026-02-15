@@ -116,7 +116,7 @@ public class PostService {
         PostReport report = postReportRepository.findByPostId(postId);
         Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         CbuMember user = cbuMemberRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        boolean isAdmin = user.getRole().equals(Role.ADMIN);
+        boolean isAdmin = user.getRole().contains(Role.ADMIN);
         boolean isAuthor = post.getAuthorId().equals(userId);
         boolean isActiveMember =
                 groupMemberRepository.existsActiveMember(
@@ -178,12 +178,12 @@ public class PostService {
     }
 
     @Transactional
-    public void acceptReport(Long reportId,Long userId) {
+    public void acceptReport(Long postId,Long userId) {
         CbuMember cbuMember = cbuMemberRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        if (!cbuMember.getRole().equals(Role.ADMIN)){
+        if (!cbuMember.getRole().contains(Role.ADMIN)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
-        PostReport report = postReportRepository.findById(reportId).orElseThrow(()->new EntityNotFoundException("Report Not Found")); //확인->변경했습니다
+        PostReport report = postReportRepository.findByPostId(postId);
         report.Accept();
     }
 
