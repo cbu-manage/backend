@@ -121,6 +121,22 @@ public class StudyController {
     }
 
     @Operation(
+            summary = "내가 작성한 스터디 게시글 목록 조회",
+            description = "쿠키에서 userId를 가져와서 자신이 작성한 스터디 게시글만 조회합니다."
+    )
+    @GetMapping("/post/study/me")
+    public ResponseEntity<ResultResponse<Page<PostDTO.StudyListDTO>>> getMyStudies(
+            @Parameter(description = "페이지번호") @RequestParam int page,
+            @Parameter(description = "페이지당 게시글 개수") @RequestParam int size,
+            @Parameter(description = "카테고리") @RequestParam int category,
+            HttpServletRequest request) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
+        Long userId = userIdFromCookie(request);
+        Page<PostDTO.StudyListDTO> studies = studyService.getMyStudiesByUserId(pageable, userId, category);
+        return ResultResponse.ok(SuccessCode.SUCCESS, studies);
+    }
+
+    @Operation(
             summary = "스터디 게시글 상세 조회",
             description = "post id를 이용하여 스터디 게시글 상세 정보를 조회합니다."
     )

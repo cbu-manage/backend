@@ -87,6 +87,14 @@ public class StudyService {
     }
 
     /**
+     * 내가 작성한 스터디 게시글 목록 페이징 조회
+     */
+    public Page<PostDTO.StudyListDTO> getMyStudiesByUserId(Pageable pageable, Long userId, int category) {
+        Page<Study> studies = studyRepository.findByPostAuthorIdAndPostCategoryAndPostIsDeletedFalse(userId, category, pageable);
+        return studies.map(study -> postMapper.toStudyListDTO(study));
+    }
+
+    /**
      * 스터디 게시글 수정 (Study 필드만)
      */
     public void updateStudy(PostDTO.StudyUpdateDTO dto, Study study) {
