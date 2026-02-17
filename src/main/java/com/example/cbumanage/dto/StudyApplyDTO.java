@@ -18,27 +18,27 @@ public class StudyApplyDTO {
      */
     @Getter
     @NoArgsConstructor
-    @Schema(description = "스터디 신청 정보")
+    @Schema(description = "스터디 신청 정보 (응답용)")
     public static class StudyApplyInfoDTO {
-        @Schema(description = "신청 ID")
+        @Schema(description = "신청 ID", example = "5")
         private Long applyId;
 
-        @Schema(description = "스터디 ID")
+        @Schema(description = "스터디 ID", example = "10")
         private Long studyId;
 
-        @Schema(description = "신청자 ID")
+        @Schema(description = "신청자 회원 ID", example = "20")
         private Long applicantId;
 
-        @Schema(description = "신청자 이름")
+        @Schema(description = "신청자 이름", example = "홍길동")
         private String applicantName;
 
-        @Schema(description = "신청자 학과")
+        @Schema(description = "신청자 학과", example = "컴퓨터공학과")
         private String major;
 
-        @Schema(description = "신청자 학년")
+        @Schema(description = "신청자 학년", example = "3학년")
         private String grade;
 
-        @Schema(description = "신청 상태")
+        @Schema(description = "신청 상태 (PENDING: 대기, ACCEPTED: 수락, REJECTED: 거절)", example = "PENDING")
         private StudyApplyStatus status;
 
         @Schema(description = "신청 일시")
@@ -66,7 +66,9 @@ public class StudyApplyDTO {
     @NoArgsConstructor
     @Schema(description = "스터디 신청 상태 변경 요청")
     public static class StudyApplyStatusRequestDTO {
-        @Schema(description = "변경할 상태 (ACCEPTED, REJECTED)")
+        @Schema(description = "변경할 상태 (ACCEPTED: 수락, REJECTED: 거절)",
+                example = "ACCEPTED",
+                allowableValues = {"ACCEPTED", "REJECTED"})
         private StudyApplyStatus status;
     }
 
