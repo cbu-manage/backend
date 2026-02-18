@@ -11,7 +11,9 @@ import com.example.cbumanage.utils.CommentMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -98,8 +100,11 @@ public class CommentService {
     댓글과 답글의 엔티티는 같기에, update에서는 다르게 취급하지 않습니다
      */
     @Transactional
-    public void updateComment(Long commentId, CommentDTO.CommentUpdateRequestDTO req) {
+    public void updateComment(Long commentId, CommentDTO.CommentUpdateRequestDTO req,Long userId) {
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment not found"));
+        if(!isAuthor(userId,comment)){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
         comment.changeContent(req.getContent());
     }
 
@@ -112,8 +117,18 @@ public class CommentService {
     }
 
     @Transactional
-    public void deleteComment(Long commentId) {
+    public void deleteComment(Long commentId,Long userId) {
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment not found"));
+        if(!isAuthor(userId,comment)){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
         comment.Delete();
+    }
+
+    boolean isAuthor(Long userId,Comment comment){
+        if (userId.equals(comment.getUserId())){
+            return true;
+        }
+        return false;
     }
 }

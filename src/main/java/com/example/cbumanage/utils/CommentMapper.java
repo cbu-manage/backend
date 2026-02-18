@@ -46,7 +46,7 @@ public class CommentMapper {
                 .commentId(comment.getId())
                 .userId(comment.getUserId())
                 .postId(comment.getPost() != null ? comment.getPost().getId() : null)
-                .problemId(Long.valueOf(comment.getProblem() != null ? comment.getProblem().getProblemId() : null))
+                .problemId(comment.getProblem() != null ? comment.getProblem().getProblemId() : null)
                 .content(comment.getContent())
                 .createdAt(comment.getCreatedAt())
                 .build();
@@ -58,6 +58,7 @@ public class CommentMapper {
                 .userId(comment.getUserId())
                 .parentId(comment.getParentComment().getId())
                 .createdAt(comment.getCreatedAt())
+                .content(comment.getContent())
                 .build();
     }
 }
