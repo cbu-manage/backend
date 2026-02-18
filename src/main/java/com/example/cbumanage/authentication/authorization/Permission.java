@@ -19,7 +19,7 @@ public enum Permission {
 	 */
 	MEMBER(
 			Set.of("/api/v1/*"),     // 인증이 필요한 경로
-			Set.of("/api/v1/login")  // 인증이 필요하지 않은 경로
+			Set.of("/api/v1/login/*")  // 인증이 필요하지 않은 경로
 	),
 
 	/**
