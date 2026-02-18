@@ -52,7 +52,7 @@ public class CommentController {
     )
     @PostMapping("problems/{problemId}/comment")
     public ResponseEntity<ResultResponse<CommentDTO.CommentCreateResponseDTO>> createProblemComment(@RequestBody CommentDTO.CommentCreateRequestDTO req,
-                                                                                                    @PathVariable Integer problemId,
+                                                                                                    @PathVariable Long problemId,
                                                                                                     @RequestParam Long userId) {
         CommentDTO.CommentCreateResponseDTO responseDTO = commentService.createCommentProblem(req, userId, problemId);
         return ResultResponse.ok(SuccessCode.CREATED, responseDTO);
@@ -63,7 +63,7 @@ public class CommentController {
             description= "problemId를 통해 문제의 댓글 목록을 불러온다. 댓글-답글 트리가 1계층으로 반환된다."
     )
     @GetMapping("problems/{problemId}/comment")
-    public ResponseEntity<ResultResponse<List<CommentDTO.CommentInfoDTO>>> getProblemComments(@PathVariable Integer problemId) {
+    public ResponseEntity<ResultResponse<List<CommentDTO.CommentInfoDTO>>> getProblemComments(@PathVariable Long problemId) {
         List<CommentDTO.CommentInfoDTO> commentLists = commentService.getCommentsProblemId(problemId);
         return ResultResponse.ok(SuccessCode.SUCCESS, commentLists);
     }

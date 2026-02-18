@@ -10,7 +10,7 @@ import lombok.Getter;
  */
 @Getter
 public class ProblemListItemDTO {
-    private final Integer problemId;
+    private final Long problemId;
     private final String platformName;
     private final String categoryName;
     private final String title;
@@ -19,7 +19,7 @@ public class ProblemListItemDTO {
     // 추후 Solution 기능 구현 시 해결 여부, 사용 언어, 댓글 수 추가
 
     @Builder
-    public ProblemListItemDTO(Integer problemId, String platformName, String categoryName, String title, String authorName, ProblemGrade grade) {
+    public ProblemListItemDTO(Long problemId, String platformName, String categoryName, String title, String authorName, ProblemGrade grade) {
         this.problemId = problemId;
         this.platformName = platformName;
         this.categoryName = categoryName;

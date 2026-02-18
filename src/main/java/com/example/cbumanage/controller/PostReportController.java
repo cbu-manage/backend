@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,7 +28,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/report")
-@Tag(name = "보고서 게식글 관리 컨틀로러")
+@Tag(name = "보고서 게시글 관리 컨틀로러")
 public class PostReportController {
     private final PostService postService;
     private final JwtProvider jwtProvider;
@@ -84,12 +85,13 @@ public class PostReportController {
             description = "한번의 요청에 게시글 생성,게시글-보고서 생성 처리. 테스트 중에는 카테고리를 7로 "
     )
     @PostMapping()
-    public ResponseEntity<ResultResponse<PostDTO.PostReportCreateResponseDTO>> createPostReport(@Parameter(description = "현재 게시글에서 테스트 할때는 category를 7로하고 테스트합니다") @RequestBody PostDTO.PostReportCreateRequestDTO req,
-                                                                                                HttpServletRequest httpServletRequest){
+    public ResponseEntity<ResultResponse<PostDTO.PostReportCreateResponseDTO>> createPostReport(@Parameter(description = "현재 게시글에서 테스트 할때는 category를 7로하고 테스트합니다, reportImage는 ImageController에서 생성한 url을 넣습니다") @RequestBody PostDTO.PostReportCreateRequestDTO req,
+                                                                                                HttpServletRequest httpServletRequest
+                                                                                                )
+                                                                                                {
         Long userId = extractUserIdFromCookie(httpServletRequest);
         PostDTO.PostReportCreateResponseDTO responseDTO = postService.createPostReport(req, userId);
         return ResultResponse.ok(SuccessCode.CREATED, responseDTO);
-
     }
 
     @Operation(
@@ -145,6 +147,9 @@ public class PostReportController {
         }
         catch (ResponseStatusException e){
             return ResultResponse.error(ErrorCode.FORBIDDEN);
+        }
+        catch (EntityNotFoundException e){
+            return ResultResponse.error(ErrorCode.NOT_FOUND);
         }
         return ResultResponse.ok(SuccessCode.UPDATED,null);
     }

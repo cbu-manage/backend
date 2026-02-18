@@ -86,7 +86,7 @@ public class CommentService {
     @Transactional
     public CommentDTO.CommentCreateResponseDTO createCommentProblem(CommentDTO.CommentCreateRequestDTO req,
                                                                     Long userId,
-                                                                    Integer problemId) {
+                                                                    Long problemId) {
         Problem problem = problemRepository.findById(problemId).orElseThrow(() -> new EntityNotFoundException(
                 "Problem not found"));
         Comment comment = new Comment(problem, userId, null, req.getContent());
@@ -104,7 +104,7 @@ public class CommentService {
     }
 
     // Problem(코딩테스트 페이지) 댓글 조회를 위한 메소드
-    public List<CommentDTO.CommentInfoDTO> getCommentsProblemId(Integer problemId) {
+    public List<CommentDTO.CommentInfoDTO> getCommentsProblemId(Long problemId) {
         Problem problem = problemRepository.findById(problemId).orElseThrow(() -> new EntityNotFoundException(
                 "Problem not found"));
         List<Comment> comments = commentRepository.findRootsProblemId(problemId);

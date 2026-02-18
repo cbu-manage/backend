@@ -47,5 +47,5 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
           )
     order by c.createdAt asc
 """)
-    List<Comment> findRootsProblemId(Integer problemId);
+    List<Comment> findRootsProblemId(Long problemId);
 }

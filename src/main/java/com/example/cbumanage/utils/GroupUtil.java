@@ -47,6 +47,8 @@ public class GroupUtil {
                 .groupMemberId(member.getId())
                 .userId(member.getCbuMember().getCbuMemberId())
                 .userName(member.getCbuMember().getName())
+                .grade(member.getCbuMember().getGrade())
+                .major(member.getCbuMember().getMajor())
                 .groupMemberRole(member.getGroupMemberRole())
                 .groupMemberStatus(member.getGroupMemberStatus())
                 .createdAt(member.getCreatedAt())
@@ -75,8 +77,20 @@ public class GroupUtil {
                 .build();
     }
 
+    public GroupDTO.GroupListDTO toGroupListDTO(Group group) {
+        GroupMember leader = group.getMembers().stream()
+                .filter(m -> m.getGroupMemberRole() == GroupMemberRole.LEADER)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Leader not found"));
 
-
-
-
+        return GroupDTO.GroupListDTO.builder()
+                .groupId(group.getId())
+                .groupName(group.getGroupName())
+                .createdAt(group.createdAt)
+                .groupRecruitmentStatus(group.getRecruitmentStatus())
+                .activeMemberCount(group.getMembers().size())
+                .leaderId(leader != null ? leader.getCbuMember().getCbuMemberId() : null)
+                .leaderName(leader != null ? leader.getCbuMember().getName() : null)
+                .build();
+    }
 }
