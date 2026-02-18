@@ -557,19 +557,19 @@ public class PostDTO {
     @NoArgsConstructor
     @Schema(description = "스터디 모집 게시글 생성 요청 DTO")
     public static class PostStudyCreateRequestDTO {
-        @Schema(description = "스터디 게시글 제목")
+        @Schema(description = "스터디 게시글 제목", example = "Spring Boot 심화 스터디 모집")
         private String title;
-        @Schema(description = "스터디 게시글 내용")
+        @Schema(description = "스터디 게시글 내용", example = "함께 Spring Boot를 공부할 팀원을 모집합니다...")
         private String content;
-        @Schema(description = "스터디 태그 목록")
+        @Schema(description = "스터디 태그 목록 (자유 입력)", example = "[\"Spring\", \"Java\", \"Backend\"]")
         private List<String> studyTags;
         @Schema(description = "스터디 이름 (마감 시 그룹 이름으로 사용)", example = "Spring 스터디")
         private String studyName;
-        @Schema(description = "모집 중 여부 (true=모집 중, false=모집 완료)")
+        @Schema(description = "모집 중 여부 (true: 모집 중, false: 모집 마감)", example = "true")
         private boolean recruiting;
-        @Schema(description = "최대 모집 인원 (팀장 포함)")
+        @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
         private int maxMembers;
-        @Schema(description = "게시글 카테고리 코드")
+        @Schema(description = "게시글 카테고리 번호", example = "1")
         private int category;
     }
 
@@ -577,9 +577,9 @@ public class PostDTO {
     @NoArgsConstructor
     @Schema(description = "스터디 모집 게시글 생성 응답 DTO")
     public static class PostStudyCreateResponseDTO {
-        @Schema(description = "생성된 게시글 ID")
+        @Schema(description = "생성된 게시글 ID", example = "101")
         private Long postId;
-        @Schema(description = "작성자 회원 ID")
+        @Schema(description = "작성자 회원 ID", example = "15")
         private Long authorId;
         @Schema(description = "스터디 게시글 제목")
         private String title;
@@ -589,13 +589,13 @@ public class PostDTO {
         private List<String> studyTags;
         @Schema(description = "스터디 이름")
         private String studyName;
-        @Schema(description = "모집 중 여부")
+        @Schema(description = "모집 중 여부 (true: 모집 중, false: 모집 마감)")
         private boolean recruiting;
-        @Schema(description = "최대 모집 인원 (팀장 포함)")
+        @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
         private int maxMembers;
         @Schema(description = "게시글 생성 시각")
         private LocalDateTime createdAt;
-        @Schema(description = "게시글 카테고리 코드")
+        @Schema(description = "게시글 카테고리 번호", example = "1")
         private int category;
 
         @Builder
@@ -644,13 +644,13 @@ public class PostDTO {
     @NoArgsConstructor
     @Schema(description = "스터디 게시글 수정 요청 DTO")
     public static class PostStudyUpdateRequestDTO {
-        @Schema(description = "수정할 제목")
+        @Schema(description = "수정할 제목", example = "[수정] Spring Boot 스터디")
         private String title;
-        @Schema(description = "수정할 내용")
+        @Schema(description = "수정할 내용", example = "스터디 내용이 변경되었습니다.")
         private String content;
-        @Schema(description = "수정할 태그 목록")
+        @Schema(description = "수정할 태그 목록", example = "[\"Spring\", \"JPA\"]")
         private List<String> studyTags;
-        @Schema(description = "모집 중 여부")
+        @Schema(description = "모집 여부 상태 변경 (true: 모집 중, false: 모집 마감)", example = "true")
         private boolean recruiting;
     }
 
@@ -677,7 +677,7 @@ public class PostDTO {
     @NoArgsConstructor
     @Schema(description = "스터디 게시글 상세 조회 DTO")
     public static class StudyInfoDetailDTO {
-        @Schema(description = "게시글 ID")
+        @Schema(description = "게시글 ID", example = "101")
         private Long postId;
         @Schema(description = "게시글 제목")
         private String title;
@@ -687,13 +687,13 @@ public class PostDTO {
         private List<String> studyTags;
         @Schema(description = "스터디 이름")
         private String studyName;
-        @Schema(description = "작성자 회원 ID")
+        @Schema(description = "작성자(팀장) 회원 ID", example = "15")
         private Long authorId;
         @Schema(description = "게시글 생성 시각")
         private LocalDateTime createdAt;
-        @Schema(description = "모집 중 여부")
+        @Schema(description = "모집 여부 (모집 중: true, 모집 마감: false)", example = "true")
         private boolean recruiting;
-        @Schema(description = "최대 모집 인원 (팀장 포함)")
+        @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
         private int maxMembers;
 
         @Builder
@@ -720,7 +720,7 @@ public class PostDTO {
     @NoArgsConstructor
     @Schema(description = "스터디 게시글 목록 조회 DTO")
     public static class StudyListDTO {
-        @Schema(description = "게시글 ID")
+        @Schema(description = "게시글 ID", example = "101")
         private Long postId;
         @Schema(description = "게시글 제목")
         private String title;
@@ -728,13 +728,13 @@ public class PostDTO {
         private List<String> studyTags;
         @Schema(description = "스터디 이름")
         private String studyName;
-        @Schema(description = "작성자 회원 ID")
+        @Schema(description = "작성자 회원 ID", example = "15")
         private Long authorId;
         @Schema(description = "게시글 생성 시각")
         private LocalDateTime createdAt;
-        @Schema(description = "모집 중 여부")
+        @Schema(description = "모집 여부 (모집 중: true, 모집 마감: false)", example = "true")
         private boolean recruiting;
-        @Schema(description = "최대 모집 인원 (팀장 포함)")
+        @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
         private int maxMembers;
 
         @Builder
