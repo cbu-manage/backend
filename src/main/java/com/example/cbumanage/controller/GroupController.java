@@ -108,9 +108,9 @@ public class GroupController {
             description = "유저가 현재 가입되어 있는 그룹들을 볼 수 있는 메소드 입니다.." +
                     "유저가 가입된 그룹 목록을 불러오거나(마이페이지)+보고서,모집글같은 게시글에 그룹을 추가해야할때 해당 기능을 사용합니다"
     )
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<ResultResponse<List<GroupDTO.GroupInfoDTO>>> getGroupMember(
-            @Parameter(description = "조회할 유저의 식별자(ID)", example = "10") @PathVariable Long userId) {
+    @GetMapping("/my")
+    public ResponseEntity<ResultResponse<List<GroupDTO.GroupInfoDTO>>> getGroupMember(HttpServletRequest request) {
+        Long userId=extractUserIdFromCookie(request);
         List<GroupDTO.GroupInfoDTO> groupInfos = groupService.getGroupByMemberId(userId);
         return ResultResponse.ok(SuccessCode.SUCCESS,groupInfos);
     }
