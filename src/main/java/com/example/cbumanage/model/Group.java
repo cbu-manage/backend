@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
+import org.hibernate.annotations.Comment;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -17,34 +18,41 @@ import java.util.List;
 
 @Entity
 @Table(name="cbu_groups")
+@Comment("CBU 동아리/모임 그룹 정보 테이블")
 @Getter
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class Group {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Comment("그룹 고유 식별자")
     private Long id;
 
     @Column(name = "group_name",unique = true, nullable = false)
+    @Comment("그룹명 (중복 불가)")
     private String groupName;
 
-    //그룹의 최소활동인원과 최대 활동 인원을 표기합니다
+    @Comment("최소 활동 인원 설정값")
     public int minActiveMembers;
 
+    @Comment("최대 활동 가능 인원 설정값")
     public int maxActiveMembers;
 
     @CreatedDate
+    @Column(updatable = false)
+    @Comment("그룹 생성 일시")
     public LocalDateTime createdAt;
 
     @LastModifiedDate
+    @Comment("그룹 정보 수정 일시")
     public LocalDateTime updatedAt;
 
-    //그룹의 모집상태를 표기하는 enum입니다 모집중/모집종료로 구분됩니다
     @Enumerated(EnumType.STRING)
+    @Comment("모집 상태 (OPEN: 모집중, CLOSED: 모집종료)")
     public GroupRecruitmentStatus recruitmentStatus;
 
-    //그룹의 상태를 표기하는 enum입니다. 활동/비활동으로 구분됩니다
     @Enumerated(EnumType.STRING)
+    @Comment("그룹 활성화 상태 (ACTIVE: 활동, INACTIVE: 비활동)")
     public GroupStatus status ;
 
     //그룹의 생성자, 상태들은 기본적으로 모집 안함, 비활성 상태로 시작
