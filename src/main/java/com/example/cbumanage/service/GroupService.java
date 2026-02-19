@@ -215,7 +215,7 @@ public class GroupService {
     }
 
     //자신이 속한 그룹들을 조회하기 위한 메서드 입니다.
-    public List<GroupDTO.GroupInfoDTO> getGroupByMemberId(Long userId){
+    public List<GroupDTO.GroupInfoDTO> getJoinedGroups(Long userId){
         List<Group> groups = groupRepository.findByUserId(userId);
         return groups.stream().map(group -> groupUtil.toGroupInfoDTO(group)).toList();
     }
