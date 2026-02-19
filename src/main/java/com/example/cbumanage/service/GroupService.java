@@ -228,7 +228,6 @@ public class GroupService {
 
     /**
      멤버를 Active 상태로 변경시키는 메소드 입니다(팀장이 가입 신청한 멤버를 수락할 때 사용되는 메서드)
-     최대인원을 초과하면 그룹을 CLOSE 상태로 변경시키고 게시글의 모집중을 모집완료로 변경합니다.
      **/
     @Transactional
     public void activateGroupMember(Long groupMemberId,Long userId){
@@ -237,12 +236,5 @@ public class GroupService {
         Group group = groupMember.getGroup();
         assertIsGroupLeader(group.getId(),userId);
         groupMember.changeStatus(GroupMemberStatus.ACTIVE);
-        int activeCount = groupRepository.countByGroupIdAndStatus(group.getId(), GroupMemberStatus.ACTIVE);
-        if (activeCount >= group.getMaxActiveMembers()) {
-            group.closeRecruitment();
-            projectRepository.findByGroupId(group.getId()).ifPresent(project -> {
-                project.updateRecruiting(false);
-            });
-        }
     }
 }
