@@ -46,6 +46,7 @@ public class GroupMember {
     private LocalDateTime updatedAt;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 20)
     @Comment("그룹 내 멤버 상태 (PENDING: 가입 대기, ACTIVE: 활동, INACTIVE: 비활동, REJECTED: 가입거절)")
     private GroupMemberStatus groupMemberStatus;
 
