@@ -27,9 +27,6 @@ import java.util.List;
 @Service
 public class CbuMemberManageService {
 
-	// 로깅을 위한 Logger 인스턴스 (클래스 이름 기반)
-	private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
-
 	// CBU 회원 데이터 접근을 위한 리포지토리
 	private CbuMemberRepository memberRepository;
 

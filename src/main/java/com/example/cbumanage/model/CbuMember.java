@@ -40,7 +40,7 @@ public class CbuMember {
     private Long    studentNumber;                //학번
     private Long    generation;                   //기수
     private String  note;                         //비고
-    private Boolean  due;
+    private Boolean due;
     private String email;
 
     // 소프트 삭제 일시 (null이 아니면 삭제된 것으로 간주)

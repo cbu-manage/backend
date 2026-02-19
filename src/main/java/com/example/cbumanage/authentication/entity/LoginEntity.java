@@ -62,6 +62,9 @@ public class LoginEntity {
 	 * @param email 사용자 이메일
 	 * @param password 사용자 비밀번호
 	 */
+
+	private Long generation;
+
 	public LoginEntity(String email, String password) {
 		this.email = email;
 		this.password = password;

@@ -182,7 +182,7 @@ public class LoginService {
 		CbuMember cbuMember = cbuMemberRepository.findByStudentNumber(dto.getStudentNumber()).orElseThrow(() -> new MemberNotExistsException("No member exists with student number"));
 		if (!dto.getName().equals(cbuMember.getName())) throw new MemberNotExistsException("No 'CbuMember' object exists with the given name");
 
-		LoginEntity entity = new LoginEntity(cbuMember.getCbuMemberId(), dto.getStudentNumber(), hashUtil.hash(dto.getPassword() + salt), dto.getEmail(), List.of(Permission.MEMBER));
+		LoginEntity entity = new LoginEntity(cbuMember.getCbuMemberId(), dto.getStudentNumber(), hashUtil.hash(dto.getPassword() + salt), dto.getEmail(), List.of(Permission.MEMBER), cbuMember.getGeneration());
 		entity = loginRepository.save(entity);
 
 		SuccessCandidate successCandidate = successCandidateRepository.findByStudentNumber(dto.getStudentNumber());
