@@ -8,5 +8,7 @@ public enum GroupMemberStatus {
     @Schema(description = "활동상태")
     ACTIVE,
     @Schema(description = "활동중단")
-    INACTIVE;
+    INACTIVE,
+    @Schema(description = "가입거절")
+    REJECTED
 }

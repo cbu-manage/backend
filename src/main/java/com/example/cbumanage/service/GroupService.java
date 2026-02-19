@@ -48,7 +48,8 @@ public class GroupService {
     public Group createGroup(String groupName, Long leaderId){
         Group group = Group.create(groupName, 1, 10);
         groupRepository.save(group);
-        CbuMember member = cbuMemberRepository.findById(leaderId).orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+        CbuMember member = cbuMemberRepository.findById(leaderId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"유저 정보를 찾을 수 없습니다."));
         GroupMember leader = GroupMember.create(group, member, GroupMemberStatus.ACTIVE, GroupMemberRole.LEADER);
         group.addMember(leader);
         groupMemberRepository.save(leader);
@@ -62,17 +63,17 @@ public class GroupService {
     @Transactional
     public GroupDTO.GroupMemberInfoDTO addGroupMember(Long groupId,
                                                       Long memberId) {
-        Group group = groupRepository.findById(groupId).orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND));
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"그룹 정보를 찾을 수 없습니다."));
         GroupMember existing = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, memberId);
         if (existing != null) {
-            throw new CustomException(ErrorCode.DUPLICATE_RESOURCE);
+            throw new CustomException(ErrorCode.ALREADY_JOINED_MEMBER);
         }
         CbuMember member = cbuMemberRepository.findById(memberId)
-                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND));
+                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"유저 정보를 찾을 수 없습니다."));
         GroupMember groupMember = GroupMember.create(group,member,GroupMemberStatus.PENDING,GroupMemberRole.MEMBER);
         group.addMember(groupMember);
         groupMemberRepository.save(groupMember);
-
         return groupUtil.toGroupMemberInfoDTO(groupMember);
     }
 
@@ -99,64 +100,62 @@ public class GroupService {
     그룹 상세보기에 사용되는 메서드 입니다.
     **/
     public GroupDTO.GroupInfoDTO getGroupById(Long groupId){
-        Group group = groupRepository.findById(groupId).orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND));
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"해당 그룹을 찾을 수 없습니다."));
         return groupUtil.toGroupInfoDTO(group);
-    }
-
-    //그룹의 모집을 시작시키는 메소드입니다
-    @Transactional
-    public void openGroupRecruitment(Long groupId,Long userId){
-        Group group = groupRepository.findById(groupId).orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND));
-        assertIsGroupLeader(groupId,userId);
-        group.openRecruitment();
     }
 
     //그룹의 모집을 종료시키는 메소드입니다
     @Transactional
-    public void closeGroupRecruitment(Long groupId, Long userId){
-        Group group = groupRepository.findById(groupId).orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND));
+    public void updateGroupRecruitment(Long groupId, Long userId, GroupRecruitmentStatus targetStatus) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"해당 그룹을 찾을 수 없습니다."));
         assertIsGroupLeader(groupId,userId);
-        group.closeRecruitment();
+        if(targetStatus==GroupRecruitmentStatus.OPEN){
+            group.openRecruitment();
+        }else{
+            group.closeRecruitment();
+        }
     }
 
     /**
-    멤버를 Active 상태로 변경시키는 메소드 입니다(팀장이 가입 신청한 멤버를 수락할 때 사용되는 메서드)
+    멤버를 ACTIVE 또는 INACTIVE,REJECTED
     최대인원을 초과하면 그룹을 CLOSE 상태로 변경시키고 게시글의 모집중을 모집완료로 변경합니다.
      **/
     @Transactional
-    public void activateGroupMember(Long groupMemberId,Long userId){
-        GroupMember groupMember = groupMemberRepository.findById(groupMemberId).orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND));
+    public void updateStatusGroupMember(Long groupMemberId,Long userId,GroupMemberStatus targetStatus) {
+        GroupMember groupMember = groupMemberRepository.findById(groupMemberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 멤버를 찾을 수 없습니다."));
         Group group = groupMember.getGroup();
-        assertIsGroupLeader(group.getId(),userId);
-        groupMember.changeStatus(GroupMemberStatus.ACTIVE);
-        int activeCount = groupRepository.countByGroupIdAndStatus(group.getId(), GroupMemberStatus.ACTIVE);
-        if (activeCount >= group.getMaxActiveMembers()) {
-            group.closeRecruitment();
-            projectRepository.findByGroupId(group.getId()).ifPresent(project -> {
-                project.updateRecruiting(false);
-            });
+        assertIsGroupLeader(group.getId(), userId);
+        groupMember.changeStatus(targetStatus);
+        if (targetStatus == GroupMemberStatus.ACTIVE) {
+            int activeCount = groupRepository.countByGroupIdAndStatus(group.getId(), GroupMemberStatus.ACTIVE);
+            if (activeCount >= group.getMaxActiveMembers()) {
+                group.closeRecruitment();
+                projectRepository.findByGroupId(group.getId()).ifPresent(project -> {
+                    project.updateRecruiting(false);
+                });
+            }
         }
     }
 
     //시전한 user가 리더가 맞는지 확인하는 메소드
     private void assertIsGroupLeader(Long groupId, Long userId){
-        Group g = groupRepository.findById(groupId)
-                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND));
-        CbuMember cbuMember =  cbuMemberRepository.findById(userId)
-                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND));
         GroupMember groupMember = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, userId);
-        if(!groupMember.getGroupMemberRole().equals(GroupMemberRole.LEADER)){
-            throw new CustomException(ErrorCode.FORBIDDEN);
+        if(groupMember.getGroupMemberRole()!=(GroupMemberRole.LEADER)){
+            throw new CustomException(ErrorCode.FORBIDDEN,"해당 그룹에 리더가 아닙니다.");
         }
     }
 
     //시전한 user가 관리자가 맞는지 확인하는 메서드
     private void assertIsAdmin(Long userId){
-        CbuMember cbuMember = cbuMemberRepository.findById(userId).orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND));
+        CbuMember cbuMember = cbuMemberRepository.findById(userId)
+                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"유저 정보를 찾을 수 없습니다."));
         boolean isAdmin = cbuMember.getRole().stream()
                 .anyMatch(role -> role==Role.ADMIN);
         if (!isAdmin) {
-            throw new CustomException(ErrorCode.FORBIDDEN);
+            throw new CustomException(ErrorCode.FORBIDDEN,"관리자가 아닙니다");
         }
     }
 
@@ -165,7 +164,7 @@ public class GroupService {
     public void cancelApplication(Long groupId, Long userId) {
         GroupMember gm = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, userId);
         if (gm == null || gm.getGroupMemberStatus() != GroupMemberStatus.PENDING) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST);
+            throw new CustomException(ErrorCode.INVALID_REQUEST,"PENDING 상태가 아닙니다.");
         }
         groupMemberRepository.delete(gm);
     }
@@ -175,17 +174,6 @@ public class GroupService {
         assertIsGroupLeader(groupId, userId);
         List<GroupMember> pending = groupMemberRepository.findByGroupIdAndGroupMemberStatus(groupId, GroupMemberStatus.PENDING);
         return pending.stream().map(groupUtil::toGroupMemberInfoDTO).toList();
-    }
-
-    /* 팀장 전용: 신청 거부 (PENDING 멤버 삭제) */
-    @Transactional
-    public void rejectApplicant(Long groupMemberId, Long userId) {
-        GroupMember gm = groupMemberRepository.findById(groupMemberId).orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
-        assertIsGroupLeader(gm.getGroup().getId(), userId);
-        if (gm.getGroupMemberStatus() != GroupMemberStatus.PENDING) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST);
-        }
-        groupMemberRepository.delete(gm);
     }
 
     /* 해당 그룹에 해당 유저가 PENDING(신청 대기) 상태로 있는지 여부 */
@@ -198,29 +186,17 @@ public class GroupService {
         return null;
     }
 
-    //그룹을 활동상태로 변경시키는 메소드 입니다 (관리자 전용)
+    /*관리자 전용: 그룹 상태를 ACTIVE 또는 INACTIVE로 변경합니다.*/
     @Transactional
-    public void activateGroupStatus(Long groupId,Long userId){
-        Group group = groupRepository.findById(groupId).orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND));
-        assertIsAdmin(userId);
-        group.activate();;
-    }
-
-    //그룹을 비활동 상태로 변경시키는 메소드 입니다 (관리자 전용)
-    @Transactional
-    public void deactivateGroupStatus(Long groupId,Long userId){
-        Group group = groupRepository.findById(groupId).orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND));
-        assertIsAdmin(userId);
-        group.deactivate();;
-    }
-
-    //그룹 멤버를 비활동 상태로 변경시키는 메소드 입니다 (팀장 전용)
-    @Transactional
-    public void deactivateGroupMember(Long groupMemberId,Long userId){
-        GroupMember groupMember = groupMemberRepository.findById(groupMemberId).orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND));
-        Group group = groupMember.getGroup();
-        assertIsGroupLeader(group.getId(),userId);
-        groupMember.changeStatus(GroupMemberStatus.INACTIVE);
+    public void updateGroupStatusAdmin(Long groupId, Long adminId, GroupStatus targetStatus) {
+        assertIsAdmin(adminId);
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 그룹을 찾을 수 없습니다."));
+        if (targetStatus == GroupStatus.ACTIVE) {
+            group.activate();
+        } else {
+            group.deactivate();
+        }
     }
 
     @Transactional
@@ -239,7 +215,7 @@ public class GroupService {
     }
 
     //자신이 속한 그룹들을 조회하기 위한 메서드 입니다.
-    public List<GroupDTO.GroupInfoDTO> getGroupByMemberId(Long userId){
+    public List<GroupDTO.GroupInfoDTO> getJoinedGroups(Long userId){
         List<Group> groups = groupRepository.findByUserId(userId);
         return groups.stream().map(group -> groupUtil.toGroupInfoDTO(group)).toList();
     }
@@ -250,4 +226,15 @@ public class GroupService {
         return groups.stream().map(group -> groupUtil.toGroupInfoDTO(group)).toList();
     }
 
+    /**
+     멤버를 Active 상태로 변경시키는 메소드 입니다(팀장이 가입 신청한 멤버를 수락할 때 사용되는 메서드)
+     **/
+    @Transactional
+    public void activateGroupMember(Long groupMemberId,Long userId){
+        GroupMember groupMember = groupMemberRepository.findById(groupMemberId)
+                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"해당 멤버를 찾을 수 없습니다."));
+        Group group = groupMember.getGroup();
+        assertIsGroupLeader(group.getId(),userId);
+        groupMember.changeStatus(GroupMemberStatus.ACTIVE);
+    }
 }

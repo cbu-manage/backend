@@ -5,6 +5,7 @@ import com.example.cbumanage.exception.CustomException;
 import com.example.cbumanage.model.Group;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.Project;
+import com.example.cbumanage.model.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.model.enums.ProjectFieldType;
 import com.example.cbumanage.repository.ProjectRepository;
 import com.example.cbumanage.repository.PostRepository;
@@ -45,7 +46,7 @@ public class ProjectService {
     //프로젝트 게시글 생성 메서드
     public Project createProject(PostDTO.ProjectCreateDTO req, Group group) {
         Post post = postRepository.findById(req.getPostId())
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"게시글이 생성되지 않았습니다."));
         List<String> fields = (req.getRecruitmentFields() != null)
                 ? req.getRecruitmentFields()
                 : new ArrayList<>();
@@ -55,10 +56,8 @@ public class ProjectService {
 
     //프로젝트 상세 조회 메서드 (로그인 시 isLeader·hasApplied 반영)
     public PostDTO.ProjectInfoDetailDTO getProjectByPostId(Long postId, Long userId) {
-        Project project = projectRepository.findByPostId(postId);
-        if (project == null) {
-            throw new CustomException(ErrorCode.NOT_FOUND);
-        }
+        Project project = projectRepository.findByPostId(postId)
+                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"해당 게시글을 찾을 수 없습니다."));
         Long groupId = project.getGroup() != null ? project.getGroup().getId() : null;
         Boolean hasApplied = groupService.hasAppliedToGroup(groupId, userId);
         boolean isLeader = userId != null && userId.equals(project.getPost().getAuthorId());
@@ -86,18 +85,18 @@ public class ProjectService {
     @Transactional
     public void updatePostProject(PostDTO.PostProjectUpdateRequestDTO req, Long postId, Long userId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 게시글을 찾을 수 없습니다."));
         //권한 확인
         validateProjectOwner(post, userId);
         PostDTO.PostUpdateDTO postUpdateDTO = postMapper.toPostUpdateDTO(req);
         postService.updatePost(postUpdateDTO, post);
-        Project project = projectRepository.findByPostId(postId);
+        Project project = projectRepository.findByPostId(postId).
+                orElseThrow(()->new CustomException(ErrorCode.NOT_FOUND,"해당 게시글을 찾을 수 없습니다."));
         PostDTO.ProjectUpdateDTO projectUpdateDTO = postMapper.toPostProjectUpdateDTO(req);
         updateProject(projectUpdateDTO, project);
-        if (!req.isRecruiting() && project.getGroup() != null) {
-            groupService.closeGroupRecruitment(project.getGroup().getId(), userId);
-        }else if (req.isRecruiting()) {
-            groupService.openGroupRecruitment(project.getGroup().getId(), userId);
+        if (project.getGroup() != null) {
+            GroupRecruitmentStatus status = req.isRecruiting() ? GroupRecruitmentStatus.OPEN : GroupRecruitmentStatus.CLOSED;
+            groupService.updateGroupRecruitment(project.getGroup().getId(), userId, status);
         }
     }
 
@@ -118,7 +117,7 @@ public class ProjectService {
     @Transactional
     public void softDeletePost(Long postId,Long userId) {
         Post post=postRepository.findById(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 게시글을 찾을 수 없습니다."));
         //권한 확인
         validateProjectOwner(post, userId);
         post.delete();
