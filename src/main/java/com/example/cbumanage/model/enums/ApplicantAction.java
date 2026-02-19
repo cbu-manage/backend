@@ -6,5 +6,5 @@ public enum ApplicantAction {
     @Schema(description = "가입 승인")
     ACCEPT,
     @Schema(description ="가입 거절")
-    REJECTED
+    REJECT
 }
