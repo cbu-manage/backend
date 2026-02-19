@@ -1,10 +1,7 @@
 package com.example.cbumanage.dto;
 
 
-import com.example.cbumanage.model.enums.GroupMemberRole;
-import com.example.cbumanage.model.enums.GroupMemberStatus;
-import com.example.cbumanage.model.enums.GroupRecruitmentStatus;
-import com.example.cbumanage.model.enums.GroupStatus;
+import com.example.cbumanage.model.enums.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -79,7 +76,7 @@ public class GroupDTO {
     @Getter
     @NoArgsConstructor
     public static class GroupMemberStatusRequestDTO {
-        @Schema(description = "멤버 상태 (PENDING: 대기, ACTIVE: 활동, INACTIVE: 비활동)", example = "ACTIVE")
+        @Schema(description = "멤버 상태 (PENDING: 대기, ACTIVE: 활동, INACTIVE: 비활동, REJECTED:가입 거절)", example = "ACTIVE")
         private GroupMemberStatus groupMemberStatus;
     }
 
@@ -243,6 +240,6 @@ public class GroupDTO {
     @NoArgsConstructor
     public static class ApplicantActionRequestDTO {
         @Schema(description = "처리 액션 (ACCEPT: 수락, REJECT: 거절)", example = "ACCEPT", allowableValues = {"ACCEPT", "REJECT"})
-        private String action;
+        private ApplicantAction action;
     }
 }
