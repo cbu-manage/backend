@@ -16,7 +16,7 @@ import java.util.Optional;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
-    Project findByPostId(Long postId);
+    Optional<Project> findByPostId(Long postId);
 
     @Query("select p from Project p where p.group.id = :groupId")
     Optional<Project> findByGroupId(@Param("groupId") Long groupId);
