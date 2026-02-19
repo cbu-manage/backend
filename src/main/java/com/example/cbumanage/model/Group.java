@@ -1,7 +1,5 @@
 package com.example.cbumanage.model;
 
-import com.example.cbumanage.model.enums.GroupMemberRole;
-import com.example.cbumanage.model.enums.GroupMemberStatus;
 import com.example.cbumanage.model.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.model.enums.GroupStatus;
 import jakarta.persistence.*;
