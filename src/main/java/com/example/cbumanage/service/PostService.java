@@ -137,8 +137,12 @@ public class PostService {
      Setter 를 사용하지 않고 클래스 내부에 변환메소드를 만들어 사용합니다
      */
     public void updatePost(PostDTO.PostUpdateDTO postUpdateDTO,Post post) {
-        post.changeTitle(postUpdateDTO.getTitle());
-        post.changeContent(postUpdateDTO.getContent());
+        if (postUpdateDTO.getTitle() != null) {
+            post.changeTitle(postUpdateDTO.getTitle());
+        }
+        if (postUpdateDTO.getContent() != null) {
+            post.changeContent(postUpdateDTO.getContent());
+        }
     }
 
     public void updateReport(PostDTO.ReportUpdateDTO postUpdateDTO,PostReport postReport) {
