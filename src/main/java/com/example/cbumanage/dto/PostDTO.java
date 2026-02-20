@@ -516,6 +516,9 @@ public class PostDTO {
         @Schema(description = "모집 마감 기한")
         private LocalDate deadline;
 
+        @Schema(description = "조회 수 ")
+        private Long viewCount;
+
         @Builder
         public ProjectInfoDetailDTO(
                 Long postId,
@@ -530,7 +533,8 @@ public class PostDTO {
                 Boolean hasApplied,
                 LocalDateTime createdAt,
                 boolean recruiting,
-                LocalDate deadline
+                LocalDate deadline,
+                Long viewCount
         ) {
             this.postId = postId;
             this.title = title;
@@ -545,6 +549,7 @@ public class PostDTO {
             this.createdAt = createdAt;
             this.recruiting = recruiting;
             this.deadline = deadline;
+            this.viewCount = viewCount;
         }
     }
 
@@ -582,6 +587,9 @@ public class PostDTO {
         @Schema(description = "모집 마감 기한")
         private LocalDate deadline;
 
+        @Schema(description = "조회 수 ")
+        private Long viewCount;
+
         @Builder
         public ProjectListDTO(Long postId,
                               String title,
@@ -592,7 +600,8 @@ public class PostDTO {
                               String authorName,
                               LocalDateTime createdAt,
                               boolean recruiting,
-                              LocalDate deadline
+                              LocalDate deadline,
+                              Long viewCount
         ) {
             this.postId = postId;
             this.title = title;
@@ -604,6 +613,7 @@ public class PostDTO {
             this.createdAt = createdAt;
             this.recruiting = recruiting;
             this.deadline = deadline;
+            this.viewCount = viewCount;
         }
     }
 

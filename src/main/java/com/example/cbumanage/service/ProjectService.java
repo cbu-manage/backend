@@ -60,11 +60,13 @@ public class ProjectService {
     }
 
     //프로젝트 상세 조회 메서드 (로그인 시 isLeader·hasApplied 반영)
+    @Transactional
     public PostDTO.ProjectInfoDetailDTO getProjectByPostId(Long postId, Long userId) {
         Project project = projectRepository.findByPostId(postId)
                 .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"해당 게시글을 찾을 수 없습니다."));
         Long groupId = project.getGroup() != null ? project.getGroup().getId() : null;
         Boolean hasApplied = groupService.hasAppliedToGroup(groupId, userId);
+        project.upViewCount();
         boolean isLeader = userId != null && userId.equals(project.getPost().getAuthorId());
         return postMapper.toProjectInfoDetailDTO(project, userId, isLeader, hasApplied);
     }

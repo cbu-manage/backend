@@ -236,6 +236,7 @@ public class PostMapper {
                 .createdAt(project.getPost().getCreatedAt())
                 .recruiting(project.isRecruiting())
                 .deadline(project.getDeadline())
+                .viewCount(project.getViewCount())
                 .build();
     }
 
@@ -254,6 +255,7 @@ public class PostMapper {
                 .createdAt(project.getPost().getCreatedAt())
                 .recruiting(project.isRecruiting())
                 .deadline(project.getDeadline())
+                .viewCount(project.getViewCount())
                 .build();
     }
 
