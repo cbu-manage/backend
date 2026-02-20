@@ -65,6 +65,8 @@ public class GroupUtil {
         return GroupDTO.GroupCreateResponseDTO.builder()
                 .groupId(group.getId())
                 .groupName(group.getGroupName())
+                .maxActiveMembers(group.getMaxActiveMembers())
+                .minActiveMembers(group.getMinActiveMembers())
                 .createdAt(group.getCreatedAt())
                 .leader(toGroupMemberInfoDTO(leader))
                 .build();
