@@ -28,7 +28,7 @@ public class RestControllerHandlerAdvice {
 
 	@ExceptionHandler(CustomException.class)
 	public ResponseEntity<ResultResponse<Void>> handleCustomException(CustomException e) {
-		return ResultResponse.error(e.getErrorCode());
+		return ResultResponse.error(e.getErrorCode(), e.getMessage());
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
