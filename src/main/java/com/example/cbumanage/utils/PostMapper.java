@@ -193,7 +193,8 @@ public class PostMapper {
     public PostDTO.StudyUpdateDTO toStudyUpdateDTO(PostDTO.PostStudyUpdateRequestDTO req) {
         return PostDTO.StudyUpdateDTO.builder()
                 .studyTags(req.getStudyTags())
-                .recruiting(req.isRecruiting())
+                .studyName(req.getStudyName())
+                .maxMembers(req.getMaxMembers())
                 .build();
     }
 
@@ -259,6 +260,7 @@ public class PostMapper {
                 .createdAt(study.getPost().getCreatedAt())
                 .recruiting(study.isRecruiting())
                 .maxMembers(study.getMaxMembers())
+                .groupId(study.getGroup() != null ? study.getGroup().getId() : null)
                 .build();
     }
 
