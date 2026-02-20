@@ -11,14 +11,16 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface StudyRepository extends JpaRepository<Study, Long> {
 
-    Study findByPostId(Long postId);
+    Optional<Study> findByPostId(Long postId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM Study s WHERE s.post.id = :postId")
-    Study findByPostIdForUpdate(@Param("postId") Long postId);
+    Optional<Study> findByPostIdForUpdate(@Param("postId") Long postId);
 
     @EntityGraph(attributePaths = {"post"})
     Page<Study> findByPostCategoryAndPostIsDeletedFalse(int category, Pageable pageable);
