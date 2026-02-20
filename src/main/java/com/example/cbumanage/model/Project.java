@@ -32,8 +32,13 @@ public class Project {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @Comment("연관된 프로젝트 모집 그룹 ID (Group 테이블 참조)")
-    @JoinColumn(name = "group_id",nullable = false)
+    @JoinColumn(name = "group_id", nullable = false)
     private Group group;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @Comment("연관된 프로젝트 모집 작성자 ID (CbuMember 테이블 참조)")
+    @JoinColumn(name = "cbu_member_id", nullable = false)
+    private CbuMember member;
 
     @ElementCollection(targetClass = ProjectFieldType.class)
     @CollectionTable(name = "project_recruitment_field", joinColumns = @JoinColumn(name = "project_id"))
@@ -50,18 +55,19 @@ public class Project {
     private LocalDate deadline;
 
     // String 리스트를 받아서 Enum으로 변환해 저장
-    public Project(Post post, List<String> fields, boolean recruiting,LocalDate deadline, Group group) {
+    public Project(Post post, List<String> fields, boolean recruiting, LocalDate deadline, Group group, CbuMember member) {
         this.post = post;
         this.recruiting = recruiting;
         this.deadline = deadline;
         if (fields != null) {
             fields.forEach(f -> this.addRecruitmentField(ProjectFieldType.valueOf(f)));
         }
-        this.group=group;
+        this.group = group;
+        this.member = member;
     }
 
-    public static Project create(Post post, List<String> fields, boolean recruiting, LocalDate deadline, Group group) {
-        return new Project(post, fields, recruiting, deadline, group);
+    public static Project create(Post post, List<String> fields, boolean recruiting, LocalDate deadline, Group group, CbuMember member) {
+        return new Project(post, fields, recruiting, deadline, group, member);
     }
 
     // 분야 추가 메서드

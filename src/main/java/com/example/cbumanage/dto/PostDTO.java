@@ -488,6 +488,12 @@ public class PostDTO {
         @Schema(description = "작성자 ID", example = "15")
         private Long authorId;
 
+        @Schema(description = "작성자 기수", example = "34")
+        private Long authorGeneration;
+
+        @Schema(description = "작성자 이름", example = "홍길동")
+        private String authorName;
+
         @Schema(description = "연결된 그룹 ID", example = "50")
         private Long groupId;
 
@@ -517,6 +523,8 @@ public class PostDTO {
                 String content,
                 List<String> recruitmentFields,
                 Long authorId,
+                Long authorGeneration,
+                String authorName,
                 Long groupId,
                 boolean isLeader,
                 Boolean hasApplied,
@@ -529,6 +537,8 @@ public class PostDTO {
             this.content = content;
             this.recruitmentFields = recruitmentFields;
             this.authorId = authorId;
+            this.authorGeneration = authorGeneration;
+            this.authorName = authorName;
             this.groupId = groupId;
             this.isLeader = isLeader;
             this.hasApplied = hasApplied;
@@ -557,6 +567,12 @@ public class PostDTO {
         @Schema(description = "작성자 ID")
         private Long authorId;
 
+        @Schema(description = "작성자 기수")
+        private Long authorGeneration;
+
+        @Schema(description = "작성자 이름")
+        private String authorName;
+
         @Schema(description = "작성 일시")
         private LocalDateTime createdAt;
 
@@ -567,12 +583,24 @@ public class PostDTO {
         private LocalDate deadline;
 
         @Builder
-        public ProjectListDTO(Long postId, String title, String content, List<String> recruitmentFields, Long authorId, LocalDateTime createdAt, boolean recruiting, LocalDate deadline) {
+        public ProjectListDTO(Long postId,
+                              String title,
+                              String content,
+                              List<String> recruitmentFields,
+                              Long authorId,
+                              Long authorGeneration,
+                              String authorName,
+                              LocalDateTime createdAt,
+                              boolean recruiting,
+                              LocalDate deadline
+        ) {
             this.postId = postId;
             this.title = title;
             this.content = content;
             this.recruitmentFields = recruitmentFields;
             this.authorId = authorId;
+            this.authorGeneration=authorGeneration;
+            this.authorName=authorName;
             this.createdAt = createdAt;
             this.recruiting = recruiting;
             this.deadline = deadline;

@@ -122,6 +122,7 @@ public class PostMapper {
                 .postId(postId)
                 .recruitmentFields(req.getRecruitmentFields())
                 .recruiting(req.isRecruiting())
+                .deadline(req.getDeadline())
                 .build();
     }
 
@@ -138,6 +139,7 @@ public class PostMapper {
                         .map(ProjectFieldType::getDescription) // Enum의 이름(BACKEND 등)을 String으로 변환
                         .collect(Collectors.toList()))
                 .recruiting(project.isRecruiting())
+                .deadline(project.getDeadline())
                 .category(post.getCategory())
                 .build();
     }
@@ -211,6 +213,7 @@ public class PostMapper {
         return PostDTO.ProjectUpdateDTO.builder()
                 .recruitmentFields(req.getRecruitmentFields())
                 .recruiting(req.isRecruiting())
+                .deadline(req.getDeadline())
                 .build();
     }
 
@@ -225,6 +228,8 @@ public class PostMapper {
                         .map(ProjectFieldType::getDescription)
                         .collect(Collectors.toList()))
                 .authorId(project.getPost().getAuthorId())
+                .authorGeneration(project.getMember().getGeneration())
+                .authorName(project.getMember().getName())
                 .groupId(groupId)
                 .isLeader(isLeader)
                 .hasApplied(hasApplied)
@@ -244,6 +249,8 @@ public class PostMapper {
                         .map(ProjectFieldType::getDescription)
                         .collect(Collectors.toList()))
                 .authorId(project.getPost().getAuthorId())
+                .authorGeneration(project.getMember().getGeneration())
+                .authorName(project.getMember().getName())
                 .createdAt(project.getPost().getCreatedAt())
                 .recruiting(project.isRecruiting())
                 .deadline(project.getDeadline())
