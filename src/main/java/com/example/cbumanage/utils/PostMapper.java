@@ -230,6 +230,7 @@ public class PostMapper {
                 .hasApplied(hasApplied)
                 .createdAt(project.getPost().getCreatedAt())
                 .recruiting(project.isRecruiting())
+                .deadline(project.getDeadline())
                 .build();
     }
 
@@ -238,12 +239,14 @@ public class PostMapper {
         return PostDTO.ProjectListDTO.builder()
                 .postId(project.getPost().getId())
                 .title(project.getPost().getTitle())
+                .content(project.getPost().getContent())
                 .recruitmentFields(project.getRecruitmentFields().stream()
                         .map(ProjectFieldType::getDescription)
                         .collect(Collectors.toList()))
                 .authorId(project.getPost().getAuthorId())
                 .createdAt(project.getPost().getCreatedAt())
                 .recruiting(project.isRecruiting())
+                .deadline(project.getDeadline())
                 .build();
     }
 

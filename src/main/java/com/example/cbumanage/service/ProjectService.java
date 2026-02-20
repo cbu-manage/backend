@@ -50,7 +50,7 @@ public class ProjectService {
         List<String> fields = (req.getRecruitmentFields() != null)
                 ? req.getRecruitmentFields()
                 : new ArrayList<>();
-        Project project = Project.create(post, fields, req.isRecruiting(),group);
+        Project project = Project.create(post, fields, req.isRecruiting(),req.getDeadline(),group);
         return projectRepository.save(project);
     }
 
