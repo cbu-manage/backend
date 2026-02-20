@@ -361,6 +361,12 @@ public class PostDTO {
         @Schema(description = "자동 생성된 프로젝트 그룹 ID", example = "50")
         private Long groupId;
 
+        @Schema(description = "작성자 기수")
+        private Long authorGeneration;
+
+        @Schema(description = "작성자 이름")
+        private String authorName;
+
         @Schema(description = "게시글 제목")
         private String title;
 
@@ -386,6 +392,8 @@ public class PostDTO {
         public PostProjectCreateResponseDTO(Long postId,
                                             Long authorId,
                                             Long groupId,
+                                            Long authorGeneration,
+                                            String authorName,
                                             String title,
                                             String content,
                                             List<String> recruitmentFields,
@@ -396,6 +404,8 @@ public class PostDTO {
             this.postId = postId;
             this.authorId = authorId;
             this.groupId = groupId;
+            this.authorGeneration = authorGeneration;
+            this.authorName = authorName;
             this.title = title;
             this.content = content;
             this.recruitmentFields = recruitmentFields;

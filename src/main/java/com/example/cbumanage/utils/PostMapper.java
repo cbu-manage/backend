@@ -1,11 +1,7 @@
 package com.example.cbumanage.utils;
 
 import com.example.cbumanage.dto.PostDTO;
-import com.example.cbumanage.model.Group;
-import com.example.cbumanage.model.Post;
-import com.example.cbumanage.model.PostReport;
-import com.example.cbumanage.model.Project;
-import com.example.cbumanage.model.Study;
+import com.example.cbumanage.model.*;
 import com.example.cbumanage.model.enums.ProjectFieldType;
 import com.example.cbumanage.repository.GroupRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -127,11 +123,13 @@ public class PostMapper {
     }
 
     // 프로젝트 생성 응답 DTO 변환
-    public PostDTO.PostProjectCreateResponseDTO toPostProjectCreateResponseDTO(Post post, Project project, Group group) {
+    public PostDTO.PostProjectCreateResponseDTO toPostProjectCreateResponseDTO(Post post, Project project, Group group, CbuMember member) {
         return PostDTO.PostProjectCreateResponseDTO.builder()
                 .postId(post.getId())
                 .authorId(post.getAuthorId())
                 .groupId(group.getId())
+                .authorGeneration(member.getGeneration())
+                .authorName(member.getName())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .createdAt(post.getCreatedAt())

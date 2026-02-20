@@ -119,7 +119,7 @@ public class ProjectService {
         PostDTO.ProjectCreateDTO projectCreateDTO = postMapper.toProjectCreateDTO(req, post.getId());
         Project project = createProject(projectCreateDTO,group,member);
         projectRepository.save(project);
-        return postMapper.toPostProjectCreateResponseDTO(post, project,group);
+        return postMapper.toPostProjectCreateResponseDTO(post, project,group, member);
     }
 
     //프로젝트 게시글 삭제 트랜잭션
