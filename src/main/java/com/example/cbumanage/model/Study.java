@@ -84,6 +84,14 @@ public class Study {
         }
     }
 
+    public void changeStudyName(String studyName) {
+        this.studyName = studyName;
+    }
+
+    public void changeMaxMembers(int maxMembers) {
+        this.maxMembers = maxMembers;
+    }
+
     public void updateRecruiting(boolean recruiting) {
         this.recruiting = recruiting;
     }
