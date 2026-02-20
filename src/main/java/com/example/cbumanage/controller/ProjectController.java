@@ -141,7 +141,7 @@ public class ProjectController {
     @Parameters({
             @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
             @Parameter(name = "size", description = "한 페이지당 출력 개수", example = "10"),
-            @Parameter(name = "category", description = "카테고리 번호", example = "1")
+            @Parameter(name = "category", description = "카테고리 번호", example = "2")
     })
     @GetMapping("/post/project/me")
     public ResponseEntity<ResultResponse<Page<PostDTO.ProjectListDTO>>> getMyProjects(

@@ -4,7 +4,6 @@ import com.example.cbumanage.model.Project;
 import com.example.cbumanage.model.enums.ProjectFieldType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -62,6 +61,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             "AND po.category = :category",
             countQuery = "SELECT count(p) FROM Project p " +
                     "JOIN p.post po " +
+                    "JOIN p.member m " +
                     "WHERE po.isDeleted = false " +
                     "AND m.cbuMemberId = :userId " +
                     "AND po.category = :category")
