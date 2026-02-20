@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -100,7 +101,7 @@ public class StudyController {
     )
     @PostMapping("/post/study")
     public ResponseEntity<ResultResponse<PostDTO.PostStudyCreateResponseDTO>> createPostStudy(
-            @RequestBody PostDTO.PostStudyCreateRequestDTO req,
+            @RequestBody @Valid PostDTO.PostStudyCreateRequestDTO req,
             HttpServletRequest request) {
         Long userId = userIdFromCookie(request);
         PostDTO.PostStudyCreateResponseDTO responseDTO = studyService.createPostStudy(req, userId);
@@ -160,12 +161,13 @@ public class StudyController {
 
     @Operation(
             summary = "스터디 게시글 수정",
-            description = "제목, 내용, 태그, 모집여부를 수정합니다. 작성자 본인만 가능합니다."
+            description = "제목, 내용, 태그, 스터디명, 최대 인원을 수정합니다. 작성자 본인만 가능합니다. " +
+                    "보내지 않은 필드는 기존 값을 유지합니다. 모집 상태는 마감 API를 이용하세요."
     )
     @PatchMapping("/post/study/{postId}")
     public ResponseEntity<ResultResponse<Void>> updateStudy(
             @Parameter(description = "게시글 ID", example = "100") @PathVariable Long postId,
-            @RequestBody PostDTO.PostStudyUpdateRequestDTO req,
+            @RequestBody @Valid PostDTO.PostStudyUpdateRequestDTO req,
             HttpServletRequest request) {
         Long userId = userIdFromCookie(request);
         studyService.updatePostStudy(req, postId, userId);
@@ -218,6 +220,19 @@ public class StudyController {
     }
 
     @Operation(
+            summary = "스터디 신청 취소",
+            description = "본인의 스터디 참가 신청을 취소합니다. PENDING 상태에서만 취소 가능합니다."
+    )
+    @DeleteMapping("/post/study/{postId}/apply")
+    public ResponseEntity<ResultResponse<Void>> cancelApply(
+            @Parameter(description = "게시글 ID", example = "100") @PathVariable Long postId,
+            HttpServletRequest request) {
+        Long userId = userIdFromCookie(request);
+        studyService.cancelApply(postId, userId);
+        return ResultResponse.ok(SuccessCode.DELETED, null);
+    }
+
+    @Operation(
             summary = "스터디 신청 목록 조회",
             description = "스터디 신청자 목록을 조회합니다. 팀장만 조회 가능합니다."
     )
@@ -238,7 +253,7 @@ public class StudyController {
     public ResponseEntity<ResultResponse<StudyApplyDTO.StudyApplyInfoDTO>> updateApplyStatus(
             @Parameter(description = "게시글 ID", example = "100") @PathVariable Long postId,
             @Parameter(description = "신청 ID", example = "5") @PathVariable Long applyId,
-            @RequestBody StudyApplyDTO.StudyApplyStatusRequestDTO req,
+            @RequestBody @Valid StudyApplyDTO.StudyApplyStatusRequestDTO req,
             HttpServletRequest request) {
         Long userId = userIdFromCookie(request);
         StudyApplyDTO.StudyApplyInfoDTO result = studyService.updateApplyStatus(
