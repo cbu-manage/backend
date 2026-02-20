@@ -54,6 +54,10 @@ public class Project {
     @Column(nullable = true)
     private LocalDate deadline;
 
+    @Comment("프로젝트 게시글 조회 수")
+    @Column(nullable = false)
+    private Long viewCount = 0L;
+
     // String 리스트를 받아서 Enum으로 변환해 저장
     public Project(Post post, List<String> fields, boolean recruiting, LocalDate deadline, Group group, CbuMember member) {
         this.post = post;
@@ -88,4 +92,6 @@ public class Project {
     }
 
     public void updateDeadline(LocalDate deadline) {this.deadline = deadline;}
+
+    public void upViewCount(){this.viewCount++;}
 }
