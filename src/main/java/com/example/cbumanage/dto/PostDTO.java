@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -344,6 +345,9 @@ public class PostDTO {
         @Schema(description = "현재 모집 여부 (true: 모집중, false: 모집마감)", example = "true")
         private boolean recruiting;
 
+        @Schema(description = "모집 마감 기한")
+        private LocalDate deadline;
+
         @Schema(description = "게시글 카테고리 식별 번호", example = "2")
         private int category;
     }
@@ -361,6 +365,12 @@ public class PostDTO {
         @Schema(description = "자동 생성된 프로젝트 그룹 ID", example = "50")
         private Long groupId;
 
+        @Schema(description = "작성자 기수")
+        private Long authorGeneration;
+
+        @Schema(description = "작성자 이름")
+        private String authorName;
+
         @Schema(description = "게시글 제목")
         private String title;
 
@@ -376,6 +386,9 @@ public class PostDTO {
         @Schema(description = "생성 일시")
         private LocalDateTime createdAt;
 
+        @Schema(description = "모집 마감 기한")
+        private LocalDate deadline;
+
         @Schema(description = "카테고리 번호")
         private int category;
 
@@ -383,20 +396,26 @@ public class PostDTO {
         public PostProjectCreateResponseDTO(Long postId,
                                             Long authorId,
                                             Long groupId,
+                                            Long authorGeneration,
+                                            String authorName,
                                             String title,
                                             String content,
                                             List<String> recruitmentFields,
                                             boolean recruiting,
                                             LocalDateTime createdAt,
+                                            LocalDate deadline,
                                             int category){
             this.postId = postId;
             this.authorId = authorId;
             this.groupId = groupId;
+            this.authorGeneration = authorGeneration;
+            this.authorName = authorName;
             this.title = title;
             this.content = content;
             this.recruitmentFields = recruitmentFields;
             this.recruiting = recruiting;
             this.createdAt = createdAt;
+            this.deadline = deadline;
             this.category = category;
         }
     }
@@ -408,12 +427,14 @@ public class PostDTO {
         private Long postId;
         private List<String> recruitmentFields;
         private boolean recruiting;
+        private LocalDate deadline;
 
         @Builder
-        public ProjectCreateDTO(Long postId,List<String> recruitmentFields, boolean recruiting){
+        public ProjectCreateDTO(Long postId,List<String> recruitmentFields, boolean recruiting, LocalDate deadline) {
             this.postId = postId;
             this.recruitmentFields = recruitmentFields;
             this.recruiting = recruiting;
+            this.deadline = deadline;
         }
     }
 
@@ -432,6 +453,9 @@ public class PostDTO {
 
         @Schema(description = "모집 여부 상태 변경", example = "false")
         private boolean recruiting;
+
+        @Schema(description = "모집 마감 기한 변경")
+        private LocalDate deadline;
     }
 
     @Getter
@@ -444,10 +468,14 @@ public class PostDTO {
         @Schema(description = "모집 여부 상태 변경")
         private boolean recruiting;
 
+        @Schema(description = "모집 마감 기한 변경")
+        private LocalDate deadline;
+
         @Builder
-        public ProjectUpdateDTO(List<String> recruitmentFields, boolean recruiting){
+        public ProjectUpdateDTO(List<String> recruitmentFields, boolean recruiting, LocalDate deadline) {
             this.recruitmentFields = recruitmentFields;
             this.recruiting = recruiting;
+            this.deadline = deadline;
         }
     }
 
@@ -474,6 +502,12 @@ public class PostDTO {
         @Schema(description = "작성자 ID", example = "15")
         private Long authorId;
 
+        @Schema(description = "작성자 기수", example = "34")
+        private Long authorGeneration;
+
+        @Schema(description = "작성자 이름", example = "홍길동")
+        private String authorName;
+
         @Schema(description = "연결된 그룹 ID", example = "50")
         private Long groupId;
 
@@ -493,6 +527,12 @@ public class PostDTO {
         @Schema(description = "모집 여부 (모집 중:true, 모집 완료:false)", example = "true")
         private boolean recruiting;
 
+        @Schema(description = "모집 마감 기한")
+        private LocalDate deadline;
+
+        @Schema(description = "조회 수 ")
+        private Long viewCount;
+
         @Builder
         public ProjectInfoDetailDTO(
                 Long postId,
@@ -500,22 +540,30 @@ public class PostDTO {
                 String content,
                 List<String> recruitmentFields,
                 Long authorId,
+                Long authorGeneration,
+                String authorName,
                 Long groupId,
                 boolean isLeader,
                 Boolean hasApplied,
                 LocalDateTime createdAt,
-                boolean recruiting
+                boolean recruiting,
+                LocalDate deadline,
+                Long viewCount
         ) {
             this.postId = postId;
             this.title = title;
             this.content = content;
             this.recruitmentFields = recruitmentFields;
             this.authorId = authorId;
+            this.authorGeneration = authorGeneration;
+            this.authorName = authorName;
             this.groupId = groupId;
             this.isLeader = isLeader;
             this.hasApplied = hasApplied;
             this.createdAt = createdAt;
             this.recruiting = recruiting;
+            this.deadline = deadline;
+            this.viewCount = viewCount;
         }
     }
 
@@ -529,11 +577,20 @@ public class PostDTO {
         @Schema(description = "게시글 제목")
         private String title;
 
+        @Schema(description = "게시글 내용")
+        private String content;
+
         @Schema(description = "모집 분야")
         private List<String> recruitmentFields;
 
         @Schema(description = "작성자 ID")
         private Long authorId;
+
+        @Schema(description = "작성자 기수")
+        private Long authorGeneration;
+
+        @Schema(description = "작성자 이름")
+        private String authorName;
 
         @Schema(description = "작성 일시")
         private LocalDateTime createdAt;
@@ -541,14 +598,36 @@ public class PostDTO {
         @Schema(description = "모집 여부 (모집 중:true, 모집 완료:false)", example = "true")
         private boolean recruiting;
 
+        @Schema(description = "모집 마감 기한")
+        private LocalDate deadline;
+
+        @Schema(description = "조회 수 ")
+        private Long viewCount;
+
         @Builder
-        public ProjectListDTO(Long postId, String title,List<String> recruitmentFields, Long authorId, LocalDateTime createdAt, boolean recruiting) {
+        public ProjectListDTO(Long postId,
+                              String title,
+                              String content,
+                              List<String> recruitmentFields,
+                              Long authorId,
+                              Long authorGeneration,
+                              String authorName,
+                              LocalDateTime createdAt,
+                              boolean recruiting,
+                              LocalDate deadline,
+                              Long viewCount
+        ) {
             this.postId = postId;
             this.title = title;
+            this.content = content;
             this.recruitmentFields = recruitmentFields;
             this.authorId = authorId;
+            this.authorGeneration=authorGeneration;
+            this.authorName=authorName;
             this.createdAt = createdAt;
             this.recruiting = recruiting;
+            this.deadline = deadline;
+            this.viewCount = viewCount;
         }
     }
 

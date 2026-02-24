@@ -2,11 +2,13 @@ package com.example.cbumanage.service;
 
 import com.example.cbumanage.dto.PostDTO;
 import com.example.cbumanage.exception.CustomException;
+import com.example.cbumanage.model.CbuMember;
 import com.example.cbumanage.model.Group;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.Project;
 import com.example.cbumanage.model.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.model.enums.ProjectFieldType;
+import com.example.cbumanage.repository.CbuMemberRepository;
 import com.example.cbumanage.repository.ProjectRepository;
 import com.example.cbumanage.repository.PostRepository;
 import com.example.cbumanage.response.ErrorCode;
@@ -25,6 +27,7 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final PostRepository postRepository;
+    private final CbuMemberRepository cbuMemberRepository;
     private final PostMapper postMapper;
     private final PostService postService;
     private final GroupService groupService;
@@ -32,34 +35,38 @@ public class ProjectService {
     @Autowired
     public ProjectService(ProjectRepository projectRepository,
                           PostRepository postRepository,
+                          CbuMemberRepository cbuMemberRepository,
                           PostMapper postMapper,
                           PostService postService,
                           GroupService groupService
     ) {
         this.projectRepository = projectRepository;
         this.postRepository = postRepository;
+        this.cbuMemberRepository=cbuMemberRepository;
         this.postMapper = postMapper;
         this.postService = postService;
         this.groupService= groupService;
     }
 
     //프로젝트 게시글 생성 메서드
-    public Project createProject(PostDTO.ProjectCreateDTO req, Group group) {
+    public Project createProject(PostDTO.ProjectCreateDTO req, Group group, CbuMember member) {
         Post post = postRepository.findById(req.getPostId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"게시글이 생성되지 않았습니다."));
         List<String> fields = (req.getRecruitmentFields() != null)
                 ? req.getRecruitmentFields()
                 : new ArrayList<>();
-        Project project = Project.create(post, fields, req.isRecruiting(),group);
+        Project project = Project.create(post, fields, req.isRecruiting(),req.getDeadline(),group, member);
         return projectRepository.save(project);
     }
 
     //프로젝트 상세 조회 메서드 (로그인 시 isLeader·hasApplied 반영)
+    @Transactional
     public PostDTO.ProjectInfoDetailDTO getProjectByPostId(Long postId, Long userId) {
         Project project = projectRepository.findByPostId(postId)
                 .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"해당 게시글을 찾을 수 없습니다."));
         Long groupId = project.getGroup() != null ? project.getGroup().getId() : null;
         Boolean hasApplied = groupService.hasAppliedToGroup(groupId, userId);
+        project.upViewCount();
         boolean isLeader = userId != null && userId.equals(project.getPost().getAuthorId());
         return postMapper.toProjectInfoDetailDTO(project, userId, isLeader, hasApplied);
     }
@@ -107,10 +114,12 @@ public class ProjectService {
         Post post = postService.createPost(postCreateDTO);
         String groupName = post.getTitle() + " #" + post.getId();
         Group group = groupService.createGroup(groupName, post.getAuthorId());
+        CbuMember member = cbuMemberRepository.findById(post.getAuthorId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 유저를 찾을 수 없습니다."));
         PostDTO.ProjectCreateDTO projectCreateDTO = postMapper.toProjectCreateDTO(req, post.getId());
-        Project project = createProject(projectCreateDTO,group);
+        Project project = createProject(projectCreateDTO,group,member);
         projectRepository.save(project);
-        return postMapper.toPostProjectCreateResponseDTO(post, project,group);
+        return postMapper.toPostProjectCreateResponseDTO(post, project,group, member);
     }
 
     //프로젝트 게시글 삭제 트랜잭션
