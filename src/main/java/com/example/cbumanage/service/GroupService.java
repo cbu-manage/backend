@@ -9,7 +9,6 @@ import com.example.cbumanage.model.enums.*;
 import com.example.cbumanage.repository.*;
 import com.example.cbumanage.response.ErrorCode;
 import com.example.cbumanage.utils.GroupUtil;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -87,7 +86,7 @@ public class GroupService {
         Group group = Group.create(groupName, minActiveMembers, maxActiveMembers);
         groupRepository.save(group);
         CbuMember member = cbuMemberRepository.findById(leaderId)
-                .orElseThrow(() -> new EntityNotFoundException("Member not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"유저 정보를 찾을 수 없습니다."));
 
         GroupMember leader = GroupMember.create(group, member, GroupMemberStatus.ACTIVE, GroupMemberRole.LEADER);
         group.addMember(leader);

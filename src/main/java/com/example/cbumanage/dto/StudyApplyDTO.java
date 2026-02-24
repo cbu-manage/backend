@@ -2,6 +2,7 @@ package com.example.cbumanage.dto;
 
 import com.example.cbumanage.model.enums.StudyApplyStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -66,6 +67,7 @@ public class StudyApplyDTO {
     @NoArgsConstructor
     @Schema(description = "스터디 신청 상태 변경 요청")
     public static class StudyApplyStatusRequestDTO {
+        @NotNull(message = "상태 값은 필수입니다.")
         @Schema(description = "변경할 상태 (ACCEPTED: 수락, REJECTED: 거절)",
                 example = "ACCEPTED",
                 allowableValues = {"ACCEPTED", "REJECTED"})

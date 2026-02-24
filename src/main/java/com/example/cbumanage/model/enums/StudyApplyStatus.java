@@ -9,5 +9,7 @@ public enum StudyApplyStatus {
     @Schema(description = "수락됨")
     ACCEPTED,
     @Schema(description = "거절됨")
-    REJECTED;
+    REJECTED,
+    @Schema(description = "신청 취소")
+    CANCELLED;
 }

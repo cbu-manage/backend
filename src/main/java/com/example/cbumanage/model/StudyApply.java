@@ -46,7 +46,7 @@ public class StudyApply {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @Schema(description = "신청 상태 (PENDING, ACCEPTED, REJECTED)")
+    @Schema(description = "신청 상태 (PENDING, ACCEPTED, REJECTED, CANCELLED)")
     @Comment("신청 상태")
     private StudyApplyStatus status;
 
@@ -71,15 +71,27 @@ public class StudyApply {
         return new StudyApply(study, applicant);
     }
 
-    public void accept() {
-        this.status = StudyApplyStatus.ACCEPTED;
+    public void changeStatus(StudyApplyStatus newStatus) {
+        if (this.status != StudyApplyStatus.PENDING) {
+            throw new IllegalStateException("대기 상태(PENDING)의 신청만 변경할 수 있습니다.");
+        }
+        if (newStatus != StudyApplyStatus.ACCEPTED && newStatus != StudyApplyStatus.REJECTED) {
+            throw new IllegalArgumentException("수락(ACCEPTED) 또는 거절(REJECTED)만 허용됩니다.");
+        }
+        this.status = newStatus;
     }
 
-    public void reject() {
-        this.status = StudyApplyStatus.REJECTED;
+    public void cancel() {
+        if (this.status != StudyApplyStatus.PENDING) {
+            throw new IllegalStateException("대기 상태(PENDING)의 신청만 취소할 수 있습니다.");
+        }
+        this.status = StudyApplyStatus.CANCELLED;
     }
 
-    public void changeStatus(StudyApplyStatus status) {
-        this.status = status;
+    public void reapply() {
+        if (this.status != StudyApplyStatus.CANCELLED && this.status != StudyApplyStatus.REJECTED) {
+            throw new IllegalStateException("취소 또는 거절된 신청만 재신청할 수 있습니다.");
+        }
+        this.status = StudyApplyStatus.PENDING;
     }
 }

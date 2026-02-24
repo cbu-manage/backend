@@ -16,12 +16,16 @@ public interface StudyApplyRepository extends JpaRepository<StudyApply, Long> {
     @EntityGraph(attributePaths = {"applicant"})
     List<StudyApply> findByStudyId(Long studyId);
 
+    // 특정 스터디의 취소되지 않은 신청 조회
+    @EntityGraph(attributePaths = {"applicant"})
+    List<StudyApply> findByStudyIdAndStatusNot(Long studyId, StudyApplyStatus status);
+
     // 특정 스터디의 상태별 신청 조회
     @EntityGraph(attributePaths = {"applicant"})
     List<StudyApply> findByStudyIdAndStatus(Long studyId, StudyApplyStatus status);
 
-    // 특정 스터디에 특정 사용자가 신청했는지 확인
-    boolean existsByStudyIdAndApplicantCbuMemberId(Long studyId, Long applicantId);
+    // 특정 스터디에서 특정 사용자의 신청 조회
+    Optional<StudyApply> findByStudyIdAndApplicantCbuMemberId(Long studyId, Long applicantId);
 
     // 특정 스터디에서 특정 신청 조회
     @EntityGraph(attributePaths = {"applicant"})

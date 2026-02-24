@@ -2,10 +2,14 @@ package com.example.cbumanage.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import com.example.cbumanage.model.enums.PostReportGroupType;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -557,18 +561,32 @@ public class PostDTO {
     @NoArgsConstructor
     @Schema(description = "스터디 모집 게시글 생성 요청 DTO")
     public static class PostStudyCreateRequestDTO {
+        @NotBlank(message = "제목은 필수입니다.")
+        @Size(max = 200, message = "제목은 200자 이내여야 합니다.")
         @Schema(description = "스터디 게시글 제목", example = "Spring Boot 심화 스터디 모집")
         private String title;
+
+        @NotBlank(message = "내용은 필수입니다.")
         @Schema(description = "스터디 게시글 내용", example = "함께 Spring Boot를 공부할 팀원을 모집합니다...")
         private String content;
+
+        @Size(max = 10, message = "태그는 최대 10개까지 가능합니다.")
         @Schema(description = "스터디 태그 목록 (자유 입력)", example = "[\"Spring\", \"Java\", \"Backend\"]")
         private List<String> studyTags;
+
+        @NotBlank(message = "스터디 이름은 필수입니다.")
+        @Size(max = 50, message = "스터디 이름은 50자 이내여야 합니다.")
         @Schema(description = "스터디 이름 (마감 시 그룹 이름으로 사용)", example = "Spring 스터디")
         private String studyName;
+
         @Schema(description = "모집 중 여부 (true: 모집 중, false: 모집 마감)", example = "true")
         private boolean recruiting;
+
+        @Min(value = 2, message = "최대 인원은 팀장 포함 최소 2명 이상이어야 합니다.")
+        @Max(value = 50, message = "최대 인원은 50명을 초과할 수 없습니다.")
         @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
         private int maxMembers;
+
         @Schema(description = "게시글 카테고리 번호", example = "1")
         private int category;
     }
@@ -644,14 +662,25 @@ public class PostDTO {
     @NoArgsConstructor
     @Schema(description = "스터디 게시글 수정 요청 DTO")
     public static class PostStudyUpdateRequestDTO {
+        @Size(max = 200, message = "제목은 200자 이내여야 합니다.")
         @Schema(description = "수정할 제목", example = "[수정] Spring Boot 스터디")
         private String title;
+
         @Schema(description = "수정할 내용", example = "스터디 내용이 변경되었습니다.")
         private String content;
+
+        @Size(max = 10, message = "태그는 최대 10개까지 가능합니다.")
         @Schema(description = "수정할 태그 목록", example = "[\"Spring\", \"JPA\"]")
         private List<String> studyTags;
-        @Schema(description = "모집 여부 상태 변경 (true: 모집 중, false: 모집 마감)", example = "true")
-        private boolean recruiting;
+
+        @Size(max = 50, message = "스터디 이름은 50자 이내여야 합니다.")
+        @Schema(description = "수정할 스터디 이름", example = "Spring 심화 스터디")
+        private String studyName;
+
+        @Min(value = 2, message = "최대 인원은 팀장 포함 최소 2명 이상이어야 합니다.")
+        @Max(value = 50, message = "최대 인원은 50명을 초과할 수 없습니다.")
+        @Schema(description = "수정할 최대 모집 인원 (팀장 포함)", example = "6")
+        private Integer maxMembers;
     }
 
     @Getter
@@ -660,13 +689,18 @@ public class PostDTO {
     public static class StudyUpdateDTO {
         @Schema(description = "수정할 태그 목록")
         private List<String> studyTags;
-        @Schema(description = "모집 중 여부")
-        private boolean recruiting;
+
+        @Schema(description = "수정할 스터디 이름")
+        private String studyName;
+
+        @Schema(description = "수정할 최대 모집 인원")
+        private Integer maxMembers;
 
         @Builder
-        public StudyUpdateDTO(List<String> studyTags, boolean recruiting) {
+        public StudyUpdateDTO(List<String> studyTags, String studyName, Integer maxMembers) {
             this.studyTags = studyTags;
-            this.recruiting = recruiting;
+            this.studyName = studyName;
+            this.maxMembers = maxMembers;
         }
     }
 
@@ -696,10 +730,13 @@ public class PostDTO {
         @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
         private int maxMembers;
 
+        @Schema(description = "마감 후 생성된 그룹 ID (모집 중이면 null)", example = "21")
+        private Long groupId;
+
         @Builder
         public StudyInfoDetailDTO(Long postId, String title, String content, List<String> studyTags,
                                   String studyName, Long authorId, LocalDateTime createdAt,
-                                  boolean recruiting, int maxMembers) {
+                                  boolean recruiting, int maxMembers, Long groupId) {
             this.postId = postId;
             this.title = title;
             this.content = content;
@@ -709,6 +746,7 @@ public class PostDTO {
             this.createdAt = createdAt;
             this.recruiting = recruiting;
             this.maxMembers = maxMembers;
+            this.groupId = groupId;
         }
     }
 

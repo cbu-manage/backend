@@ -36,4 +36,9 @@ public class ResultResponse<T>{
         return ResponseEntity.status(errorCode.getHttpStatus()).
                 body(new ResultResponse<>(errorCode.getCode(), errorCode.getMessage(),null ));
     }
+
+    public static <T> ResponseEntity<ResultResponse<T>> error (ErrorCode errorCode, String message) {
+        return ResponseEntity.status(errorCode.getHttpStatus()).
+                body(new ResultResponse<>(errorCode.getCode(), message, null));
+    }
 }

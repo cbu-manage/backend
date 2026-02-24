@@ -3,30 +3,31 @@ package com.example.cbumanage.service;
 import com.example.cbumanage.dto.GroupDTO;
 import com.example.cbumanage.dto.PostDTO;
 import com.example.cbumanage.dto.StudyApplyDTO;
+import com.example.cbumanage.exception.CustomException;
 import com.example.cbumanage.model.CbuMember;
 import com.example.cbumanage.model.Group;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.Study;
 import com.example.cbumanage.model.StudyApply;
+import com.example.cbumanage.model.enums.GroupMemberStatus;
 import com.example.cbumanage.model.enums.StudyApplyStatus;
 import com.example.cbumanage.repository.CbuMemberRepository;
 import com.example.cbumanage.repository.PostRepository;
 import com.example.cbumanage.repository.GroupRepository;
 import com.example.cbumanage.repository.StudyApplyRepository;
 import com.example.cbumanage.repository.StudyRepository;
+import com.example.cbumanage.response.ErrorCode;
 import com.example.cbumanage.utils.PostMapper;
-import jakarta.persistence.EntityNotFoundException;
+import com.example.cbumanage.utils.StudyApplyMapper;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class StudyService {
@@ -39,6 +40,7 @@ public class StudyService {
     private final CbuMemberRepository cbuMemberRepository;
     private final GroupService groupService;
     private final GroupRepository groupRepository;
+    private final StudyApplyMapper studyApplyMapper;
 
     @Autowired
     public StudyService(StudyRepository studyRepository,
@@ -48,7 +50,8 @@ public class StudyService {
                         StudyApplyRepository studyApplyRepository,
                         CbuMemberRepository cbuMemberRepository,
                         GroupService groupService,
-                        GroupRepository groupRepository) {
+                        GroupRepository groupRepository,
+                        StudyApplyMapper studyApplyMapper) {
         this.studyRepository = studyRepository;
         this.postRepository = postRepository;
         this.postMapper = postMapper;
@@ -57,54 +60,67 @@ public class StudyService {
         this.cbuMemberRepository = cbuMemberRepository;
         this.groupService = groupService;
         this.groupRepository = groupRepository;
+        this.studyApplyMapper = studyApplyMapper;
     }
 
-    /**
-     * 스터디 게시글 생성 (Study 서브 테이블만)
-     */
+    @Transactional
     public Study createStudy(PostDTO.StudyCreateDTO req) {
         Post post = postRepository.findById(req.getPostId())
-                .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "게시글을 찾을 수 없습니다."));
         List<String> tags = (req.getStudyTags() != null) ? req.getStudyTags() : new ArrayList<>();
         Study study = Study.create(post, tags, req.getStudyName(), req.getMaxMembers(), req.isRecruiting());
         return studyRepository.save(study);
     }
 
-    /**
-     * 스터디 게시글 상세 조회
-     */
+    // 스터디 상세 조회
+    @Transactional
     public PostDTO.StudyInfoDetailDTO getStudyByPostId(Long postId) {
-        Study study = studyRepository.findByPostId(postId);
+        Study study = getActiveStudy(postId);
         return postMapper.toStudyInfoDetailDTO(study);
     }
 
-    /**
-     * 스터디 게시글 목록 페이징 조회 (카테고리 기준)
-     */
+    // 카테고리별 목록 조회 (삭제 게시글 제외)
+    @Transactional
     public Page<PostDTO.StudyListDTO> getPostsByCategory(Pageable pageable, int category) {
         Page<Study> studies = studyRepository.findByPostCategoryAndPostIsDeletedFalse(category, pageable);
         return studies.map(study -> postMapper.toStudyListDTO(study));
     }
 
-    /**
-     * 내가 작성한 스터디 게시글 목록 페이징 조회
-     */
+    @Transactional
     public Page<PostDTO.StudyListDTO> getMyStudiesByUserId(Pageable pageable, Long userId, int category) {
         Page<Study> studies = studyRepository.findByPostAuthorIdAndPostCategoryAndPostIsDeletedFalse(userId, category, pageable);
         return studies.map(study -> postMapper.toStudyListDTO(study));
     }
 
-    /**
-     * 스터디 게시글 수정 (Study 필드만)
-     */
+    // Study 고유 필드 수정 (태그, 스터디명, 최대인원). updatePostStudy()에서 호출.
     public void updateStudy(PostDTO.StudyUpdateDTO dto, Study study) {
-        study.updateStudyTags(dto.getStudyTags());
-        study.updateRecruiting(dto.isRecruiting());
+        if (dto.getStudyTags() != null) {
+            study.updateStudyTags(dto.getStudyTags());
+        }
+
+        // 마감 후에는 studyName, maxMembers 변경 불가
+        if (!study.isRecruiting() && (dto.getStudyName() != null || dto.getMaxMembers() != null)) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST,
+                    "모집이 마감된 스터디의 이름과 최대 인원은 수정할 수 없습니다.");
+        }
+
+        if (dto.getStudyName() != null) {
+            study.changeStudyName(dto.getStudyName());
+        }
+
+        if (dto.getMaxMembers() != null) {
+            long acceptedCount = studyApplyRepository.countByStudyIdAndStatus(
+                    study.getId(), StudyApplyStatus.ACCEPTED);
+
+            if (dto.getMaxMembers() <= acceptedCount) {
+                throw new CustomException(ErrorCode.INVALID_REQUEST,
+                        "이미 수락된 인원(" + acceptedCount + "명)보다 작거나 같은 값으로 변경할 수 없습니다.");
+            }
+            study.changeMaxMembers(dto.getMaxMembers());
+        }
     }
 
-    /**
-     * 스터디 게시글 생성 (Post + Study 트랜잭션)
-     */
+    // Post + Study 한번에 생성
     @Transactional
     public PostDTO.PostStudyCreateResponseDTO createPostStudy(PostDTO.PostStudyCreateRequestDTO req, Long userId) {
         PostDTO.PostCreateDTO postCreateDTO = postMapper.toPostCreateDTO(req, userId);
@@ -114,38 +130,36 @@ public class StudyService {
         return postMapper.toPostStudyCreateResponseDTO(post, study);
     }
 
-    /**
-     * 스터디 게시글 수정 (Post + Study 트랜잭션)
-     */
+    // Post + Study 한번에 수정. recruiting은 여기서 변경할수 없고, 마감 API로만 변경 가능.
     @Transactional
     public void updatePostStudy(PostDTO.PostStudyUpdateRequestDTO req, Long postId, Long userId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        // 권한 확인
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
+        if (post.isDeleted()) {
+            throw new CustomException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+        }
         validateStudyOwner(post, userId);
         PostDTO.PostUpdateDTO postUpdateDTO = postMapper.toPostUpdateDTO(req);
         postService.updatePost(postUpdateDTO, post);
-        Study study = studyRepository.findByPostId(postId);
+        Study study = studyRepository.findByPostId(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "스터디를 찾을 수 없습니다."));
         PostDTO.StudyUpdateDTO studyUpdateDTO = postMapper.toStudyUpdateDTO(req);
         updateStudy(studyUpdateDTO, study);
     }
 
-    /**
-     * 스터디 게시글 소프트 삭제
-     */
+    // 소프트 삭제
     @Transactional
     public void softDeletePost(Long postId, Long userId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new EntityNotFoundException("Study Not Found"));
-        // 권한 확인
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
+        if (post.isDeleted()) {
+            throw new CustomException(ErrorCode.NOT_FOUND, "이미 삭제된 게시글입니다.");
+        }
         validateStudyOwner(post, userId);
         post.delete();
     }
 
-    /**
-     * 스터디 태그별 목록 조회 (정확히 일치).
-     * 사용자가 추가한 태그 문자열로 검색.
-     */
+    // 태그 정확히 일치 검색
     @Transactional
     public Page<PostDTO.StudyListDTO> searchByTag(String tag, Pageable pageable) {
         Page<Study> studies = studyRepository.findByExactTagAndPostIsDeletedFalse(tag, pageable);
@@ -153,188 +167,182 @@ public class StudyService {
     }
 
     /**
-     * 유효 권한 확인 메서드
-     */
-    private void validateStudyOwner(Post post, Long userId) {
-        if (!post.getAuthorId().equals(userId)) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "게시글에 대한 권한이 없습니다."
-            );
-        }
-    }
-
-    /**
-     * 스터디 신청
+     * 스터디 참가 신청.
+     * study_apply 테이블에 (study_id, applicant_id) UniqueConstraint가 걸려있어서
+     * 취소/거절된 기존 레코드가 있으면 새로 INSERT 하지 않고 reapply()로 PENDING 복구한다.
      */
     @Transactional
     public StudyApplyDTO.StudyApplyInfoDTO applyStudy(Long postId, Long applicantId) {
-        Study study = studyRepository.findByPostId(postId);
-        if (study == null) {
-            throw new EntityNotFoundException("Study Not Found");
-        }
-
-        if (study.getPost().isDeleted()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "삭제된 게시글입니다.");
-        }
+        Study study = getActiveStudy(postId);
 
         if (!study.isRecruiting()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "모집이 종료된 스터디입니다.");
-        }
-
-        if (studyApplyRepository.existsByStudyIdAndApplicantCbuMemberId(study.getId(), applicantId)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 신청한 스터디입니다.");
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "모집이 종료된 스터디입니다.");
         }
 
         if (study.getPost().getAuthorId().equals(applicantId)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "본인이 개설한 스터디에는 신청할 수 없습니다.");
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "본인이 개설한 스터디에는 신청할 수 없습니다.");
         }
 
         CbuMember applicant = cbuMemberRepository.findById(applicantId)
-                .orElseThrow(() -> new EntityNotFoundException("Member Not Found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "회원 정보를 찾을 수 없습니다."));
 
-        StudyApply apply = StudyApply.create(study, applicant);
-        try {
+        Optional<StudyApply> existingApply = studyApplyRepository.findByStudyIdAndApplicantCbuMemberId(
+                study.getId(), applicantId);
+
+        StudyApply apply;
+        if (existingApply.isPresent()) {
+            apply = existingApply.get();
+            if (apply.getStatus() == StudyApplyStatus.PENDING || apply.getStatus() == StudyApplyStatus.ACCEPTED) {
+                throw new CustomException(ErrorCode.DUPLICATE_RESOURCE, "이미 신청한 스터디입니다.");
+            }
+            // 취소/거절 상태 -> 재신청
+            apply.reapply();
+        } else {
+            apply = StudyApply.create(study, applicant);
             studyApplyRepository.save(apply);
-        } catch (DataIntegrityViolationException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 신청한 스터디입니다.");
         }
 
-        return toStudyApplyInfoDTO(apply);
+        return studyApplyMapper.toStudyApplyInfoDTO(apply);
     }
 
-    /**
-     * 스터디 신청 목록 조회 (팀장만 가능)
-     */
+    // 신청 취소 (본인만, PENDING만)
+    @Transactional
+    public void cancelApply(Long postId, Long userId) {
+        Study study = getActiveStudy(postId);
+
+        StudyApply apply = studyApplyRepository.findByStudyIdAndApplicantCbuMemberId(study.getId(), userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "신청 내역을 찾을 수 없습니다."));
+
+        if (apply.getStatus() != StudyApplyStatus.PENDING) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "대기 중인 신청만 취소할 수 있습니다.");
+        }
+
+        apply.cancel();
+    }
+
+    // 신청자 목록 조회 (팀장만). 취소된 건 빼고 보여줌.
     @Transactional
     public List<StudyApplyDTO.StudyApplyInfoDTO> getApplicants(Long postId, Long userId) {
-        Study study = studyRepository.findByPostId(postId);
-        if (study == null) {
-            throw new EntityNotFoundException("Study Not Found");
-        }
-
-        if (study.getPost().isDeleted()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "삭제된 게시글입니다.");
-        }
-
+        Study study = getActiveStudy(postId);
         validateStudyOwner(study.getPost(), userId);
 
-        List<StudyApply> applies = studyApplyRepository.findByStudyId(study.getId());
+        List<StudyApply> applies = studyApplyRepository.findByStudyIdAndStatusNot(study.getId(), StudyApplyStatus.CANCELLED);
         return applies.stream()
-                .map(this::toStudyApplyInfoDTO)
+                .map(studyApplyMapper::toStudyApplyInfoDTO)
                 .toList();
     }
 
     /**
-     * 스터디 신청 수락/거절
+     * 신청 수락/거절 (팀장만).
+     * acceptedCount + 1 >= maxMembers 이면 수락 거부.
      */
     @Transactional
     public StudyApplyDTO.StudyApplyInfoDTO updateApplyStatus(Long postId, Long applyId,
-                                                              StudyApplyStatus status, Long userId) {
-        Study study = studyRepository.findByPostId(postId);
-        if (study == null) {
-            throw new EntityNotFoundException("Study Not Found");
-        }
-
+                                                             StudyApplyStatus status, Long userId) {
+        Study study = studyRepository.findByPostIdForUpdate(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "스터디를 찾을 수 없습니다."));
         if (study.getPost().isDeleted()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "삭제된 게시글입니다.");
+            throw new CustomException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
         }
-
         validateStudyOwner(study.getPost(), userId);
 
-        if (status == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "상태 값은 필수입니다.");
-        }
         if (status != StudyApplyStatus.ACCEPTED && status != StudyApplyStatus.REJECTED) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
-                "ACCEPTED 또는 REJECTED만 허용됩니다.");
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "ACCEPTED 또는 REJECTED만 허용됩니다.");
         }
 
         if (!study.isRecruiting()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
-                "모집이 마감된 스터디입니다.");
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "모집이 마감된 스터디입니다.");
         }
 
         if (status == StudyApplyStatus.ACCEPTED) {
             long acceptedCount = studyApplyRepository.countByStudyIdAndStatus(
                     study.getId(), StudyApplyStatus.ACCEPTED);
             if (acceptedCount + 1 >= study.getMaxMembers()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "모집 인원이 가득 찼습니다. (최대 " + study.getMaxMembers() + "명, 팀장 포함)");
+                throw new CustomException(ErrorCode.INVALID_REQUEST,
+                        "모집 인원이 가득 찼습니다. (최대 " + study.getMaxMembers() + "명, 팀장 포함)");
             }
         }
 
         StudyApply apply = studyApplyRepository.findByIdAndStudyId(applyId, study.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Apply Not Found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "신청 정보를 찾을 수 없습니다."));
+
+        if (apply.getStatus() != StudyApplyStatus.PENDING) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "대기 중인 신청만 수락/거절할 수 있습니다.");
+        }
 
         apply.changeStatus(status);
 
-        return toStudyApplyInfoDTO(apply);
+        return studyApplyMapper.toStudyApplyInfoDTO(apply);
     }
 
     /**
-     * 스터디 모집 마감 + Group 생성
+     * 모집 마감하면서 Group까지 자동으로 만들어주는 메서드.
+     * 마감 → PENDING 일괄 거절 → Group 생성 → 수락자 멤버 등록 순서로 진행.
      */
     @Transactional
     public GroupDTO.GroupCreateResponseDTO closeStudyRecruitment(Long postId, Long userId) {
-        Study study = studyRepository.findByPostIdForUpdate(postId);
-        if (study == null) {
-            throw new EntityNotFoundException("Study Not Found");
-        }
+        Study study = studyRepository.findByPostIdForUpdate(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "스터디를 찾을 수 없습니다."));
 
         if (study.getPost().isDeleted()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "삭제된 게시글입니다.");
+            throw new CustomException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
         }
 
-        Post post = study.getPost();
-
-        validateStudyOwner(post, userId);
+        validateStudyOwner(study.getPost(), userId);
 
         if (!study.isRecruiting()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 모집이 마감된 스터디입니다.");
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "이미 모집이 마감된 스터디입니다.");
         }
 
         study.updateRecruiting(false);
+
+        // 아직 대기 중인 신청은 일괄 거절
+        List<StudyApply> pendingApplies = studyApplyRepository.findByStudyIdAndStatus(
+                study.getId(), StudyApplyStatus.PENDING);
+        for (StudyApply pending : pendingApplies) {
+            pending.changeStatus(StudyApplyStatus.REJECTED);
+        }
 
         List<StudyApply> acceptedApplies = studyApplyRepository.findByStudyIdAndStatus(
                 study.getId(), StudyApplyStatus.ACCEPTED);
 
         if (acceptedApplies.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
-                "수락된 신청자가 없습니다. 최소 1명 이상 수락해야 합니다.");
+            throw new CustomException(ErrorCode.INVALID_REQUEST,
+                    "수락된 신청자가 없습니다. 최소 1명 이상 수락해야 합니다.");
         }
 
-        // Group 생성 (개설자가 팀장, Study에 저장된 이름과 maxMembers 사용)
         GroupDTO.GroupCreateResponseDTO groupResponse =
-            groupService.createGroupInternal(study.getStudyName(), 1, study.getMaxMembers(), userId);
+                groupService.createGroupInternal(study.getStudyName(), 1, study.getMaxMembers(), userId);
 
+        // TODO: 현재 그룹에 멤버를 추가할 때 대기 상태로 추가 -> 활동 상태로 변경 2단계로 처리가 되는 문제
+        //  GroupService.addGroupMember()가 프로젝트 모집과 공유되어 있어 항상 대기상태로만 생성 됨 (프로젝트 모집 방식이 스터디 모집이랑 달라서..)
         for (StudyApply apply : acceptedApplies) {
             GroupDTO.GroupMemberInfoDTO memberInfo = groupService.addGroupMember(
                     groupResponse.getGroupId(),
                     apply.getApplicant().getCbuMemberId());
-            groupService.activateGroupMember(memberInfo.getGroupMemberId(), userId);
+            groupService.updateStatusGroupMember(memberInfo.getGroupMemberId(), userId, GroupMemberStatus.ACTIVE);
         }
 
         Group group = groupRepository.findById(groupResponse.getGroupId())
-                .orElseThrow(() -> new EntityNotFoundException("생성된 그룹을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "생성된 그룹을 찾을 수 없습니다."));
         study.linkGroup(group);
 
         return groupResponse;
     }
 
-    /**
-     * StudyApply -> DTO 변환
-     */
-    private StudyApplyDTO.StudyApplyInfoDTO toStudyApplyInfoDTO(StudyApply apply) {
-        return StudyApplyDTO.StudyApplyInfoDTO.builder()
-                .applyId(apply.getId())
-                .studyId(apply.getStudy().getId())
-                .applicantId(apply.getApplicant().getCbuMemberId())
-                .applicantName(apply.getApplicant().getName())
-                .major(apply.getApplicant().getMajor())
-                .grade(apply.getApplicant().getGrade())
-                .status(apply.getStatus())
-                .createdAt(apply.getCreatedAt())
-                .build();
+    private Study getActiveStudy(Long postId) {
+        Study study = studyRepository.findByPostId(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "스터디를 찾을 수 없습니다."));
+        if (study.getPost().isDeleted()) {
+            throw new CustomException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+        }
+        return study;
     }
+
+    private void validateStudyOwner(Post post, Long userId) {
+        if (!post.getAuthorId().equals(userId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN, "게시글에 대한 권한이 없습니다.");
+        }
+    }
+
 }
