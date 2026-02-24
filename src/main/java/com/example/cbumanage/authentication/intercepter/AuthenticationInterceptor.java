@@ -191,7 +191,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 			}
 		}
 		// 마지막으로, 파싱된 AccessToken이 요청에 필요한 권한(permission)을 포함하고 있는지 확인합니다.
-		if (!accessToken.getPermission().contains(this.permission)) {
+		if (!Permission.isSatisfiedBy(new java.util.HashSet<>(accessToken.getPermission()), this.permission)) {
 			// 권한이 부족한 경우 401 Unauthorized 상태를 설정하고 요청 처리를 중단합니다.
 			logger.warn("권한 부족 - 경로: {}, 필요 권한: {}, 사용자 권한: {}", 
 					requestPath, permission, accessToken.getPermission());

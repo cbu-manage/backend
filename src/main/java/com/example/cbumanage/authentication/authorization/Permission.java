@@ -3,6 +3,7 @@ package com.example.cbumanage.authentication.authorization;
 import lombok.Getter;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,7 +19,7 @@ public enum Permission {
 	 * - exclusivePath: 인증이 필요하지 않은 예외 경로
 	 */
 	MEMBER(
-			Set.of("/api/v1/*"),     // 인증이 필요한 경로
+			Set.of("/api/v1/**"),     // 인증이 필요한 경로
 			Set.of("/api/v1/login")  // 인증이 필요하지 않은 경로
 	),
 
@@ -28,8 +29,13 @@ public enum Permission {
 	 * - exclusivePath: 관리자 권한에서 제외할 경로
 	 */
 	ADMIN(
-			Set.of("/api/v1/member", "/api/v1/members"), // 관리자만 접근 가능한 경로
+			Set.of("/api/v1/member", "/api/v1/members", "/api/v1/member/**", "/api/v1/members/**"), // 관리자만 접근 가능한 경로
 			Set.of()  // 관리자 권한에서 제외할 경로
+	);
+
+	private static final Map<Permission, Set<Permission>> impliedPermissions = Map.of(
+			MEMBER, Set.of(MEMBER),
+			ADMIN, Set.of(ADMIN, MEMBER)
 	);
 
 	@Getter
@@ -93,5 +99,22 @@ public enum Permission {
 	 */
 	public static Permission getValue(String name) {
 		return permissionMap.get(name);
+	}
+
+	/**
+	 * this 권한이 requiredPermission을 포함하는지 확인합니다.
+	 */
+	public boolean includes(Permission requiredPermission) {
+		return impliedPermissions.getOrDefault(this, Set.of(this)).contains(requiredPermission);
+	}
+
+	/**
+	 * userPermissions 중 하나라도 requiredPermission을 포함하면 true를 반환합니다.
+	 */
+	public static boolean isSatisfiedBy(Set<Permission> userPermissions, Permission requiredPermission) {
+		if (userPermissions == null || requiredPermission == null) return false;
+
+		Set<Permission> permissions = new HashSet<>(userPermissions);
+		return permissions.stream().anyMatch(permission -> permission.includes(requiredPermission));
 	}
 }
