@@ -3,6 +3,7 @@ package com.example.cbumanage.utils;
 import com.example.cbumanage.dto.PostDTO;
 import com.example.cbumanage.model.*;
 import com.example.cbumanage.model.enums.ProjectFieldType;
+import com.example.cbumanage.repository.CbuMemberRepository;
 import com.example.cbumanage.repository.GroupRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,17 +16,21 @@ public class PostMapper {
 
     private final GroupUtil groupUtil;
     private final GroupRepository groupRepository;
-
+    private final CbuMemberRepository cbuMemberRepository;
     @Autowired
-    public PostMapper(GroupUtil groupUtil, GroupRepository groupRepository) {
+    public PostMapper(GroupUtil groupUtil, GroupRepository groupRepository, CbuMemberRepository cbuMemberRepository) {
         this.groupUtil = groupUtil;
         this.groupRepository = groupRepository;
+        this.cbuMemberRepository = cbuMemberRepository;
     }
 
 
     public PostDTO.PostInfoDTO toPostInfoDTO(Post post) {
+        CbuMember author = cbuMemberRepository.findById(post.getAuthorId()).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
         return  PostDTO.PostInfoDTO.builder().postId(post.getId())
                 .authorId(post.getAuthorId())
+                .authorName(author.getName())
+                .generation(author.getGeneration())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .createdAt(post.getCreatedAt())

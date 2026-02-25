@@ -31,6 +31,10 @@ public class PostDTO {
     public static class PostInfoDTO{
         private Long postId;
 
+        private String authorName;
+
+        private Long    generation;
+
         private Long authorId;
 
         private String title;
@@ -44,6 +48,8 @@ public class PostDTO {
         @Builder
         public PostInfoDTO(
                 Long postId,
+                String authorName,
+                Long generation,
                 Long authorId,
                 String title,
                 String content,
@@ -52,6 +58,8 @@ public class PostDTO {
         )
         {
             this.postId = postId;
+            this.authorName = authorName;
+            this.generation = generation;
             this.authorId = authorId;
             this.title = title;
             this.content = content;
