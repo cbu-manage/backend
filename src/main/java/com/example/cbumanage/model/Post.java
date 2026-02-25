@@ -39,6 +39,10 @@ public class Post {
     private int category;
 
     private boolean isDeleted = false;
+
+    @Column(nullable = false)
+    private Long viewCount = 0L;
+
     //생성자
     public Post(Long authorId,String title,String content,int category) {
         this.authorId = authorId;
@@ -67,6 +71,10 @@ public class Post {
     public void delete() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
+    }
+
+    public void upViewCount() {
+        this.viewCount++;
     }
 
 }
