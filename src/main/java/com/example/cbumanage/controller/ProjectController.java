@@ -9,10 +9,7 @@ import com.example.cbumanage.utils.JwtProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -99,7 +96,8 @@ public class ProjectController {
     @Operation(
             summary = "프로젝트 게시글 생성",
             description = "프로젝트 정보를 입력받아 새 게시글을 생성합니다. " +
-                    "생성 시 해당 프로젝트를 관리할 그룹이 자동으로 생성되며, 작성자는 그룹장이 됩니다."
+                    "생성 시 기입한 최대 모집 인원과 게시글 이름을 반영하여" +
+                    "프로젝트를 관리할 그룹이 자동으로 생성되며, 작성자는 그룹장이 됩니다."
     )
     @PostMapping("/post/project")
     public ResponseEntity<ResultResponse<PostDTO.PostProjectCreateResponseDTO>> createPostProject(
@@ -191,7 +189,8 @@ public class ProjectController {
 
     @Operation(
             summary = "프로젝트 게시글 삭제",
-            description = "게시글을 Soft Delete 처리합니다. 실제 데이터는 남으나 목록 및 상세 조회에서 제외됩니다."
+            description = "프로젝트 게시글과 함께 생성된 그룹을 동시에 soft delete 처리 합니다." +
+                    "목록 및 상세조회에서 제외 됩니다."
     )
     @DeleteMapping("/post/project/{postId}")
     public ResponseEntity<ResultResponse<Void>> deletePost(
