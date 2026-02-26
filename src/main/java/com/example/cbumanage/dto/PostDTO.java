@@ -356,6 +356,9 @@ public class PostDTO {
         @Schema(description = "모집 마감 기한")
         private LocalDate deadline;
 
+        @Schema(description = "최대 모집 인원",example="10")
+        private int maxMember;
+
         @Schema(description = "게시글 카테고리 식별 번호", example = "2")
         private int category;
     }
@@ -397,6 +400,9 @@ public class PostDTO {
         @Schema(description = "모집 마감 기한")
         private LocalDate deadline;
 
+        @Schema(description = "최대 모집 인원")
+        private int maxMember;
+
         @Schema(description = "카테고리 번호")
         private int category;
 
@@ -412,6 +418,7 @@ public class PostDTO {
                                             boolean recruiting,
                                             LocalDateTime createdAt,
                                             LocalDate deadline,
+                                            int maxMember,
                                             int category){
             this.postId = postId;
             this.authorId = authorId;
@@ -424,6 +431,7 @@ public class PostDTO {
             this.recruiting = recruiting;
             this.createdAt = createdAt;
             this.deadline = deadline;
+            this.maxMember = maxMember;
             this.category = category;
         }
     }
@@ -436,13 +444,15 @@ public class PostDTO {
         private List<String> recruitmentFields;
         private boolean recruiting;
         private LocalDate deadline;
+        private int maxMember;
 
         @Builder
-        public ProjectCreateDTO(Long postId,List<String> recruitmentFields, boolean recruiting, LocalDate deadline) {
+        public ProjectCreateDTO(Long postId,List<String> recruitmentFields, boolean recruiting, LocalDate deadline, int maxMember) {
             this.postId = postId;
             this.recruitmentFields = recruitmentFields;
             this.recruiting = recruiting;
             this.deadline = deadline;
+            this.maxMember = maxMember;
         }
     }
 
@@ -464,6 +474,9 @@ public class PostDTO {
 
         @Schema(description = "모집 마감 기한 변경")
         private LocalDate deadline;
+
+        @Schema(description = "최대 모집 인원 변경")
+        private int maxMember;
     }
 
     @Getter
@@ -479,11 +492,15 @@ public class PostDTO {
         @Schema(description = "모집 마감 기한 변경")
         private LocalDate deadline;
 
+        @Schema(description = "최대 모집 인원 변경")
+        private int maxMember;
+
         @Builder
-        public ProjectUpdateDTO(List<String> recruitmentFields, boolean recruiting, LocalDate deadline) {
+        public ProjectUpdateDTO(List<String> recruitmentFields, boolean recruiting, LocalDate deadline, int maxMember) {
             this.recruitmentFields = recruitmentFields;
             this.recruiting = recruiting;
             this.deadline = deadline;
+            this.maxMember = maxMember;
         }
     }
 
@@ -541,6 +558,9 @@ public class PostDTO {
         @Schema(description = "조회 수 ")
         private Long viewCount;
 
+        @Schema(description = "최대 모집 인원")
+        private int maxMember;
+
         @Builder
         public ProjectInfoDetailDTO(
                 Long postId,
@@ -556,7 +576,8 @@ public class PostDTO {
                 LocalDateTime createdAt,
                 boolean recruiting,
                 LocalDate deadline,
-                Long viewCount
+                Long viewCount,
+                int maxMember
         ) {
             this.postId = postId;
             this.title = title;
@@ -572,6 +593,7 @@ public class PostDTO {
             this.recruiting = recruiting;
             this.deadline = deadline;
             this.viewCount = viewCount;
+            this.maxMember = maxMember;
         }
     }
 
