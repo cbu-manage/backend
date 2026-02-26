@@ -6,13 +6,20 @@ import com.example.cbumanage.model.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.model.enums.GroupStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface GroupRepository extends JpaRepository<Group, Long> {
+
     Group findById(long id);
+
+    //soft delete 안된 값만 조회
+    Optional<Group> findByIdAndIsDeletedFalse(Long id);
+
     List<Group> findByGroupNameContaining(String groupName);
 
 
@@ -32,8 +39,10 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
     select m.group
     from GroupMember m
     where m.cbuMember.cbuMemberId =:userId
+    and m.groupMemberStatus =:memberStatus
+    and m.group.isDeleted = false
 """)
-    List<Group> findByUserId(Long userId);
+    List<Group> findByUserId(Long userId, GroupMemberStatus memberStatus);
 
 
 }
