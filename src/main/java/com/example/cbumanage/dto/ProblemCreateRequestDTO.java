@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 
@@ -14,6 +15,7 @@ import java.util.List;
  * 문제 생성할 때 사용하는 DTO.
  */
 @Getter
+@Setter
 @NoArgsConstructor
 public class ProblemCreateRequestDTO {
 
