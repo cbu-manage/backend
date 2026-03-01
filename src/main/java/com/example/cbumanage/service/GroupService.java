@@ -22,7 +22,6 @@ public class GroupService {
     private final CbuMemberRepository cbuMemberRepository;
     private final CommentRepository commentRepository;
     private final ProjectRepository projectRepository;
-    private final StudyRepository studyRepository;
     private final GroupUtil groupUtil;
 
     @Autowired
@@ -31,14 +30,12 @@ public class GroupService {
                         CbuMemberRepository cbuMemberRepository,
                         CommentRepository commentRepository,
                         ProjectRepository projectRepository,
-                        StudyRepository studyRepository,
                         GroupUtil groupUtil) {
         this.groupRepository = groupRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.cbuMemberRepository = cbuMemberRepository;
         this.commentRepository = commentRepository;
         this.projectRepository = projectRepository;
-        this.studyRepository = studyRepository;
         this.groupUtil = groupUtil;
     }
 
@@ -67,9 +64,6 @@ public class GroupService {
                                                       Long memberId) {
         Group group = groupRepository.findByIdAndIsDeletedFalse(groupId)
                 .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"그룹 정보를 찾을 수 없습니다."));
-        if (group.getRecruitmentStatus() == GroupRecruitmentStatus.CLOSED) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST, "모집이 종료된 그룹입니다.");
-        }
         GroupMember existing = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, memberId);
         if (existing != null) {
             throw new CustomException(ErrorCode.ALREADY_JOINED_MEMBER);
@@ -80,6 +74,24 @@ public class GroupService {
         group.addMember(groupMember);
         groupMemberRepository.save(groupMember);
         return groupUtil.toGroupMemberInfoDTO(groupMember);
+    }
+
+     // 서비스 내부 호출용 그룹 생성 메서드
+     // DTO 없이 파라미터로 직접 값을 받아 그룹을 생성합니다.
+    @Transactional
+    public GroupDTO.GroupCreateResponseDTO createGroupInternal(String groupName,
+                                                                int minActiveMembers,
+                                                                int maxActiveMembers,
+                                                                Long leaderId) {
+        Group group = Group.create(groupName, minActiveMembers, maxActiveMembers);
+        groupRepository.save(group);
+        CbuMember member = cbuMemberRepository.findById(leaderId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"유저 정보를 찾을 수 없습니다."));
+
+        GroupMember leader = GroupMember.create(group, member, GroupMemberStatus.ACTIVE, GroupMemberRole.LEADER);
+        group.addMember(leader);
+        groupMemberRepository.save(leader);
+        return groupUtil.toGroupCreateResponseDTO(group);
     }
 
     /**
@@ -123,9 +135,6 @@ public class GroupService {
                 projectRepository.findByGroupId(group.getId()).ifPresent(project -> {
                     project.updateRecruiting(false);
                 });
-                studyRepository.findByGroupId(group.getId()).ifPresent(study -> {
-                    study.updateRecruiting(false);
-                });
             }
         }
     }
@@ -133,7 +142,7 @@ public class GroupService {
     //시전한 user가 리더가 맞는지 확인하는 메소드
     private void assertIsGroupLeader(Long groupId, Long userId){
         GroupMember groupMember = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, userId);
-        if (groupMember == null || groupMember.getGroupMemberRole() != GroupMemberRole.LEADER) {
+        if(groupMember.getGroupMemberRole()!=(GroupMemberRole.LEADER)){
             throw new CustomException(ErrorCode.FORBIDDEN,"해당 그룹에 리더가 아닙니다.");
         }
     }
@@ -157,13 +166,6 @@ public class GroupService {
             throw new CustomException(ErrorCode.INVALID_REQUEST,"PENDING 상태가 아닙니다.");
         }
         groupMemberRepository.delete(gm);
-    }
-
-    /* PENDING 상태 멤버 일괄 거절: 모집 마감 시 사용 */
-    @Transactional
-    public void rejectAllPendingMembers(Long groupId) {
-        List<GroupMember> pending = groupMemberRepository.findByGroupIdAndGroupMemberStatus(groupId, GroupMemberStatus.PENDING);
-        pending.forEach(member -> member.changeStatus(GroupMemberStatus.REJECTED));
     }
 
     /* 팀장 전용: PENDING 신청인원 목록 조회 메서드(학년, 학부, 이름) */
@@ -222,4 +224,15 @@ public class GroupService {
         return groups.stream().map(group -> groupUtil.toGroupInfoDTO(group)).toList();
     }
 
+    /**
+     멤버를 Active 상태로 변경시키는 메소드 입니다(팀장이 가입 신청한 멤버를 수락할 때 사용되는 메서드)
+     **/
+    @Transactional
+    public void activateGroupMember(Long groupMemberId,Long userId){
+        GroupMember groupMember = groupMemberRepository.findById(groupMemberId)
+                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"해당 멤버를 찾을 수 없습니다."));
+        Group group = groupMember.getGroup();
+        assertIsGroupLeader(group.getId(),userId);
+        groupMember.changeStatus(GroupMemberStatus.ACTIVE);
+    }
 }
