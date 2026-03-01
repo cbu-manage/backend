@@ -708,8 +708,6 @@ public class PostDTO {
         private Long postId;
         @Schema(description = "작성자 회원 ID", example = "15")
         private Long authorId;
-        @Schema(description = "자동 생성된 스터디 그룹 ID", example = "50")
-        private Long groupId;
         @Schema(description = "스터디 게시글 제목")
         private String title;
         @Schema(description = "스터디 게시글 내용")
@@ -728,12 +726,11 @@ public class PostDTO {
         private int category;
 
         @Builder
-        public PostStudyCreateResponseDTO(Long postId, Long authorId, Long groupId, String title, String content,
+        public PostStudyCreateResponseDTO(Long postId, Long authorId, String title, String content,
                                           List<String> studyTags, String studyName, boolean recruiting,
                                           int maxMembers, LocalDateTime createdAt, int category) {
             this.postId = postId;
             this.authorId = authorId;
-            this.groupId = groupId;
             this.title = title;
             this.content = content;
             this.studyTags = studyTags;
@@ -842,23 +839,13 @@ public class PostDTO {
         @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
         private int maxMembers;
 
-        @Schema(description = "연결된 그룹 ID", example = "21")
+        @Schema(description = "마감 후 생성된 그룹 ID (모집 중이면 null)", example = "21")
         private Long groupId;
-
-        @Schema(description = "조회한 유저가 팀장(작성자)인지 여부. true일 경우: '신청 인원 확인' 버튼 노출", example = "false")
-        private boolean isLeader;
-
-        @Schema(description = "조회한 유저의 신청 상태. " +
-                "1. true: 이미 신청함(PENDING) → '신청 취소하기' 버튼 노출 " +
-                "2. false: 신청 이력 없음 → '신청하기' 버튼 노출 " +
-                "3. null: 이미 그룹 멤버(승인됨) → '가입 완료' 표시(버튼 비활성)", example = "false")
-        private Boolean hasApplied;
 
         @Builder
         public StudyInfoDetailDTO(Long postId, String title, String content, List<String> studyTags,
                                   String studyName, Long authorId, LocalDateTime createdAt,
-                                  boolean recruiting, int maxMembers, Long groupId,
-                                  boolean isLeader, Boolean hasApplied) {
+                                  boolean recruiting, int maxMembers, Long groupId) {
             this.postId = postId;
             this.title = title;
             this.content = content;
@@ -869,8 +856,6 @@ public class PostDTO {
             this.recruiting = recruiting;
             this.maxMembers = maxMembers;
             this.groupId = groupId;
-            this.isLeader = isLeader;
-            this.hasApplied = hasApplied;
         }
     }
 

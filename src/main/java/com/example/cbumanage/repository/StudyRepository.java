@@ -38,6 +38,4 @@ public interface StudyRepository extends JpaRepository<Study, Long> {
     @EntityGraph(attributePaths = {"post"})
     @Query("SELECT s FROM Study s WHERE s.post.isDeleted = false AND s.post.authorId = :userId AND s.post.category = :category")
     Page<Study> findByPostAuthorIdAndPostCategoryAndPostIsDeletedFalse(@Param("userId") Long userId, @Param("category") int category, Pageable pageable);
-
-    Optional<Study> findByGroupId(Long groupId);
 }

@@ -158,11 +158,10 @@ public class PostMapper {
                 .build();
     }
 
-    public PostDTO.PostStudyCreateResponseDTO toPostStudyCreateResponseDTO(Post post, Study study, Group group) {
+    public PostDTO.PostStudyCreateResponseDTO toPostStudyCreateResponseDTO(Post post, Study study) {
         return PostDTO.PostStudyCreateResponseDTO.builder()
                 .postId(post.getId())
                 .authorId(post.getAuthorId())
-                .groupId(group.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .studyTags(study.getStudyTags())
@@ -267,7 +266,7 @@ public class PostMapper {
     }
 
     // 스터디 게시글 상세 조회 DTO 변환
-    public PostDTO.StudyInfoDetailDTO toStudyInfoDetailDTO(Study study, boolean isLeader, Boolean hasApplied) {
+    public PostDTO.StudyInfoDetailDTO toStudyInfoDetailDTO(Study study) {
         return PostDTO.StudyInfoDetailDTO.builder()
                 .postId(study.getPost().getId())
                 .title(study.getPost().getTitle())
@@ -279,8 +278,6 @@ public class PostMapper {
                 .recruiting(study.isRecruiting())
                 .maxMembers(study.getMaxMembers())
                 .groupId(study.getGroup() != null ? study.getGroup().getId() : null)
-                .isLeader(isLeader)
-                .hasApplied(hasApplied)
                 .build();
     }
 

@@ -54,24 +54,23 @@ public class Study {
     private boolean recruiting;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id", nullable = false)
-    @Schema(description = "게시글 생성 시 자동 생성된 그룹")
-    @Comment("게시글 생성 시 자동 생성된 그룹 FK")
+    @JoinColumn(name = "group_id")
+    @Schema(description = "모집 마감 후 생성된 그룹")
+    @Comment("모집 마감 후 생성된 그룹 FK")
     private Group group;
 
-    public Study(Post post, List<String> tags, String studyName, int maxMembers, boolean recruiting, Group group) {
+    public Study(Post post, List<String> tags, String studyName, int maxMembers, boolean recruiting) {
         this.post = post;
         this.studyName = studyName;
         this.maxMembers = maxMembers;
         this.recruiting = recruiting;
-        this.group = group;
         if (tags != null) {
             this.studyTags.addAll(tags);
         }
     }
 
-    public static Study create(Post post, List<String> tags, String studyName, int maxMembers, boolean recruiting, Group group) {
-        return new Study(post, tags, studyName, maxMembers, recruiting, group);
+    public static Study create(Post post, List<String> tags, String studyName, int maxMembers, boolean recruiting) {
+        return new Study(post, tags, studyName, maxMembers, recruiting);
     }
 
     public void addStudyTag(String tag) {
@@ -97,4 +96,7 @@ public class Study {
         this.recruiting = recruiting;
     }
 
+    public void linkGroup(Group group) {
+        this.group = group;
+    }
 }
