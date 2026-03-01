@@ -710,6 +710,10 @@ public class PostDTO {
         private Long authorId;
         @Schema(description = "자동 생성된 스터디 그룹 ID", example = "50")
         private Long groupId;
+        @Schema(description = "작성자 기수")
+        private Long authorGeneration;
+        @Schema(description = "작성자 이름")
+        private String authorName;
         @Schema(description = "스터디 게시글 제목")
         private String title;
         @Schema(description = "스터디 게시글 내용")
@@ -728,12 +732,16 @@ public class PostDTO {
         private int category;
 
         @Builder
-        public PostStudyCreateResponseDTO(Long postId, Long authorId, Long groupId, String title, String content,
+        public PostStudyCreateResponseDTO(Long postId, Long authorId, Long groupId,
+                                          Long authorGeneration, String authorName,
+                                          String title, String content,
                                           List<String> studyTags, String studyName, boolean recruiting,
                                           int maxMembers, LocalDateTime createdAt, int category) {
             this.postId = postId;
             this.authorId = authorId;
             this.groupId = groupId;
+            this.authorGeneration = authorGeneration;
+            this.authorName = authorName;
             this.title = title;
             this.content = content;
             this.studyTags = studyTags;
@@ -835,6 +843,10 @@ public class PostDTO {
         private String studyName;
         @Schema(description = "작성자(팀장) 회원 ID", example = "15")
         private Long authorId;
+        @Schema(description = "작성자 기수", example = "34")
+        private Long authorGeneration;
+        @Schema(description = "작성자 이름", example = "홍길동")
+        private String authorName;
         @Schema(description = "게시글 생성 시각")
         private LocalDateTime createdAt;
         @Schema(description = "모집 여부 (모집 중: true, 모집 마감: false)", example = "true")
@@ -856,7 +868,8 @@ public class PostDTO {
 
         @Builder
         public StudyInfoDetailDTO(Long postId, String title, String content, List<String> studyTags,
-                                  String studyName, Long authorId, LocalDateTime createdAt,
+                                  String studyName, Long authorId, Long authorGeneration, String authorName,
+                                  LocalDateTime createdAt,
                                   boolean recruiting, int maxMembers, Long groupId,
                                   boolean isLeader, Boolean hasApplied) {
             this.postId = postId;
@@ -865,6 +878,8 @@ public class PostDTO {
             this.studyTags = studyTags;
             this.studyName = studyName;
             this.authorId = authorId;
+            this.authorGeneration = authorGeneration;
+            this.authorName = authorName;
             this.createdAt = createdAt;
             this.recruiting = recruiting;
             this.maxMembers = maxMembers;
@@ -892,6 +907,10 @@ public class PostDTO {
         private String studyName;
         @Schema(description = "작성자 회원 ID", example = "15")
         private Long authorId;
+        @Schema(description = "작성자 기수")
+        private Long authorGeneration;
+        @Schema(description = "작성자 이름")
+        private String authorName;
         @Schema(description = "게시글 생성 시각")
         private LocalDateTime createdAt;
         @Schema(description = "모집 여부 (모집 중: true, 모집 마감: false)", example = "true")
@@ -901,12 +920,15 @@ public class PostDTO {
 
         @Builder
         public StudyListDTO(Long postId, String title, List<String> studyTags, String studyName,
-                            Long authorId, LocalDateTime createdAt, boolean recruiting, int maxMembers) {
+                            Long authorId, Long authorGeneration, String authorName,
+                            LocalDateTime createdAt, boolean recruiting, int maxMembers) {
             this.postId = postId;
             this.title = title;
             this.studyTags = studyTags;
             this.studyName = studyName;
             this.authorId = authorId;
+            this.authorGeneration = authorGeneration;
+            this.authorName = authorName;
             this.createdAt = createdAt;
             this.recruiting = recruiting;
             this.maxMembers = maxMembers;

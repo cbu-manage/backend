@@ -2,11 +2,13 @@ package com.example.cbumanage.service;
 
 import com.example.cbumanage.dto.PostDTO;
 import com.example.cbumanage.exception.CustomException;
+import com.example.cbumanage.model.CbuMember;
 import com.example.cbumanage.model.Group;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.Study;
 import com.example.cbumanage.model.enums.GroupMemberStatus;
 import com.example.cbumanage.model.enums.GroupRecruitmentStatus;
+import com.example.cbumanage.repository.CbuMemberRepository;
 import com.example.cbumanage.repository.GroupMemberRepository;
 import com.example.cbumanage.repository.PostRepository;
 import com.example.cbumanage.repository.StudyRepository;
@@ -20,12 +22,16 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class StudyService {
 
     private final StudyRepository studyRepository;
     private final PostRepository postRepository;
+    private final CbuMemberRepository cbuMemberRepository;
     private final PostMapper postMapper;
     private final PostService postService;
     private final GroupService groupService;
@@ -34,12 +40,14 @@ public class StudyService {
     @Autowired
     public StudyService(StudyRepository studyRepository,
                         PostRepository postRepository,
+                        CbuMemberRepository cbuMemberRepository,
                         PostMapper postMapper,
                         PostService postService,
                         GroupService groupService,
                         GroupMemberRepository groupMemberRepository) {
         this.studyRepository = studyRepository;
         this.postRepository = postRepository;
+        this.cbuMemberRepository = cbuMemberRepository;
         this.postMapper = postMapper;
         this.postService = postService;
         this.groupService = groupService;
@@ -61,20 +69,34 @@ public class StudyService {
         boolean isLeader = userId != null && study.getPost().getAuthorId().equals(userId);
         Boolean hasApplied = groupService.hasAppliedToGroup(
                 study.getGroup() != null ? study.getGroup().getId() : null, userId);
-        return postMapper.toStudyInfoDetailDTO(study, isLeader, hasApplied);
+        CbuMember author = cbuMemberRepository.findById(study.getPost().getAuthorId()).orElse(null);
+        return postMapper.toStudyInfoDetailDTO(study, isLeader, hasApplied, author);
     }
 
     // 카테고리별 목록 조회 (삭제 게시글 제외)
     @Transactional
     public Page<PostDTO.StudyListDTO> getPostsByCategory(Pageable pageable, int category) {
         Page<Study> studies = studyRepository.findByPostCategoryAndPostIsDeletedFalse(category, pageable);
-        return studies.map(study -> postMapper.toStudyListDTO(study));
+        return mapStudiesToStudyListDTO(studies);
     }
 
     @Transactional
     public Page<PostDTO.StudyListDTO> getMyStudiesByUserId(Pageable pageable, Long userId, int category) {
         Page<Study> studies = studyRepository.findByPostAuthorIdAndPostCategoryAndPostIsDeletedFalse(userId, category, pageable);
-        return studies.map(study -> postMapper.toStudyListDTO(study));
+        return mapStudiesToStudyListDTO(studies);
+    }
+
+    // 스터디 목록 조회 결과에 작성자 정보를 매핑하여 DTO로 변환
+    private Page<PostDTO.StudyListDTO> mapStudiesToStudyListDTO(Page<Study> studies) {
+        if (studies.getContent().isEmpty()) {
+            return studies.map(s -> postMapper.toStudyListDTO(s, null));
+        }
+        Set<Long> authorIds = studies.getContent().stream()
+                .map(s -> s.getPost().getAuthorId())
+                .collect(Collectors.toSet());
+        Map<Long, CbuMember> authorMap = cbuMemberRepository.findAllById(authorIds).stream()
+                .collect(Collectors.toMap(CbuMember::getCbuMemberId, m -> m));
+        return studies.map(s -> postMapper.toStudyListDTO(s, authorMap.get(s.getPost().getAuthorId())));
     }
 
     // Study 고유 필드 수정 (태그, 스터디명, 최대인원). updatePostStudy()에서 호출.
@@ -115,7 +137,8 @@ public class StudyService {
         Group group = groupService.createGroup(groupName, userId, req.getMaxMembers());
         PostDTO.StudyCreateDTO studyCreateDTO = postMapper.toStudyCreateDTO(req, post.getId());
         Study study = createStudy(studyCreateDTO, group);
-        return postMapper.toPostStudyCreateResponseDTO(post, study, group);
+        CbuMember author = cbuMemberRepository.findById(post.getAuthorId()).orElse(null);
+        return postMapper.toPostStudyCreateResponseDTO(post, study, group, author);
     }
 
     // Post + Study 한번에 수정. recruiting은 여기서 변경할수 없고, 마감 API로만 변경 가능.
@@ -157,7 +180,7 @@ public class StudyService {
     @Transactional
     public Page<PostDTO.StudyListDTO> searchByTag(String tag, Pageable pageable) {
         Page<Study> studies = studyRepository.findByExactTagAndPostIsDeletedFalse(tag, pageable);
-        return studies.map(study -> postMapper.toStudyListDTO(study));
+        return mapStudiesToStudyListDTO(studies);
     }
 
     /**
