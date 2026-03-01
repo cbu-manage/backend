@@ -15,8 +15,6 @@ import java.util.Optional;
 @Repository
 public interface GroupRepository extends JpaRepository<Group, Long> {
 
-    Group findById(long id);
-
     //soft delete 안된 값만 조회
     Optional<Group> findByIdAndIsDeletedFalse(Long id);
 
