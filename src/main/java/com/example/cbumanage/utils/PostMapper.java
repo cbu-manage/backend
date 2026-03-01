@@ -128,13 +128,13 @@ public class PostMapper {
     }
 
     // 프로젝트 생성 응답 DTO 변환
-    public PostDTO.PostProjectCreateResponseDTO toPostProjectCreateResponseDTO(Post post, Project project, Group group, CbuMember member) {
+    public PostDTO.PostProjectCreateResponseDTO toPostProjectCreateResponseDTO(Post post, Project project, Group group, CbuMember author) {
         return PostDTO.PostProjectCreateResponseDTO.builder()
                 .postId(post.getId())
                 .authorId(post.getAuthorId())
                 .groupId(group.getId())
-                .authorGeneration(member.getGeneration())
-                .authorName(member.getName())
+                .authorGeneration(author!=null?author.getGeneration():null)
+                .authorName(author!=null?author.getName():null)
                 .title(post.getTitle())
                 .content(post.getContent())
                 .createdAt(post.getCreatedAt())
@@ -143,6 +143,7 @@ public class PostMapper {
                         .collect(Collectors.toList()))
                 .recruiting(project.isRecruiting())
                 .deadline(project.getDeadline())
+                .maxMember(group.getMaxActiveMembers())
                 .category(post.getCategory())
                 .build();
     }
@@ -157,10 +158,11 @@ public class PostMapper {
                 .build();
     }
 
-    public PostDTO.PostStudyCreateResponseDTO toPostStudyCreateResponseDTO(Post post, Study study) {
+    public PostDTO.PostStudyCreateResponseDTO toPostStudyCreateResponseDTO(Post post, Study study, Group group) {
         return PostDTO.PostStudyCreateResponseDTO.builder()
                 .postId(post.getId())
                 .authorId(post.getAuthorId())
+                .groupId(group.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .studyTags(study.getStudyTags())
@@ -222,7 +224,7 @@ public class PostMapper {
     }
 
     // 프로젝트 게시글 상세 조회 DTO 변환 (로그인 사용자 기준 isLeader, hasApplied 포함)
-    public PostDTO.ProjectInfoDetailDTO toProjectInfoDetailDTO(Project project, Long userId, boolean isLeader, Boolean hasApplied) {
+    public PostDTO.ProjectInfoDetailDTO toProjectInfoDetailDTO(Project project, Long userId, boolean isLeader, Boolean hasApplied, CbuMember author) {
         Long groupId = project.getGroup() != null ? project.getGroup().getId() : null;
         return PostDTO.ProjectInfoDetailDTO.builder()
                 .postId(project.getPost().getId())
@@ -232,20 +234,21 @@ public class PostMapper {
                         .map(ProjectFieldType::getDescription)
                         .collect(Collectors.toList()))
                 .authorId(project.getPost().getAuthorId())
-                .authorGeneration(project.getMember().getGeneration())
-                .authorName(project.getMember().getName())
+                .authorGeneration(author!=null?author.getGeneration():null)
+                .authorName(author!=null?author.getName():null)
                 .groupId(groupId)
                 .isLeader(isLeader)
                 .hasApplied(hasApplied)
                 .createdAt(project.getPost().getCreatedAt())
                 .recruiting(project.isRecruiting())
                 .deadline(project.getDeadline())
-                .viewCount(project.getViewCount())
+                .maxMember(project.getGroup().getMaxActiveMembers())
+                .viewCount(project.getPost().getViewCount())
                 .build();
     }
 
     // 프로젝트 게시글 목록 조회 DTO 변환
-    public PostDTO.ProjectListDTO toProjectListDTO(Project project) {
+    public PostDTO.ProjectListDTO toProjectListDTO(Project project, CbuMember author) {
         return PostDTO.ProjectListDTO.builder()
                 .postId(project.getPost().getId())
                 .title(project.getPost().getTitle())
@@ -254,17 +257,17 @@ public class PostMapper {
                         .map(ProjectFieldType::getDescription)
                         .collect(Collectors.toList()))
                 .authorId(project.getPost().getAuthorId())
-                .authorGeneration(project.getMember().getGeneration())
-                .authorName(project.getMember().getName())
+                .authorGeneration(author!=null?author.getGeneration():null)
+                .authorName(author!=null?author.getName():null)
                 .createdAt(project.getPost().getCreatedAt())
                 .recruiting(project.isRecruiting())
                 .deadline(project.getDeadline())
-                .viewCount(project.getViewCount())
+                .viewCount(project.getPost().getViewCount())
                 .build();
     }
 
     // 스터디 게시글 상세 조회 DTO 변환
-    public PostDTO.StudyInfoDetailDTO toStudyInfoDetailDTO(Study study) {
+    public PostDTO.StudyInfoDetailDTO toStudyInfoDetailDTO(Study study, boolean isLeader, Boolean hasApplied) {
         return PostDTO.StudyInfoDetailDTO.builder()
                 .postId(study.getPost().getId())
                 .title(study.getPost().getTitle())
@@ -276,6 +279,8 @@ public class PostMapper {
                 .recruiting(study.isRecruiting())
                 .maxMembers(study.getMaxMembers())
                 .groupId(study.getGroup() != null ? study.getGroup().getId() : null)
+                .isLeader(isLeader)
+                .hasApplied(hasApplied)
                 .build();
     }
 

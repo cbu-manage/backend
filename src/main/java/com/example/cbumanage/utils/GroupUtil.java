@@ -90,7 +90,7 @@ public class GroupUtil {
                 .groupName(group.getGroupName())
                 .createdAt(group.createdAt)
                 .groupRecruitmentStatus(group.getRecruitmentStatus())
-                .activeMemberCount(group.getMembers().size())
+                .activeMemberCount(groupRepository.countByGroupIdAndStatus(group.getId(), GroupMemberStatus.ACTIVE))
                 .leaderId(leader != null ? leader.getCbuMember().getCbuMemberId() : null)
                 .leaderName(leader != null ? leader.getCbuMember().getName() : null)
                 .build();

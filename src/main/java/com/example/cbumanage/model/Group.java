@@ -9,6 +9,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.hibernate.annotations.Comment;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import software.amazon.awssdk.services.s3.endpoints.internal.Value;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -53,8 +54,11 @@ public class Group {
     @Comment("그룹 활성화 상태 (ACTIVE: 활동, INACTIVE: 비활동)")
     public GroupStatus status ;
 
+    @Comment("그룹 삭제 여부(Soft Delete")
+    public Boolean isDeleted = false;
+
     //그룹의 생성자, 상태들은 기본적으로 모집 안함, 비활성 상태로 시작
-    public Group(String groupName, int minActiveMembers, int maxActiveMembers) {
+    public Group(String groupName, int minActiveMembers, int maxActiveMembers)  {
 
         this.groupName = groupName;
         this.minActiveMembers = minActiveMembers;
@@ -70,7 +74,6 @@ public class Group {
     public void changeGroupName(String groupName) {
         this.groupName = groupName;
     }
-    public void changeMinActiveMembers(int minActiveMembers) {this.minActiveMembers = minActiveMembers;}
     public void changeMaxActiveMembers(int maxActiveMembers) {this.maxActiveMembers = maxActiveMembers;}
 
     @OneToMany(mappedBy = "group" ,
@@ -108,6 +111,10 @@ public class Group {
     public void closeRecruitment() {
         if (this.recruitmentStatus == GroupRecruitmentStatus.CLOSED) return;
         this.recruitmentStatus = GroupRecruitmentStatus.CLOSED;
+    }
+
+    public void delete() {
+        this.isDeleted = true;
     }
 
 

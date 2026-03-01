@@ -35,11 +35,6 @@ public class Project {
     @JoinColumn(name = "group_id", nullable = false)
     private Group group;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @Comment("연관된 프로젝트 모집 작성자 ID (CbuMember 테이블 참조)")
-    @JoinColumn(name = "cbu_member_id", nullable = false)
-    private CbuMember member;
-
     @ElementCollection(targetClass = ProjectFieldType.class)
     @CollectionTable(name = "project_recruitment_field", joinColumns = @JoinColumn(name = "project_id"))
     @Enumerated(EnumType.STRING)
@@ -51,15 +46,10 @@ public class Project {
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     @FutureOrPresent(message = "마감일은 오늘 이후여야 합니다.") // 과거 날짜 방지 (선택)
-    @Column(nullable = true)
     private LocalDate deadline;
 
-    @Comment("프로젝트 게시글 조회 수")
-    @Column(nullable = false)
-    private Long viewCount = 0L;
-
     // String 리스트를 받아서 Enum으로 변환해 저장
-    public Project(Post post, List<String> fields, boolean recruiting, LocalDate deadline, Group group, CbuMember member) {
+    public Project(Post post, List<String> fields, boolean recruiting, LocalDate deadline, Group group) {
         this.post = post;
         this.recruiting = recruiting;
         this.deadline = deadline;
@@ -67,11 +57,10 @@ public class Project {
             fields.forEach(f -> this.addRecruitmentField(ProjectFieldType.valueOf(f)));
         }
         this.group = group;
-        this.member = member;
     }
 
-    public static Project create(Post post, List<String> fields, boolean recruiting, LocalDate deadline, Group group, CbuMember member) {
-        return new Project(post, fields, recruiting, deadline, group, member);
+    public static Project create(Post post, List<String> fields, boolean recruiting, LocalDate deadline, Group group ) {
+        return new Project(post, fields, recruiting, deadline, group);
     }
 
     // 분야 추가 메서드
@@ -90,8 +79,4 @@ public class Project {
     public void updateRecruiting(boolean recruiting) {
         this.recruiting = recruiting;
     }
-
-    public void updateDeadline(LocalDate deadline) {this.deadline = deadline;}
-
-    public void upViewCount(){this.viewCount++;}
 }
