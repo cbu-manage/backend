@@ -75,20 +75,6 @@ public class Problem {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-   /* *//**
-     * 입력에 대한 설명
-     *//*
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String inputDescription;
-
-    *//**
-     * 출력에 대한 설명
-     *//*
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String outputDescription;
-
-*/
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProblemGrade grade;
@@ -129,7 +115,7 @@ public class Problem {
 
     @Builder
     public Problem(CbuMember member, List<Category> categories, Platform platform, Language language, String title, String content,
-                   String inputDescription, String outputDescription, ProblemGrade grade, String problemUrl, ProblemStatus problemStatus) {
+                    ProblemGrade grade, String problemUrl, ProblemStatus problemStatus) {
         this.member = member;
         this.categories = (categories != null) ? categories : new ArrayList<>();
         this.platform = platform;
@@ -147,9 +133,8 @@ public class Problem {
     /**
      * 문제 정보를 수정하는 메소드. null이 아닌 필드만 업데이트.
      */
-    public void update(List<Category> categories, Platform platform, Language language,
-                       String title, String content, String inputDescription, String outputDescription,
-                       ProblemGrade grade, String problemUrl, ProblemStatus problemStatus) {
+    public void update(List<Category> categories, Platform platform, Language language, String title,
+                       String content, ProblemGrade grade, String problemUrl, ProblemStatus problemStatus) {
         if (categories != null) {
             this.categories = categories;
         }

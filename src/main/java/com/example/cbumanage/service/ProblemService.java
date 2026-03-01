@@ -122,8 +122,6 @@ public class ProblemService {
                 language,
                 request.getTitle(),
                 request.getContent(),
-                null,
-                null,
                 request.getGrade(),
                 request.getProblemUrl(),
                 request.getProblemStatus()
