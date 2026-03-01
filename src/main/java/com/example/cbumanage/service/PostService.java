@@ -59,7 +59,6 @@ public class PostService {
 
     public PostReport createReport(PostDTO.ReportCreateDTO req) {
         Post post = postRepository.findById(req.getPostId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        Group group = groupRepository.findById(req.getGroupId());
         PostReport report = PostReport.create(post, req.getGroupId(), req.getType(),req.getDate(),req.getLocation(),req.getReportImage());
         PostReport saved = postReportRepository.save(report);
         return saved;

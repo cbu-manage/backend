@@ -1,8 +1,6 @@
 package com.example.cbumanage.controller;
 
-import com.example.cbumanage.dto.GroupDTO;
 import com.example.cbumanage.dto.PostDTO;
-import com.example.cbumanage.dto.StudyApplyDTO;
 import com.example.cbumanage.response.ResultResponse;
 import com.example.cbumanage.response.SuccessCode;
 import com.example.cbumanage.service.StudyService;
@@ -25,7 +23,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -95,9 +92,18 @@ public class StudyController {
         return userId;
     }
 
+    // 인증이 선택적인 경우 (로그인 안 해도 조회 가능). 로그인 미인증 시 null 반환.
+    private Long userIdFromCookieOptional(HttpServletRequest request) {
+        try {
+            return userIdFromCookie(request);
+        } catch (ResponseStatusException e) {
+            return null;
+        }
+    }
+
     @Operation(
             summary = "스터디 게시글 생성",
-            description = "스터디 모집 게시글을 생성합니다. 작성자가 팀장이 됩니다."
+            description = "스터디 모집 게시글을 생성합니다. 작성자가 팀장이 되며 게시글과 함께 그룹이 자동으로 생성됩니다."
     )
     @PostMapping("/post/study")
     public ResponseEntity<ResultResponse<PostDTO.PostStudyCreateResponseDTO>> createPostStudy(
@@ -150,12 +156,16 @@ public class StudyController {
 
     @Operation(
             summary = "스터디 게시글 상세 조회",
-            description = "스터디 게시글의 상세 정보(스터디명, 태그, 최대 인원, 모집 여부 등)를 조회합니다."
+            description = "스터디 게시글의 상세 정보를 조회합니다. 응답 데이터의 **isLeader**와 **hasApplied** 값에 따라 " +
+                    "프론트엔드에서 '신청 인원 확인', '신청하기', '취소하기', '가입완료' 버튼을 분기 처리합니다. " +
+                    "비로그인 사용자도 조회 가능합니다."
     )
     @GetMapping("/post/study/{postId}")
     public ResponseEntity<ResultResponse<PostDTO.StudyInfoDetailDTO>> getPostStudy(
-            @Parameter(description = "게시글 ID", example = "100") @PathVariable Long postId) {
-        PostDTO.StudyInfoDetailDTO studyInfoDetailDTO = studyService.getStudyByPostId(postId);
+            @Parameter(description = "게시글 ID", example = "100") @PathVariable Long postId,
+            HttpServletRequest request) {
+        Long userId = userIdFromCookieOptional(request);
+        PostDTO.StudyInfoDetailDTO studyInfoDetailDTO = studyService.getStudyByPostId(postId, userId);
         return ResultResponse.ok(SuccessCode.SUCCESS, studyInfoDetailDTO);
     }
 
@@ -176,7 +186,7 @@ public class StudyController {
 
     @Operation(
             summary = "스터디 게시글 삭제",
-            description = "Soft Delete 처리합니다. 작성자 본인만 가능합니다."
+            description = "Soft Delete 처리합니다. 게시글과 함께 생성된 그룹도 함께 삭제됩니다. 작성자 본인만 가능합니다."
     )
     @DeleteMapping("/post/study/{postId}")
     public ResponseEntity<ResultResponse<Void>> deletePost(
@@ -207,71 +217,16 @@ public class StudyController {
     }
 
     @Operation(
-            summary = "스터디 참가 신청",
-            description = "모집 중인 스터디에 참가 신청합니다. 중복 신청, 본인 스터디 신청은 불가합니다."
-    )
-    @PostMapping("/post/study/{postId}/apply")
-    public ResponseEntity<ResultResponse<StudyApplyDTO.StudyApplyInfoDTO>> applyStudy(
-            @Parameter(description = "게시글 ID", example = "100") @PathVariable Long postId,
-            HttpServletRequest request) {
-        Long userId = userIdFromCookie(request);
-        StudyApplyDTO.StudyApplyInfoDTO result = studyService.applyStudy(postId, userId);
-        return ResultResponse.ok(SuccessCode.CREATED, result);
-    }
-
-    @Operation(
-            summary = "스터디 신청 취소",
-            description = "본인의 스터디 참가 신청을 취소합니다. PENDING 상태에서만 취소 가능합니다."
-    )
-    @DeleteMapping("/post/study/{postId}/apply")
-    public ResponseEntity<ResultResponse<Void>> cancelApply(
-            @Parameter(description = "게시글 ID", example = "100") @PathVariable Long postId,
-            HttpServletRequest request) {
-        Long userId = userIdFromCookie(request);
-        studyService.cancelApply(postId, userId);
-        return ResultResponse.ok(SuccessCode.DELETED, null);
-    }
-
-    @Operation(
-            summary = "스터디 신청 목록 조회",
-            description = "스터디 신청자 목록을 조회합니다. 팀장만 조회 가능합니다."
-    )
-    @GetMapping("/post/study/{postId}/apply")
-    public ResponseEntity<ResultResponse<List<StudyApplyDTO.StudyApplyInfoDTO>>> getApplicants(
-            @Parameter(description = "게시글 ID", example = "100") @PathVariable Long postId,
-            HttpServletRequest request) {
-        Long userId = userIdFromCookie(request);
-        List<StudyApplyDTO.StudyApplyInfoDTO> result = studyService.getApplicants(postId, userId);
-        return ResultResponse.ok(SuccessCode.SUCCESS, result);
-    }
-
-    @Operation(
-            summary = "스터디 신청 수락/거절",
-            description = "팀장이 신청자를 수락(ACCEPTED) 또는 거절(REJECTED)합니다. 최대 인원 초과 시 수락 불가합니다."
-    )
-    @PatchMapping("/post/study/{postId}/apply/{applyId}")
-    public ResponseEntity<ResultResponse<StudyApplyDTO.StudyApplyInfoDTO>> updateApplyStatus(
-            @Parameter(description = "게시글 ID", example = "100") @PathVariable Long postId,
-            @Parameter(description = "신청 ID", example = "5") @PathVariable Long applyId,
-            @RequestBody @Valid StudyApplyDTO.StudyApplyStatusRequestDTO req,
-            HttpServletRequest request) {
-        Long userId = userIdFromCookie(request);
-        StudyApplyDTO.StudyApplyInfoDTO result = studyService.updateApplyStatus(
-                postId, applyId, req.getStatus(), userId);
-        return ResultResponse.ok(SuccessCode.UPDATED, result);
-    }
-
-    @Operation(
             summary = "스터디 모집 마감",
-            description = "모집을 마감하고 그룹을 자동 생성합니다. 수락된 신청자들이 그룹 멤버로 등록됩니다. " +
-                    "팀장만 가능하며, 최소 1명 이상 수락자가 필요합니다."
+            description = "모집을 마감합니다. PENDING 신청자는 일괄 거절되고 그룹 모집이 종료됩니다. " +
+                    "팀장만 가능하며, 최소 1명 이상 수락자(ACTIVE)가 필요합니다."
     )
     @PostMapping("/post/study/{postId}/close")
-    public ResponseEntity<ResultResponse<GroupDTO.GroupCreateResponseDTO>> closeStudyRecruitment(
+    public ResponseEntity<ResultResponse<Void>> closeStudyRecruitment(
             @Parameter(description = "게시글 ID", example = "100") @PathVariable Long postId,
             HttpServletRequest request) {
         Long userId = userIdFromCookie(request);
-        GroupDTO.GroupCreateResponseDTO result = studyService.closeStudyRecruitment(postId, userId);
-        return ResultResponse.ok(SuccessCode.CREATED, result);
+        studyService.closeStudyRecruitment(postId, userId);
+        return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
 }
