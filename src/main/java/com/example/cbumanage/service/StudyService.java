@@ -66,6 +66,7 @@ public class StudyService {
     @Transactional
     public PostDTO.StudyInfoDetailDTO getStudyByPostId(Long postId, Long userId) {
         Study study = getActiveStudy(postId);
+        study.getPost().upViewCount();
         boolean isLeader = userId != null && study.getPost().getAuthorId().equals(userId);
         Boolean hasApplied = groupService.hasAppliedToGroup(
                 study.getGroup() != null ? study.getGroup().getId() : null, userId);

@@ -285,6 +285,7 @@ public class PostMapper {
                 .groupId(study.getGroup() != null ? study.getGroup().getId() : null)
                 .isLeader(isLeader)
                 .hasApplied(hasApplied)
+                .viewCount(study.getPost().getViewCount())
                 .build();
     }
 

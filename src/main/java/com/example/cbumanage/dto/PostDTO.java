@@ -866,12 +866,15 @@ public class PostDTO {
                 "3. null: 이미 그룹 멤버(승인됨) → '가입 완료' 표시(버튼 비활성)", example = "false")
         private Boolean hasApplied;
 
+        @Schema(description = "게시글 조회수", example = "42")
+        private Long viewCount;
+
         @Builder
         public StudyInfoDetailDTO(Long postId, String title, String content, List<String> studyTags,
                                   String studyName, Long authorId, Long authorGeneration, String authorName,
                                   LocalDateTime createdAt,
                                   boolean recruiting, int maxMembers, Long groupId,
-                                  boolean isLeader, Boolean hasApplied) {
+                                  boolean isLeader, Boolean hasApplied, Long viewCount) {
             this.postId = postId;
             this.title = title;
             this.content = content;
@@ -886,6 +889,7 @@ public class PostDTO {
             this.groupId = groupId;
             this.isLeader = isLeader;
             this.hasApplied = hasApplied;
+            this.viewCount = viewCount;
         }
     }
 

@@ -184,8 +184,9 @@ public class GroupService {
         GroupMember gm = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, userId);
         if (gm == null) return false; // 미가입자
         GroupMemberStatus status = gm.getGroupMemberStatus();
-        if (status == GroupMemberStatus.PENDING) return true;  // 펜딩자
-        return null;
+        if (status == GroupMemberStatus.PENDING) return true;   // 신청 대기
+        if (status == GroupMemberStatus.REJECTED) return false; // 거절 → 재신청 가능
+        return null; // ACTIVE, INACTIVE → 가입 완료
     }
 
     /*관리자 전용: 그룹 상태를 ACTIVE 또는 INACTIVE로 변경합니다.*/
