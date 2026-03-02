@@ -72,6 +72,10 @@ public class GroupService {
         }
         GroupMember existing = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, memberId);
         if (existing != null) {
+            if (existing.getGroupMemberStatus() == GroupMemberStatus.REJECTED) {
+                existing.changeStatus(GroupMemberStatus.PENDING);
+                return groupUtil.toGroupMemberInfoDTO(existing);
+            }
             throw new CustomException(ErrorCode.ALREADY_JOINED_MEMBER);
         }
         CbuMember member = cbuMemberRepository.findById(memberId)
@@ -175,7 +179,8 @@ public class GroupService {
 
     /* 해당 그룹에 해당 유저가 PENDING(신청 대기) 상태로 있는지 여부 */
     public Boolean hasAppliedToGroup(Long groupId, Long userId) {
-        if (groupId == null || userId == null) return null;
+        if (userId == null) return false; // 비로그인 = 신청 이력 없음
+        if (groupId == null) return null;
         GroupMember gm = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, userId);
         if (gm == null) return false; // 미가입자
         GroupMemberStatus status = gm.getGroupMemberStatus();

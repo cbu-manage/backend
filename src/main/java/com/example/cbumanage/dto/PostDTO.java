@@ -475,8 +475,8 @@ public class PostDTO {
         @Schema(description = "모집 마감 기한 변경")
         private LocalDate deadline;
 
-        @Schema(description = "최대 모집 인원 변경")
-        private int maxMember;
+        @Schema(description = "최대 모집 인원 변경 (생략 시 기존 값 유지)")
+        private Integer maxMember;
     }
 
     @Getter
@@ -696,7 +696,7 @@ public class PostDTO {
         @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
         private int maxMembers;
 
-        @Schema(description = "게시글 카테고리 번호", example = "1")
+        @Schema(description = "게시글 카테고리 번호 (스터디: 1)", example = "1")
         private int category;
     }
 
@@ -862,7 +862,7 @@ public class PostDTO {
 
         @Schema(description = "조회한 유저의 신청 상태. " +
                 "1. true: 이미 신청함(PENDING) → '신청 취소하기' 버튼 노출 " +
-                "2. false: 신청 이력 없음 → '신청하기' 버튼 노출 " +
+                "2. false: 신청 이력 없음 또는 비로그인 → '신청하기' 버튼 노출 " +
                 "3. null: 이미 그룹 멤버(승인됨) → '가입 완료' 표시(버튼 비활성)", example = "false")
         private Boolean hasApplied;
 
