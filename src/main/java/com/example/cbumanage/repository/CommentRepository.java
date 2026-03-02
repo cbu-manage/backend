@@ -3,6 +3,7 @@ package com.example.cbumanage.repository;
 import com.example.cbumanage.model.Comment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -48,4 +49,11 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     order by c.createdAt asc
 """)
     List<Comment> findRootsProblemId(Long problemId);
+
+    /**
+     * 소프트 딜리트로 구현하였기 때문에, 대댓글을 포함한
+     * 특정 문제의 삭제되지 않은 댓글 수를 조회합니다.
+     */
+    @Query("SELECT COUNT(c) FROM Comment c WHERE c.problem.problemId = :problemId AND c.isDeleted = false")
+    Long countByProblemId(@Param("problemId") Long problemId);
 }
