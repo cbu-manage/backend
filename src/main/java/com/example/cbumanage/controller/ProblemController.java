@@ -74,7 +74,7 @@ public class ProblemController {
             @ApiResponse(responseCode = "404", description = "카테고리 또는 플랫폼을 찾을 수 없음")
     })
     public ResponseEntity<ResultResponse<ProblemResponseDTO>> createProblem(AccessToken accessToken,
-                                                                            @Valid @RequestBody ProblemCreateRequestDTO request) {
+                                                                            @Valid @org.springframework.web.bind.annotation.RequestBody ProblemCreateRequestDTO request) {
         ProblemResponseDTO response = problemService.createProblem(request, accessToken.getUserId());
         return ResultResponse.ok(SuccessCode.CREATED, response);
     }
