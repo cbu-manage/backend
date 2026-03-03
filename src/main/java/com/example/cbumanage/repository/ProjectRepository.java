@@ -15,7 +15,8 @@ import java.util.Optional;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
-    Optional<Project> findByPostId(Long postId);
+    @Query("SELECT p FROM Project p JOIN p.post po WHERE po.id = :postId AND po.isDeleted = false")
+    Optional<Project> findByPostId(@Param("postId") Long postId);
 
     @Query("select p from Project p where p.group.id = :groupId")
     Optional<Project> findByGroupId(@Param("groupId") Long groupId);
@@ -23,7 +24,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     // 프로젝트 게시글 전체 조회 및 모집여부 필터
     @Query(value = "SELECT p FROM Project p " +
             "JOIN FETCH p.post po " +
-            "JOIN FETCH p.member m " +
             "WHERE po.isDeleted = false " +
             "AND po.category = :category " +
             "AND (:recruiting IS NULL OR p.recruiting = :recruiting)",
@@ -39,7 +39,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     // 프로젝트 게시글 모집분야별로 조회 및 모집여부 필터
     @Query(value = "SELECT p FROM Project p " +
             "JOIN FETCH p.post po " +
-            "JOIN FETCH p.member m " +
             "WHERE po.isDeleted = false " +
             "AND :fields MEMBER OF p.recruitmentFields " +
             "AND (:recruiting IS NULL OR p.recruiting = :recruiting)",
@@ -55,15 +54,13 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     // 내가 작성한 프로젝트 게시글 전체 조회
     @Query(value = "SELECT p FROM Project p " +
             "JOIN FETCH p.post po " +
-            "JOIN FETCH p.member m " +
             "WHERE po.isDeleted = false " +
-            "AND m.cbuMemberId = :userId " +
+            "AND po.authorId = :userId " +
             "AND po.category = :category",
             countQuery = "SELECT count(p) FROM Project p " +
                     "JOIN p.post po " +
-                    "JOIN p.member m " +
                     "WHERE po.isDeleted = false " +
-                    "AND m.cbuMemberId = :userId " +
+                    "AND po.authorId = :userId " +
                     "AND po.category = :category")
     Page<Project> findByUserIdAndCategory(@Param("userId") Long userId,
                                           @Param("category") int category,

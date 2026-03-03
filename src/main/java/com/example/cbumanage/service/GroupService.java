@@ -41,11 +41,11 @@ public class GroupService {
 
     /**
      게시글 생성 시 자동 생성되는 그룹.
-     groupName=게시글 제목, 최소1명·최대10명 고정, 생성자를 리더로 추가하고 모집을 OPEN으로 설정.
+     groupName=게시글 제목, 최소1명(고정) ·최대 N명(입력받은 값), 생성자를 리더로 추가하고 모집을 OPEN으로 설정.
      **/
     @Transactional
-    public Group createGroup(String groupName, Long leaderId){
-        Group group = Group.create(groupName, 1, 10);
+    public Group createGroup(String groupName, Long leaderId, int maxMember){
+        Group group = Group.create(groupName, 1, maxMember);
         groupRepository.save(group);
         CbuMember member = cbuMemberRepository.findById(leaderId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"유저 정보를 찾을 수 없습니다."));
@@ -62,7 +62,7 @@ public class GroupService {
     @Transactional
     public GroupDTO.GroupMemberInfoDTO addGroupMember(Long groupId,
                                                       Long memberId) {
-        Group group = groupRepository.findById(groupId)
+        Group group = groupRepository.findByIdAndIsDeletedFalse(groupId)
                 .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"그룹 정보를 찾을 수 없습니다."));
         GroupMember existing = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, memberId);
         if (existing != null) {
@@ -99,7 +99,7 @@ public class GroupService {
     그룹 상세보기에 사용되는 메서드 입니다.
     **/
     public GroupDTO.GroupInfoDTO getGroupById(Long groupId){
-        Group group = groupRepository.findById(groupId)
+        Group group = groupRepository.findByIdAndIsDeletedFalse(groupId)
                 .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"해당 그룹을 찾을 수 없습니다."));
         return groupUtil.toGroupInfoDTO(group);
     }
@@ -107,7 +107,7 @@ public class GroupService {
     //그룹의 모집을 종료시키는 메소드입니다
     @Transactional
     public void updateGroupRecruitment(Long groupId, Long userId, GroupRecruitmentStatus targetStatus) {
-        Group group = groupRepository.findById(groupId)
+        Group group = groupRepository.findByIdAndIsDeletedFalse(groupId)
                 .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"해당 그룹을 찾을 수 없습니다."));
         assertIsGroupLeader(groupId,userId);
         if(targetStatus==GroupRecruitmentStatus.OPEN){
@@ -189,7 +189,7 @@ public class GroupService {
     @Transactional
     public void updateGroupStatusAdmin(Long groupId, Long adminId, GroupStatus targetStatus) {
         assertIsAdmin(adminId);
-        Group group = groupRepository.findById(groupId)
+        Group group = groupRepository.findByIdAndIsDeletedFalse(groupId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 그룹을 찾을 수 없습니다."));
         if (targetStatus == GroupStatus.ACTIVE) {
             group.activate();
@@ -198,12 +198,11 @@ public class GroupService {
         }
     }
 
-    @Transactional
-    public void updateGroup(Long groupId, GroupDTO.GroupUpdateRequestDTO req){
-        Group group =  groupRepository.findById(groupId).orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND));
-        group.changeGroupName(req.getGroupName());
-        group.changeMinActiveMembers(req.getMinActiveMembers());
-        group.changeMaxActiveMembers(req.getMaxActiveMembers());
+    //최대 모집 인원을 변경합니다.
+    public void updateGroupMaxMember(Long groupId, int maxMember){
+        Group group =  groupRepository.findByIdAndIsDeletedFalse(groupId)
+                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"그룹을 찾을 수 없습니다."));
+        group.changeMaxActiveMembers(maxMember);
     }
 
     //개설되어 있는 그룹 전체를 조회하는 기능입니다. (관리자 전용)
@@ -215,7 +214,7 @@ public class GroupService {
 
     //자신이 속한 그룹들을 조회하기 위한 메서드 입니다.
     public List<GroupDTO.GroupInfoDTO> getJoinedGroups(Long userId){
-        List<Group> groups = groupRepository.findByUserId(userId);
+        List<Group> groups = groupRepository.findByUserId(userId,GroupMemberStatus.ACTIVE);
         return groups.stream().map(group -> groupUtil.toGroupInfoDTO(group)).toList();
     }
 
