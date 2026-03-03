@@ -31,9 +31,11 @@ public class PostDTO {
     public static class PostInfoDTO{
         private Long postId;
 
+        @Schema(description = "작성자의 이름입니다")
         private String authorName;
 
-        private Long    generation;
+        @Schema(description = "작성자의 기수 입니다")
+        private Long generation;
 
         private Long authorId;
 
@@ -135,6 +137,7 @@ public class PostDTO {
         @Schema(description = "s3버킷에 사진을 업로드 하고 반환받은 url을 넣습니다")
         private String reportImage;
 
+        @Schema(description = "서브 테이블의 카테고리 번호 입니다, 보고서는 기본적으로 7을 번호로 사용합니다")
         private int category;
 
         //보고서에 그룹을 연결합니다
@@ -159,6 +162,7 @@ public class PostDTO {
 
         private Long authorId;
 
+        @Schema(description = "보고서에 추가된 group의 정보를 담는 DTO입니다")
         private GroupDTO.GroupInfoDTO groupInfoDTO;
 
         private String title;
@@ -888,7 +892,7 @@ public class PostDTO {
         private String authorName;
 
         private PostReportGroupType type;
-        @Schema(description = "보고서 승인 여부 입니다")
+        @Schema(description = "보고서 승인 여부 입니다, 보고서 게시글이 생셩될때 기본값은 false로 생성되며, 운영진이 승인할 경우 True로 변겯됩니다")
         private boolean isAccepted;
 
         @Schema(description = "보고서를 작성한 그룹의 ID입니다")
