@@ -65,15 +65,6 @@ public class PostService {
         return postMapper.toPostInfoDTO(post);
     }
 
-    //PostId로  알맞는 Report 를 불러와 DTO 로 변환시켜 반환하는 메소드 입니다
-    public PostDTO.ReportInfoDTO getReportByPostId(Long PostId){
-        PostReport report = postReportRepository.findByPostId(PostId);
-        return postMapper.toReportInfoDTO(report);
-    }
-
-
-
-
     /*
     updatePostReport 하나의 메소드에 들어온 req 을 각각의 엔티티에 맞춰
     두개의 DTO 로 분리해 각 엔티티의 update 를 수행합니다
@@ -86,13 +77,6 @@ public class PostService {
         if (postUpdateDTO.getContent() != null) {
             post.changeContent(postUpdateDTO.getContent());
         }
-    }
-
-    public void updateReport(PostDTO.ReportUpdateDTO postUpdateDTO,PostReport postReport) {
-        postReport.changeDate(postUpdateDTO.getDate());
-        postReport.changeLocation(postUpdateDTO.getLocation());
-        postReport.changeReportImage(postUpdateDTO.getReportImage());
-        postReport.changeType(postUpdateDTO.getType());
     }
 
     @Transactional

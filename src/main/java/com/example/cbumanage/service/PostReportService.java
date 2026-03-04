@@ -111,7 +111,7 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
         postService.updatePost(postUpdateDTO,post);
         PostReport report =postReportRepository.findByPostId(postId);
         PostDTO.ReportUpdateDTO reportUpdateDTO=postMapper.topostReportUpdateDTO(req);
-        postService.updateReport(reportUpdateDTO,report);
+        updateReport(reportUpdateDTO,report);
     }
 
     @Transactional
@@ -122,5 +122,12 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
         }
         PostReport report = postReportRepository.findByPostId(postId);
         report.Accept();
+    }
+
+    public void updateReport(PostDTO.ReportUpdateDTO postUpdateDTO,PostReport postReport) {
+        postReport.changeDate(postUpdateDTO.getDate());
+        postReport.changeLocation(postUpdateDTO.getLocation());
+        postReport.changeReportImage(postUpdateDTO.getReportImage());
+        postReport.changeType(postUpdateDTO.getType());
     }
 }
