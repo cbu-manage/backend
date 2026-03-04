@@ -74,6 +74,20 @@ public class ResourceService {
     }
 
     /**
+     * 내가 작성한 자료방 게시글 목록을 조회합니다.
+     *
+     * @param memberId 조회할 회원 ID
+     * @param pageable 페이지네이션 정보
+     * @return 페이지네이션된 내 게시글 목록 DTO
+     */
+    public Page<ResourceListItemDTO> getMyResources(Long memberId, Pageable pageable) {
+        CbuMember member = cbuMemberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberNotExistsException("ID가 " + memberId + "인 회원을 찾을 수 없습니다."));
+        return resourceRepository.findByPostAuthorId(memberId, pageable)
+                .map(r -> ResourceListItemDTO.from(r, member));
+    }
+
+    /**
      * 자료방 게시글을 삭제합니다. (소프트 딜리트)
      * 작성자 본인만 삭제할 수 있습니다.
      *

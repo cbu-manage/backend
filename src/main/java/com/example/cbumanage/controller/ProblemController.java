@@ -174,6 +174,19 @@ public class ProblemController {
      * @param id 조회할 문제의 ID
      * @return 문제 상세 정보
      */
+    @GetMapping("/problems/my")
+    @Operation(summary = "내 코딩 테스트 문제 목록 조회", description = "내가 작성한 코딩 테스트 문제 목록을 최신 순으로 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "문제 조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 (토큰 없음 또는 만료)")
+    })
+    public ResponseEntity<ResultResponse<Page<ProblemListItemDTO>>> getMyProblems(
+            AccessToken accessToken,
+            @PageableDefault(size = 10, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<ProblemListItemDTO> problems = problemService.getMyProblems(accessToken.getUserId(), pageable);
+        return ResultResponse.ok(SuccessCode.SUCCESS, problems);
+    }
+
     @GetMapping("/problems/{id}")
     @Operation(summary = "문제 상세 정보 조회", description = "ID를 사용하여 특정 문제의 상세 정보를 조회합니다. 조회할때마다 조회수가 증가합니다.")
     @ApiResponses({
