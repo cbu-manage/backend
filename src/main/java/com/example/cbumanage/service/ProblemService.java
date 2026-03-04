@@ -212,6 +212,20 @@ public class ProblemService {
     }
 
     /**
+     * 내가 작성한 코딩 테스트 문제 목록을 조회합니다.
+     *
+     * @param memberId 조회할 회원 ID
+     * @param pageable 페이지네이션 정보
+     * @return 페이지네이션된 내 문제 목록 DTO
+     */
+    public Page<ProblemListItemDTO> getMyProblems(Long memberId, Pageable pageable) {
+        CbuMember member = cbuMemberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberNotExistsException("ID가 " + memberId + "인 회원을 찾을 수 없습니다."));
+        return problemRepository.findByPostAuthorId(memberId, pageable)
+                .map(p -> ProblemListItemDTO.from(p, member, commentRepository.countByProblemId(p.getProblemId())));
+    }
+
+    /**
      * 모든 카테고리 목록을 조회합니다.
      */
     public List<CategoryResponseDTO> getAllCategories() {
