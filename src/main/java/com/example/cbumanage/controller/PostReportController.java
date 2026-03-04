@@ -4,22 +4,20 @@ import com.example.cbumanage.dto.PostDTO;
 import com.example.cbumanage.response.ErrorCode;
 import com.example.cbumanage.response.ResultResponse;
 import com.example.cbumanage.response.SuccessCode;
+import com.example.cbumanage.service.PostReportService;
 import com.example.cbumanage.service.PostService;
 import com.example.cbumanage.utils.JwtProvider;
+import com.example.cbumanage.utils.UserIdExtractor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -32,52 +30,19 @@ import java.util.Map;
 public class PostReportController {
     private final PostService postService;
     private final JwtProvider jwtProvider;
+    private final PostReportService postReportService;
+    private final UserIdExtractor userIdExtractor;
 
     @Autowired
-    public PostReportController(PostService postService, JwtProvider jwtProvider) {
+    public PostReportController(PostService postService, JwtProvider jwtProvider, PostReportService postReportService, UserIdExtractor userIdExtractor) {
 
         this.postService = postService;
         this.jwtProvider = jwtProvider;
+        this.postReportService = postReportService;
+        this.userIdExtractor = userIdExtractor;
     }
 
-    //쿠키에서 userId를 추출하는 코드 입니다
-    private Long extractUserIdFromCookie(HttpServletRequest httpServletRequest) {
-        String token = null;
 
-        Cookie[] cookies = httpServletRequest.getCookies();
-        if (cookies != null) {
-            for (Cookie c : cookies) {
-                if ("ACCESS_TOKEN".equals(c.getName())) {
-                    token = c.getValue();
-                    break;
-                }
-            }
-        }
-
-        if (token == null || token.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "ACCESS_TOKEN not found");
-        }
-
-        Map<String, Object> tokenInfo;
-        try {
-            tokenInfo = jwtProvider.parseJwt(
-                    token,
-                    Map.of(
-                            "user_id", Long.class,
-                            "student_number", Long.class,
-                            "role", JSONArray.class,
-                            "permissions", JSONArray.class
-                    )
-            );
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid JWT token");
-        }
-
-        Long user_id = (Long) tokenInfo.get("user_id");
-
-        return user_id;
-
-    }
 
 
     @Operation(
@@ -91,8 +56,8 @@ public class PostReportController {
                                                                                                 HttpServletRequest httpServletRequest
                                                                                                 )
                                                                                                 {
-        Long userId = extractUserIdFromCookie(httpServletRequest);
-        PostDTO.PostReportCreateResponseDTO responseDTO = postService.createPostReport(req, userId);
+        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
+        PostDTO.PostReportCreateResponseDTO responseDTO = postReportService.createPostReport(req, userId);
         return ResultResponse.ok(SuccessCode.CREATED, responseDTO);
     }
 
@@ -105,7 +70,7 @@ public class PostReportController {
     @GetMapping
     public ResponseEntity<ResultResponse<Page<PostDTO.PostReportPreviewDTO>>> getPostReportPreviews(@RequestParam int page, @RequestParam int size){
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
-        Page<PostDTO.PostReportPreviewDTO> postReportPreviewDTOs = postService.getPostReportPreviewDTOList(pageable);
+        Page<PostDTO.PostReportPreviewDTO> postReportPreviewDTOs = postReportService.getPostReportPreviewDTOList(pageable);
         return ResultResponse.ok(SuccessCode.SUCCESS, postReportPreviewDTOs);
     }
 
@@ -118,9 +83,9 @@ public class PostReportController {
     @GetMapping("/{postId}")
     public ResponseEntity<ResultResponse<PostDTO.PostReportViewDTO>>  getPostReportView(@PathVariable Long postId,HttpServletRequest httpServletRequest){
         PostDTO.PostReportViewDTO postReportView;
-        Long userId = extractUserIdFromCookie(httpServletRequest);
+        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
         try{
-             postReportView = postService.getPostReportViewDTO(postId, userId);
+             postReportView = postReportService.getPostReportViewDTO(postId, userId);
         }catch (ResponseStatusException e){
             return ResultResponse.error(ErrorCode.FORBIDDEN);
         }
@@ -135,9 +100,9 @@ public class PostReportController {
     public ResponseEntity<ResultResponse<Void>> updatePostReport(@PathVariable Long postId,
                                                                  @RequestBody PostDTO.PostReportUpdateRequestDTO req,
                                                                  HttpServletRequest httpServletRequest){
-        Long userId = extractUserIdFromCookie(httpServletRequest);
+        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
         try {
-            postService.updatePostReport(req,postId,userId);
+            postReportService.updatePostReport(req,postId,userId);
         } catch (ResponseStatusException e){
             return ResultResponse.error(ErrorCode.FORBIDDEN);
         }
@@ -148,9 +113,9 @@ public class PostReportController {
             "운영진의 권한 여부를 판단해 거부하며, 매개변수 없이 보고서의 현재 상태를 변경시킵니다")
     @PatchMapping("/{postId}/accept")
     public ResponseEntity<ResultResponse<Void>> acceptPostReport(@PathVariable Long postId,HttpServletRequest httpServletRequest){
-        Long userId = extractUserIdFromCookie(httpServletRequest);
+        Long userId =userIdExtractor.extractUserIdFromCookie(httpServletRequest);
         try {
-            postService.acceptReport(postId,userId);
+            postReportService.acceptReport(postId,userId);
         }
         catch (ResponseStatusException e){
             return ResultResponse.error(ErrorCode.FORBIDDEN);
