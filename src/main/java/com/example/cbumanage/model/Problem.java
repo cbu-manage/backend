@@ -7,12 +7,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -24,7 +20,6 @@ import java.util.List;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EntityListeners(AuditingEntityListener.class)
 @Table(name = "problem")
 @SQLDelete(sql = "UPDATE problem SET deleted_at = CURRENT_TIMESTAMP WHERE problem_id = ?")
 @SQLRestriction("deleted_at IS NULL")
@@ -38,8 +33,8 @@ public class Problem {
     private Long problemId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id")
-    private CbuMember member;
+    @JoinColumn(name = "post_id", nullable = false)
+    private Post post;
 
     /**
      ** 알고리즘 키워드 (다중 선택)
@@ -63,22 +58,9 @@ public class Problem {
     @JoinColumn(name = "language_id")
     private Language language;
 
-    /**
-     * 문제 제목
-     */
-    @Column(nullable = false)
-    private String title;
-
-    /**
-     * 문제 본문 내용
-     */
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String content;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProblemGrade grade;
-
 
     /**
      * 문제 링크
@@ -93,41 +75,18 @@ public class Problem {
     @Column(nullable = false)
     private ProblemStatus problemStatus;
 
-    /**
-     * 조회수
-     */
-    @Column(nullable = false, columnDefinition = "BIGINT DEFAULT 0")
-    @ColumnDefault("0")
-    private Long viewCount = 0L;
-
-
-    @CreatedDate
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
-
-    /**
-     * 수정 시간
-     */
-    @LastModifiedDate
-    private LocalDateTime updatedAt;
-
     private LocalDateTime deletedAt;
 
     @Builder
-    public Problem(CbuMember member, List<Category> categories, Platform platform, Language language, String title, String content,
-                    ProblemGrade grade, String problemUrl, ProblemStatus problemStatus) {
-        this.member = member;
+    public Problem(Post post, List<Category> categories, Platform platform, Language language,
+                   ProblemGrade grade, String problemUrl, ProblemStatus problemStatus) {
+        this.post = post;
         this.categories = (categories != null) ? categories : new ArrayList<>();
         this.platform = platform;
         this.language = language;
-        this.title = title;
-        this.content = content;
-        //this.inputDescription = inputDescription;
-        //this.outputDescription = outputDescription;
         this.grade = grade;
         this.problemUrl = problemUrl;
         this.problemStatus = problemStatus;
-        this.viewCount = 0L;
     }
 
     /**
@@ -145,17 +104,11 @@ public class Problem {
             this.language = language;
         }
         if (title != null) {
-            this.title = title;
+            this.post.changeTitle(title);
         }
         if (content != null) {
-            this.content = content;
+            this.post.changeContent(content);
         }
-//        if (inputDescription != null) {
-//            this.inputDescription = inputDescription;
-//        }
-//        if (outputDescription != null) {
-//            this.outputDescription = outputDescription;
-//        }
         if (grade != null) {
             this.grade = grade;
         }

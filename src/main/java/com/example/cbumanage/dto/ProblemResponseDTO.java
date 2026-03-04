@@ -1,5 +1,6 @@
 package com.example.cbumanage.dto;
 
+import com.example.cbumanage.model.CbuMember;
 import com.example.cbumanage.model.Problem;
 import com.example.cbumanage.model.enums.ProblemGrade;
 import com.example.cbumanage.model.enums.ProblemStatus;
@@ -25,8 +26,6 @@ public class ProblemResponseDTO {
     private final String languageName;
     private final String title;
     private final String content;
-    // private final String inputDescription;
-    // private final String outputDescription;
     private final ProblemGrade grade;
     private final String problemUrl;
     private final ProblemStatus problemStatus;
@@ -57,33 +56,25 @@ public class ProblemResponseDTO {
         this.updatedAt = updatedAt;
     }
 
-    /**
-     * Problem 엔티티를 ProblemResponse DTO로 변환합니다.
-     *
-     * @param problem 변환할 Problem 엔티티
-     * @return 변환된 ProblemResponse DTO
-     */
-    public static ProblemResponseDTO from(Problem problem, Long commentCount) {
+    public static ProblemResponseDTO from(Problem problem, CbuMember author, Long commentCount) {
         return ProblemResponseDTO.builder()
                 .problemId(problem.getProblemId())
-                .authorName(problem.getMember().getName())
-                .authorGeneration(problem.getMember().getGeneration())
+                .authorName(author.getName())
+                .authorGeneration(author.getGeneration())
                 .platformName(problem.getPlatform().getName())
                 .categories(problem.getCategories().stream()
                         .map(c -> c.getName())
                         .collect(Collectors.toList()))
                 .languageName(problem.getLanguage().getName())
-                .title(problem.getTitle())
-                .content(problem.getContent())
-                //.inputDescription(problem.getInputDescription())
-                //.outputDescription(problem.getOutputDescription())
+                .title(problem.getPost().getTitle())
+                .content(problem.getPost().getContent())
                 .grade(problem.getGrade())
                 .problemUrl(problem.getProblemUrl())
                 .problemStatus(problem.getProblemStatus())
-                .viewCount(problem.getViewCount())
+                .viewCount(problem.getPost().getViewCount())
                 .commentCount(commentCount)
-                .createdAt(problem.getCreatedAt())
-                .updatedAt(problem.getUpdatedAt())
+                .createdAt(problem.getPost().getCreatedAt())
+                .updatedAt(problem.getPost().getUpdatedAt())
                 .build();
     }
 }
