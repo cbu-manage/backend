@@ -1,12 +1,19 @@
 package com.example.cbumanage.controller;
 
 import com.example.cbumanage.dto.PostDTO;
+import com.example.cbumanage.response.ErrorCode;
 import com.example.cbumanage.response.ResultResponse;
 import com.example.cbumanage.response.SuccessCode;
+import com.example.cbumanage.service.PostReportService;
 import com.example.cbumanage.service.PostService;
+import com.example.cbumanage.service.ProjectService;
+import com.example.cbumanage.service.StudyService;
+import com.example.cbumanage.utils.UserIdExtractor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,16 +21,29 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/v1/")
 @Tag(name = "포스트 관리 컨트롤러")
 public class PostController {
     private final PostService postService;
+    private final UserIdExtractor userIdExtractor;
+    private final StudyService studyService;
+    private final ProjectService projectService;
+    private final PostReportService postReportService;
 
     @Autowired
-    public PostController(PostService postService){
+    public PostController(PostService postService,
+                          UserIdExtractor userIdExtractor,
+                          StudyService studyService,
+                          ProjectService projectService,
+                          PostReportService postReportService) {
         this.postService = postService;
+        this.userIdExtractor = userIdExtractor;
+        this.studyService = studyService;
+        this.projectService = projectService;
+        this.postReportService = postReportService;
     }
 
     /*
@@ -66,5 +86,41 @@ public class PostController {
     public ResponseEntity<ResultResponse<Void>> deletePost(@PathVariable Long postId){
         postService.softDeletePost(postId);
         return ResultResponse.ok(SuccessCode.DELETED, null);
+    }
+
+    @GetMapping("post/my")
+    public ResponseEntity<ResultResponse<Object>> getMyPosts(
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam(required = false) Integer category,
+            HttpServletRequest request
+    ) {
+        Long userId = userIdExtractor.extractUserIdFromCookie(request);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
+
+        try {
+            Object posts;
+
+            if (category == null) { // 카테고리 없음
+                posts = postService.getMyPosts(pageable, userId);
+                return ResultResponse.ok(SuccessCode.SUCCESS, posts);
+            } else if (category == 1) { // 스터디
+                posts = studyService.getMyStudiesByUserId(pageable, userId, category);
+                return ResultResponse.ok(SuccessCode.SUCCESS, posts);
+            } else if (category == 2) { // 프로젝트
+                posts = projectService.getMyProjectsByUserId(pageable, userId, category);
+                return ResultResponse.ok(SuccessCode.SUCCESS, posts);
+            } else if (category == 7) { // 보고서
+                posts = postReportService.getMyPostReportPreviewDTOList(pageable, userId);
+                return ResultResponse.ok(SuccessCode.SUCCESS, posts);
+            } else {
+                return ResultResponse.error(ErrorCode.INVALID_REQUEST);
+            }
+
+        } catch (ResponseStatusException e) {
+            return ResultResponse.error(ErrorCode.FORBIDDEN);
+        } catch (EntityNotFoundException e) {
+            return ResultResponse.error(ErrorCode.NOT_FOUND);
+        }
     }
 }
