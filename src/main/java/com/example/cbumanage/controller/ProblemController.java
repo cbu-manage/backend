@@ -159,7 +159,7 @@ public class ProblemController {
             @ApiResponse(responseCode = "404", description = "문제를 찾을 수 없음")
     })
     public ResponseEntity<ResultResponse<Page<ProblemListItemDTO>>> getProblems(
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @PageableDefault(size = 10, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable,
             @Parameter(description = "필터링할 카테고리 ID 목록 (GET /categories에서 조회 가능)", example = "1")
             @RequestParam(required = false) List<Integer> categoryId,
             @Parameter(description = "필터링할 플랫폼 ID 목록 (GET /platforms에서 조회 가능)", example = "1")
