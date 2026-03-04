@@ -1,5 +1,6 @@
 package com.example.cbumanage.dto;
 
+import com.example.cbumanage.model.CbuMember;
 import com.example.cbumanage.model.Problem;
 import com.example.cbumanage.model.enums.ProblemGrade;
 import com.example.cbumanage.model.enums.ProblemStatus;
@@ -41,7 +42,7 @@ public class ProblemListItemDTO {
         this.commentCount = commentCount;
     }
 
-    public static ProblemListItemDTO from(Problem problem, Long commentCount) {
+    public static ProblemListItemDTO from(Problem problem, CbuMember author, Long commentCount) {
         return ProblemListItemDTO.builder()
                 .problemId(problem.getProblemId())
                 .platformName(problem.getPlatform().getName())
@@ -49,11 +50,11 @@ public class ProblemListItemDTO {
                         .map(c -> c.getName())
                         .collect(Collectors.toList()))
                 .languageName(problem.getLanguage().getName())
-                .title(problem.getTitle())
-                .authorName(problem.getMember().getName())
+                .title(problem.getPost().getTitle())
+                .authorName(author.getName())
                 .grade(problem.getGrade())
                 .problemStatus(problem.getProblemStatus())
-                .viewCount(problem.getViewCount())
+                .viewCount(problem.getPost().getViewCount())
                 .commentCount(commentCount)
                 .build();
     }
