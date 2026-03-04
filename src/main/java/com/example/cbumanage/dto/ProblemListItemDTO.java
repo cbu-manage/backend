@@ -2,7 +2,6 @@ package com.example.cbumanage.dto;
 
 import com.example.cbumanage.model.CbuMember;
 import com.example.cbumanage.model.Problem;
-import com.example.cbumanage.model.enums.ProblemGrade;
 import com.example.cbumanage.model.enums.ProblemStatus;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,14 +20,13 @@ public class ProblemListItemDTO {
     private final String languageName;
     private final String title;
     private final String authorName;
-    private final ProblemGrade grade;
     private final ProblemStatus problemStatus;
     private final Long viewCount;
     private final Long commentCount;
 
     @Builder
     public ProblemListItemDTO(Long problemId, String platformName, List<String> categories, String languageName,
-                              String title, String authorName, ProblemGrade grade, ProblemStatus problemStatus,
+                              String title, String authorName, ProblemStatus problemStatus,
                               Long viewCount, Long commentCount) {
         this.problemId = problemId;
         this.platformName = platformName;
@@ -36,7 +34,6 @@ public class ProblemListItemDTO {
         this.languageName = languageName;
         this.title = title;
         this.authorName = authorName;
-        this.grade = grade;
         this.problemStatus = problemStatus;
         this.viewCount = viewCount;
         this.commentCount = commentCount;
@@ -52,7 +49,6 @@ public class ProblemListItemDTO {
                 .languageName(problem.getLanguage().getName())
                 .title(problem.getPost().getTitle())
                 .authorName(author.getName())
-                .grade(problem.getGrade())
                 .problemStatus(problem.getProblemStatus())
                 .viewCount(problem.getPost().getViewCount())
                 .commentCount(commentCount)
