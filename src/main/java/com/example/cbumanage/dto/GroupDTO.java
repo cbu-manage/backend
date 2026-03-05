@@ -92,6 +92,8 @@ public class GroupDTO {
         public LocalDateTime createdAt;
         @Schema(description = "현재 활동 중인 인원 수", example = "5")
         public int activeMemberCount;
+        @Schema(description = "현재 그룹 활성화 상태", example = "ACTIVE")
+        GroupStatus groupStatus;
         @Schema(description = "현재 그룹 모집 상태",example="OPEN")
         GroupRecruitmentStatus groupRecruitmentStatus;
         @Schema(description = "현재 그룹 리더 ID", example="10")
@@ -105,6 +107,7 @@ public class GroupDTO {
                 String groupName,
                 LocalDateTime createdAt,
                 int activeMemberCount,
+                GroupStatus groupStatus,
                 GroupRecruitmentStatus groupRecruitmentStatus,
                 Long leaderId,
                 String leaderName
@@ -112,6 +115,7 @@ public class GroupDTO {
             this.groupId = groupId;
             this.groupName = groupName;
             this.createdAt = createdAt;
+            this.groupStatus = groupStatus;
             this.groupRecruitmentStatus = groupRecruitmentStatus;
             this.activeMemberCount = activeMemberCount;
             this.leaderId=leaderId;

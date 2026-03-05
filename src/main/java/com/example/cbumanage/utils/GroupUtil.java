@@ -89,6 +89,7 @@ public class GroupUtil {
                 .groupId(group.getId())
                 .groupName(group.getGroupName())
                 .createdAt(group.createdAt)
+                .groupStatus(group.getStatus())
                 .groupRecruitmentStatus(group.getRecruitmentStatus())
                 .activeMemberCount(group.getMembers().size())
                 .leaderId(leader != null ? leader.getCbuMember().getCbuMemberId() : null)
