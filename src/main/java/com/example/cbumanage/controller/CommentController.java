@@ -8,6 +8,7 @@ import com.example.cbumanage.response.ResultResponse;
 import com.example.cbumanage.response.SuccessCode;
 import com.example.cbumanage.service.CommentService;
 import com.example.cbumanage.utils.JwtProvider;
+import com.example.cbumanage.utils.UserIdExtractor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.servlet.http.Cookie;
@@ -26,54 +27,14 @@ import java.util.Map;
 @RequestMapping("/api/v1/")
 public class CommentController {
     private final CommentService commentService;
-    private final JwtProvider jwtProvider;
+    private final UserIdExtractor userIdExtractor;
 
     @Autowired
-    public CommentController(CommentService commentService, JwtProvider jwtProvider) {
+    public CommentController(CommentService commentService,UserIdExtractor userIdExtractor) {
         this.commentService = commentService;
-        this.jwtProvider = jwtProvider;
+        this.userIdExtractor = userIdExtractor;
     }
 
-
-
-    //쿠키에서 userId를 추출하는 코드 입니다
-    private Long extractUserIdFromCookie(HttpServletRequest httpServletRequest) {
-        String token = null;
-
-        Cookie[] cookies = httpServletRequest.getCookies();
-        if (cookies != null) {
-            for (Cookie c : cookies) {
-                if ("ACCESS_TOKEN".equals(c.getName())) {
-                    token = c.getValue();
-                    break;
-                }
-            }
-        }
-
-        if (token == null || token.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "ACCESS_TOKEN not found");
-        }
-
-        Map<String, Object> tokenInfo;
-        try {
-            tokenInfo = jwtProvider.parseJwt(
-                    token,
-                    Map.of(
-                            "user_id", Long.class,
-                            "student_number", Long.class,
-                            "role", JSONArray.class,
-                            "permissions", JSONArray.class
-                    )
-            );
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid JWT token");
-        }
-
-        Long user_id = (Long) tokenInfo.get("user_id");
-
-        return user_id;
-
-    }
 
     @Operation(
             summary = "코멘트 작성 요청",
@@ -83,7 +44,7 @@ public class CommentController {
     public ResponseEntity<ResultResponse<CommentDTO.CommentCreateResponseDTO>> createComment(@RequestBody CommentDTO.CommentCreateRequestDTO req,
                                                                                              @PathVariable Long postId,
                                                                                              HttpServletRequest httpServletRequest) {
-        Long userId = extractUserIdFromCookie(httpServletRequest);
+        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
         CommentDTO.CommentCreateResponseDTO responseDTO = commentService.createComment(req, userId, postId);
         return ResultResponse.ok(SuccessCode.CREATED, responseDTO);
     }
@@ -106,7 +67,7 @@ public class CommentController {
     public ResponseEntity<ResultResponse<CommentDTO.CommentCreateResponseDTO>> createProblemComment(@RequestBody CommentDTO.CommentCreateRequestDTO req,
                                                                                                     @PathVariable Long problemId,
                                                                                                      HttpServletRequest httpServletRequest) {
-        Long userId = extractUserIdFromCookie(httpServletRequest);
+        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
         CommentDTO.CommentCreateResponseDTO responseDTO = commentService.createCommentProblem(req, userId, problemId);
         return ResultResponse.ok(SuccessCode.CREATED, responseDTO);
     }
@@ -134,7 +95,7 @@ public class CommentController {
     public ResponseEntity<ResultResponse<CommentDTO.ReplyCreateResponseDTO>> createReply(@RequestBody CommentDTO.ReplyCreateRequestDTO req,
                                                                                          @Parameter(description = "답글을 추가할 댓글의 ID. 답글을 넣을경우 해당 답글의 부모댓글과 자동으로 연결됩니다") @PathVariable Long commentId,
                                                                                          HttpServletRequest httpServletRequest) {
-        Long userId = extractUserIdFromCookie(httpServletRequest);
+        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
         CommentDTO.ReplyCreateResponseDTO replyCreateResponseDTO = commentService.createReply(req, userId, commentId);
         return ResultResponse.ok(SuccessCode.CREATED, replyCreateResponseDTO);
     }
@@ -147,7 +108,7 @@ public class CommentController {
     public ResponseEntity<ResultResponse<Void>> updateComment(@RequestBody CommentDTO.CommentUpdateRequestDTO req,
                                                               @PathVariable Long commentId,
                                                               HttpServletRequest httpServletRequest) {
-        Long userId = extractUserIdFromCookie(httpServletRequest);
+        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
         try{
             commentService.updateComment(commentId, req, userId);
             return ResultResponse.ok(SuccessCode.UPDATED, null);
@@ -163,7 +124,7 @@ public class CommentController {
     )
     @DeleteMapping("comment/{commentId}")
     public ResponseEntity<ResultResponse<Void>> deleteComment(@PathVariable Long commentId, HttpServletRequest httpServletRequest) {
-        Long userId = extractUserIdFromCookie(httpServletRequest);
+        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
         try {
             commentService.deleteComment(commentId,userId);
             return ResultResponse.ok(SuccessCode.DELETED, null);

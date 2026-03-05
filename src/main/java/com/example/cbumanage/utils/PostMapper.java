@@ -4,6 +4,7 @@ import com.example.cbumanage.dto.PostDTO;
 import com.example.cbumanage.model.*;
 import com.example.cbumanage.model.enums.ProjectFieldType;
 import com.example.cbumanage.repository.CbuMemberRepository;
+import com.example.cbumanage.repository.CommentRepository;
 import com.example.cbumanage.repository.GroupRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,11 +18,13 @@ public class PostMapper {
     private final GroupUtil groupUtil;
     private final GroupRepository groupRepository;
     private final CbuMemberRepository cbuMemberRepository;
+    private final CommentRepository commentRepository;
     @Autowired
-    public PostMapper(GroupUtil groupUtil, GroupRepository groupRepository, CbuMemberRepository cbuMemberRepository) {
+    public PostMapper(GroupUtil groupUtil, GroupRepository groupRepository, CbuMemberRepository cbuMemberRepository, CommentRepository commentRepository) {
         this.groupUtil = groupUtil;
         this.groupRepository = groupRepository;
         this.cbuMemberRepository = cbuMemberRepository;
+        this.commentRepository = commentRepository;
     }
 
 
@@ -311,6 +314,22 @@ public class PostMapper {
                 .postInfoDTO(toPostInfoDTO(post))
                 .reportInfoDTO(toReportInfoDTO(report))
                 .build();
+    }
+
+    public PostDTO.PostMyPageViewDTO  toPostMyPageViewDTO(Post post,CbuMember author) {
+        return PostDTO.PostMyPageViewDTO.builder()
+                .postId(post.getId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .category(post.getCategory())
+                .createdAt(post.getCreatedAt())
+                .authorId(author.getCbuMemberId())
+                .authorName(author.getName())
+                .authorGeneration(author.getGeneration())
+                .viewCount(post.getViewCount())
+                .commentCount(commentRepository.countByPostId(post.getId()))
+                .build();
+
     }
 
 

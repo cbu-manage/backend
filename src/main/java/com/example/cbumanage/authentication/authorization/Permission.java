@@ -20,7 +20,7 @@ public enum Permission {
 	 */
 	MEMBER(
 			Set.of("/api/v1/**"),     // 인증이 필요한 경로
-			Set.of("/api/v1/login")  // 인증이 필요하지 않은 경로
+			Set.of("/api/v1/login", "/api/v1/mail/**", "/api/v1/validate")  // 인증이 필요하지 않은 경로
 	),
 
 	/**
@@ -29,7 +29,7 @@ public enum Permission {
 	 * - exclusivePath: 관리자 권한에서 제외할 경로
 	 */
 	ADMIN(
-			Set.of("/api/v1/member", "/api/v1/members", "/api/v1/member/**", "/api/v1/members/**"), // 관리자만 접근 가능한 경로
+			Set.of("/api/v1/member", "/api/v1/members", "/api/v1/member/**", "/api/v1/members/**", "/api/v1/candidate/sync"), // 관리자만 접근 가능한 경로
 			Set.of()  // 관리자 권한에서 제외할 경로
 	);
 

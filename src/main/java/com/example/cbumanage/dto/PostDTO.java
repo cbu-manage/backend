@@ -10,7 +10,6 @@ import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,9 +30,11 @@ public class PostDTO {
     public static class PostInfoDTO{
         private Long postId;
 
+        @Schema(description = "작성자의 이름입니다")
         private String authorName;
 
-        private Long    generation;
+        @Schema(description = "작성자의 기수 입니다")
+        private Long generation;
 
         private Long authorId;
 
@@ -135,6 +136,7 @@ public class PostDTO {
         @Schema(description = "s3버킷에 사진을 업로드 하고 반환받은 url을 넣습니다")
         private String reportImage;
 
+        @Schema(description = "서브 테이블의 카테고리 번호 입니다, 보고서는 기본적으로 7을 번호로 사용합니다")
         private int category;
 
         //보고서에 그룹을 연결합니다
@@ -159,6 +161,7 @@ public class PostDTO {
 
         private Long authorId;
 
+        @Schema(description = "보고서에 추가된 group의 정보를 담는 DTO입니다")
         private GroupDTO.GroupInfoDTO groupInfoDTO;
 
         private String title;
@@ -854,7 +857,7 @@ public class PostDTO {
         @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
         private int maxMembers;
 
-        @Schema(description = "연결된 그룹 ID", example = "21")
+        @Schema(description = "마감 후 생성된 그룹 ID (모집 중이면 null)", example = "21")
         private Long groupId;
 
         @Schema(description = "조회한 유저가 팀장(작성자)인지 여부. true일 경우: '신청 인원 확인' 버튼 노출", example = "false")
@@ -951,7 +954,7 @@ public class PostDTO {
         private String authorName;
 
         private PostReportGroupType type;
-        @Schema(description = "보고서 승인 여부 입니다")
+        @Schema(description = "보고서 승인 여부 입니다, 보고서 게시글이 생셩될때 기본값은 false로 생성되며, 운영진이 승인할 경우 True로 변겯됩니다")
         private boolean isAccepted;
 
         @Schema(description = "보고서를 작성한 그룹의 ID입니다")
@@ -992,6 +995,41 @@ public class PostDTO {
         }
 
     }
+
+    @Getter
+    @NoArgsConstructor
+    @Schema(description = "내 글 읽어오기에서 카테고리 입력하지 않을 시 보여줄 핵심내용입니다")
+    public static class PostMyPageViewDTO{
+        private Long postId;
+        private String title;
+        private String content;
+        private int category;
+        private LocalDateTime createdAt;
+
+        private Long authorId;
+        private String authorName;
+        private Long authorGeneration;
+
+        private Long viewCount;
+        private Long commentCount;
+
+        @Builder
+        public PostMyPageViewDTO(Long postId, String title,String content ,int category, LocalDateTime createdAt, Long authorId, String authorName, Long authorGeneration, Long viewCount, Long commentCount) {
+            this.postId = postId;
+            this.title = title;
+            this.content = content;
+            this.category = category;
+            this.createdAt = createdAt;
+            this.authorId = authorId;
+            this.authorName = authorName;
+            this.authorGeneration = authorGeneration;
+            this.viewCount = viewCount;
+            this.commentCount = commentCount;
+        }
+
+    }
+
+
 
 
 
