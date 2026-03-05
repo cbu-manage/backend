@@ -85,6 +85,11 @@ public class PostService {
         post.delete();
     }
 
+    public Page<PostDTO.PostMyPageViewDTO>  getMyPosts(Pageable pageable,Long userId) {
+        CbuMember cbuMember = cbuMemberRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        Page<Post> posts = postRepository.findByAuthorIdAndIsDeletedFalse(userId,pageable);
+        return posts.map(post -> postMapper.toPostMyPageViewDTO(post,cbuMember));
+    }
 
 
 

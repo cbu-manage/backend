@@ -75,6 +75,11 @@ fetch join -> 해결
         return reportPreviewDTOS;
     }
 
+    public Page<PostDTO.PostReportPreviewDTO> getMyPostReportPreviewDTOList(Pageable pageable,Long userId) {
+        Page<PostDTO.PostReportPreviewDTO> myReportPreviewDTOS=postReportRepository.findMyPostReportPreviews(pageable,7,userId);
+        return myReportPreviewDTOS;
+    }
+
     /*
 보고서 포스트 자세히 보기 메소드입니다. post와 report를 한번에 가져옵니다
  */

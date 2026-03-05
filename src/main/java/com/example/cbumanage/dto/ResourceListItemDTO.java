@@ -1,5 +1,6 @@
 package com.example.cbumanage.dto;
 
+import com.example.cbumanage.model.CbuMember;
 import com.example.cbumanage.model.Resource;
 import lombok.Builder;
 import lombok.Getter;
@@ -41,14 +42,14 @@ public class ResourceListItemDTO {
     /**
      * Resource 엔티티를 ResourceListItemDTO로 변환합니다.
      */
-    public static ResourceListItemDTO from(Resource resource) {
+    public static ResourceListItemDTO from(Resource resource, CbuMember author) {
         return ResourceListItemDTO.builder()
                 .resourceId(resource.getResourceId())
-                .title(resource.getTitle())
-                .authorName(resource.getMember().getName())
-                .generation(resource.getMember().getGeneration())
+                .title(resource.getPost().getTitle())
+                .authorName(author.getName())
+                .generation(author.getGeneration())
                 .link(resource.getLink())
-                .createdAt(resource.getCreatedAt())
+                .createdAt(resource.getPost().getCreatedAt())
                 .build();
     }
 }

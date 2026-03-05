@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.cglib.core.Local;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -955,6 +956,41 @@ public class PostDTO {
         }
 
     }
+
+    @Getter
+    @NoArgsConstructor
+    @Schema(description = "내 글 읽어오기에서 카테고리 입력하지 않을 시 보여줄 핵심내용입니다")
+    public static class PostMyPageViewDTO{
+        private Long postId;
+        private String title;
+        private String content;
+        private int category;
+        private LocalDateTime createdAt;
+
+        private Long authorId;
+        private String authorName;
+        private Long authorGeneration;
+
+        private Long viewCount;
+        private Long commentCount;
+
+        @Builder
+        public PostMyPageViewDTO(Long postId, String title,String content ,int category, LocalDateTime createdAt, Long authorId, String authorName, Long authorGeneration, Long viewCount, Long commentCount) {
+            this.postId = postId;
+            this.title = title;
+            this.content = content;
+            this.category = category;
+            this.createdAt = createdAt;
+            this.authorId = authorId;
+            this.authorName = authorName;
+            this.authorGeneration = authorGeneration;
+            this.viewCount = viewCount;
+            this.commentCount = commentCount;
+        }
+
+    }
+
+
 
 
 

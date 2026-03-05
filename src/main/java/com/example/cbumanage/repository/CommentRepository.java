@@ -56,4 +56,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
      */
     @Query("SELECT COUNT(c) FROM Comment c WHERE c.problem.problemId = :problemId AND c.isDeleted = false")
     Long countByProblemId(@Param("problemId") Long problemId);
+
+    @Query("SELECT COUNT(c) FROM Comment c WHERE c.post.id = :postId AND c.isDeleted = false")
+    Long countByPostId(Long postId);
 }

@@ -28,16 +28,19 @@ import java.util.stream.Collectors;
 public class ProblemService {
 
     private final ProblemRepository problemRepository;
+    private final PostRepository postRepository;
     private final CbuMemberRepository cbuMemberRepository;
     private final CategoryRepository categoryRepository;
     private final PlatformRepository platformRepository;
     private final LanguageRepository languageRepository;
     private final CommentRepository commentRepository;
 
-    public ProblemService(ProblemRepository problemRepository, CbuMemberRepository cbuMemberRepository,
-                          CategoryRepository categoryRepository, PlatformRepository platformRepository,
-                          LanguageRepository languageRepository, CommentRepository commentRepository) {
+    public ProblemService(ProblemRepository problemRepository, PostRepository postRepository,
+                          CbuMemberRepository cbuMemberRepository, CategoryRepository categoryRepository,
+                          PlatformRepository platformRepository, LanguageRepository languageRepository,
+                          CommentRepository commentRepository) {
         this.problemRepository = problemRepository;
+        this.postRepository = postRepository;
         this.cbuMemberRepository = cbuMemberRepository;
         this.categoryRepository = categoryRepository;
         this.platformRepository = platformRepository;
@@ -68,21 +71,22 @@ public class ProblemService {
         Language language = languageRepository.findById(request.getLanguageId())
                 .orElseThrow(() -> new EntityNotFoundException("ID가 " + request.getLanguageId() + "인 언어를 찾을 수 없습니다."));
 
+        Post post = Post.create(member.getCbuMemberId(), request.getTitle(), request.getContent(), 5);
+        Post savedPost = postRepository.save(post);
+
         Problem problem = Problem.builder()
-                .member(member)
+                .post(savedPost)
                 .categories(categories)
                 .platform(platform)
                 .language(language)
-                .title(request.getTitle())
-                .content(request.getContent())
                 .grade(request.getGrade())
                 .problemUrl(request.getProblemUrl())
                 .problemStatus(request.getProblemStatus())
                 .build();
 
-        Problem savedProblem = problemRepository.save(problem);
+        problemRepository.save(problem);
 
-        return ProblemResponseDTO.from(savedProblem, 0L);
+        return ProblemResponseDTO.from(problem, member, 0L);
     }
 
     /**
@@ -98,7 +102,7 @@ public class ProblemService {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new EntityNotFoundException("ID가 " + problemId + "인 문제를 찾을 수 없습니다."));
 
-        if (!Objects.equals(problem.getMember().getCbuMemberId(), memberId)) {
+        if (!Objects.equals(problem.getPost().getAuthorId(), memberId)) {
             throw new MemberDoesntHavePermissionException("이 문제를 수정할 권한이 없습니다.");
         }
 
@@ -127,8 +131,11 @@ public class ProblemService {
                 request.getProblemStatus()
         );
 
+        CbuMember author = cbuMemberRepository.findById(problem.getPost().getAuthorId())
+                .orElseThrow(() -> new MemberNotExistsException("작성자를 찾을 수 없습니다."));
+
         Long commentCount = commentRepository.countByProblemId(problemId);
-        return ProblemResponseDTO.from(problem, commentCount);
+        return ProblemResponseDTO.from(problem, author, commentCount);
     }
 
     /**
@@ -142,10 +149,11 @@ public class ProblemService {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new EntityNotFoundException("ID가 " + problemId + "인 문제를 찾을 수 없습니다."));
 
-        if (!Objects.equals(problem.getMember().getCbuMemberId(), memberId)) {
+        if (!Objects.equals(problem.getPost().getAuthorId(), memberId)) {
             throw new MemberDoesntHavePermissionException("이 문제를 삭제할 권한이 없습니다.");
         }
 
+        problem.getPost().delete();
         problemRepository.delete(problem);
     }
 
@@ -175,7 +183,11 @@ public class ProblemService {
         };
 
         return problemRepository.findAll(spec, pageable)
-                .map(p -> ProblemListItemDTO.from(p, commentRepository.countByProblemId(p.getProblemId())));
+                .map(p -> {
+                    CbuMember author = cbuMemberRepository.findById(p.getPost().getAuthorId())
+                            .orElseThrow(() -> new MemberNotExistsException("작성자를 찾을 수 없습니다."));
+                    return ProblemListItemDTO.from(p, author, commentRepository.countByProblemId(p.getProblemId()));
+                });
     }
 
     /**
@@ -190,10 +202,27 @@ public class ProblemService {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new EntityNotFoundException("ID가 " + problemId + "인 문제를 찾을 수 없습니다."));
 
-        problemRepository.incrementViewCount(problemId);
+        postRepository.incrementViewCount(problem.getPost().getId());
+
+        CbuMember author = cbuMemberRepository.findById(problem.getPost().getAuthorId())
+                .orElseThrow(() -> new MemberNotExistsException("작성자를 찾을 수 없습니다."));
 
         Long commentCount = commentRepository.countByProblemId(problemId);
-        return ProblemResponseDTO.from(problem, commentCount);
+        return ProblemResponseDTO.from(problem, author, commentCount);
+    }
+
+    /**
+     * 내가 작성한 코딩 테스트 문제 목록을 조회합니다.
+     *
+     * @param memberId 조회할 회원 ID
+     * @param pageable 페이지네이션 정보
+     * @return 페이지네이션된 내 문제 목록 DTO
+     */
+    public Page<ProblemListItemDTO> getMyProblems(Long memberId, Pageable pageable) {
+        CbuMember member = cbuMemberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberNotExistsException("ID가 " + memberId + "인 회원을 찾을 수 없습니다."));
+        return problemRepository.findByPostAuthorId(memberId, pageable)
+                .map(p -> ProblemListItemDTO.from(p, member, commentRepository.countByProblemId(p.getProblemId())));
     }
 
     /**

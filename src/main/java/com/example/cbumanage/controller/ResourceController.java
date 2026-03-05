@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import org.springdoc.core.annotations.ParameterObject;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -91,8 +92,27 @@ public class ResourceController {
             @ApiResponse(responseCode = "200", description = "목록 조회 성공")
     })
     public ResponseEntity<ResultResponse<Page<ResourceListItemDTO>>> getResources(
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<ResourceListItemDTO> resources = resourceService.getResources(pageable);
+        return ResultResponse.ok(SuccessCode.SUCCESS, resources);
+    }
+
+    /**
+     * 내가 작성한 자료방 게시글 목록을 조회합니다.
+     *
+     * @param pageable 페이지네이션 정보
+     * @return 내가 작성한 게시글 목록
+     */
+    @GetMapping("/my")
+    @Operation(summary = "내 자료 목록 조회", description = "내가 작성한 자료방 게시글 목록을 최신 순으로 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "목록 조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 (토큰 없음 또는 만료)")
+    })
+    public ResponseEntity<ResultResponse<Page<ResourceListItemDTO>>> getMyResources(
+            AccessToken accessToken,
+            @ParameterObject @PageableDefault(size = 20, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<ResourceListItemDTO> resources = resourceService.getMyResources(accessToken.getUserId(), pageable);
         return ResultResponse.ok(SuccessCode.SUCCESS, resources);
     }
 

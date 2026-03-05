@@ -43,4 +43,32 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     and p.isDeleted = false
 """)
     Page<PostDTO.PostReportPreviewDTO> findPostReportPreviews(Pageable pageable, @Param("category")int category);
+
+
+    @Query(value = """
+    select new com.example.cbumanage.dto.PostDTO$PostReportPreviewDTO(
+    p.id,p.title,p.createdAt,p.authorId,m.name,
+    r.type,r.isAccepted,
+    
+    g.id,g.groupName, (
+    select count(gm)
+    from GroupMember gm
+    where gm.group.id = g.id
+    and gm.groupMemberStatus=com.example.cbumanage.model.enums.GroupMemberStatus.ACTIVE
+    )
+    )
+    from Post p
+    left join PostReport r on r.post = p
+    left join Group g on r.groupId = g.id
+    left join CbuMember m on m.cbuMemberId = p.authorId
+    where p.category = :category and p.authorId = :userId
+    and p.isDeleted = false
+""",
+            countQuery = """
+    select count(p)
+    from Post p
+    where p.category =:category
+    and p.isDeleted = false and p.authorId = :userId
+""")
+    Page<PostDTO.PostReportPreviewDTO> findMyPostReportPreviews(Pageable pageable, @Param("category")int category,Long userId);
 }
