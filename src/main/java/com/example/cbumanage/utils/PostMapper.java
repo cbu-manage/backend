@@ -161,10 +161,13 @@ public class PostMapper {
                 .build();
     }
 
-    public PostDTO.PostStudyCreateResponseDTO toPostStudyCreateResponseDTO(Post post, Study study) {
+    public PostDTO.PostStudyCreateResponseDTO toPostStudyCreateResponseDTO(Post post, Study study, Group group, CbuMember author) {
         return PostDTO.PostStudyCreateResponseDTO.builder()
                 .postId(post.getId())
                 .authorId(post.getAuthorId())
+                .groupId(group.getId())
+                .authorGeneration(author != null ? author.getGeneration() : null)
+                .authorName(author != null ? author.getName() : null)
                 .title(post.getTitle())
                 .content(post.getContent())
                 .studyTags(study.getStudyTags())
@@ -269,7 +272,7 @@ public class PostMapper {
     }
 
     // 스터디 게시글 상세 조회 DTO 변환
-    public PostDTO.StudyInfoDetailDTO toStudyInfoDetailDTO(Study study) {
+    public PostDTO.StudyInfoDetailDTO toStudyInfoDetailDTO(Study study, boolean isLeader, Boolean hasApplied, CbuMember author) {
         return PostDTO.StudyInfoDetailDTO.builder()
                 .postId(study.getPost().getId())
                 .title(study.getPost().getTitle())
@@ -277,21 +280,28 @@ public class PostMapper {
                 .studyTags(study.getStudyTags())
                 .studyName(study.getStudyName())
                 .authorId(study.getPost().getAuthorId())
+                .authorGeneration(author != null ? author.getGeneration() : null)
+                .authorName(author != null ? author.getName() : null)
                 .createdAt(study.getPost().getCreatedAt())
                 .recruiting(study.isRecruiting())
                 .maxMembers(study.getMaxMembers())
                 .groupId(study.getGroup() != null ? study.getGroup().getId() : null)
+                .isLeader(isLeader)
+                .hasApplied(hasApplied)
+                .viewCount(study.getPost().getViewCount())
                 .build();
     }
 
     // 스터디 게시글 목록 조회 DTO 변환
-    public PostDTO.StudyListDTO toStudyListDTO(Study study) {
+    public PostDTO.StudyListDTO toStudyListDTO(Study study, CbuMember author) {
         return PostDTO.StudyListDTO.builder()
                 .postId(study.getPost().getId())
                 .title(study.getPost().getTitle())
                 .studyTags(study.getStudyTags())
                 .studyName(study.getStudyName())
                 .authorId(study.getPost().getAuthorId())
+                .authorGeneration(author != null ? author.getGeneration() : null)
+                .authorName(author != null ? author.getName() : null)
                 .createdAt(study.getPost().getCreatedAt())
                 .recruiting(study.isRecruiting())
                 .maxMembers(study.getMaxMembers())

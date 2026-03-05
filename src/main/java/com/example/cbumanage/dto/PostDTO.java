@@ -10,8 +10,6 @@ import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.cglib.core.Local;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -480,8 +478,8 @@ public class PostDTO {
         @Schema(description = "모집 마감 기한 변경")
         private LocalDate deadline;
 
-        @Schema(description = "최대 모집 인원 변경")
-        private int maxMember;
+        @Schema(description = "최대 모집 인원 변경 (생략 시 기존 값 유지)")
+        private Integer maxMember;
     }
 
     @Getter
@@ -701,7 +699,7 @@ public class PostDTO {
         @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
         private int maxMembers;
 
-        @Schema(description = "게시글 카테고리 번호", example = "1")
+        @Schema(description = "게시글 카테고리 번호 (스터디: 1)", example = "1")
         private int category;
     }
 
@@ -713,6 +711,12 @@ public class PostDTO {
         private Long postId;
         @Schema(description = "작성자 회원 ID", example = "15")
         private Long authorId;
+        @Schema(description = "자동 생성된 스터디 그룹 ID", example = "50")
+        private Long groupId;
+        @Schema(description = "작성자 기수")
+        private Long authorGeneration;
+        @Schema(description = "작성자 이름")
+        private String authorName;
         @Schema(description = "스터디 게시글 제목")
         private String title;
         @Schema(description = "스터디 게시글 내용")
@@ -731,11 +735,16 @@ public class PostDTO {
         private int category;
 
         @Builder
-        public PostStudyCreateResponseDTO(Long postId, Long authorId, String title, String content,
+        public PostStudyCreateResponseDTO(Long postId, Long authorId, Long groupId,
+                                          Long authorGeneration, String authorName,
+                                          String title, String content,
                                           List<String> studyTags, String studyName, boolean recruiting,
                                           int maxMembers, LocalDateTime createdAt, int category) {
             this.postId = postId;
             this.authorId = authorId;
+            this.groupId = groupId;
+            this.authorGeneration = authorGeneration;
+            this.authorName = authorName;
             this.title = title;
             this.content = content;
             this.studyTags = studyTags;
@@ -837,6 +846,10 @@ public class PostDTO {
         private String studyName;
         @Schema(description = "작성자(팀장) 회원 ID", example = "15")
         private Long authorId;
+        @Schema(description = "작성자 기수", example = "34")
+        private Long authorGeneration;
+        @Schema(description = "작성자 이름", example = "홍길동")
+        private String authorName;
         @Schema(description = "게시글 생성 시각")
         private LocalDateTime createdAt;
         @Schema(description = "모집 여부 (모집 중: true, 모집 마감: false)", example = "true")
@@ -847,20 +860,39 @@ public class PostDTO {
         @Schema(description = "마감 후 생성된 그룹 ID (모집 중이면 null)", example = "21")
         private Long groupId;
 
+        @Schema(description = "조회한 유저가 팀장(작성자)인지 여부. true일 경우: '신청 인원 확인' 버튼 노출", example = "false")
+        private boolean isLeader;
+
+        @Schema(description = "조회한 유저의 신청 상태. " +
+                "1. true: 이미 신청함(PENDING) → '신청 취소하기' 버튼 노출 " +
+                "2. false: 신청 이력 없음 또는 비로그인 → '신청하기' 버튼 노출 " +
+                "3. null: 이미 그룹 멤버(승인됨) → '가입 완료' 표시(버튼 비활성)", example = "false")
+        private Boolean hasApplied;
+
+        @Schema(description = "게시글 조회수", example = "42")
+        private Long viewCount;
+
         @Builder
         public StudyInfoDetailDTO(Long postId, String title, String content, List<String> studyTags,
-                                  String studyName, Long authorId, LocalDateTime createdAt,
-                                  boolean recruiting, int maxMembers, Long groupId) {
+                                  String studyName, Long authorId, Long authorGeneration, String authorName,
+                                  LocalDateTime createdAt,
+                                  boolean recruiting, int maxMembers, Long groupId,
+                                  boolean isLeader, Boolean hasApplied, Long viewCount) {
             this.postId = postId;
             this.title = title;
             this.content = content;
             this.studyTags = studyTags;
             this.studyName = studyName;
             this.authorId = authorId;
+            this.authorGeneration = authorGeneration;
+            this.authorName = authorName;
             this.createdAt = createdAt;
             this.recruiting = recruiting;
             this.maxMembers = maxMembers;
             this.groupId = groupId;
+            this.isLeader = isLeader;
+            this.hasApplied = hasApplied;
+            this.viewCount = viewCount;
         }
     }
 
@@ -882,6 +914,10 @@ public class PostDTO {
         private String studyName;
         @Schema(description = "작성자 회원 ID", example = "15")
         private Long authorId;
+        @Schema(description = "작성자 기수")
+        private Long authorGeneration;
+        @Schema(description = "작성자 이름")
+        private String authorName;
         @Schema(description = "게시글 생성 시각")
         private LocalDateTime createdAt;
         @Schema(description = "모집 여부 (모집 중: true, 모집 마감: false)", example = "true")
@@ -891,12 +927,15 @@ public class PostDTO {
 
         @Builder
         public StudyListDTO(Long postId, String title, List<String> studyTags, String studyName,
-                            Long authorId, LocalDateTime createdAt, boolean recruiting, int maxMembers) {
+                            Long authorId, Long authorGeneration, String authorName,
+                            LocalDateTime createdAt, boolean recruiting, int maxMembers) {
             this.postId = postId;
             this.title = title;
             this.studyTags = studyTags;
             this.studyName = studyName;
             this.authorId = authorId;
+            this.authorGeneration = authorGeneration;
+            this.authorName = authorName;
             this.createdAt = createdAt;
             this.recruiting = recruiting;
             this.maxMembers = maxMembers;

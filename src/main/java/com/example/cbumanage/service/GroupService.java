@@ -66,6 +66,10 @@ public class GroupService {
                 .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"그룹 정보를 찾을 수 없습니다."));
         GroupMember existing = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, memberId);
         if (existing != null) {
+            if (existing.getGroupMemberStatus() == GroupMemberStatus.REJECTED) {
+                existing.changeStatus(GroupMemberStatus.PENDING);
+                return groupUtil.toGroupMemberInfoDTO(existing);
+            }
             throw new CustomException(ErrorCode.ALREADY_JOINED_MEMBER);
         }
         CbuMember member = cbuMemberRepository.findById(memberId)
@@ -158,6 +162,13 @@ public class GroupService {
         }
     }
 
+    /* PENDING 상태인 모든 멤버를 일괄 거절 (모집 마감 시 사용) */
+    @Transactional
+    public void rejectAllPendingMembers(Long groupId) {
+        List<GroupMember> pending = groupMemberRepository.findByGroupIdAndGroupMemberStatus(groupId, GroupMemberStatus.PENDING);
+        pending.forEach(member -> member.changeStatus(GroupMemberStatus.REJECTED));
+    }
+
     /* 신청 취소: PENDING 상태인 본인 신청만 삭제 */
     @Transactional
     public void cancelApplication(Long groupId, Long userId) {
@@ -177,12 +188,14 @@ public class GroupService {
 
     /* 해당 그룹에 해당 유저가 PENDING(신청 대기) 상태로 있는지 여부 */
     public Boolean hasAppliedToGroup(Long groupId, Long userId) {
-        if (groupId == null || userId == null) return null;
+        if (userId == null) return false; // 비로그인 = 신청 이력 없음
+        if (groupId == null) return null;
         GroupMember gm = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, userId);
         if (gm == null) return false; // 미가입자
         GroupMemberStatus status = gm.getGroupMemberStatus();
-        if (status == GroupMemberStatus.PENDING) return true;  // 펜딩자
-        return null;
+        if (status == GroupMemberStatus.PENDING) return true;   // 신청 대기
+        if (status == GroupMemberStatus.REJECTED) return false; // 거절 → 재신청 가능
+        return null; // ACTIVE, INACTIVE → 가입 완료
     }
 
     /*관리자 전용: 그룹 상태를 ACTIVE 또는 INACTIVE로 변경합니다.*/
