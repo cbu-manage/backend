@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import org.springdoc.core.annotations.ParameterObject;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -91,7 +92,7 @@ public class ResourceController {
             @ApiResponse(responseCode = "200", description = "목록 조회 성공")
     })
     public ResponseEntity<ResultResponse<Page<ResourceListItemDTO>>> getResources(
-            @PageableDefault(size = 20, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<ResourceListItemDTO> resources = resourceService.getResources(pageable);
         return ResultResponse.ok(SuccessCode.SUCCESS, resources);
     }
@@ -110,7 +111,7 @@ public class ResourceController {
     })
     public ResponseEntity<ResultResponse<Page<ResourceListItemDTO>>> getMyResources(
             AccessToken accessToken,
-            @PageableDefault(size = 20, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<ResourceListItemDTO> resources = resourceService.getMyResources(accessToken.getUserId(), pageable);
         return ResultResponse.ok(SuccessCode.SUCCESS, resources);
     }
