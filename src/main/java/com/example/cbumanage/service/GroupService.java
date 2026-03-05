@@ -215,6 +215,11 @@ public class GroupService {
     public void updateGroupMaxMember(Long groupId, int maxMember){
         Group group =  groupRepository.findByIdAndIsDeletedFalse(groupId)
                 .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"그룹을 찾을 수 없습니다."));
+        int activeCount = groupRepository.countByGroupIdAndStatus(group.getId(), GroupMemberStatus.ACTIVE);
+        if (activeCount >= maxMember) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST,
+                    "현재 참여 인원(" + activeCount + "명)보다 적은 인원으로 수정할 수 없습니다.");
+        }
         group.changeMaxActiveMembers(maxMember);
     }
 

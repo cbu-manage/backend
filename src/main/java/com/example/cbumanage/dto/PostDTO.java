@@ -2,11 +2,7 @@ package com.example.cbumanage.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import com.example.cbumanage.model.enums.PostReportGroupType;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -341,9 +337,11 @@ public class PostDTO {
     @NoArgsConstructor
     public static class PostProjectCreateRequestDTO{
         @Schema(description = "게시글 제목", example = "스프링부트 기반 커뮤니티 개발 프로젝트")
+        @NotBlank(message = "제목은 필수 입력값입니다.")
         private String title;
 
         @Schema(description = "게시글 상세 내용", example = "함께 협업하며 성장할 팀원을 모집합니다...")
+        @NotBlank(message = "내용은 필수 입력값입니다.")
         private String content;
 
         @Schema(
@@ -351,14 +349,17 @@ public class PostDTO {
                 example = "[\"BACKEND\", \"FRONTEND\"]",
                 allowableValues = {"BACKEND", "FRONTEND", "DEV", "PLANNING", "DESIGN", "ETC"}
         )
+        @NotEmpty(message = "최소 하나 이상의 모집 분야를 선택해야 합니다.")
         private List<String> recruitmentFields;
 
         @Schema(description = "현재 모집 여부 (true: 모집중, false: 모집마감)", example = "true")
         private boolean recruiting;
 
         @Schema(description = "모집 마감 기한")
+        @FutureOrPresent(message = "마감일은 과거일 수 없습니다.")
         private LocalDate deadline;
 
+        @Min(1)
         @Schema(description = "최대 모집 인원",example="10")
         private int maxMember;
 
@@ -464,20 +465,25 @@ public class PostDTO {
     @NoArgsConstructor
     public static class PostProjectUpdateRequestDTO{
         @Schema(description = "수정할 제목", example = "[수정] 스프링부트 프로젝트")
+        @NotBlank(message = "제목은 필수 입력값입니다.")
         private String title;
 
         @Schema(description = "수정할 내용", example = "프로젝트 내용이 변경되었습니다.")
+        @NotBlank(message = "내용은 필수 입력값입니다.")
         private String content;
 
         @Schema(description = "수정할 모집 분야", example = "[\"BACKEND\", \"DESIGN\"]")
+        @NotEmpty(message = "최소 하나 이상의 모집 분야를 선택해야 합니다.")
         private List<String> recruitmentFields;
 
         @Schema(description = "모집 여부 상태 변경", example = "false")
         private boolean recruiting;
 
         @Schema(description = "모집 마감 기한 변경")
+        @FutureOrPresent(message = "마감일은 과거일 수 없습니다.")
         private LocalDate deadline;
 
+        @Min(1)
         @Schema(description = "최대 모집 인원 변경 (생략 시 기존 값 유지)")
         private Integer maxMember;
     }

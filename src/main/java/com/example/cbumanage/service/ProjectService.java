@@ -122,9 +122,9 @@ public class ProjectService {
         Project project = projectRepository.findByPostId(postId).
                 orElseThrow(()->new CustomException(ErrorCode.NOT_FOUND,"해당 게시글을 찾을 수 없습니다."));
         PostDTO.ProjectUpdateDTO projectUpdateDTO = postMapper.toPostProjectUpdateDTO(req);
-        updateProject(projectUpdateDTO, project);
-        groupService.updateGroupMaxMember(project.getGroup().getId(), req.getMaxMember());
         if (project.getGroup() != null) {
+            updateProject(projectUpdateDTO, project);
+            groupService.updateGroupMaxMember(project.getGroup().getId(), req.getMaxMember());
             GroupRecruitmentStatus status = req.isRecruiting() ? GroupRecruitmentStatus.OPEN : GroupRecruitmentStatus.CLOSED;
             groupService.updateGroupRecruitment(project.getGroup().getId(), userId, status);
         }
@@ -156,7 +156,7 @@ public class ProjectService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 게시글을 찾을 수 없습니다."));
         post.delete();
         //group도 동시에 soft delete 처리
-        project.getGroup().delete();
+        if(project.getGroup()!=null) {project.getGroup().delete();}
     }
 
     //프로젝트 모집분야로 조회 트랜잭션

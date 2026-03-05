@@ -1,5 +1,6 @@
 package com.example.cbumanage.model;
 
+import com.example.cbumanage.exception.CustomException;
 import com.example.cbumanage.model.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.model.enums.GroupStatus;
 import jakarta.persistence.*;
@@ -9,7 +10,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.hibernate.annotations.Comment;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import software.amazon.awssdk.services.s3.endpoints.internal.Value;
+import com.example.cbumanage.response.ErrorCode;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -59,7 +60,9 @@ public class Group {
 
     //그룹의 생성자, 상태들은 기본적으로 모집 안함, 비활성 상태로 시작
     public Group(String groupName, int minActiveMembers, int maxActiveMembers)  {
-
+        if (maxActiveMembers < 2) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "최대 모집 인원은 본인을 포함해 최소 2명 이상이어야 합니다.");
+        }
         this.groupName = groupName;
         this.minActiveMembers = minActiveMembers;
         this.maxActiveMembers = maxActiveMembers;
@@ -68,13 +71,17 @@ public class Group {
     }
 
     public static Group create(String groupName,int minActiveMembers,int maxActiveMembers) {
+        if (maxActiveMembers < 2) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "최대 모집 인원은 본인을 포함해 최소 2명 이상이어야 합니다.");
+        }
         return new Group(groupName,minActiveMembers,maxActiveMembers);
     }
 
     public void changeGroupName(String groupName) {
         this.groupName = groupName;
     }
-    public void changeMaxActiveMembers(int maxActiveMembers) {this.maxActiveMembers = maxActiveMembers;}
+
+    public void changeMaxActiveMembers(int newMaxMember) {this.maxActiveMembers = newMaxMember;}
 
     @OneToMany(mappedBy = "group" ,
             cascade = CascadeType.ALL,

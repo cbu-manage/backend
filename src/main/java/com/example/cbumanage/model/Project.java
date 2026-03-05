@@ -45,7 +45,8 @@ public class Project {
     private boolean recruiting;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
-    @FutureOrPresent(message = "마감일은 오늘 이후여야 합니다.") // 과거 날짜 방지 (선택)
+    @Comment("프로젝트 마감일(과거 일자 입력 방지)")
+    @FutureOrPresent(message = "마감일은 오늘 이후여야 합니다.")
     private LocalDate deadline;
 
     // String 리스트를 받아서 Enum으로 변환해 저장
