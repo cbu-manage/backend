@@ -74,7 +74,7 @@ public class ProblemController {
             @ApiResponse(responseCode = "401", description = "인증 실패 (토큰 없음 또는 만료)"),
             @ApiResponse(responseCode = "404", description = "카테고리 또는 플랫폼을 찾을 수 없음")
     })
-    public ResponseEntity<ResultResponse<ProblemResponseDTO>> createProblem(AccessToken accessToken,
+    public ResponseEntity<ResultResponse<ProblemResponseDTO>> createProblem(@Parameter(hidden = true) AccessToken accessToken,
                                                                             @Valid @org.springframework.web.bind.annotation.RequestBody ProblemCreateRequestDTO request) {
         ProblemResponseDTO response = problemService.createProblem(request, accessToken.getUserId());
         return ResultResponse.ok(SuccessCode.CREATED, response);
@@ -110,7 +110,7 @@ public class ProblemController {
             @ApiResponse(responseCode = "404", description = "문제를 찾을 수 없음")
     })
     public ResponseEntity<ResultResponse<ProblemResponseDTO>> updateProblem(@PathVariable Long id,
-                                                                            AccessToken accessToken,
+                                                                            @Parameter(hidden = true) AccessToken accessToken,
                                                                             @Valid @RequestBody ProblemUpdateRequestDTO request) {
         ProblemResponseDTO response = problemService.updateProblem(id, accessToken.getUserId(), request);
         return ResultResponse.ok(SuccessCode.UPDATED, response);
@@ -131,7 +131,7 @@ public class ProblemController {
     })
 
     public ResponseEntity<ResultResponse<Void>> deleteProblem(@PathVariable Long id,
-                                                              AccessToken accessToken) {
+                                                              @Parameter(hidden = true) AccessToken accessToken) {
         problemService.deleteProblem(id, accessToken.getUserId());
         return ResultResponse.ok(SuccessCode.DELETED);
     }
@@ -182,7 +182,7 @@ public class ProblemController {
             @ApiResponse(responseCode = "401", description = "인증 실패 (토큰 없음 또는 만료)")
     })
     public ResponseEntity<ResultResponse<Page<ProblemListItemDTO>>> getMyProblems(
-            AccessToken accessToken,
+            @Parameter(hidden = true) AccessToken accessToken,
             @ParameterObject @PageableDefault(size = 10, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<ProblemListItemDTO> problems = problemService.getMyProblems(accessToken.getUserId(), pageable);
         return ResultResponse.ok(SuccessCode.SUCCESS, problems);

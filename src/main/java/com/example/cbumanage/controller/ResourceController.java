@@ -67,7 +67,7 @@ public class ResourceController {
             @ApiResponse(responseCode = "404", description = "회원을 찾을 수 없음")
     })
     public ResponseEntity<ResultResponse<ResourceListItemDTO>> createResource(
-            AccessToken accessToken,
+            @Parameter(hidden = true) AccessToken accessToken,
             @Valid @org.springframework.web.bind.annotation.RequestBody ResourceCreateRequestDTO request) {
         ResourceListItemDTO response = resourceService.createResource(request, accessToken.getUserId());
         return ResultResponse.ok(SuccessCode.CREATED, response);
@@ -110,7 +110,7 @@ public class ResourceController {
             @ApiResponse(responseCode = "401", description = "인증 실패 (토큰 없음 또는 만료)")
     })
     public ResponseEntity<ResultResponse<Page<ResourceListItemDTO>>> getMyResources(
-            AccessToken accessToken,
+            @Parameter(hidden = true) AccessToken accessToken,
             @ParameterObject @PageableDefault(size = 20, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<ResourceListItemDTO> resources = resourceService.getMyResources(accessToken.getUserId(), pageable);
         return ResultResponse.ok(SuccessCode.SUCCESS, resources);
@@ -130,7 +130,7 @@ public class ResourceController {
             @ApiResponse(responseCode = "404", description = "자료를 찾을 수 없음")
     })
     public ResponseEntity<ResultResponse<Void>> deleteResource(@PathVariable Long id,
-                                                               AccessToken accessToken) {
+                                                               @Parameter(hidden = true) AccessToken accessToken) {
         resourceService.deleteResource(id, accessToken.getUserId());
         return ResultResponse.ok(SuccessCode.DELETED);
     }
