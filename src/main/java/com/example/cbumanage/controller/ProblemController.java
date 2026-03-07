@@ -146,7 +146,7 @@ public class ProblemController {
      */
     @GetMapping("/problems")
     @Operation(summary = "코딩 테스트 문제 목록 조회",
-            description = "문제 목록을 페이지네이션하여(deault걊은 10) 조회합니다. 최신 등록 순이며, 카테고리, 플랫폼으로 필터링 가능합니다",
+            description = "문제 목록을 페이지네이션하여(deault값은 10) 조회합니다. 최신 등록 순이며, 카테고리, 플랫폼으로 필터링 가능합니다",
             parameters = {
                     @Parameter(name = "page", description = "페이지 번호(0부터 시작)", example = "0"),
                     @Parameter(name = "size", description = "페이지당 보여질 문제 수", example = "10"),

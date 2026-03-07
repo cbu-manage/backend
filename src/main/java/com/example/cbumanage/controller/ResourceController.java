@@ -85,14 +85,14 @@ public class ResourceController {
             description = "자료방 게시글 목록을 최신 순으로 조회합니다. 게시글의 link 필드로 외부 링크 이동이 가능합니다.",
             parameters = {
                     @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
-                    @Parameter(name = "size", description = "페이지당 게시글 수 (기본값 20)", example = "20")
+                    @Parameter(name = "size", description = "페이지당 게시글 수 (기본값 16)", example = "16")
             }
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "목록 조회 성공")
     })
     public ResponseEntity<ResultResponse<Page<ResourceListItemDTO>>> getResources(
-            @ParameterObject @PageableDefault(size = 20, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 16, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<ResourceListItemDTO> resources = resourceService.getResources(pageable);
         return ResultResponse.ok(SuccessCode.SUCCESS, resources);
     }
