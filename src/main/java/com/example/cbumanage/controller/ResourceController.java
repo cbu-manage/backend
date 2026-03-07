@@ -111,7 +111,7 @@ public class ResourceController {
     })
     public ResponseEntity<ResultResponse<Page<ResourceListItemDTO>>> getMyResources(
             @Parameter(hidden = true) AccessToken accessToken,
-            @ParameterObject @PageableDefault(size = 20, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 16, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<ResourceListItemDTO> resources = resourceService.getMyResources(accessToken.getUserId(), pageable);
         return ResultResponse.ok(SuccessCode.SUCCESS, resources);
     }
