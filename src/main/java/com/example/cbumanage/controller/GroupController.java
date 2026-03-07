@@ -7,6 +7,7 @@ import com.example.cbumanage.response.ResultResponse;
 import com.example.cbumanage.response.SuccessCode;
 import com.example.cbumanage.service.GroupService;
 import com.example.cbumanage.utils.JwtProvider;
+import com.example.cbumanage.utils.UserIdExtractor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,46 +28,12 @@ import java.util.Map;
 @Tag(name = "Group API", description = "그룹 생성, 가입 신청 및 관리 관련 API")
 public class GroupController {
     private final GroupService groupService;
-    private final JwtProvider jwtProvider;
+    private final UserIdExtractor userIdExtractor;
 
     @Autowired
-    public GroupController(GroupService groupService, JwtProvider jwtProvider) {
+    public GroupController(GroupService groupService, UserIdExtractor userIdExtractor) {
         this.groupService = groupService;
-        this.jwtProvider = jwtProvider;
-    }
-
-    //쿠키에서 userId를 추출하는 코드 입니다
-    private Long extractUserIdFromCookie(HttpServletRequest httpServletRequest) {
-        String token = null;
-
-        Cookie[] cookies = httpServletRequest.getCookies();
-        if (cookies != null) {
-            for (Cookie c : cookies) {
-                if ("ACCESS_TOKEN".equals(c.getName())) {
-                    token = c.getValue();
-                    break;
-                }
-            }
-        }
-        if (token == null || token.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "ACCESS_TOKEN not found");
-        }
-        Map<String, Object> tokenInfo;
-        try {
-            tokenInfo = jwtProvider.parseJwt(
-                    token,
-                    Map.of(
-                            "user_id", Long.class,
-                            "student_number", Long.class,
-                            "role", JSONArray.class,
-                            "permissions", JSONArray.class
-                    )
-            );
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid JWT token");
-        }
-        Long user_id = (Long) tokenInfo.get("user_id");
-        return user_id;
+        this.userIdExtractor = userIdExtractor;
     }
 
     /* ============================================================
@@ -79,7 +46,7 @@ public class GroupController {
             @Parameter(description = "가입할 그룹의 ID", example = "1")
             @PathVariable Long groupId,
             HttpServletRequest httpServletRequest) {
-        Long memberId = extractUserIdFromCookie(httpServletRequest);
+        Long memberId =userIdExtractor.extractUserIdFromCookie(httpServletRequest);
         GroupDTO.GroupMemberInfoDTO groupMemberInfoDTO = groupService.addGroupMember(groupId, memberId);
         return ResultResponse.ok(SuccessCode.CREATED, groupMemberInfoDTO);
     }
@@ -90,7 +57,7 @@ public class GroupController {
             @Parameter(description = "가입 취소할 그룹의 ID", example = "1")
             @PathVariable Long groupId,
             HttpServletRequest httpServletRequest) {
-        Long userId = extractUserIdFromCookie(httpServletRequest);
+        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
         groupService.cancelApplication(groupId, userId);
         return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
@@ -102,7 +69,7 @@ public class GroupController {
     )
     @GetMapping("/my")
     public ResponseEntity<ResultResponse<List<GroupDTO.GroupInfoDTO>>> getMyJoinedGroups(HttpServletRequest request) {
-        Long userId=extractUserIdFromCookie(request);
+        Long userId=userIdExtractor.extractUserIdFromCookie(request);
         List<GroupDTO.GroupInfoDTO> groupInfos = groupService.getJoinedGroups(userId);
         return ResultResponse.ok(SuccessCode.SUCCESS,groupInfos);
     }
@@ -124,7 +91,7 @@ public class GroupController {
             @Parameter(description = "조회할 그룹의 ID", example = "1")
             @PathVariable Long groupId,
             HttpServletRequest httpServletRequest) {
-        Long userId = extractUserIdFromCookie(httpServletRequest);
+        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
         List<GroupDTO.GroupMemberInfoDTO> applicants = groupService.getPendingGroupMember(groupId, userId);
         return ResultResponse.ok(SuccessCode.SUCCESS, applicants);
     }
@@ -139,7 +106,7 @@ public class GroupController {
             (@PathVariable Long groupId ,
              @Parameter(description = "OPEN,CLOSED 중 원하는 상태를 보냅니다.") @RequestBody GroupDTO.GroupRecruitmentStatusRequestDTO req,
              HttpServletRequest httpServletRequest) {
-        Long userId = extractUserIdFromCookie(httpServletRequest);
+        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
         groupService.updateGroupRecruitment(groupId, userId, req.getGroupRecruitmentStatus());
         return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
@@ -153,7 +120,7 @@ public class GroupController {
             @PathVariable Long groupMemberId,
             @RequestBody GroupDTO.GroupMemberStatusRequestDTO req,
             HttpServletRequest httpServletRequest) {
-        Long userId = extractUserIdFromCookie(httpServletRequest);
+        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
         groupService.updateStatusGroupMember(groupMemberId, userId, req.getGroupMemberStatus());
         return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
@@ -166,7 +133,7 @@ public class GroupController {
     public ResponseEntity<ResultResponse<Void>> handleApplicantAction(
             @Parameter(description = "그룹 멤버 고유 식별자(groupMemberId)", example = "50") @PathVariable Long groupMemberId,
             @RequestBody GroupDTO.ApplicantActionRequestDTO req, HttpServletRequest httpServletRequest) {
-        Long userId = extractUserIdFromCookie(httpServletRequest);
+        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
         GroupMemberStatus targetStatus = (req.getAction() == ApplicantAction.ACCEPT)
                 ? GroupMemberStatus.ACTIVE
                 : GroupMemberStatus.REJECTED;
@@ -183,7 +150,7 @@ public class GroupController {
     )
     @GetMapping("/admin")
     public ResponseEntity<ResultResponse<List<GroupDTO.GroupListDTO>>> getAllGroups(HttpServletRequest httpServletRequest) {
-        Long userId = extractUserIdFromCookie(httpServletRequest);
+        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
         List<GroupDTO.GroupListDTO> groupAllList = groupService.getAllGroups(userId);
         return ResultResponse.ok(SuccessCode.SUCCESS, groupAllList);
     }
@@ -197,7 +164,7 @@ public class GroupController {
             @PathVariable Long groupId ,
             @Parameter(description = "ACTIVE,INACTIVE로 구분되며 원하는 상태를 보냅니다") @RequestBody GroupDTO.GroupStatusRequestDTO req,
             HttpServletRequest httpServletRequest) {
-        Long userId = extractUserIdFromCookie(httpServletRequest);
+        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
         groupService.updateGroupStatusAdmin(groupId, userId, req.getGroupStatus());
         return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
