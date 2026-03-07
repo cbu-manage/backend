@@ -151,19 +151,24 @@ public class LoginService {
 	public Cookie[] generateCookie(String accessToken, String refreshToken) {
 		// SameSite=None 이면 브라우저 규격상 Secure=true 필수
 		boolean secure = "None".equalsIgnoreCase(this.sameSite) || secureCookie;
+		// MaxAge=0이면 브라우저가 쿠키를 즉시 삭제함. expireTime이 ms가 아닌 경우 0이 될 수 있으므로 하한 보정.
+		int accessMaxAgeSec = (int) (accessTokenExpireTime / 1000);
+		int refreshMaxAgeSec = (int) (this.refreshTokenExpireTime / 1000);
+		if (accessMaxAgeSec <= 0) accessMaxAgeSec = 600;       // 최소 10분
+		if (refreshMaxAgeSec <= 0) refreshMaxAgeSec = 86400;  // 최소 1일
 
 		Cookie accessTokenCookie = new Cookie("ACCESS_TOKEN", accessToken);
 		accessTokenCookie.setSecure(secure);
 		accessTokenCookie.setHttpOnly(true);
 		accessTokenCookie.setPath("/");
-		accessTokenCookie.setMaxAge((int) (accessTokenExpireTime / 1000));
+		accessTokenCookie.setMaxAge(accessMaxAgeSec);
 		accessTokenCookie.setAttribute("SameSite", this.sameSite);
 
 		Cookie refreshTokenCookie = new Cookie("REFRESH_TOKEN", refreshToken);
 		refreshTokenCookie.setSecure(secure);
 		refreshTokenCookie.setHttpOnly(true);
 		refreshTokenCookie.setPath("/");
-		refreshTokenCookie.setMaxAge((int) (this.refreshTokenExpireTime / 1000));
+		refreshTokenCookie.setMaxAge(refreshMaxAgeSec);
 		refreshTokenCookie.setAttribute("SameSite", this.sameSite);
 
 		return new Cookie[]{accessTokenCookie, refreshTokenCookie};
