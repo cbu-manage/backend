@@ -51,8 +51,9 @@ public class LoginService {
 	private final long accessTokenExpireTime;
 	private final long refreshTokenExpireTime;
 	private final boolean secureCookie;
+	private final String sameSite;
 
-	public LoginService(EmailManager emailManager, CbuMemberRepository cbuMemberRepository, LoginRepository loginRepository, RefreshTokenRepository refreshTokenRepository, JwtProvider jwtProvider, HashUtil hashUtil, @Value("${cbu.login.salt}") String salt, @Value("${cbu.jwt.expireTime}") Long accessTokenExpireTime, @Value("${cbu.jwt.refreshExpireTime}") Long refreshTokenExpireTime, @Value("${cbu.jwt.secureCookie:true}") boolean secureCookie) {
+	public LoginService(EmailManager emailManager, CbuMemberRepository cbuMemberRepository, LoginRepository loginRepository, RefreshTokenRepository refreshTokenRepository, JwtProvider jwtProvider, HashUtil hashUtil, @Value("${cbu.login.salt}") String salt, @Value("${cbu.jwt.expireTime}") Long accessTokenExpireTime, @Value("${cbu.jwt.refreshExpireTime}") Long refreshTokenExpireTime, @Value("${cbu.jwt.secureCookie:false}") boolean secureCookie, @Value("${cbu.jwt.sameSite:Lax}") String sameSite) {
 		this.emailManager = emailManager;
 		this.cbuMemberRepository = cbuMemberRepository;
 		this.loginRepository = loginRepository;
@@ -64,6 +65,7 @@ public class LoginService {
 		this.accessTokenExpireTime = accessTokenExpireTime;
 		this.refreshTokenExpireTime = refreshTokenExpireTime;
 		this.secureCookie = secureCookie;
+		this.sameSite = sameSite != null && !sameSite.isBlank() ? sameSite : "Lax";
 	}
 
 	/**
@@ -147,22 +149,22 @@ public class LoginService {
 	 * @return Return array of cookies. Index 0 is access token and 1 is refresh token
 	 */
 	public Cookie[] generateCookie(String accessToken, String refreshToken) {
+		// SameSite=None 이면 브라우저 규격상 Secure=true 필수
+		boolean secure = "None".equalsIgnoreCase(this.sameSite) || secureCookie;
+
 		Cookie accessTokenCookie = new Cookie("ACCESS_TOKEN", accessToken);
-		accessTokenCookie.setSecure(secureCookie);
+		accessTokenCookie.setSecure(secure);
 		accessTokenCookie.setHttpOnly(true);
 		accessTokenCookie.setPath("/");
-		// 쿠키의 MaxAge는 초 단위이므로 밀리초를 초로 변환
 		accessTokenCookie.setMaxAge((int) (accessTokenExpireTime / 1000));
-		// SameSite 설정은 Servlet API 버전에 따라 다를 수 있지만, 최신 버전에서는 setAttribute 사용
-		// accessTokenCookie.setAttribute("SameSite", "Strict");
+		accessTokenCookie.setAttribute("SameSite", this.sameSite);
 
 		Cookie refreshTokenCookie = new Cookie("REFRESH_TOKEN", refreshToken);
-		refreshTokenCookie.setSecure(secureCookie);
+		refreshTokenCookie.setSecure(secure);
 		refreshTokenCookie.setHttpOnly(true);
 		refreshTokenCookie.setPath("/");
-		// 쿠키의 MaxAge는 초 단위이므로 밀리초를 초로 변환
 		refreshTokenCookie.setMaxAge((int) (this.refreshTokenExpireTime / 1000));
-		// refreshTokenCookie.setAttribute("SameSite", "Strict");
+		refreshTokenCookie.setAttribute("SameSite", this.sameSite);
 
 		return new Cookie[]{accessTokenCookie, refreshTokenCookie};
 	}
