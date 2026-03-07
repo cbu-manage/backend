@@ -82,7 +82,7 @@ public class LoginService {
 		LoginEntity login = loginRepository.findById(cbuMember.getCbuMemberId())
 				.orElseThrow(MemberNotExistsException::new);
 
-		// 비밀번호 검증: 입력한 비밀번호를 해싱한 값과 DB에 저장된 비밀번호 비교
+		// 비밀번호 검증 - 입력한 비밀번호를 해싱한 값과 DB에 저장된 비밀번호 비교
 		if (!login.getPassword().equals(hashUtil.hash(dto.getPassword() + salt))) {
 			throw new InvalidPasswordException();
 		}
