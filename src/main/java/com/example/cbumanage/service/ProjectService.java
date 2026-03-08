@@ -126,7 +126,7 @@ public class ProjectService {
         PostDTO.ProjectUpdateDTO projectUpdateDTO = postMapper.toPostProjectUpdateDTO(req);
         if (project.getGroup() != null) {
             if (req.getTitle() != null) {
-                String newGroupName = post.getTitle() + " #" + post.getId();
+                String newGroupName = post.getTitle();
                 project.getGroup().changeGroupName(newGroupName);
             }
             updateProject(projectUpdateDTO, project);
@@ -144,7 +144,7 @@ public class ProjectService {
     public PostDTO.PostProjectCreateResponseDTO createPostProject(PostDTO.PostProjectCreateRequestDTO req, Long userId) {
         PostDTO.PostCreateDTO postCreateDTO = postMapper.toPostCreateDTO(req, userId);
         Post post = postService.createPost(postCreateDTO);
-        String groupName = post.getTitle() + " #" + post.getId();
+        String groupName = post.getTitle();
         Group group = groupService.createGroup(groupName, post.getAuthorId(),req.getMaxMember());
         PostDTO.ProjectCreateDTO projectCreateDTO = postMapper.toProjectCreateDTO(req, post.getId());
         Project project = createProject(projectCreateDTO,group);

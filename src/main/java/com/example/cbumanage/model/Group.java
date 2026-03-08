@@ -29,8 +29,8 @@ public class Group {
     @Comment("그룹 고유 식별자")
     private Long id;
 
-    @Column(name = "group_name",unique = true, nullable = false)
-    @Comment("그룹명 (중복 불가)")
+    @Column(name = "group_name", nullable = false)
+    @Comment("그룹명")
     private String groupName;
 
     @Comment("최소 활동 인원 설정값")
