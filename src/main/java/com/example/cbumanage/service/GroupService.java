@@ -186,7 +186,7 @@ public class GroupService {
     /*관리자 전용: 그룹 상태를 ACTIVE 또는 INACTIVE로 변경합니다.*/
     @Transactional
     public void updateGroupStatusAdmin(Long groupId, Long adminId, GroupStatus targetStatus) {
-        assertIsAdmin(adminId);
+//        assertIsAdmin(adminId);
         Group group = groupRepository.findByIdAndIsDeletedFalse(groupId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 그룹을 찾을 수 없습니다."));
         if (targetStatus == GroupStatus.ACTIVE) {
@@ -212,16 +212,16 @@ public class GroupService {
     //개설되어 있는 그룹 전체를 조회하는 기능입니다. (관리자 전용)
     @Transactional(readOnly = true)
     public List<GroupDTO.GroupListDTO> getAllGroups(Long userId) {
-        assertIsAdmin(userId);
+//        assertIsAdmin(userId);
         List<Group> groups = groupRepository.findAllByIsDeletedFalse();
         return groups.stream().map(group->groupUtil.toGroupListDTO(group)).toList();
     }
 
     //자신이 속한 그룹들을 조회하기 위한 메서드 입니다.
     @Transactional(readOnly = true)
-    public List<GroupDTO.GroupInfoDTO> getJoinedGroups(Long userId){
+    public List<GroupDTO.GroupListDTO> getJoinedGroups(Long userId){
         List<Group> groups = groupRepository.findByUserId(userId,GroupMemberStatus.ACTIVE);
-        return groups.stream().map(group -> groupUtil.toGroupInfoDTO(group)).toList();
+        return groups.stream().map(group -> groupUtil.toGroupListDTO(group)).toList();
     }
 
     //그룹을 이름으로 검색하는 기능입니다.

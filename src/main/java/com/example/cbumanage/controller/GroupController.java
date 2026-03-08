@@ -68,9 +68,9 @@ public class GroupController {
                     "유저가 가입된 그룹 목록을 불러오거나(마이페이지)+보고서,모집글같은 게시글에 그룹을 추가해야할때 해당 기능을 사용합니다"
     )
     @GetMapping("/my")
-    public ResponseEntity<ResultResponse<List<GroupDTO.GroupInfoDTO>>> getMyJoinedGroups(HttpServletRequest request) {
+    public ResponseEntity<ResultResponse<List<GroupDTO.GroupListDTO>>> getMyJoinedGroups(HttpServletRequest request) {
         Long userId=userIdExtractor.extractUserIdFromCookie(request);
-        List<GroupDTO.GroupInfoDTO> groupInfos = groupService.getJoinedGroups(userId);
+        List<GroupDTO.GroupListDTO> groupInfos = groupService.getJoinedGroups(userId);
         return ResultResponse.ok(SuccessCode.SUCCESS,groupInfos);
     }
 
