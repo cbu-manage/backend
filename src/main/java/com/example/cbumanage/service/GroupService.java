@@ -9,7 +9,7 @@ import com.example.cbumanage.model.enums.*;
 import com.example.cbumanage.repository.*;
 import com.example.cbumanage.response.ErrorCode;
 import com.example.cbumanage.utils.GroupUtil;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -80,28 +80,11 @@ public class GroupService {
         return groupUtil.toGroupMemberInfoDTO(groupMember);
     }
 
-     // 서비스 내부 호출용 그룹 생성 메서드
-     // DTO 없이 파라미터로 직접 값을 받아 그룹을 생성합니다.
-    @Transactional
-    public GroupDTO.GroupCreateResponseDTO createGroupInternal(String groupName,
-                                                                int minActiveMembers,
-                                                                int maxActiveMembers,
-                                                                Long leaderId) {
-        Group group = Group.create(groupName, minActiveMembers, maxActiveMembers);
-        groupRepository.save(group);
-        CbuMember member = cbuMemberRepository.findById(leaderId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"유저 정보를 찾을 수 없습니다."));
-
-        GroupMember leader = GroupMember.create(group, member, GroupMemberStatus.ACTIVE, GroupMemberRole.LEADER);
-        group.addMember(leader);
-        groupMemberRepository.save(leader);
-        return groupUtil.toGroupCreateResponseDTO(group);
-    }
-
     /**
     그룹을 id로 찾아오는 기능입니다
     그룹 상세보기에 사용되는 메서드 입니다.
     **/
+    @Transactional(readOnly=true)
     public GroupDTO.GroupInfoDTO getGroupById(Long groupId){
         Group group = groupRepository.findByIdAndIsDeletedFalse(groupId)
                 .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"해당 그룹을 찾을 수 없습니다."));
@@ -146,7 +129,7 @@ public class GroupService {
     //시전한 user가 리더가 맞는지 확인하는 메소드
     private void assertIsGroupLeader(Long groupId, Long userId){
         GroupMember groupMember = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, userId);
-        if(groupMember.getGroupMemberRole()!=(GroupMemberRole.LEADER)){
+        if(groupMember == null || groupMember.getGroupMemberRole() != GroupMemberRole.LEADER){
             throw new CustomException(ErrorCode.FORBIDDEN,"해당 그룹에 리더가 아닙니다.");
         }
     }
@@ -180,6 +163,7 @@ public class GroupService {
     }
 
     /* 팀장 전용: PENDING 신청인원 목록 조회 메서드(학년, 학부, 이름) */
+    @Transactional(readOnly = true)
     public List<GroupDTO.GroupMemberInfoDTO> getPendingGroupMember(Long groupId, Long userId) {
         assertIsGroupLeader(groupId, userId);
         List<GroupMember> pending = groupMemberRepository.findByGroupIdAndGroupMemberStatus(groupId, GroupMemberStatus.PENDING);
@@ -187,6 +171,7 @@ public class GroupService {
     }
 
     /* 해당 그룹에 해당 유저가 PENDING(신청 대기) 상태로 있는지 여부 */
+    @Transactional(readOnly = true)
     public Boolean hasAppliedToGroup(Long groupId, Long userId) {
         if (userId == null) return false; // 비로그인 = 신청 이력 없음
         if (groupId == null) return null;
@@ -212,6 +197,7 @@ public class GroupService {
     }
 
     //최대 모집 인원을 변경합니다.
+    @Transactional
     public void updateGroupMaxMember(Long groupId, int maxMember){
         Group group =  groupRepository.findByIdAndIsDeletedFalse(groupId)
                 .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"그룹을 찾을 수 없습니다."));
@@ -224,33 +210,24 @@ public class GroupService {
     }
 
     //개설되어 있는 그룹 전체를 조회하는 기능입니다. (관리자 전용)
+    @Transactional(readOnly = true)
     public List<GroupDTO.GroupListDTO> getAllGroups(Long userId) {
         assertIsAdmin(userId);
-        List<Group> groups = groupRepository.findAll();
+        List<Group> groups = groupRepository.findAllByIsDeletedFalse();
         return groups.stream().map(group->groupUtil.toGroupListDTO(group)).toList();
     }
 
     //자신이 속한 그룹들을 조회하기 위한 메서드 입니다.
+    @Transactional(readOnly = true)
     public List<GroupDTO.GroupInfoDTO> getJoinedGroups(Long userId){
         List<Group> groups = groupRepository.findByUserId(userId,GroupMemberStatus.ACTIVE);
         return groups.stream().map(group -> groupUtil.toGroupInfoDTO(group)).toList();
     }
 
     //그룹을 이름으로 검색하는 기능입니다.
+    @Transactional(readOnly = true)
     public List<GroupDTO.GroupInfoDTO> getGroupByGroupNameAndStatus(String groupName ) {
         List<Group> groups = groupRepository.findByGroupNameContaining(groupName);
         return groups.stream().map(group -> groupUtil.toGroupInfoDTO(group)).toList();
-    }
-
-    /**
-     멤버를 Active 상태로 변경시키는 메소드 입니다(팀장이 가입 신청한 멤버를 수락할 때 사용되는 메서드)
-     **/
-    @Transactional
-    public void activateGroupMember(Long groupMemberId,Long userId){
-        GroupMember groupMember = groupMemberRepository.findById(groupMemberId)
-                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"해당 멤버를 찾을 수 없습니다."));
-        Group group = groupMember.getGroup();
-        assertIsGroupLeader(group.getId(),userId);
-        groupMember.changeStatus(GroupMemberStatus.ACTIVE);
     }
 }
