@@ -6,6 +6,7 @@ import com.example.cbumanage.model.enums.GroupStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import org.springframework.data.annotation.CreatedDate;
 import org.hibernate.annotations.Comment;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -80,6 +81,7 @@ public class Group {
 
     public void changeMaxActiveMembers(int newMaxMember) {this.maxActiveMembers = newMaxMember;}
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "group" ,
             cascade = CascadeType.ALL,
             orphanRemoval = true,
