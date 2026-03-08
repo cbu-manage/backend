@@ -353,7 +353,7 @@ public class PostDTO {
         private List<String> recruitmentFields;
 
         @Schema(description = "현재 모집 여부 (true: 모집중, false: 모집마감)", example = "true")
-        private boolean recruiting;
+        private Boolean recruiting;
 
         @Schema(description = "모집 마감 기한")
         @FutureOrPresent(message = "마감일은 과거일 수 없습니다.")
@@ -361,7 +361,7 @@ public class PostDTO {
 
         @Min(1)
         @Schema(description = "최대 모집 인원",example="10")
-        private int maxMember;
+        private Integer maxMember;
 
         @Schema(description = "게시글 카테고리 식별 번호", example = "2")
         private int category;
@@ -396,7 +396,7 @@ public class PostDTO {
         private List<String> recruitmentFields;
 
         @Schema(description = "모집 여부")
-        private boolean recruiting;
+        private Boolean recruiting;
 
         @Schema(description = "생성 일시")
         private LocalDateTime createdAt;
@@ -405,7 +405,7 @@ public class PostDTO {
         private LocalDate deadline;
 
         @Schema(description = "최대 모집 인원")
-        private int maxMember;
+        private Integer maxMember;
 
         @Schema(description = "카테고리 번호")
         private int category;
@@ -419,10 +419,10 @@ public class PostDTO {
                                             String title,
                                             String content,
                                             List<String> recruitmentFields,
-                                            boolean recruiting,
+                                            Boolean recruiting,
                                             LocalDateTime createdAt,
                                             LocalDate deadline,
-                                            int maxMember,
+                                            Integer maxMember,
                                             int category){
             this.postId = postId;
             this.authorId = authorId;
@@ -446,12 +446,12 @@ public class PostDTO {
     public static class ProjectCreateDTO{
         private Long postId;
         private List<String> recruitmentFields;
-        private boolean recruiting;
+        private Boolean recruiting;
         private LocalDate deadline;
-        private int maxMember;
+        private Integer maxMember;
 
         @Builder
-        public ProjectCreateDTO(Long postId,List<String> recruitmentFields, boolean recruiting, LocalDate deadline, int maxMember) {
+        public ProjectCreateDTO(Long postId,List<String> recruitmentFields, Boolean recruiting, LocalDate deadline, Integer maxMember) {
             this.postId = postId;
             this.recruitmentFields = recruitmentFields;
             this.recruiting = recruiting;
@@ -477,7 +477,7 @@ public class PostDTO {
         private List<String> recruitmentFields;
 
         @Schema(description = "모집 여부 상태 변경", example = "false")
-        private boolean recruiting;
+        private Boolean recruiting;
 
         @Schema(description = "모집 마감 기한 변경")
         @FutureOrPresent(message = "마감일은 과거일 수 없습니다.")
@@ -496,16 +496,16 @@ public class PostDTO {
         private List<String> recruitmentFields;
 
         @Schema(description = "모집 여부 상태 변경")
-        private boolean recruiting;
+        private Boolean recruiting;
 
         @Schema(description = "모집 마감 기한 변경")
         private LocalDate deadline;
 
         @Schema(description = "최대 모집 인원 변경")
-        private int maxMember;
+        private Integer maxMember;
 
         @Builder
-        public ProjectUpdateDTO(List<String> recruitmentFields, boolean recruiting, LocalDate deadline, int maxMember) {
+        public ProjectUpdateDTO(List<String> recruitmentFields, Boolean recruiting, LocalDate deadline, Integer maxMember) {
             this.recruitmentFields = recruitmentFields;
             this.recruiting = recruiting;
             this.deadline = deadline;
@@ -559,7 +559,7 @@ public class PostDTO {
         private LocalDateTime createdAt;
 
         @Schema(description = "모집 여부 (모집 중:true, 모집 완료:false)", example = "true")
-        private boolean recruiting;
+        private Boolean recruiting;
 
         @Schema(description = "모집 마감 기한")
         private LocalDate deadline;
@@ -583,7 +583,7 @@ public class PostDTO {
                 boolean isLeader,
                 Boolean hasApplied,
                 LocalDateTime createdAt,
-                boolean recruiting,
+                Boolean recruiting,
                 LocalDate deadline,
                 Long viewCount,
                 int maxMember
@@ -635,7 +635,7 @@ public class PostDTO {
         private LocalDateTime createdAt;
 
         @Schema(description = "모집 여부 (모집 중:true, 모집 완료:false)", example = "true")
-        private boolean recruiting;
+        private Boolean recruiting;
 
         @Schema(description = "모집 마감 기한")
         private LocalDate deadline;
@@ -652,7 +652,7 @@ public class PostDTO {
                               Long authorGeneration,
                               String authorName,
                               LocalDateTime createdAt,
-                              boolean recruiting,
+                              Boolean recruiting,
                               LocalDate deadline,
                               Long viewCount
         ) {
@@ -698,7 +698,7 @@ public class PostDTO {
         private String studyName;
 
         @Schema(description = "모집 중 여부 (true: 모집 중, false: 모집 마감)", example = "true")
-        private boolean recruiting;
+        private Boolean recruiting;
 
         @Min(value = 2, message = "최대 인원은 팀장 포함 최소 2명 이상이어야 합니다.")
         @Max(value = 50, message = "최대 인원은 50명을 초과할 수 없습니다.")
