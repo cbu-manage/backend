@@ -125,7 +125,7 @@ public class PostMapper {
         return PostDTO.ProjectCreateDTO.builder()
                 .postId(postId)
                 .recruitmentFields(req.getRecruitmentFields())
-                .recruiting(req.isRecruiting())
+                .recruiting(req.getRecruiting())
                 .deadline(req.getDeadline())
                 .build();
     }
@@ -144,7 +144,7 @@ public class PostMapper {
                 .recruitmentFields(project.getRecruitmentFields().stream()
                         .map(ProjectFieldType::getDescription) // Enum의 이름(BACKEND 등)을 String으로 변환
                         .collect(Collectors.toList()))
-                .recruiting(project.isRecruiting())
+                .recruiting(project.getRecruiting())
                 .deadline(project.getDeadline())
                 .maxMember(group.getMaxActiveMembers())
                 .category(post.getCategory())
@@ -156,7 +156,7 @@ public class PostMapper {
                 .postId(postId)
                 .studyTags(req.getStudyTags())
                 .studyName(req.getStudyName())
-                .recruiting(req.isRecruiting())
+                .recruiting(req.getRecruiting())
                 .maxMembers(req.getMaxMembers())
                 .build();
     }
@@ -223,7 +223,7 @@ public class PostMapper {
     public PostDTO.ProjectUpdateDTO toPostProjectUpdateDTO(PostDTO.PostProjectUpdateRequestDTO req) {
         return PostDTO.ProjectUpdateDTO.builder()
                 .recruitmentFields(req.getRecruitmentFields())
-                .recruiting(req.isRecruiting())
+                .recruiting(req.getRecruiting())
                 .deadline(req.getDeadline())
                 .build();
     }
@@ -245,9 +245,9 @@ public class PostMapper {
                 .isLeader(isLeader)
                 .hasApplied(hasApplied)
                 .createdAt(project.getPost().getCreatedAt())
-                .recruiting(project.isRecruiting())
+                .recruiting(project.getRecruiting())
                 .deadline(project.getDeadline())
-                .maxMember(project.getGroup().getMaxActiveMembers())
+                .maxMember(project.getGroup()!= null ? project.getGroup().getMaxActiveMembers() : 0)
                 .viewCount(project.getPost().getViewCount())
                 .build();
     }
@@ -265,7 +265,7 @@ public class PostMapper {
                 .authorGeneration(author!=null?author.getGeneration():null)
                 .authorName(author!=null?author.getName():null)
                 .createdAt(project.getPost().getCreatedAt())
-                .recruiting(project.isRecruiting())
+                .recruiting(project.getRecruiting())
                 .deadline(project.getDeadline())
                 .viewCount(project.getPost().getViewCount())
                 .build();
