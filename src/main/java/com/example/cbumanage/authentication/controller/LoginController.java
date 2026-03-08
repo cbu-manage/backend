@@ -87,9 +87,7 @@ public class LoginController {
 		// LoginService의 login 메서드를 호출하여 Access 및 Refresh 토큰을 생성합니다.
 		AccessAndRefreshTokenDTO login = loginService.login(new StudentNumberAndPasswordDTO(studentNumberAndPasswordDTO.getStudentNumber(), studentNumberAndPasswordDTO.getPassword()));
 
-		// 토큰 문자열을 포함하는 쿠키 배열을 생성합니다.
 		Cookie[] cookies = loginService.generateCookie(login.getAccessToken(), login.getRefreshToken());
-		// 각 쿠키를 응답에 추가합니다.
 		for (Cookie cookie : cookies) {
 			res.addCookie(cookie);
 		}
@@ -99,6 +97,9 @@ public class LoginController {
 		Map<String, String> response = new HashMap<>();
 		response.put("name", cbuMember);
 		response.put("email", memberEmail);
+		// 크로스오리진에서 쿠키가 안 붙을 때 Authorization 헤더로 쓸 수 있도록 body에도 담아 반환
+		response.put("accessToken", login.getAccessToken());
+		response.put("refreshToken", login.getRefreshToken());
 
 		return response;
 	}

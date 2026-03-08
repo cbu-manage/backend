@@ -66,11 +66,25 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 		logger.debug("인증 검증 시작 - 경로: {}, 권한: {}", requestPath, permission);
 		
 		// 요청 속성에 저장된 AccessToken 객체를 가져옵니다.
-		AccessToken accessToken = ((AccessToken) request.getAttribute("ACCESS_TOKEN"));
-		// 요청 속성에 저장된 RefreshToken 객체를 가져옵니다.
-		RefreshToken refreshToken = ((RefreshToken) request.getAttribute("REFRESH_TOKEN"));
+		AccessToken accessToken = (AccessToken) request.getAttribute("ACCESS_TOKEN");
+		RefreshToken refreshToken = (RefreshToken) request.getAttribute("REFRESH_TOKEN");
 
-		// 만약 AccessToken이 아직 파싱되어 있지 않다면, 쿠키에서 ACCESS_TOKEN을 찾아 파싱 시도합니다.
+		// 1) Authorization: Bearer <token> 헤더 확인 (크로스오리진/쿠키 미전송 환경 대응)
+		if (accessToken == null) {
+			String authHeader = request.getHeader("Authorization");
+			if (authHeader != null && authHeader.startsWith("Bearer ")) {
+				String token = authHeader.substring(7).trim();
+				if (!token.isEmpty()) {
+					accessToken = parseAccessTokenJwt(token);
+					if (accessToken != null) {
+						request.setAttribute("ACCESS_TOKEN", accessToken);
+						logger.debug("AccessToken 파싱 성공(헤더) - userId: {}", accessToken.getUserId());
+					}
+				}
+			}
+		}
+
+		// 2) 쿠키에서 ACCESS_TOKEN을 찾아 파싱 시도합니다.
 		if (accessToken == null) {
 			Cookie cookie = null;
 			// 요청에 포함된 모든 쿠키를 가져옵니다.
@@ -88,57 +102,13 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 			} else {
 				logger.debug("쿠키가 없습니다");
 			}
-			// ACCESS_TOKEN 쿠키가 존재하면, 해당 JWT 문자열을 파싱하여 토큰 정보를 얻습니다.
 			if (cookie != null) {
-				try {
-					Map<String, Object> tokenInfo = jwtProvider.parseJwt(
-							cookie.getValue(),
-							// JWT의 클레임 정보에 대해 예상하는 타입을 지정합니다.
-							Map.of(
-									"user_id", Long.class,
-									"student_number", Long.class,
-									"role", JSONArray.class,
-									"permissions", JSONArray.class
-							)
-					);
-					// 파싱된 정보를 바탕으로 AccessToken 객체를 생성합니다.
-					accessToken = new AccessToken(
-							((Long) tokenInfo.get("user_id")),
-							((Long) tokenInfo.get("student_number")),
-							// Role 목록을 JSONArray에서 List<Role>로 변환합니다.
-							((JSONArray) tokenInfo.get("role")).toList().stream()
-									.map(role -> {
-										// Role enum의 name은 대문자이므로 그대로 사용
-										Role r = Role.getValue(role.toString());
-										if (r == null) {
-											logger.warn("알 수 없는 역할: {}", role);
-										}
-										return r;
-									})
-									.filter(r -> r != null)
-									.toList(),
-							// Permission 목록을 JSONArray에서 List<Permission>로 변환합니다.
-							((JSONArray) tokenInfo.get("permissions")).toList().stream()
-									.map(permission -> {
-										// 대소문자 구분 없이 소문자로 변환하여 매칭
-										String permissionName = permission.toString().toLowerCase();
-										Permission p = Permission.getValue(permissionName);
-										if (p == null) {
-											logger.warn("알 수 없는 권한: {} (소문자 변환 후: {})", permission, permissionName);
-										}
-										return p;
-									})
-									.filter(p -> p != null)
-									.toList()
-					);
-					logger.debug("AccessToken 파싱 성공 - userId: {}, permissions: {}", 
-							accessToken.getUserId(), accessToken.getPermission());
-					// 파싱된 AccessToken을 요청 속성에 저장하여 이후 재사용할 수 있게 합니다.
+				accessToken = parseAccessTokenJwt(cookie.getValue());
+				if (accessToken != null) {
 					request.setAttribute("ACCESS_TOKEN", accessToken);
-				} catch (Exception e) {
-					// JWT 파싱 실패 시 accessToken은 null로 유지하여 RefreshToken으로 재시도
-					logger.warn("JWT 파싱 실패: {}", e.getMessage(), e);
-					accessToken = null;
+					logger.debug("AccessToken 파싱 성공(쿠키) - userId: {}", accessToken.getUserId());
+				} else {
+					logger.debug("ACCESS_TOKEN 쿠키 JWT 파싱 실패");
 				}
 			} else {
 				logger.debug("ACCESS_TOKEN 쿠키를 찾을 수 없습니다");
@@ -202,5 +172,42 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 		// 모든 검증이 통과되면, 요청 처리를 계속 진행합니다.
 		logger.debug("인증 검증 성공 - 경로: {}, 권한: {}", requestPath, permission);
 		return true;
+	}
+
+	/** JWT 문자열을 파싱하여 AccessToken 객체로 반환. 실패 시 null */
+	private AccessToken parseAccessTokenJwt(String jwt) {
+		try {
+			Map<String, Object> tokenInfo = jwtProvider.parseJwt(jwt,
+					Map.of(
+							"user_id", Long.class,
+							"student_number", Long.class,
+							"role", JSONArray.class,
+							"permissions", JSONArray.class
+					));
+			return new AccessToken(
+					(Long) tokenInfo.get("user_id"),
+					(Long) tokenInfo.get("student_number"),
+					((JSONArray) tokenInfo.get("role")).toList().stream()
+							.map(role -> {
+								Role r = Role.getValue(role.toString());
+								if (r == null) logger.warn("알 수 없는 역할: {}", role);
+								return r;
+							})
+							.filter(r -> r != null)
+							.toList(),
+					((JSONArray) tokenInfo.get("permissions")).toList().stream()
+							.map(p -> {
+								String name = p.toString().toLowerCase();
+								Permission perm = Permission.getValue(name);
+								if (perm == null) logger.warn("알 수 없는 권한: {}", name);
+								return perm;
+							})
+							.filter(p -> p != null)
+							.toList()
+			);
+		} catch (Exception e) {
+			logger.warn("JWT 파싱 실패: {}", e.getMessage());
+			return null;
+		}
 	}
 }
