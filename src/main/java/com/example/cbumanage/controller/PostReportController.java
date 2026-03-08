@@ -26,7 +26,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/report")
-@Tag(name = "보고서 게시글 관리 컨틀로러")
+@Tag(name = "보고서 게시글 관리 컨트롤러")
 public class PostReportController {
     private final PostService postService;
     private final JwtProvider jwtProvider;

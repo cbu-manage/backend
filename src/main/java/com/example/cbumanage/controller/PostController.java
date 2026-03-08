@@ -58,7 +58,7 @@ public class PostController {
      */
 
     @Operation(
-            summary = "카테고리 별 포스트 목록 페이징 조회",
+            summary = "카테고리 별 포스트 목록 페이징 조회 (이제 사용하지 않습니다)",
             description = "포스트 목록을 페이징으로 불러옵니다. 공통테이블인 Post만 읽습니다"
     )
     @GetMapping("post")
@@ -73,7 +73,7 @@ public class PostController {
     }
 
     @Operation(
-            summary = "포스트 메인테이블 단건조회",
+            summary = "포스트 메인테이블 단건조회 (이제 사용하지 않습니다)",
             description = "제목, 내용, userId등을 포함한 게시글의 메인테이블의 단건을 조회합니다. 카테고리에 맞는 서브테이블을 불러와야합니다"
     )
     @GetMapping("post/{postId}/post")
@@ -92,11 +92,16 @@ public class PostController {
         return ResultResponse.ok(SuccessCode.DELETED, null);
     }
 
+    @Operation(
+            summary = "내가 쓴 게시글 조회 api입니다",
+            description = "쿠키에 저장된 userI를 기반으로 작성된 글들을 불러옵니다.<br> 파라미터로 카테고리를 구분하며, 카테고리를 입력하지 않을 시 모든 글을 미리보기 형태로 가져옵니다"
+    )
     @GetMapping("post/my")
     public ResponseEntity<ResultResponse<Object>> getMyPosts(
             @RequestParam int page,
             @RequestParam int size,
-            @RequestParam(required = false) Integer category,
+            @Parameter(description = "카테고리 번호를 입력합니다. 입력하지 않을 시 모든 글을 미리보기 형태로 가져옵니다" +
+                    "<br> 스터디 : 1, 프로젝트:2 , 코딩테스트: 5 , 자료방 :6 , 보고서 : 7 , 모두가져오기 null") @RequestParam(required = false) Integer category,
             HttpServletRequest request
     ) {
         Long userId = userIdExtractor.extractUserIdFromCookie(request);
