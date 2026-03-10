@@ -14,7 +14,7 @@ import com.example.cbumanage.repository.ProjectRepository;
 import com.example.cbumanage.repository.PostRepository;
 import com.example.cbumanage.response.ErrorCode;
 import com.example.cbumanage.utils.PostMapper;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -59,7 +59,7 @@ public class ProjectService {
         List<String> fields = (req.getRecruitmentFields() != null)
                 ? req.getRecruitmentFields()
                 : new ArrayList<>();
-        Project project = Project.create(post, fields, req.isRecruiting(),req.getDeadline(),group);
+        Project project = Project.create(post, fields, req.getRecruiting(),req.getDeadline(),group);
         return projectRepository.save(project);
     }
 
@@ -72,20 +72,21 @@ public class ProjectService {
         Boolean hasApplied = groupService.hasAppliedToGroup(groupId, userId);
         Post post =project.getPost();
         post.upViewCount();
-        postRepository.save(post);
         boolean isLeader = userId != null && userId.equals(project.getPost().getAuthorId());
         CbuMember author = cbuMemberRepository.findById(project.getPost().getAuthorId()).orElse(null);
         return postMapper.toProjectInfoDetailDTO(project, userId, isLeader, hasApplied, author);
-
     }
 
+
     //프로젝트 게시글 전체 조회 메서드
+    @Transactional(readOnly = true)
     public Page<PostDTO.ProjectListDTO> getPostsByCategory(Pageable pageable, Boolean recruiting, int category) {
         Page<Project> projects = projectRepository.findByCategory(category, recruiting, pageable);
         return mapProjectsToProjectListDTO(projects);
     }
 
     //내가 작성한 프로젝트 게시글 전체 조회 메서드
+    @Transactional(readOnly = true)
     public Page<PostDTO.ProjectListDTO> getMyProjectsByUserId(Pageable pageable, Long userId, int category) {
         Page<Project> projects = projectRepository.findByUserIdAndCategory(userId,category, pageable);
         return mapProjectsToProjectListDTO(projects);
@@ -107,7 +108,8 @@ public class ProjectService {
     //프로젝트 게시글 수정 메서드
     public void updateProject(PostDTO.ProjectUpdateDTO dto, Project project) {
         project.updateRecruitmentFields(dto.getRecruitmentFields());
-        project.updateRecruiting(dto.isRecruiting());
+        project.updateRecruiting(dto.getRecruiting());
+        project.updateDeadline(dto.getDeadline());
     }
 
     //프로젝트 게시글 수정 트랜잭션
@@ -122,10 +124,17 @@ public class ProjectService {
         Project project = projectRepository.findByPostId(postId).
                 orElseThrow(()->new CustomException(ErrorCode.NOT_FOUND,"해당 게시글을 찾을 수 없습니다."));
         PostDTO.ProjectUpdateDTO projectUpdateDTO = postMapper.toPostProjectUpdateDTO(req);
-        updateProject(projectUpdateDTO, project);
-        groupService.updateGroupMaxMember(project.getGroup().getId(), req.getMaxMember());
         if (project.getGroup() != null) {
-            GroupRecruitmentStatus status = req.isRecruiting() ? GroupRecruitmentStatus.OPEN : GroupRecruitmentStatus.CLOSED;
+            if (req.getTitle() != null) {
+                String newGroupName = post.getTitle();
+                project.getGroup().changeGroupName(newGroupName);
+            }
+            updateProject(projectUpdateDTO, project);
+            if (req.getMaxMember() != null) {
+                groupService.updateGroupMaxMember(project.getGroup().getId(), req.getMaxMember());
+            }
+            GroupRecruitmentStatus status = req.getRecruiting()
+                    ? GroupRecruitmentStatus.OPEN : GroupRecruitmentStatus.CLOSED;
             groupService.updateGroupRecruitment(project.getGroup().getId(), userId, status);
         }
     }
@@ -135,11 +144,10 @@ public class ProjectService {
     public PostDTO.PostProjectCreateResponseDTO createPostProject(PostDTO.PostProjectCreateRequestDTO req, Long userId) {
         PostDTO.PostCreateDTO postCreateDTO = postMapper.toPostCreateDTO(req, userId);
         Post post = postService.createPost(postCreateDTO);
-        String groupName = post.getTitle() + " #" + post.getId();
+        String groupName = post.getTitle();
         Group group = groupService.createGroup(groupName, post.getAuthorId(),req.getMaxMember());
         PostDTO.ProjectCreateDTO projectCreateDTO = postMapper.toProjectCreateDTO(req, post.getId());
         Project project = createProject(projectCreateDTO,group);
-        projectRepository.save(project);
         CbuMember author = cbuMemberRepository.findById(post.getAuthorId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 유저를 찾을 수 없습니다."));
         return postMapper.toPostProjectCreateResponseDTO(post, project, group, author);
@@ -156,11 +164,11 @@ public class ProjectService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 게시글을 찾을 수 없습니다."));
         post.delete();
         //group도 동시에 soft delete 처리
-        project.getGroup().delete();
+        if(project.getGroup()!=null) {project.getGroup().delete();}
     }
 
     //프로젝트 모집분야로 조회 트랜잭션
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<PostDTO.ProjectListDTO> searchByField(ProjectFieldType fields, Boolean recruiting, Pageable pageable) {
         Page<Project> projects = projectRepository.findByFilters(fields, recruiting,pageable);
         return mapProjectsToProjectListDTO(projects);
