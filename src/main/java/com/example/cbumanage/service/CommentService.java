@@ -49,10 +49,6 @@ public class CommentService {
     답글 생성 메소드입니다.
     댓글과 달리 특정 댓글에 연결되기 때문에 postId 대신 commentId를 받아 처리합니다.
     조회한 댓글에 답글을 생성해 parentComment에 addReply로 연결하여 답글 목록에 추가합니다.
-
-    만약 대상 댓글이 이미 답글이라면,
-    그 답글의 부모 댓글을 기준으로 답글을 생성해
-    부모 댓글 기준으로 통일된 1단계 답글 목록을 유지합니다.
     */
 
     @Transactional
@@ -61,15 +57,8 @@ public class CommentService {
                                                          Long commentId) {
 
         Comment target = commentRepository.findById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment not found"));
-        Comment parent;
-        if (target.getParentComment() == null) {
-            parent = target;
-        } else {
-            parent = target.getParentComment();
-        }
-
-        Comment reply = new Comment(parent.getPost(), userId, parent, req.getContent());
-        parent.addReply(reply);
+        Comment reply = new Comment(target.getPost(), userId, target, req.getContent());
+        target.addReply(reply);
         Comment saved = commentRepository.save(reply);
         return commentMapper.toReplyCreateResponseDTO(saved);
     }
@@ -80,21 +69,21 @@ public class CommentService {
      */
     public List<CommentDTO.CommentInfoDTO> getComments(Long postId) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post not found"));
-        List<Comment> comments = commentRepository.findRoots(postId);
+        List<Comment> comments = commentRepository.findByPostId(postId);
         return comments.stream().map(comment -> commentMapper.toCommentInfoDTO(comment)).toList();
     }
 
-    // Problem(코딩테스트 페이지) 댓글 생성을 위한 메소드
-    @Transactional
-    public CommentDTO.CommentCreateResponseDTO createCommentProblem(CommentDTO.CommentCreateRequestDTO req,
-                                                                    Long userId,
-                                                                    Long problemId) {
-        Problem problem = problemRepository.findById(problemId).orElseThrow(() -> new EntityNotFoundException(
-                "Problem not found"));
-        Comment comment = new Comment(problem, userId, null, req.getContent());
-        Comment saved = commentRepository.save(comment);
-        return commentMapper.toCommentCreateResponseDTO(saved);
-    }
+//    // Problem(코딩테스트 페이지) 댓글 생성을 위한 메소드
+//    @Transactional
+//    public CommentDTO.CommentCreateResponseDTO createCommentProblem(CommentDTO.CommentCreateRequestDTO req,
+//                                                                    Long userId,
+//                                                                    Long problemId) {
+//        Problem problem = problemRepository.findById(problemId).orElseThrow(() -> new EntityNotFoundException(
+//                "Problem not found"));
+//        Comment comment = new Comment(problem, userId, null, req.getContent());
+//        Comment saved = commentRepository.save(comment);
+//        return commentMapper.toCommentCreateResponseDTO(saved);
+//    }
 
     /*
     댓글과 답글의 엔티티는 같기에, update에서는 다르게 취급하지 않습니다
@@ -108,13 +97,13 @@ public class CommentService {
         comment.changeContent(req.getContent());
     }
 
-    // Problem(코딩테스트 페이지) 댓글 조회를 위한 메소드
-    public List<CommentDTO.CommentInfoDTO> getCommentsProblemId(Long problemId) {
-        Problem problem = problemRepository.findById(problemId).orElseThrow(() -> new EntityNotFoundException(
-                "Problem not found"));
-        List<Comment> comments = commentRepository.findRootsProblemId(problemId);
-        return comments.stream().map(commentMapper::toCommentInfoDTO).toList();
-    }
+//    // Problem(코딩테스트 페이지) 댓글 조회를 위한 메소드
+//    public List<CommentDTO.CommentInfoDTO> getCommentsProblemId(Long problemId) {
+//        Problem problem = problemRepository.findById(problemId).orElseThrow(() -> new EntityNotFoundException(
+//                "Problem not found"));
+//        List<Comment> comments = commentRepository.findRootsProblemId(problemId);
+//        return comments.stream().map(commentMapper::toCommentInfoDTO).toList();
+//    }
 
     @Transactional
     public void deleteComment(Long commentId,Long userId) {

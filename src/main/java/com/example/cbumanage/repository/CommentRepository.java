@@ -21,41 +21,11 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     select c
     from Comment c
     where c.post.id = :postId
-      and c.parentComment is null
-      and (
-            c.isDeleted = false
-            or exists (
-                select 1 from Comment r
-                where r.parentComment = c
-            )
-          )
     order by c.createdAt asc
 """)
-    List<Comment> findRoots(Long postId);
 
-    // Problem 댓글 기능을 위해 새로 추가하는 메소드
-    @Query("""
-    select c
-    from Comment c
-    where c.problem.problemId = :problemId
-      and c.parentComment is null
-      and (
-            c.isDeleted = false
-            or exists (
-                select 1 from Comment r
-                where r.parentComment = c
-            )
-          )
-    order by c.createdAt asc
-""")
-    List<Comment> findRootsProblemId(Long problemId);
+    List<Comment> findByPostId(Long postId);
 
-    /**
-     * 소프트 딜리트로 구현하였기 때문에, 대댓글을 포함한
-     * 특정 문제의 삭제되지 않은 댓글 수를 조회합니다.
-     */
-    @Query("SELECT COUNT(c) FROM Comment c WHERE c.problem.problemId = :problemId AND c.isDeleted = false")
-    Long countByProblemId(@Param("problemId") Long problemId);
 
     @Query("SELECT COUNT(c) FROM Comment c WHERE c.post.id = :postId AND c.isDeleted = false")
     Long countByPostId(Long postId);

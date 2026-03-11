@@ -21,29 +21,36 @@ public class CommentDTO {
 
         private Long userId;
 
+        private Long generation;
+
+        private String userName;
+
         private String content;
+
+        private Long parentCommentId;
 
         private LocalDateTime createdAt;
 
         private LocalDateTime updatedAt;
 
-        @Schema(description = "답글 리스트")
-        private List<ReplyInfoDTO>  replies;
-
         @Builder
         public CommentInfoDTO(Long id,
                               Long userId,
+                              Long generation,
+                              String userName,
                               String content,
+                              Long parentCommentId,
                               LocalDateTime createdAt,
-                              LocalDateTime updatedAt,
-                              List<ReplyInfoDTO> replies)
+                              LocalDateTime updatedAt)
         {
             this.id = id;
             this.userId = userId;
+            this.generation = generation;
+            this.userName = userName;
             this.content = content;
+            this.parentCommentId = parentCommentId;
             this.createdAt = createdAt;
             this.updatedAt = updatedAt;
-            this.replies = replies;
         }
 
     }
@@ -59,6 +66,10 @@ public class CommentDTO {
 
         private Long userId;
 
+        private String userName;
+
+        private Long generation;
+
         private String content;
 
         private LocalDateTime createdAt;
@@ -66,9 +77,17 @@ public class CommentDTO {
         private LocalDateTime updatedAt;
 
         @Builder
-        public ReplyInfoDTO(Long id, Long userId, String content, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        public ReplyInfoDTO(Long id,
+                            Long userId,
+                            Long generation,
+                            String userName,
+                            String content,
+                            LocalDateTime createdAt,
+                            LocalDateTime updatedAt) {
             this.id = id;
             this.userId = userId;
+            this.generation = generation;
+            this.userName = userName;
             this.content = content;
             this.createdAt = createdAt;
             this.updatedAt = updatedAt;
@@ -90,18 +109,15 @@ public class CommentDTO {
 
         private Long postId;
 
-        private Long problemId; // problemId 필드 추가
-
         private String content;
 
         private LocalDateTime createdAt;
 
         @Builder
-        public  CommentCreateResponseDTO(Long commentId,Long userId,Long postId, Long problemId, String content,LocalDateTime createdAt){
+        public  CommentCreateResponseDTO(Long commentId,Long userId,Long postId,String content,LocalDateTime createdAt){
             this.commentId = commentId;
             this.userId = userId;
             this.postId = postId;
-            this.problemId = problemId;
             this.content = content;
             this.createdAt = createdAt;
         }

@@ -134,7 +134,7 @@ public class ProblemService {
         CbuMember author = cbuMemberRepository.findById(problem.getPost().getAuthorId())
                 .orElseThrow(() -> new MemberNotExistsException("작성자를 찾을 수 없습니다."));
 
-        Long commentCount = commentRepository.countByProblemId(problemId);
+        Long commentCount = commentRepository.countByPostId(problemId);
         return ProblemResponseDTO.from(problem, author, commentCount);
     }
 
@@ -186,7 +186,7 @@ public class ProblemService {
                 .map(p -> {
                     CbuMember author = cbuMemberRepository.findById(p.getPost().getAuthorId())
                             .orElseThrow(() -> new MemberNotExistsException("작성자를 찾을 수 없습니다."));
-                    return ProblemListItemDTO.from(p, author, commentRepository.countByProblemId(p.getProblemId()));
+                    return ProblemListItemDTO.from(p, author, commentRepository.countByPostId(p.getProblemId()));
                 });
     }
 
@@ -207,7 +207,7 @@ public class ProblemService {
         CbuMember author = cbuMemberRepository.findById(problem.getPost().getAuthorId())
                 .orElseThrow(() -> new MemberNotExistsException("작성자를 찾을 수 없습니다."));
 
-        Long commentCount = commentRepository.countByProblemId(problemId);
+        Long commentCount = commentRepository.countByPostId(problemId);
         return ProblemResponseDTO.from(problem, author, commentCount);
     }
 
@@ -222,7 +222,7 @@ public class ProblemService {
         CbuMember member = cbuMemberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberNotExistsException("ID가 " + memberId + "인 회원을 찾을 수 없습니다."));
         return problemRepository.findByPostAuthorId(memberId, pageable)
-                .map(p -> ProblemListItemDTO.from(p, member, commentRepository.countByProblemId(p.getProblemId())));
+                .map(p -> ProblemListItemDTO.from(p, member, commentRepository.countByPostId(p.getProblemId())));
     }
 
     /**
