@@ -17,7 +17,7 @@ public class CommentDTO {
     @Getter
     @NoArgsConstructor
     public static class CommentInfoDTO{
-        private Long id;
+        private Long commentId;
 
         private Long userId;
 
@@ -34,7 +34,7 @@ public class CommentDTO {
         private LocalDateTime updatedAt;
 
         @Builder
-        public CommentInfoDTO(Long id,
+        public CommentInfoDTO(Long commentId,
                               Long userId,
                               Long generation,
                               String userName,
@@ -43,7 +43,7 @@ public class CommentDTO {
                               LocalDateTime createdAt,
                               LocalDateTime updatedAt)
         {
-            this.id = id;
+            this.commentId = commentId;
             this.userId = userId;
             this.generation = generation;
             this.userName = userName;

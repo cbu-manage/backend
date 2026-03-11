@@ -27,7 +27,7 @@ public class CommentMapper {
     public CommentDTO.CommentInfoDTO toCommentInfoDTO(Comment comment) {
         CbuMember cbuMember = cbuMemberRepository.findById(comment.getUserId()).orElseThrow(()->new EntityNotFoundException("user Not Found"));
         return CommentDTO.CommentInfoDTO.builder()
-                .id(comment.getId())
+                .commentId(comment.getId())
                 .userId(comment.getUserId())
                 .generation(cbuMember.getGeneration())
                 .userName(cbuMember.getName())

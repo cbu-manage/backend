@@ -11,6 +11,7 @@ import com.example.cbumanage.utils.JwtProvider;
 import com.example.cbumanage.utils.UserIdExtractor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.json.JSONArray;
@@ -25,6 +26,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/")
+@Tag(name = "댓글 관리 컨틀로러")
 public class CommentController {
     private final CommentService commentService;
     private final UserIdExtractor userIdExtractor;
