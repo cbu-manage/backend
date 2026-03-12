@@ -29,7 +29,7 @@ public enum Permission {
 	 * - exclusivePath: 관리자 권한에서 제외할 경로
 	 */
 	ADMIN(
-			Set.of("/api/v1/member", "/api/v1/members", "/api/v1/member/**", "/api/v1/members/**", "/api/v1/candidate/sync"), // 관리자만 접근 가능한 경로
+			Set.of("/api/v1/member", "/api/v1/members", "/api/v1/member/createAccount", "/api/v1/members/**", "/api/v1/candidate/sync", "/api/v1/member/sync"), // 관리자만 접근 가능한 경로
 			Set.of()  // 관리자 권한에서 제외할 경로
 	);
 
