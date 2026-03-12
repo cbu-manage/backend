@@ -56,6 +56,7 @@ dependencies {
     implementation 'com.amazonaws:aws-java-sdk-s3:1.12.707'
     implementation "net.coobird:thumbnailator:0.4.20"
     implementation "com.github.gotson.nightmonkeys:imageio-heif:1.1.0"
+    implementation 'org.jsoup:jsoup:1.17.2'
 
 
 }

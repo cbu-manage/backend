@@ -41,9 +41,30 @@ public class Resource {
      */
     private LocalDateTime deletedAt;
 
+    /*
+    OG (Open Graph) 메타데이터 필드입니다.
+    OG는 링크 공유 시 미리보기로 보여지는 제목, 설명, 이미지 등을 정의합니다.
+     */
+
+    // Open Graph 대표 이미지 URL
+    private String ogImage;
+
+    // Open Graph 설명
+    private String ogDescription;
+
+    // Open Graph 마지막 갱신 시간
+    private LocalDateTime ogUpdatedAt;
+
     @Builder
     public Resource(Post post, String link) {
         this.post = post;
         this.link = link;
     }
+
+    public void updateOg(String ogImage, String ogDescription) {
+        this.ogImage = ogImage;
+        this.ogDescription = ogDescription;
+        this.ogUpdatedAt = LocalDateTime.now();
+    }
+
 }

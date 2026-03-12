@@ -1,6 +1,7 @@
 package com.example.cbumanage.controller;
 
 import com.example.cbumanage.authentication.dto.AccessToken;
+import com.example.cbumanage.dto.OgMetaPreviewDTO;
 import com.example.cbumanage.dto.ResourceCreateRequestDTO;
 import com.example.cbumanage.dto.ResourceListItemDTO;
 import com.example.cbumanage.response.ResultResponse;
@@ -114,6 +115,39 @@ public class ResourceController {
             @ParameterObject @PageableDefault(size = 20, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<ResourceListItemDTO> resources = resourceService.getMyResources(accessToken.getUserId(), pageable);
         return ResultResponse.ok(SuccessCode.SUCCESS, resources);
+    }
+
+    /**
+     * URL에서 OG 메타 정보를 미리보기합니다. (저장 없음)
+     * 자료 등록 전 og:title을 제목 입력란에 자동으로 채워주기 위해 사용합니다.
+     */
+    @GetMapping("/og-preview")
+    @Operation(summary = "OG 데이터 미리보기", description = "URL에서 og:title, og:image, og:description을 추출합니다. 자료 등록 전 제목/이미지/설명 자동 완성에 사용합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OG 정보 추출 성공 (파싱 실패 시 필드는 null로 반환)"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 (토큰 없음 또는 만료)")
+    })
+    public ResponseEntity<ResultResponse<OgMetaPreviewDTO>> previewOg(
+            @Parameter(description = "OG 정보를 추출할 외부 URL", example = "https://github.com/")
+            @RequestParam String url) {
+        return ResultResponse.ok(SuccessCode.SUCCESS, resourceService.previewOg(url));
+    }
+
+    /**
+     * 자료방 게시글의 OG 메타 정보를 수동으로 갱신합니다.
+     * 작성자 본인만 갱신할 수 있습니다.
+     */
+    @PatchMapping("/{id}/refresh-og")
+    @Operation(summary = "OG 메타 수동 갱신", description = "해당 자료의 og:image, og:description을 URL에서 다시 파싱하여 갱신합니다. 작성자 본인만 가능합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OG 갱신 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 (토큰 없음 또는 만료)"),
+            @ApiResponse(responseCode = "403", description = "갱신 권한 없음 (작성자만 가능)"),
+            @ApiResponse(responseCode = "404", description = "자료를 찾을 수 없음")
+    })
+    public ResponseEntity<ResultResponse<Void>> refreshOg(@PathVariable Long id, AccessToken accessToken) {
+        resourceService.refreshOg(id, accessToken.getUserId());
+        return ResultResponse.ok(SuccessCode.UPDATED);
     }
 
     /**

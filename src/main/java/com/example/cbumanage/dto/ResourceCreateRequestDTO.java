@@ -21,4 +21,10 @@ public class ResourceCreateRequestDTO {
     @NotBlank(message = "링크는 필수입니다.")
     @Schema(description = "자료 외부 링크", example = "https://programmers.co.kr/learn/challenges")
     private String link;
+
+    @Schema(description = "OG 이미지 URL (og-preview에서 받은 값)", example = "https://example.com/image.png")
+    private String ogImage;
+
+    @Schema(description = "OG 설명 (og-preview에서 받은 값)", example = "프로그래머스 코딩테스트 연습")
+    private String ogDescription;
 }

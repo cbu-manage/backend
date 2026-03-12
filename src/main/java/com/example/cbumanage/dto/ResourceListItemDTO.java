@@ -28,15 +28,24 @@ public class ResourceListItemDTO {
 
     private final LocalDateTime createdAt;
 
+    /** OG 대표 이미지 URL */
+    private final String ogImage;
+
+    /** OG 설명 */
+    private final String ogDescription;
+
     @Builder
     public ResourceListItemDTO(Long resourceId, String title, String authorName,
-                               Long generation, String link, LocalDateTime createdAt) {
+                               Long generation, String link, LocalDateTime createdAt,
+                               String ogImage, String ogDescription) {
         this.resourceId = resourceId;
         this.title = title;
         this.authorName = authorName;
         this.generation = generation;
         this.link = link;
         this.createdAt = createdAt;
+        this.ogImage = ogImage;
+        this.ogDescription = ogDescription;
     }
 
     /**
@@ -50,6 +59,8 @@ public class ResourceListItemDTO {
                 .generation(author.getGeneration())
                 .link(resource.getLink())
                 .createdAt(resource.getPost().getCreatedAt())
+                .ogImage(resource.getOgImage())
+                .ogDescription(resource.getOgDescription())
                 .build();
     }
 }

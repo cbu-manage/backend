@@ -37,10 +37,6 @@ public class ProblemCreateRequestDTO {
     @NotBlank(message = "문제 내용은 필수입니다.")
     private String content;
 
-    // private String inputDescription;
-
-    // private String outputDescription;
-
     @NotNull(message = "문제 난이도는 필수입니다.")
     @Schema(description = "문제 난이도", example = "SILVER",
             allowableValues = {"BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "RUBY"})
