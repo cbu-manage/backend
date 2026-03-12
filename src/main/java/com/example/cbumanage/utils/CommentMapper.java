@@ -1,11 +1,22 @@
 package com.example.cbumanage.utils;
 
 import com.example.cbumanage.dto.CommentDTO;
+import com.example.cbumanage.model.CbuMember;
 import com.example.cbumanage.model.Comment;
+import com.example.cbumanage.repository.CbuMemberRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class CommentMapper {
+
+    private CbuMemberRepository cbuMemberRepository;
+
+    @Autowired
+    public CommentMapper(CbuMemberRepository cbuMemberRepository) {
+        this.cbuMemberRepository = cbuMemberRepository;
+    }
 
     /*
     CommentInfo를 만드는 Mapper입니다.
@@ -14,26 +25,14 @@ public class CommentMapper {
     softDelete - 만약 삭제된 댓글이지만 답글이 있을경우, 댓글-답글 목록은 보여주되, 내용은 삭제된 댓글입이다 라고 표시합니다
      */
     public CommentDTO.CommentInfoDTO toCommentInfoDTO(Comment comment) {
+        CbuMember cbuMember = cbuMemberRepository.findById(comment.getUserId()).orElseThrow(()->new EntityNotFoundException("user Not Found"));
         return CommentDTO.CommentInfoDTO.builder()
-                .id(comment.getId())
+                .commentId(comment.getId())
                 .userId(comment.getUserId())
+                .generation(cbuMember.getGeneration())
+                .userName(cbuMember.getName())
                 .content(comment.isDeleted() ? "삭제된 댓글입니다" : comment.getContent())
-                .createdAt(comment.getCreatedAt())
-                .updatedAt(comment.getUpdatedAt())
-                .replies(comment.getReplies().stream().map(reply -> toReplyInfoDTO(reply)).toList())
-                .build();
-    }
-
-    /*
-    Comment의 replies를 DTO로 변환시키기 위한 메소드 입니다
-
-    softDelete - 만약 삭제된 답글이라면, 내용에 삭제된 답글이라고 표시합니다
-     */
-    public CommentDTO.ReplyInfoDTO toReplyInfoDTO(Comment comment) {
-        return CommentDTO.ReplyInfoDTO.builder()
-                .id(comment.getId())
-                .userId(comment.getUserId())
-                .content(comment.isDeleted() ? "삭제된 답글입니다" : comment.getContent())
+                .parentCommentId(comment.getParentComment()!=null?comment.getParentComment().getId():null)
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .build();
@@ -45,8 +44,7 @@ public class CommentMapper {
         return CommentDTO.CommentCreateResponseDTO.builder()
                 .commentId(comment.getId())
                 .userId(comment.getUserId())
-                .postId(comment.getPost() != null ? comment.getPost().getId() : null)
-                .problemId(comment.getProblem() != null ? comment.getProblem().getProblemId() : null)
+                .postId(comment.getPost().getId())
                 .content(comment.getContent())
                 .createdAt(comment.getCreatedAt())
                 .build();

@@ -30,9 +30,9 @@ public class Comment {
     @JoinColumn(name="post_id")
     private Post post;
 
-    @ManyToOne
-    @JoinColumn(name = "problem_id")
-    private Problem problem;
+//    @ManyToOne
+//    @JoinColumn(name = "problem_id")
+//    private Problem problem;
 
     //user와 Comment는 연관관계가 약하기에 userId를 외래키로 넣었습니다
     private Long userId;
@@ -61,7 +61,7 @@ public class Comment {
      */
     public Comment(Post post, Long userId,Comment parentComment, String content) {
         this.post = post;
-        this.problem = null;
+//        this.problem = null;
         this.userId = userId;
         this.parentComment = parentComment;
         this.content = content;
@@ -70,13 +70,13 @@ public class Comment {
     /**
      * Problem 대한 댓글 생성
      */
-    public Comment(Problem problem, Long userId,Comment parentComment, String content) {
-        this.post = null;
-        this.problem = problem;
-        this.userId = userId;
-        this.parentComment = parentComment;
-        this.content = content;
-    }
+//    public Comment(Problem problem, Long userId,Comment parentComment, String content) {
+//        this.post = null;
+////        this.problem = problem;
+//        this.userId = userId;
+//        this.parentComment = parentComment;
+//        this.content = content;
+//    }
 
     /**
      * 이  메소드는 생성자 오버로딩 방식으로 변경합니다.
