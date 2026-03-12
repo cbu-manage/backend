@@ -26,7 +26,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/")
-@Tag(name = "댓글 관리 컨틀로러")
+@Tag(name = "댓글 관리 컨트롤러")
 public class CommentController {
     private final CommentService commentService;
     private final UserIdExtractor userIdExtractor;
