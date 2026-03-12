@@ -1,5 +1,6 @@
 package com.example.cbumanage.service;
 
+import com.example.cbumanage.dto.OgMetaPreviewDTO;
 import com.example.cbumanage.dto.ResourceCreateRequestDTO;
 import com.example.cbumanage.dto.ResourceListItemDTO;
 import com.example.cbumanage.exception.MemberDoesntHavePermissionException;
@@ -10,6 +11,7 @@ import com.example.cbumanage.model.Resource;
 import com.example.cbumanage.repository.CbuMemberRepository;
 import com.example.cbumanage.repository.PostRepository;
 import com.example.cbumanage.repository.ResourceRepository;
+import com.example.cbumanage.utils.OgMetaParser;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,12 +28,14 @@ public class ResourceService {
     private final ResourceRepository resourceRepository;
     private final PostRepository postRepository;
     private final CbuMemberRepository cbuMemberRepository;
+    private final OgMetaParser ogMetaParser;
 
     public ResourceService(ResourceRepository resourceRepository, PostRepository postRepository,
-                           CbuMemberRepository cbuMemberRepository) {
+                           CbuMemberRepository cbuMemberRepository, OgMetaParser ogMetaParser) {
         this.resourceRepository = resourceRepository;
         this.postRepository = postRepository;
         this.cbuMemberRepository = cbuMemberRepository;
+        this.ogMetaParser = ogMetaParser;
     }
 
     /**
@@ -46,13 +50,21 @@ public class ResourceService {
         CbuMember member = cbuMemberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberNotExistsException("ID가 " + memberId + "인 회원을 찾을 수 없습니다."));
 
-        Post post = Post.create(member.getCbuMemberId(), request.getTitle(), "", 6);
+        String title = request.getTitle();
+        if (title == null || title.isBlank()) {
+            OgMetaParser.OgMeta ogMeta = ogMetaParser.parse(request.getLink());
+            title = (ogMeta.title() != null) ? ogMeta.title() : request.getLink();
+        }
+
+        Post post = Post.create(member.getCbuMemberId(), title, "", 6);
         Post savedPost = postRepository.save(post);
 
         Resource resource = Resource.builder()
                 .post(savedPost)
                 .link(request.getLink())
                 .build();
+
+        resource.updateOg(request.getOgImage(), request.getOgDescription());
 
         resourceRepository.save(resource);
         return ResourceListItemDTO.from(resource, member);
@@ -85,6 +97,36 @@ public class ResourceService {
                 .orElseThrow(() -> new MemberNotExistsException("ID가 " + memberId + "인 회원을 찾을 수 없습니다."));
         return resourceRepository.findByPostAuthorId(memberId, pageable)
                 .map(r -> ResourceListItemDTO.from(r, member));
+    }
+
+    /**
+     * URL에서 OG 메타 정보를 파싱하여 반환합니다. (저장 없이 미리보기용)
+     *
+     * @param url 미리보기할 외부 URL
+     * @return OG 제목, 이미지, 설명
+     */
+    public OgMetaPreviewDTO previewOg(String url) {
+        return new OgMetaPreviewDTO(ogMetaParser.parse(url));
+    }
+
+    /**
+     * 자료방 게시글의 OG 메타 정보를 URL에서 다시 파싱하여 갱신합니다.
+     * 작성자 본인만 갱신할 수 있습니다.
+     *
+     * @param resourceId 갱신할 게시글 ID
+     * @param memberId   요청 회원 ID
+     */
+    @Transactional
+    public void refreshOg(Long resourceId, Long memberId) {
+        Resource resource = resourceRepository.findById(resourceId)
+                .orElseThrow(() -> new EntityNotFoundException("ID가 " + resourceId + "인 자료를 찾을 수 없습니다."));
+
+        if (!resource.getPost().getAuthorId().equals(memberId)) {
+            throw new MemberDoesntHavePermissionException("이 자료의 OG 정보를 갱신할 권한이 없습니다.");
+        }
+
+        OgMetaParser.OgMeta ogMeta = ogMetaParser.parse(resource.getLink());
+        resource.updateOg(ogMeta.image(), ogMeta.description());
     }
 
     /**
