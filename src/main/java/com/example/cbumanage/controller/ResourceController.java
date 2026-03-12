@@ -52,12 +52,29 @@ public class ResourceController {
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "자료 등록 예시",
-                                    value = """
-                                            { "link" : "https://programmers.co.kr/learn/challenges", "ogImage" : "https://example.com/image.png", "ogDescription" : "프로그래머스 코딩테스트 연습" }
-                                            """
-                            )
+                            examples = {
+                                    @ExampleObject(
+                                            name = "링크만 전송 (제목 자동 설정)",
+                                            summary = "link만 보내면 OG 파싱으로 제목/이미지/설명 자동 설정",
+                                            value = """
+                                                    { "link": "https://programmers.co.kr/learn/challenges" }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "og-preview 결과 포함 전송",
+                                            summary = "og-preview API로 받은 OG 정보를 함께 전송 (서버 재파싱 없이 저장)",
+                                            value = """
+                                                    { "link": "https://programmers.co.kr/learn/challenges", "ogImage": "https://example.com/image.png", "ogDescription": "프로그래머스 코딩테스트 연습" }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "제목 직접 입력",
+                                            summary = "사용자가 제목을 직접 입력한 경우 (OG 파싱 제목 무시)",
+                                            value = """
+                                                    { "link": "https://programmers.co.kr/learn/challenges", "title": "2024 카카오 코딩테스트 문제 모음", "ogImage": "https://example.com/image.png", "ogDescription": "프로그래머스 코딩테스트 연습" }
+                                                    """
+                                    )
+                            }
                     )
             )
     )
