@@ -14,8 +14,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ResourceCreateRequestDTO {
 
-    @NotBlank(message = "제목은 필수입니다.")
-    @Schema(description = "자료 제목", example = "2024 카카오 코딩테스트 문제 모음")
+    @Schema(description = "자료 제목 (생략 시 OG 파싱으로 자동 설정)", example = "2024 카카오 코딩테스트 문제 모음")
     private String title;
 
     @NotBlank(message = "링크는 필수입니다.")

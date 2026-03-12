@@ -50,7 +50,13 @@ public class ResourceService {
         CbuMember member = cbuMemberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberNotExistsException("ID가 " + memberId + "인 회원을 찾을 수 없습니다."));
 
-        Post post = Post.create(member.getCbuMemberId(), request.getTitle(), "", 6);
+        String title = request.getTitle();
+        if (title == null || title.isBlank()) {
+            OgMetaParser.OgMeta ogMeta = ogMetaParser.parse(request.getLink());
+            title = (ogMeta.title() != null) ? ogMeta.title() : request.getLink();
+        }
+
+        Post post = Post.create(member.getCbuMemberId(), title, "", 6);
         Post savedPost = postRepository.save(post);
 
         Resource resource = Resource.builder()

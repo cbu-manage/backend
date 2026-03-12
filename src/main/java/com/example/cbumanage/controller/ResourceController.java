@@ -47,15 +47,15 @@ public class ResourceController {
     @PostMapping
     @Operation(
             summary = "자료 등록",
-            description = "자료방에 새 게시글을 등록합니다. 제목과 링크는 필수입니다.",
+            description = "자료방에 새 게시글을 등록합니다. 링크는 필수이며, 제목을 생략하면 OG 파싱으로 자동 설정됩니다.",
             requestBody = @RequestBody(
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
                                     name = "자료 등록 예시",
-                                    value = """ 
-                                            { "title" : "2024 카카오 코딩테스트 문제 모음", "link" : "https://programmers.co.kr/learn/challenges" }
+                                    value = """
+                                            { "link" : "https://programmers.co.kr/learn/challenges", "ogImage" : "https://example.com/image.png", "ogDescription" : "프로그래머스 코딩테스트 연습" }
                                             """
                             )
                     )
