@@ -36,8 +36,10 @@ public class GroupUtil {
                 .activeMemberCount((int) group.getMembers().stream()
                         .filter(m -> m.getGroupMemberStatus() == GroupMemberStatus.ACTIVE)
                         .count())
-                .maxActiveMembers(group.getMaxActiveMembers())
-                .minActiveMembers(group.getMinActiveMembers())
+                .maxMembers
+
+(group.getMaxActiveMembers())
+                .minMembers(group.getMinActiveMembers())
                 .members(group.getMembers().stream().map(m->toGroupMemberInfoDTO(m)).toList())
                 .groupRecruitmentStatus(group.getRecruitmentStatus())
                 .groupStatus(group.getStatus())
@@ -67,8 +69,10 @@ public class GroupUtil {
         return GroupDTO.GroupCreateResponseDTO.builder()
                 .groupId(group.getId())
                 .groupName(group.getGroupName())
-                .maxActiveMembers(group.getMaxActiveMembers())
-                .minActiveMembers(group.getMinActiveMembers())
+                .maxMembers
+
+(group.getMaxActiveMembers())
+                .minMembers(group.getMinActiveMembers())
                 .createdAt(group.getCreatedAt())
                 .leader(toGroupMemberInfoDTO(leader))
                 .build();
@@ -97,7 +101,9 @@ public class GroupUtil {
                 .activeMemberCount((int) group.getMembers().stream()
                         .filter(m -> m.getGroupMemberStatus() == GroupMemberStatus.ACTIVE)
                         .count())
-                .maxActiveMembers(group.getMaxActiveMembers() != null ? group.getMaxActiveMembers() : 0)
+                .maxMembers
+
+(group.getMaxActiveMembers() != null ? group.getMaxActiveMembers() : 0)
                 .leaderId(leader != null ? leader.getCbuMember().getCbuMemberId() : null)
                 .leaderName(leader != null ? leader.getCbuMember().getName() : null)
                 .build();
@@ -120,7 +126,9 @@ public class GroupUtil {
                 .activeMemberCount((int) group.getMembers().stream()
                         .filter(m -> m.getGroupMemberStatus() == GroupMemberStatus.ACTIVE)
                         .count())
-                .maxActiveMembers(group.getMaxActiveMembers() != null ? group.getMaxActiveMembers() : 0)
+                .maxMembers
+
+(group.getMaxActiveMembers() != null ? group.getMaxActiveMembers() : 0)
                 .leaderId(leader != null ? leader.getCbuMember().getCbuMemberId() : null)
                 .leaderName(leader != null ? leader.getCbuMember().getName() : null)
                 .myStatus(groupMember.getGroupMemberStatus())

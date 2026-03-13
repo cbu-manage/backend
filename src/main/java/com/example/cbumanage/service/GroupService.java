@@ -74,7 +74,7 @@ public class GroupService {
                 existing.changeStatus(GroupMemberStatus.PENDING);
                 return groupUtil.toGroupMemberInfoDTO(existing);
             }
-            throw new CustomException(ErrorCode.ALREADY_JOINED_MEMBER);
+            throw new CustomException(ErrorCode.ALREADY_JOINED_MEMBER,"중복 신청이 불가합니다.");
         }
         CbuMember member = cbuMemberRepository.findById(memberId)
                 .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"유저 정보를 찾을 수 없습니다."));

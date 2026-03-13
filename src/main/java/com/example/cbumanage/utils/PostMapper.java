@@ -146,7 +146,7 @@ public class PostMapper {
                         .collect(Collectors.toList()))
                 .recruiting(project.getRecruiting())
                 .deadline(project.getDeadline())
-                .maxMember(group.getMaxActiveMembers())
+                .maxMembers(group.getMaxActiveMembers())
                 .category(post.getCategory())
                 .build();
     }
@@ -255,12 +255,12 @@ public class PostMapper {
                 .deadline(project.getDeadline())
                 .viewCount(project.getPost().getViewCount())
                 .activeMemberCount(activeMemberCount)
-                .maxMember(maxMember)
+                .maxMembers(maxMember)
                 .build();
     }
 
     // 프로젝트 게시글 목록 조회 DTO 변환 
-    public PostDTO.ProjectListDTO toProjectListDTO(Project project, CbuMember author, int activeMemberCount, int maxMember) {
+    public PostDTO.ProjectListDTO toProjectListDTO(Project project, CbuMember author, int activeMemberCount, int maxMembers) {
         return PostDTO.ProjectListDTO.builder()
                 .postId(project.getPost().getId())
                 .title(project.getPost().getTitle())
@@ -276,7 +276,7 @@ public class PostMapper {
                 .deadline(project.getDeadline())
                 .viewCount(project.getPost().getViewCount())
                 .activeMemberCount(activeMemberCount)
-                .maxMember(maxMember)
+                .maxMembers(maxMembers)
                 .build();
     }
 

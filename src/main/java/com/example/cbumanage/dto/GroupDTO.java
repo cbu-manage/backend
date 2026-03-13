@@ -23,8 +23,8 @@ public class GroupDTO {
     @NoArgsConstructor
     public static class GroupCreateRequestDTO {
         private String groupName;
-        private int maxActiveMembers;
-        private int minActiveMembers;
+        private int maxMembers;
+        private int minMembers;
     }
 
     @Getter
@@ -32,17 +32,17 @@ public class GroupDTO {
     public static class GroupCreateResponseDTO {
         private Long groupId;
         private String groupName;
-        private int maxActiveMembers;
-        private int minActiveMembers;
+        private int maxMembers;
+        private int minMembers;
         private LocalDateTime createdAt;
         private GroupMemberInfoDTO leader;
 
         @Builder
-        public GroupCreateResponseDTO(Long groupId,String groupName, int maxActiveMembers, int minActiveMembers, LocalDateTime createdAt, GroupMemberInfoDTO leader) {
+        public GroupCreateResponseDTO(Long groupId,String groupName, int maxMembers, int minMembers, LocalDateTime createdAt, GroupMemberInfoDTO leader) {
             this.groupId = groupId;
             this.groupName = groupName;
-            this.maxActiveMembers = maxActiveMembers;
-            this.minActiveMembers = minActiveMembers;
+            this.maxMembers = maxMembers;
+            this.minMembers = minMembers;
             this.createdAt = createdAt;
             this.leader = leader;
         }
@@ -52,8 +52,8 @@ public class GroupDTO {
     @NoArgsConstructor
     public static class GroupUpdateRequestDTO{
         private String groupName;
-        private Integer maxActiveMembers;
-        private int minActiveMembers;
+        private Integer maxMembers;
+        private int minMembers;
     }
 
     @Schema(description = "그룹 상태 변환 요청 DTO")
@@ -92,10 +92,10 @@ public class GroupDTO {
         private String groupName;
         @Schema(description = "그룹 생성일")
         private LocalDateTime createdAt;
-        @Schema(description = "현재 활동 중인 인원 수. maxActiveMembers와 함께 N/M 형태 표시용", example = "5")
+        @Schema(description = "현재 활동 중인 인원 수. maxMembers와 함께 N/M 형태 표시용", example = "5")
         private int activeMemberCount;
         @Schema(description = "최대 모집 인원 수. 활동수와 함께 N/M 형태 표시용", example = "10")
-        private int maxActiveMembers;
+        private int maxMembers;
         @Schema(description = "현재 그룹 활성화 상태", example = "ACTIVE")
         GroupStatus groupStatus;
         @Schema(description = "현재 그룹 모집 상태",example="OPEN")
@@ -112,7 +112,7 @@ public class GroupDTO {
                 String groupName,
                 LocalDateTime createdAt,
                 int activeMemberCount,
-                int maxActiveMembers,
+                int maxMembers,
                 GroupStatus groupStatus,
                 GroupRecruitmentStatus groupRecruitmentStatus,
                 Long leaderId,
@@ -125,7 +125,7 @@ public class GroupDTO {
             this.groupStatus = groupStatus;
             this.groupRecruitmentStatus = groupRecruitmentStatus;
             this.activeMemberCount = activeMemberCount;
-            this.maxActiveMembers = maxActiveMembers;
+            this.maxMembers = maxMembers;
             this.leaderId=leaderId;
             this.leaderName=leaderName;
         }
@@ -146,7 +146,7 @@ public class GroupDTO {
         @Schema(description = "현재 활동 중인 인원 수", example = "5")
         private int activeMemberCount;
         @Schema(description = "최대 모집 인원 수", example = "10")
-        private int maxActiveMembers;
+        private int maxMembers;
         @Schema(description = "그룹 활성화 상태", example = "ACTIVE")
         private GroupStatus groupStatus;
         @Schema(description = "그룹 모집 상태", example = "OPEN")
@@ -160,7 +160,7 @@ public class GroupDTO {
 
         @Builder
         public MyGroupApplicationListDTO(Long groupId, Long postId, String groupName, LocalDateTime createdAt,
-                                         int activeMemberCount, int maxActiveMembers, GroupStatus groupStatus,
+                                         int activeMemberCount, int maxMembers, GroupStatus groupStatus,
                                          GroupRecruitmentStatus groupRecruitmentStatus, Long leaderId, String leaderName,
                                          GroupMemberStatus myStatus) {
             this.groupId = groupId;
@@ -168,7 +168,7 @@ public class GroupDTO {
             this.groupName = groupName;
             this.createdAt = createdAt;
             this.activeMemberCount = activeMemberCount;
-            this.maxActiveMembers = maxActiveMembers;
+            this.maxMembers = maxMembers;
             this.groupStatus = groupStatus;
             this.groupRecruitmentStatus = groupRecruitmentStatus;
             this.leaderId = leaderId;
@@ -200,9 +200,9 @@ public class GroupDTO {
         @Schema(description = "현재 활동 중인 인원 수", example = "5")
         private int activeMemberCount;
         @Schema(description = "최대 인원 제한", example = "10")
-        private int maxActiveMembers;
+        private int maxMembers;
         @Schema(description = "최소 인원 제한", example = "3")
-        private int minActiveMembers;
+        private int minMembers;
         @Schema(description = "그룹 소속 멤버 리스트")
         private List<GroupMemberInfoDTO> members;
 
@@ -215,8 +215,8 @@ public class GroupDTO {
                 GroupRecruitmentStatus groupRecruitmentStatus,
                 GroupStatus  groupStatus,
                 int activeMemberCount,
-                int maxActiveMembers,
-                int minActiveMembers,
+                int maxMembers,
+                int minMembers,
                 List<GroupMemberInfoDTO> members
         ){
             this.groupId = groupId;
@@ -226,8 +226,8 @@ public class GroupDTO {
             this.groupRecruitmentStatus = groupRecruitmentStatus;
             this.groupStatus = groupStatus;
             this.activeMemberCount = activeMemberCount;
-            this.maxActiveMembers = maxActiveMembers;
-            this.minActiveMembers = minActiveMembers;
+            this.maxMembers = maxMembers;
+            this.minMembers = minMembers;
             this.members = members;
         }
 

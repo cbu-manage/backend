@@ -147,8 +147,8 @@ public class ProjectService {
                 project.getGroup().changeGroupName(newGroupName);
             }
             updateProject(projectUpdateDTO, project);
-            if (req.getMaxMember() != null) {
-                groupService.updateGroupMaxMember(project.getGroup().getId(), req.getMaxMember());
+            if (req.getMaxMembers() != null) {
+                groupService.updateGroupMaxMember(project.getGroup().getId(), req.getMaxMembers());
             }
             GroupRecruitmentStatus status = req.getRecruiting()
                     ? GroupRecruitmentStatus.OPEN : GroupRecruitmentStatus.CLOSED;
@@ -162,7 +162,7 @@ public class ProjectService {
         PostDTO.PostCreateDTO postCreateDTO = postMapper.toPostCreateDTO(req, userId);
         Post post = postService.createPost(postCreateDTO);
         String groupName = post.getTitle();
-        Group group = groupService.createGroup(groupName, post.getAuthorId(), req.getMaxMember(), post.getId());
+        Group group = groupService.createGroup(groupName, post.getAuthorId(), req.getMaxMembers(), post.getId());
         PostDTO.ProjectCreateDTO projectCreateDTO = postMapper.toProjectCreateDTO(req, post.getId());
         Project project = createProject(projectCreateDTO,group);
         CbuMember author = cbuMemberRepository.findById(post.getAuthorId())
