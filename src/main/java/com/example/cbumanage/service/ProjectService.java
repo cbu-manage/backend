@@ -6,6 +6,7 @@ import com.example.cbumanage.model.CbuMember;
 import com.example.cbumanage.model.Group;
 import com.example.cbumanage.model.Post;
 import com.example.cbumanage.model.Project;
+import com.example.cbumanage.model.enums.GroupMemberStatus;
 import com.example.cbumanage.model.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.model.enums.ProjectFieldType;
 import com.example.cbumanage.repository.CbuMemberRepository;
@@ -74,7 +75,13 @@ public class ProjectService {
         post.upViewCount();
         boolean isLeader = userId != null && userId.equals(project.getPost().getAuthorId());
         CbuMember author = cbuMemberRepository.findById(project.getPost().getAuthorId()).orElse(null);
-        return postMapper.toProjectInfoDetailDTO(project, userId, isLeader, hasApplied, author);
+        int active = 0;
+        int max = 0;
+        if (project.getGroup() != null) {
+            active = groupRepository.countByGroupIdAndStatus(project.getGroup().getId(), GroupMemberStatus.ACTIVE);
+            max = project.getGroup().getMaxActiveMembers();
+        }
+        return postMapper.toProjectInfoDetailDTO(project, userId, isLeader, hasApplied, author, active, max);
     }
 
 
@@ -92,17 +99,27 @@ public class ProjectService {
         return mapProjectsToProjectListDTO(projects);
     }
 
-    // 프로젝트 목록 조회 결과에 작성자 정보를 매핑하여 DTO로 변환
+    // 프로젝트 목록 조회 결과에 작성자 정보 및 활동인원/최대인원 매핑
     private Page<PostDTO.ProjectListDTO> mapProjectsToProjectListDTO(Page<Project> projects) {
         if (projects.getContent().isEmpty()) {
-            return projects.map(p -> postMapper.toProjectListDTO(p, null));
+            return projects.map(p -> toProjectListDTOWithMemberCounts(p, null));
         }
         java.util.Set<Long> authorIds = projects.getContent().stream()
                 .map(p -> p.getPost().getAuthorId())
                 .collect(java.util.stream.Collectors.toSet());
         java.util.Map<Long, CbuMember> authorMap = cbuMemberRepository.findAllById(authorIds).stream()
                 .collect(java.util.stream.Collectors.toMap(CbuMember::getCbuMemberId, m -> m));
-        return projects.map(p -> postMapper.toProjectListDTO(p, authorMap.get(p.getPost().getAuthorId())));
+        return projects.map(p -> toProjectListDTOWithMemberCounts(p, authorMap.get(p.getPost().getAuthorId())));
+    }
+
+    private PostDTO.ProjectListDTO toProjectListDTOWithMemberCounts(Project p, CbuMember author) {
+        int active = 0;
+        int max = 0;
+        if (p.getGroup() != null) {
+            active = groupRepository.countByGroupIdAndStatus(p.getGroup().getId(), GroupMemberStatus.ACTIVE);
+            max = p.getGroup().getMaxActiveMembers();
+        }
+        return postMapper.toProjectListDTO(p, author, active, max);
     }
 
     //프로젝트 게시글 수정 메서드
@@ -130,8 +147,8 @@ public class ProjectService {
                 project.getGroup().changeGroupName(newGroupName);
             }
             updateProject(projectUpdateDTO, project);
-            if (req.getMaxMember() != null) {
-                groupService.updateGroupMaxMember(project.getGroup().getId(), req.getMaxMember());
+            if (req.getMaxMembers() != null) {
+                groupService.updateGroupMaxMember(project.getGroup().getId(), req.getMaxMembers());
             }
             GroupRecruitmentStatus status = req.getRecruiting()
                     ? GroupRecruitmentStatus.OPEN : GroupRecruitmentStatus.CLOSED;
@@ -145,7 +162,7 @@ public class ProjectService {
         PostDTO.PostCreateDTO postCreateDTO = postMapper.toPostCreateDTO(req, userId);
         Post post = postService.createPost(postCreateDTO);
         String groupName = post.getTitle();
-        Group group = groupService.createGroup(groupName, post.getAuthorId(),req.getMaxMember());
+        Group group = groupService.createGroup(groupName, post.getAuthorId(), req.getMaxMembers(), post.getId());
         PostDTO.ProjectCreateDTO projectCreateDTO = postMapper.toProjectCreateDTO(req, post.getId());
         Project project = createProject(projectCreateDTO,group);
         CbuMember author = cbuMemberRepository.findById(post.getAuthorId())

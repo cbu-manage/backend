@@ -18,6 +18,9 @@ public interface StudyRepository extends JpaRepository<Study, Long> {
 
     Optional<Study> findByPostId(Long postId);
 
+    @Query("SELECT s FROM Study s WHERE s.group.id = :groupId")
+    Optional<Study> findByGroupId(@Param("groupId") Long groupId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM Study s WHERE s.post.id = :postId")
     Optional<Study> findByPostIdForUpdate(@Param("postId") Long postId);

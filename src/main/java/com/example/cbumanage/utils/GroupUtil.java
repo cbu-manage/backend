@@ -36,8 +36,10 @@ public class GroupUtil {
                 .activeMemberCount((int) group.getMembers().stream()
                         .filter(m -> m.getGroupMemberStatus() == GroupMemberStatus.ACTIVE)
                         .count())
-                .maxActiveMembers(group.getMaxActiveMembers())
-                .minActiveMembers(group.getMinActiveMembers())
+                .maxMembers
+
+(group.getMaxActiveMembers())
+                .minMembers(group.getMinActiveMembers())
                 .members(group.getMembers().stream().map(m->toGroupMemberInfoDTO(m)).toList())
                 .groupRecruitmentStatus(group.getRecruitmentStatus())
                 .groupStatus(group.getStatus())
@@ -67,8 +69,10 @@ public class GroupUtil {
         return GroupDTO.GroupCreateResponseDTO.builder()
                 .groupId(group.getId())
                 .groupName(group.getGroupName())
-                .maxActiveMembers(group.getMaxActiveMembers())
-                .minActiveMembers(group.getMinActiveMembers())
+                .maxMembers
+
+(group.getMaxActiveMembers())
+                .minMembers(group.getMinActiveMembers())
                 .createdAt(group.getCreatedAt())
                 .leader(toGroupMemberInfoDTO(leader))
                 .build();
@@ -89,6 +93,7 @@ public class GroupUtil {
 
         return GroupDTO.GroupListDTO.builder()
                 .groupId(group.getId())
+                .postId(group.getPostId())
                 .groupName(group.getGroupName())
                 .createdAt(group.getCreatedAt())
                 .groupStatus(group.getStatus())
@@ -96,8 +101,37 @@ public class GroupUtil {
                 .activeMemberCount((int) group.getMembers().stream()
                         .filter(m -> m.getGroupMemberStatus() == GroupMemberStatus.ACTIVE)
                         .count())
+                .maxMembers
+
+(group.getMaxActiveMembers() != null ? group.getMaxActiveMembers() : 0)
                 .leaderId(leader != null ? leader.getCbuMember().getCbuMemberId() : null)
                 .leaderName(leader != null ? leader.getCbuMember().getName() : null)
+                .build();
+    }
+
+    // 내가 신청한 그룹 목록 ACTIVE=승인, PENDING=승인 대기중, REJECTED=거절됨, INACTIVE=비활동
+    public GroupDTO.MyGroupApplicationListDTO toMyGroupApplicationListDTO(GroupMember groupMember) {
+        Group group = groupMember.getGroup();
+        GroupMember leader = group.getMembers().stream()
+                .filter(m -> m.getGroupMemberRole() == GroupMemberRole.LEADER)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Leader not found"));
+        return GroupDTO.MyGroupApplicationListDTO.builder()
+                .groupId(group.getId())
+                .postId(group.getPostId())
+                .groupName(group.getGroupName())
+                .createdAt(group.getCreatedAt())
+                .groupStatus(group.getStatus())
+                .groupRecruitmentStatus(group.getRecruitmentStatus())
+                .activeMemberCount((int) group.getMembers().stream()
+                        .filter(m -> m.getGroupMemberStatus() == GroupMemberStatus.ACTIVE)
+                        .count())
+                .maxMembers
+
+(group.getMaxActiveMembers() != null ? group.getMaxActiveMembers() : 0)
+                .leaderId(leader != null ? leader.getCbuMember().getCbuMemberId() : null)
+                .leaderName(leader != null ? leader.getCbuMember().getName() : null)
+                .myStatus(groupMember.getGroupMemberStatus())
                 .build();
     }
 }

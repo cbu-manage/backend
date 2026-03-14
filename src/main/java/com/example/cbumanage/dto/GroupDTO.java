@@ -23,8 +23,8 @@ public class GroupDTO {
     @NoArgsConstructor
     public static class GroupCreateRequestDTO {
         private String groupName;
-        private Integer maxActiveMembers;
-        private int minActiveMembers;
+        private int maxMembers;
+        private int minMembers;
     }
 
     @Getter
@@ -32,17 +32,17 @@ public class GroupDTO {
     public static class GroupCreateResponseDTO {
         private Long groupId;
         private String groupName;
-        private Integer maxActiveMembers;
-        private int minActiveMembers;
+        private int maxMembers;
+        private int minMembers;
         private LocalDateTime createdAt;
         private GroupMemberInfoDTO leader;
 
         @Builder
-        public GroupCreateResponseDTO(Long groupId,String groupName, Integer maxActiveMembers, int minActiveMembers, LocalDateTime createdAt, GroupMemberInfoDTO leader) {
+        public GroupCreateResponseDTO(Long groupId,String groupName, int maxMembers, int minMembers, LocalDateTime createdAt, GroupMemberInfoDTO leader) {
             this.groupId = groupId;
             this.groupName = groupName;
-            this.maxActiveMembers = maxActiveMembers;
-            this.minActiveMembers = minActiveMembers;
+            this.maxMembers = maxMembers;
+            this.minMembers = minMembers;
             this.createdAt = createdAt;
             this.leader = leader;
         }
@@ -52,8 +52,8 @@ public class GroupDTO {
     @NoArgsConstructor
     public static class GroupUpdateRequestDTO{
         private String groupName;
-        private Integer maxActiveMembers;
-        private int minActiveMembers;
+        private Integer maxMembers;
+        private int minMembers;
     }
 
     @Schema(description = "그룹 상태 변환 요청 DTO")
@@ -86,12 +86,16 @@ public class GroupDTO {
     public static class GroupListDTO{
         @Schema(description = "그룹 고유 ID", example = "1")
         private Long groupId;
+        @Schema(description = "연결된 게시글 ID. 목록에서 해당 프로젝트/스터디 상세로 이동 시 사용. 없으면 null", example = "101")
+        private Long postId;
         @Schema(description = "그룹명", example = "AI 에이전트를 활용한 프로젝트 팀원 모집")
         private String groupName;
         @Schema(description = "그룹 생성일")
         private LocalDateTime createdAt;
-        @Schema(description = "현재 활동 중인 인원 수", example = "5")
+        @Schema(description = "현재 활동 중인 인원 수. maxMembers와 함께 N/M 형태 표시용", example = "5")
         private int activeMemberCount;
+        @Schema(description = "최대 모집 인원 수. 활동수와 함께 N/M 형태 표시용", example = "10")
+        private int maxMembers;
         @Schema(description = "현재 그룹 활성화 상태", example = "ACTIVE")
         GroupStatus groupStatus;
         @Schema(description = "현재 그룹 모집 상태",example="OPEN")
@@ -104,22 +108,72 @@ public class GroupDTO {
         @Builder
         public GroupListDTO(
                 Long groupId,
+                Long postId,
                 String groupName,
                 LocalDateTime createdAt,
                 int activeMemberCount,
+                int maxMembers,
                 GroupStatus groupStatus,
                 GroupRecruitmentStatus groupRecruitmentStatus,
                 Long leaderId,
                 String leaderName
         ){
             this.groupId = groupId;
+            this.postId = postId;
             this.groupName = groupName;
             this.createdAt = createdAt;
             this.groupStatus = groupStatus;
             this.groupRecruitmentStatus = groupRecruitmentStatus;
             this.activeMemberCount = activeMemberCount;
+            this.maxMembers = maxMembers;
             this.leaderId=leaderId;
             this.leaderName=leaderName;
+        }
+    }
+
+    @Schema(description = "내가 신청한 그룹 목록. myStatus로 승인/대기/거절/비활동 구분. 프론트에서 라벨·버튼 분기용.")
+    @Getter
+    @NoArgsConstructor
+    public static class MyGroupApplicationListDTO {
+        @Schema(description = "그룹 고유 ID", example = "1")
+        private Long groupId;
+        @Schema(description = "연결된 게시글 ID. 해당 프로젝트/스터디 상세 이동 시 사용", example = "101")
+        private Long postId;
+        @Schema(description = "그룹명")
+        private String groupName;
+        @Schema(description = "그룹 생성일")
+        private LocalDateTime createdAt;
+        @Schema(description = "현재 활동 중인 인원 수", example = "5")
+        private int activeMemberCount;
+        @Schema(description = "최대 모집 인원 수", example = "10")
+        private int maxMembers;
+        @Schema(description = "그룹 활성화 상태", example = "ACTIVE")
+        private GroupStatus groupStatus;
+        @Schema(description = "그룹 모집 상태", example = "OPEN")
+        private GroupRecruitmentStatus groupRecruitmentStatus;
+        @Schema(description = "리더 ID", example = "10")
+        private Long leaderId;
+        @Schema(description = "리더 이름")
+        private String leaderName;
+        @Schema(description = "내 신청/가입 상태. PENDING=승인 대기중, ACTIVE=승인, REJECTED=거절됨, INACTIVE=비활동. 프론트 라벨·버튼(신청취소/다시신청 등) 분기용", example = "PENDING")
+        private GroupMemberStatus myStatus;
+
+        @Builder
+        public MyGroupApplicationListDTO(Long groupId, Long postId, String groupName, LocalDateTime createdAt,
+                                         int activeMemberCount, int maxMembers, GroupStatus groupStatus,
+                                         GroupRecruitmentStatus groupRecruitmentStatus, Long leaderId, String leaderName,
+                                         GroupMemberStatus myStatus) {
+            this.groupId = groupId;
+            this.postId = postId;
+            this.groupName = groupName;
+            this.createdAt = createdAt;
+            this.activeMemberCount = activeMemberCount;
+            this.maxMembers = maxMembers;
+            this.groupStatus = groupStatus;
+            this.groupRecruitmentStatus = groupRecruitmentStatus;
+            this.leaderId = leaderId;
+            this.leaderName = leaderName;
+            this.myStatus = myStatus;
         }
     }
 
@@ -146,9 +200,9 @@ public class GroupDTO {
         @Schema(description = "현재 활동 중인 인원 수", example = "5")
         private int activeMemberCount;
         @Schema(description = "최대 인원 제한", example = "10")
-        private Integer maxActiveMembers;
+        private int maxMembers;
         @Schema(description = "최소 인원 제한", example = "3")
-        private int minActiveMembers;
+        private int minMembers;
         @Schema(description = "그룹 소속 멤버 리스트")
         private List<GroupMemberInfoDTO> members;
 
@@ -161,8 +215,8 @@ public class GroupDTO {
                 GroupRecruitmentStatus groupRecruitmentStatus,
                 GroupStatus  groupStatus,
                 int activeMemberCount,
-                Integer maxActiveMembers,
-                int minActiveMembers,
+                int maxMembers,
+                int minMembers,
                 List<GroupMemberInfoDTO> members
         ){
             this.groupId = groupId;
@@ -172,8 +226,8 @@ public class GroupDTO {
             this.groupRecruitmentStatus = groupRecruitmentStatus;
             this.groupStatus = groupStatus;
             this.activeMemberCount = activeMemberCount;
-            this.maxActiveMembers = maxActiveMembers;
-            this.minActiveMembers = minActiveMembers;
+            this.maxMembers = maxMembers;
+            this.minMembers = minMembers;
             this.members = members;
         }
 

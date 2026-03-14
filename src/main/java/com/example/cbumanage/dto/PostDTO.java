@@ -361,7 +361,7 @@ public class PostDTO {
 
         @Min(1)
         @Schema(description = "최대 모집 인원",example="10")
-        private Integer maxMember;
+        private Integer maxMembers;
 
         @Schema(description = "게시글 카테고리 식별 번호", example = "2")
         private int category;
@@ -405,7 +405,7 @@ public class PostDTO {
         private LocalDate deadline;
 
         @Schema(description = "최대 모집 인원")
-        private Integer maxMember;
+        private Integer maxMembers;
 
         @Schema(description = "카테고리 번호")
         private int category;
@@ -422,7 +422,7 @@ public class PostDTO {
                                             Boolean recruiting,
                                             LocalDateTime createdAt,
                                             LocalDate deadline,
-                                            Integer maxMember,
+                                            Integer maxMembers,
                                             int category){
             this.postId = postId;
             this.authorId = authorId;
@@ -435,7 +435,7 @@ public class PostDTO {
             this.recruiting = recruiting;
             this.createdAt = createdAt;
             this.deadline = deadline;
-            this.maxMember = maxMember;
+            this.maxMembers = maxMembers;
             this.category = category;
         }
     }
@@ -448,15 +448,15 @@ public class PostDTO {
         private List<String> recruitmentFields;
         private Boolean recruiting;
         private LocalDate deadline;
-        private Integer maxMember;
+        private int maxMembers;
 
         @Builder
-        public ProjectCreateDTO(Long postId,List<String> recruitmentFields, Boolean recruiting, LocalDate deadline, Integer maxMember) {
+        public ProjectCreateDTO(Long postId,List<String> recruitmentFields, Boolean recruiting, LocalDate deadline, int maxMembers) {
             this.postId = postId;
             this.recruitmentFields = recruitmentFields;
             this.recruiting = recruiting;
             this.deadline = deadline;
-            this.maxMember = maxMember;
+            this.maxMembers = maxMembers;
         }
     }
 
@@ -485,7 +485,7 @@ public class PostDTO {
 
         @Min(1)
         @Schema(description = "최대 모집 인원 변경 (생략 시 기존 값 유지)")
-        private Integer maxMember;
+        private Integer maxMembers;
     }
 
     @Getter
@@ -502,14 +502,14 @@ public class PostDTO {
         private LocalDate deadline;
 
         @Schema(description = "최대 모집 인원 변경")
-        private Integer maxMember;
+        private Integer maxMembers;
 
         @Builder
-        public ProjectUpdateDTO(List<String> recruitmentFields, Boolean recruiting, LocalDate deadline, Integer maxMember) {
+        public ProjectUpdateDTO(List<String> recruitmentFields, Boolean recruiting, LocalDate deadline, Integer maxMembers) {
             this.recruitmentFields = recruitmentFields;
             this.recruiting = recruiting;
             this.deadline = deadline;
-            this.maxMember = maxMember;
+            this.maxMembers = maxMembers;
         }
     }
 
@@ -567,8 +567,11 @@ public class PostDTO {
         @Schema(description = "조회 수 ")
         private Long viewCount;
 
-        @Schema(description = "최대 모집 인원")
-        private int maxMember;
+        @Schema(description = "현재 활동 중인 멤버 수(팀장 포함). maxMember와 함께 상세 화면에서 예) 2/4 형태 표시용", example = "2")
+        private int activeMemberCount;
+
+        @Schema(description = "최대 모집 인원(팀장 포함). activeMemberCount와 함께 상세 화면에서 예) 2/4 형태 표시용", example = "4")
+        private int maxMembers;
 
         @Builder
         public ProjectInfoDetailDTO(
@@ -586,7 +589,8 @@ public class PostDTO {
                 Boolean recruiting,
                 LocalDate deadline,
                 Long viewCount,
-                int maxMember
+                int activeMemberCount,
+                int maxMembers
         ) {
             this.postId = postId;
             this.title = title;
@@ -602,7 +606,8 @@ public class PostDTO {
             this.recruiting = recruiting;
             this.deadline = deadline;
             this.viewCount = viewCount;
-            this.maxMember = maxMember;
+            this.activeMemberCount = activeMemberCount;
+            this.maxMembers = maxMembers;
         }
     }
 
@@ -643,6 +648,12 @@ public class PostDTO {
         @Schema(description = "조회 수 ")
         private Long viewCount;
 
+        @Schema(description = "현재 활동 중인 멤버 수(팀장 포함). maxMember와 함께 목록에서 예) 2/4 형태 표시용", example = "2")
+        private int activeMemberCount;
+
+        @Schema(description = "최대 모집 인원(팀장 포함). activeMemberCount와 함께 목록에서 예) 2/4 형태 표시용", example = "4")
+        private int maxMembers;
+
         @Builder
         public ProjectListDTO(Long postId,
                               String title,
@@ -654,7 +665,9 @@ public class PostDTO {
                               LocalDateTime createdAt,
                               Boolean recruiting,
                               LocalDate deadline,
-                              Long viewCount
+                              Long viewCount,
+                              int activeMemberCount,
+                              int maxMembers
         ) {
             this.postId = postId;
             this.title = title;
@@ -667,6 +680,8 @@ public class PostDTO {
             this.recruiting = recruiting;
             this.deadline = deadline;
             this.viewCount = viewCount;
+            this.activeMemberCount = activeMemberCount;
+            this.maxMembers = maxMembers;
         }
     }
 
@@ -860,7 +875,9 @@ public class PostDTO {
         private LocalDateTime createdAt;
         @Schema(description = "모집 여부 (모집 중: true, 모집 마감: false)", example = "true")
         private boolean recruiting;
-        @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
+        @Schema(description = "현재 활동 중인 멤버 수 (팀장 포함). maxMembers와 함께 상세 화면에서 예) 2/4 형태 표시용", example = "2")
+        private int activeMemberCount;
+        @Schema(description = "최대 모집 인원 (팀장 포함). activeMemberCount와 함께 상세 화면에서 예) 2/4 형태 표시용", example = "5")
         private int maxMembers;
 
         @Schema(description = "마감 후 생성된 그룹 ID (모집 중이면 null)", example = "21")
@@ -882,7 +899,7 @@ public class PostDTO {
         public StudyInfoDetailDTO(Long postId, String title, String content, List<String> studyTags,
                                   String studyName, Long authorId, Long authorGeneration, String authorName,
                                   LocalDateTime createdAt,
-                                  boolean recruiting, int maxMembers, Long groupId,
+                                  boolean recruiting, int activeMemberCount, int maxMembers, Long groupId,
                                   boolean isLeader, Boolean hasApplied, Long viewCount) {
             this.postId = postId;
             this.title = title;
@@ -894,6 +911,7 @@ public class PostDTO {
             this.authorName = authorName;
             this.createdAt = createdAt;
             this.recruiting = recruiting;
+            this.activeMemberCount = activeMemberCount;
             this.maxMembers = maxMembers;
             this.groupId = groupId;
             this.isLeader = isLeader;
@@ -928,13 +946,15 @@ public class PostDTO {
         private LocalDateTime createdAt;
         @Schema(description = "모집 여부 (모집 중: true, 모집 마감: false)", example = "true")
         private boolean recruiting;
-        @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
+        @Schema(description = "현재 활동 중인 멤버 수 (팀장 포함). maxMembers와 함께 목록에서 예) 2/4 형태 표시용", example = "2")
+        private int activeMemberCount;
+        @Schema(description = "최대 모집 인원 (팀장 포함). activeMemberCount와 함께 목록에서 예) 2/4 형태 표시용", example = "5")
         private int maxMembers;
 
         @Builder
         public StudyListDTO(Long postId, String title, List<String> studyTags, String studyName,
                             Long authorId, Long authorGeneration, String authorName,
-                            LocalDateTime createdAt, boolean recruiting, int maxMembers) {
+                            LocalDateTime createdAt, boolean recruiting, int activeMemberCount, int maxMembers) {
             this.postId = postId;
             this.title = title;
             this.studyTags = studyTags;
@@ -944,6 +964,7 @@ public class PostDTO {
             this.authorName = authorName;
             this.createdAt = createdAt;
             this.recruiting = recruiting;
+            this.activeMemberCount = activeMemberCount;
             this.maxMembers = maxMembers;
         }
     }

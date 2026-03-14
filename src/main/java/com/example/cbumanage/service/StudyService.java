@@ -10,6 +10,7 @@ import com.example.cbumanage.model.enums.GroupMemberStatus;
 import com.example.cbumanage.model.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.repository.CbuMemberRepository;
 import com.example.cbumanage.repository.GroupMemberRepository;
+import com.example.cbumanage.repository.GroupRepository;
 import com.example.cbumanage.repository.PostRepository;
 import com.example.cbumanage.repository.StudyRepository;
 import com.example.cbumanage.response.ErrorCode;
@@ -36,6 +37,7 @@ public class StudyService {
     private final PostService postService;
     private final GroupService groupService;
     private final GroupMemberRepository groupMemberRepository;
+    private final GroupRepository groupRepository;
 
     @Autowired
     public StudyService(StudyRepository studyRepository,
@@ -44,7 +46,8 @@ public class StudyService {
                         PostMapper postMapper,
                         PostService postService,
                         GroupService groupService,
-                        GroupMemberRepository groupMemberRepository) {
+                        GroupMemberRepository groupMemberRepository,
+                        GroupRepository groupRepository) {
         this.studyRepository = studyRepository;
         this.postRepository = postRepository;
         this.cbuMemberRepository = cbuMemberRepository;
@@ -52,6 +55,7 @@ public class StudyService {
         this.postService = postService;
         this.groupService = groupService;
         this.groupMemberRepository = groupMemberRepository;
+        this.groupRepository = groupRepository;
     }
 
     public Study createStudy(PostDTO.StudyCreateDTO req, Group group) {
@@ -71,7 +75,15 @@ public class StudyService {
         Boolean hasApplied = groupService.hasAppliedToGroup(
                 study.getGroup() != null ? study.getGroup().getId() : null, userId);
         CbuMember author = cbuMemberRepository.findById(study.getPost().getAuthorId()).orElse(null);
-        return postMapper.toStudyInfoDetailDTO(study, isLeader, hasApplied, author);
+
+        int active = 0;
+        int max = study.getMaxMembers();
+        if (study.getGroup() != null) {
+            active = groupRepository.countByGroupIdAndStatus(study.getGroup().getId(), GroupMemberStatus.ACTIVE);
+            max = study.getGroup().getMaxActiveMembers();
+        }
+
+        return postMapper.toStudyInfoDetailDTO(study, isLeader, hasApplied, author, active, max);
     }
 
     // 카테고리별 목록 조회 (삭제 게시글 제외)
@@ -87,17 +99,27 @@ public class StudyService {
         return mapStudiesToStudyListDTO(studies);
     }
 
-    // 스터디 목록 조회 결과에 작성자 정보를 매핑하여 DTO로 변환
+    // 스터디 목록 조회 결과에 작성자 정보 및 활동인원/최대인원 매핑
     private Page<PostDTO.StudyListDTO> mapStudiesToStudyListDTO(Page<Study> studies) {
         if (studies.getContent().isEmpty()) {
-            return studies.map(s -> postMapper.toStudyListDTO(s, null));
+            return studies.map(s -> toStudyListDTOWithMemberCounts(s, null));
         }
         Set<Long> authorIds = studies.getContent().stream()
                 .map(s -> s.getPost().getAuthorId())
                 .collect(Collectors.toSet());
         Map<Long, CbuMember> authorMap = cbuMemberRepository.findAllById(authorIds).stream()
                 .collect(Collectors.toMap(CbuMember::getCbuMemberId, m -> m));
-        return studies.map(s -> postMapper.toStudyListDTO(s, authorMap.get(s.getPost().getAuthorId())));
+        return studies.map(s -> toStudyListDTOWithMemberCounts(s, authorMap.get(s.getPost().getAuthorId())));
+    }
+
+    private PostDTO.StudyListDTO toStudyListDTOWithMemberCounts(Study s, CbuMember author) {
+        int active = 0;
+        int max = s.getMaxMembers();
+        if (s.getGroup() != null) {
+            active = groupRepository.countByGroupIdAndStatus(s.getGroup().getId(), GroupMemberStatus.ACTIVE);
+            max = s.getGroup().getMaxActiveMembers();
+        }
+        return postMapper.toStudyListDTO(s, author, active, max);
     }
 
     // Study 고유 필드 수정 (태그, 스터디명, 최대인원). updatePostStudy()에서 호출.
@@ -135,7 +157,7 @@ public class StudyService {
         PostDTO.PostCreateDTO postCreateDTO = postMapper.toPostCreateDTO(req, userId);
         Post post = postService.createPost(postCreateDTO);
         String groupName = req.getStudyName() + " #" + post.getId();
-        Group group = groupService.createGroup(groupName, userId, req.getMaxMembers());
+        Group group = groupService.createGroup(groupName, userId, req.getMaxMembers(), post.getId());
         PostDTO.StudyCreateDTO studyCreateDTO = postMapper.toStudyCreateDTO(req, post.getId());
         Study study = createStudy(studyCreateDTO, group);
         CbuMember author = cbuMemberRepository.findById(post.getAuthorId()).orElse(null);

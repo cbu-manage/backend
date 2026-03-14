@@ -39,6 +39,10 @@ public class Group {
     @Comment("최대 활동 가능 인원 설정값")
     private Integer maxActiveMembers;
 
+    @Column(name = "post_id")
+    @Comment("연결된 게시글 ID (프로젝트/스터디 모집글). 없으면 null")
+    private Long postId;
+
     @CreatedDate
     @Column(updatable = false)
     @Comment("그룹 생성 일시")
@@ -60,19 +64,20 @@ public class Group {
     private Boolean isDeleted = false;
 
     //그룹의 생성자, 상태들은 기본적으로 모집 안함, 비활성 상태로 시작
-    public Group(String groupName, int minActiveMembers, Integer maxActiveMembers)  {
+    public Group(String groupName, int minActiveMembers, Integer maxActiveMembers, Long postId)  {
         if (maxActiveMembers < 2) {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "최대 모집 인원은 본인을 포함해 최소 2명 이상이어야 합니다.");
         }
         this.groupName = groupName;
         this.minActiveMembers = minActiveMembers;
         this.maxActiveMembers = maxActiveMembers;
+        this.postId = postId;
         this.recruitmentStatus = GroupRecruitmentStatus.CLOSED;
         this.status = GroupStatus.INACTIVE;
     }
 
-    public static Group create(String groupName,int minActiveMembers,Integer maxActiveMembers) {
-        return new Group(groupName,minActiveMembers,maxActiveMembers);
+    public static Group create(String groupName, int minActiveMembers, Integer maxActiveMembers, Long postId) {
+        return new Group(groupName, minActiveMembers, maxActiveMembers, postId);
     }
 
     public void changeGroupName(String groupName) {

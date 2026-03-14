@@ -63,15 +63,28 @@ public class GroupController {
     }
 
     @Operation(
-            summary = "자신이 가입한 그룹 조회하기",
-            description = "유저가 현재 가입되어 있는 그룹들을 볼 수 있는 메소드 입니다.." +
-                    "유저가 가입된 그룹 목록을 불러오거나(마이페이지)+보고서,모집글같은 게시글에 그룹을 추가해야할때 해당 기능을 사용합니다"
+            summary = "자신이 가입한 그룹 조회",
+            description = "가입 완료(ACTIVE)된 그룹 목록 조회. 응답에 postId(연결 게시글 ID), activeMemberCount, maxActiveMembers 포함. " +
+                    "postId로 해당 프로젝트/스터디 상세 이동, 인원은 활동수/최대인원(예: 2/4) 표시용."
     )
     @GetMapping("/my")
     public ResponseEntity<ResultResponse<List<GroupDTO.GroupListDTO>>> getMyJoinedGroups(HttpServletRequest request) {
         Long userId=userIdExtractor.extractUserIdFromCookie(request);
         List<GroupDTO.GroupListDTO> groupInfos = groupService.getJoinedGroups(userId);
         return ResultResponse.ok(SuccessCode.SUCCESS,groupInfos);
+    }
+
+    @Operation(
+            summary = "내가 신청한 그룹 목록 (승인/대기/거절/비활동)",
+            description = "본인이 신청한 그룹을 상태별로 조회."+
+                    "myStatus로 프론트에서 라벨 분기: PENDING=승인 대기중, ACTIVE=승인, REJECTED=거절됨, INACTIVE=비활동. " +
+                    "신청 취소는 myStatus가 PENDING일 때만 노출"
+    )
+    @GetMapping("/my/applications")
+    public ResponseEntity<ResultResponse<List<GroupDTO.MyGroupApplicationListDTO>>> getMyAppliedGroups(HttpServletRequest request) {
+        Long userId = userIdExtractor.extractUserIdFromCookie(request);
+        List<GroupDTO.MyGroupApplicationListDTO> list = groupService.getMyAppliedGroups(userId);
+        return ResultResponse.ok(SuccessCode.SUCCESS, list);
     }
 
     @Operation(summary = "그룹 상세 정보 조회", description = "그룹 ID를 통해 그룹의 기본 정보를 상세 조회합니다.")
@@ -85,21 +98,39 @@ public class GroupController {
     /* ============================================================
      * [ 팀장(Leader) 전용 API ]
      * ============================================================ */
-    @Operation(summary = "신청 인원 확인 (팀장 전용)", description = "그룹 리더가 현재 가입 대기 중인(PENDING) 유저 목록을 조회합니다.")
-    @GetMapping("/{groupId}/applicants")
-    public ResponseEntity<ResultResponse<List<GroupDTO.GroupMemberInfoDTO>>> getGroupApplicants(
-            @Parameter(description = "조회할 그룹의 ID", example = "1")
+//    @Operation(
+//            summary = "신청 인원 확인 (팀장 전용)",
+//            description = "가입 대기(PENDING) 유저만 조회. 수락/거절 버튼용. 전체 상태가 필요하면 GET .../applicants/overview 사용."
+//    )
+//    @GetMapping("/{groupId}/applicants")
+//    public ResponseEntity<ResultResponse<List<GroupDTO.GroupMemberInfoDTO>>> getGroupApplicants(
+//            @Parameter(description = "조회할 그룹의 ID", example = "1")
+//            @PathVariable Long groupId,
+//            HttpServletRequest httpServletRequest) {
+//        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
+//        List<GroupDTO.GroupMemberInfoDTO> applicants = groupService.getPendingGroupMember(groupId, userId);
+//        return ResultResponse.ok(SuccessCode.SUCCESS, applicants);
+//    }
+
+    @Operation(
+            summary = "신청 인원 상태 전체 보기(팀장 전용)",
+            description = "그룹 팀원(MEMBER) 전원을 상태별로 조회. PENDING/ACTIVE/REJECTED/INACTIVE 모두 포함."
+    )
+    @GetMapping("/{groupId}/applicants/overview")
+    public ResponseEntity<ResultResponse<List<GroupDTO.GroupMemberInfoDTO>>> getGroupApplicantsOverview(
+            @Parameter(description = "조회할 그룹의 ID", example = "1") 
             @PathVariable Long groupId,
             HttpServletRequest httpServletRequest) {
         Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
-        List<GroupDTO.GroupMemberInfoDTO> applicants = groupService.getPendingGroupMember(groupId, userId);
-        return ResultResponse.ok(SuccessCode.SUCCESS, applicants);
+        List<GroupDTO.GroupMemberInfoDTO> overview = groupService.getGroupApplicantsOverview(groupId, userId);
+        return ResultResponse.ok(SuccessCode.SUCCESS, overview);
     }
 
 
     @Operation(
-            summary = "그룹 모집 상태 변경(팀장 전용)",
-            description = "그룹의 모집 상태를 변경하는 메소드 입니다. OPEN,CLOSED로 구분됩니다"
+            summary = "그룹 모집 상태 변경 (팀장 전용)",
+            description = "요청 body에 OPEN 또는 CLOSED 전달. 그룹 모집 상태 변경 시 연결된 프로젝트/스터디 게시글의 recruiting도 함께 동기화됨."+
+                    "만약 모집마감 시 pending상태가 남아 있는 경우 모두 rejected 처리"
     )
     @PatchMapping("/{groupId}/recruitment")
     public ResponseEntity<ResultResponse<Void>> changeGroupRecruitmentStatus
