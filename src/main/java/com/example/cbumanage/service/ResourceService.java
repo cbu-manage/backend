@@ -126,7 +126,13 @@ public class ResourceService {
         }
 
         OgMetaParser.OgMeta ogMeta = ogMetaParser.parse(resource.getLink());
-        resource.updateOg(ogMeta.image(), ogMeta.description());
+        if (ogMeta.image() == null && ogMeta.description() == null) {
+            return;
+        }
+        resource.updateOg(
+                ogMeta.image() != null ? ogMeta.image() : resource.getOgImage(),
+                ogMeta.description() != null ? ogMeta.description() : resource.getOgDescription()
+        );
     }
 
     /**
