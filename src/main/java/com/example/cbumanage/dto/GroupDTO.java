@@ -102,6 +102,8 @@ public class GroupDTO {
         GroupRecruitmentStatus groupRecruitmentStatus;
         @Schema(description = "현재 그룹 리더 ID", example="10")
         private Long leaderId;
+        @Schema(description = "현재 그룹 리더 기수", example="15")
+        private Long leaderGeneration;
         @Schema(description = "현재 그룹 리더 이름",example="홍길동")
         private String leaderName;
 
@@ -116,6 +118,7 @@ public class GroupDTO {
                 GroupStatus groupStatus,
                 GroupRecruitmentStatus groupRecruitmentStatus,
                 Long leaderId,
+                Long leaderGeneration,
                 String leaderName
         ){
             this.groupId = groupId;
@@ -127,6 +130,7 @@ public class GroupDTO {
             this.activeMemberCount = activeMemberCount;
             this.maxMembers = maxMembers;
             this.leaderId=leaderId;
+            this.leaderGeneration=leaderGeneration;
             this.leaderName=leaderName;
         }
     }
@@ -247,6 +251,8 @@ public class GroupDTO {
         private Long groupMemberId;
         @Schema(description = "유저 고유 ID", example = "10")
         private Long userId;
+        @Schema(description = "유저 기수",example = "15")
+        private Long userGeneration;
         @Schema(description = "유저 성명", example = "홍길동")
         private String userName;
         @Schema(description = "학년", example = "3학년")
@@ -264,6 +270,7 @@ public class GroupDTO {
         public GroupMemberInfoDTO(
                 Long groupMemberId,
                 Long userId,
+                Long userGeneration,
                 String userName,
                 String grade,
                 String major,
@@ -273,6 +280,7 @@ public class GroupDTO {
         ){
             this.groupMemberId = groupMemberId;
             this.userId = userId;
+            this.userGeneration = userGeneration;
             this.userName = userName;
             this.grade=grade;
             this.major=major;

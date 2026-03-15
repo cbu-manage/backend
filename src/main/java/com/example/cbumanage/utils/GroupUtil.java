@@ -50,6 +50,7 @@ public class GroupUtil {
         return GroupDTO.GroupMemberInfoDTO.builder()
                 .groupMemberId(member.getId())
                 .userId(member.getCbuMember().getCbuMemberId())
+                .userGeneration(member.getCbuMember().getGeneration())
                 .userName(member.getCbuMember().getName())
                 .grade(member.getCbuMember().getGrade())
                 .major(member.getCbuMember().getMajor())
@@ -105,6 +106,7 @@ public class GroupUtil {
 
 (group.getMaxActiveMembers() != null ? group.getMaxActiveMembers() : 0)
                 .leaderId(leader != null ? leader.getCbuMember().getCbuMemberId() : null)
+                .leaderGeneration(leader != null ? leader.getCbuMember().getGeneration() : null)
                 .leaderName(leader != null ? leader.getCbuMember().getName() : null)
                 .build();
     }
