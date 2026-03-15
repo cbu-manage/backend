@@ -61,17 +61,10 @@ public class ResourceController {
                                                     """
                                     ),
                                     @ExampleObject(
-                                            name = "og-preview 결과 포함 전송",
-                                            summary = "og-preview API로 받은 OG 정보를 함께 전송 (서버 재파싱 없이 저장)",
-                                            value = """
-                                                    { "link": "https://programmers.co.kr/learn/challenges", "ogImage": "https://example.com/image.png", "ogDescription": "프로그래머스 코딩테스트 연습" }
-                                                    """
-                                    ),
-                                    @ExampleObject(
                                             name = "제목 직접 입력",
                                             summary = "사용자가 제목을 직접 입력한 경우 (OG 파싱 제목 무시)",
                                             value = """
-                                                    { "link": "https://programmers.co.kr/learn/challenges", "title": "2024 카카오 코딩테스트 문제 모음", "ogImage": "https://example.com/image.png", "ogDescription": "프로그래머스 코딩테스트 연습" }
+                                                    { "link": "https://programmers.co.kr/learn/challenges", "title": "2024 카카오 코딩테스트 문제 모음" }
                                                     """
                                     )
                             }
