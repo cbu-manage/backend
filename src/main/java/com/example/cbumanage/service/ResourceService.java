@@ -50,9 +50,10 @@ public class ResourceService {
         CbuMember member = cbuMemberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberNotExistsException("ID가 " + memberId + "인 회원을 찾을 수 없습니다."));
 
+        OgMetaParser.OgMeta ogMeta = ogMetaParser.parse(request.getLink());
+
         String title = request.getTitle();
         if (title == null || title.isBlank()) {
-            OgMetaParser.OgMeta ogMeta = ogMetaParser.parse(request.getLink());
             title = (ogMeta.title() != null) ? ogMeta.title() : request.getLink();
         }
 
@@ -64,7 +65,7 @@ public class ResourceService {
                 .link(request.getLink())
                 .build();
 
-        resource.updateOg(request.getOgImage(), request.getOgDescription());
+        resource.updateOg(ogMeta.image(), ogMeta.description());
 
         resourceRepository.save(resource);
         return ResourceListItemDTO.from(resource, member);
