@@ -130,6 +130,7 @@ public class GroupUtil {
 
 (group.getMaxActiveMembers() != null ? group.getMaxActiveMembers() : 0)
                 .leaderId(leader != null ? leader.getCbuMember().getCbuMemberId() : null)
+                .leaderGeneration(leader != null ? leader.getCbuMember().getGeneration() : null)
                 .leaderName(leader != null ? leader.getCbuMember().getName() : null)
                 .myStatus(groupMember.getGroupMemberStatus())
                 .build();

@@ -153,6 +153,8 @@ public class GroupDTO {
         private GroupRecruitmentStatus groupRecruitmentStatus;
         @Schema(description = "리더 ID", example = "10")
         private Long leaderId;
+        @Schema(description = "리더 기수", example = "10")
+        private Long leaderGeneration;
         @Schema(description = "리더 이름")
         private String leaderName;
         @Schema(description = "내 신청/가입 상태. PENDING=승인 대기중, ACTIVE=승인, REJECTED=거절됨, INACTIVE=비활동. 프론트 라벨·버튼(신청취소/다시신청 등) 분기용", example = "PENDING")
@@ -161,7 +163,7 @@ public class GroupDTO {
         @Builder
         public MyGroupApplicationListDTO(Long groupId, Long postId, String groupName, LocalDateTime createdAt,
                                          int activeMemberCount, int maxMembers, GroupStatus groupStatus,
-                                         GroupRecruitmentStatus groupRecruitmentStatus, Long leaderId, String leaderName,
+                                         GroupRecruitmentStatus groupRecruitmentStatus, Long leaderId, Long leaderGeneration, String leaderName,
                                          GroupMemberStatus myStatus) {
             this.groupId = groupId;
             this.postId = postId;
@@ -172,6 +174,7 @@ public class GroupDTO {
             this.groupStatus = groupStatus;
             this.groupRecruitmentStatus = groupRecruitmentStatus;
             this.leaderId = leaderId;
+            this.leaderGeneration = leaderGeneration;
             this.leaderName = leaderName;
             this.myStatus = myStatus;
         }
