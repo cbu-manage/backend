@@ -23,6 +23,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
+@BatchSize(size = 100)
 public class Group {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,6 +43,10 @@ public class Group {
     @Column(name = "post_id")
     @Comment("연결된 게시글 ID (프로젝트/스터디 모집글). 없으면 null")
     private Long postId;
+
+    @Column(name = "category")
+    @Comment("연결된 게시글 카테고리 번호 (스터디=1, 프로젝트=2)")
+    private Integer category;
 
     @CreatedDate
     @Column(updatable = false)
@@ -64,7 +69,7 @@ public class Group {
     private Boolean isDeleted = false;
 
     //그룹의 생성자, 상태들은 기본적으로 모집 안함, 비활성 상태로 시작
-    public Group(String groupName, int minActiveMembers, Integer maxActiveMembers, Long postId)  {
+    public Group(String groupName, int minActiveMembers, Integer maxActiveMembers, Long postId, int category)  {
         if (maxActiveMembers < 2) {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "최대 모집 인원은 본인을 포함해 최소 2명 이상이어야 합니다.");
         }
@@ -72,12 +77,13 @@ public class Group {
         this.minActiveMembers = minActiveMembers;
         this.maxActiveMembers = maxActiveMembers;
         this.postId = postId;
+        this.category = category;
         this.recruitmentStatus = GroupRecruitmentStatus.CLOSED;
         this.status = GroupStatus.INACTIVE;
     }
 
-    public static Group create(String groupName, int minActiveMembers, Integer maxActiveMembers, Long postId) {
-        return new Group(groupName, minActiveMembers, maxActiveMembers, postId);
+    public static Group create(String groupName, int minActiveMembers, Integer maxActiveMembers, Long postId, int category) {
+        return new Group(groupName, minActiveMembers, maxActiveMembers, postId, category);
     }
 
     public void changeGroupName(String groupName) {

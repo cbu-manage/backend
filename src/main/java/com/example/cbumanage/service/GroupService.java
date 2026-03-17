@@ -9,14 +9,20 @@ import com.example.cbumanage.model.enums.*;
 import com.example.cbumanage.repository.*;
 import com.example.cbumanage.response.ErrorCode;
 import com.example.cbumanage.utils.GroupUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class GroupService {
+    private static final Logger log = LoggerFactory.getLogger(GroupService.class);
+
     private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final CbuMemberRepository cbuMemberRepository;
@@ -48,8 +54,8 @@ public class GroupService {
      postId=연결된 게시글 ID (목록에서 게시글 본문 이동용).
      **/
     @Transactional
-    public Group createGroup(String groupName, Long leaderId, int maxMember, Long postId){
-        Group group = Group.create(groupName, 1, maxMember, postId);
+    public Group createGroup(String groupName, Long leaderId, int maxMember, Long postId, int category){
+        Group group = Group.create(groupName, 1, maxMember, postId, category);
         groupRepository.save(group);
         CbuMember member = cbuMemberRepository.findById(leaderId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"유저 정보를 찾을 수 없습니다."));
@@ -232,15 +238,16 @@ public class GroupService {
         return groups.stream().map(group -> groupUtil.toGroupListDTO(group)).toList();
     }
 
-    //본인이 신청한 그룹 목록 전체 (승인/대기/거절/비활동). 리더로 소속된 그룹은 제외, 삭제된 그룹 제외
+    //본인이 신청한 그룹 목록 카테고리별 페이징 (승인/대기/거절/비활동). 리더로 소속된 그룹은 제외, 삭제된 그룹 제외
     @Transactional(readOnly = true)
-    public List<GroupDTO.MyGroupApplicationListDTO> getMyAppliedGroups(Long userId) {
-        List<GroupMember> members = groupMemberRepository.findByCbuMemberCbuMemberId(userId);
-        return members.stream()
-                .filter(gm -> gm.getGroupMemberRole() != GroupMemberRole.LEADER)
-                .filter(gm -> !Boolean.TRUE.equals(gm.getGroup().getIsDeleted()))
-                .map(groupUtil::toMyGroupApplicationListDTO)
-                .toList();
+    public Page<GroupDTO.MyGroupApplicationListDTO> getMyAppliedGroupsByCategory(Long userId, Integer category, Pageable pageable) {
+        Page<GroupMember> members = groupMemberRepository.findMyApplicationsByCategory(
+                userId,
+                category,
+                GroupMemberRole.LEADER,
+                pageable
+        );
+        return members.map(groupUtil::toMyGroupApplicationListDTO);
     }
 
     //팀장 전용: 신청인원 전체 상태 한눈에 확인(PENDING/ACTIVE/REJECTED/INACTIVE 팀원 목록)
