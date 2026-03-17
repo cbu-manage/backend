@@ -5,27 +5,10 @@ import com.example.cbumanage.model.Group;
 import com.example.cbumanage.model.GroupMember;
 import com.example.cbumanage.model.enums.GroupMemberRole;
 import com.example.cbumanage.model.enums.GroupMemberStatus;
-import com.example.cbumanage.repository.CbuMemberRepository;
-import com.example.cbumanage.repository.GroupMemberRepository;
-import com.example.cbumanage.repository.GroupRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class GroupUtil {
-
-    private final CbuMemberRepository cbuMemberRepository;
-    private final GroupMemberRepository groupMemberRepository;
-    private final GroupRepository groupRepository;
-
-    @Autowired
-    public GroupUtil(CbuMemberRepository cbuMemberRepository, GroupMemberRepository groupMemberRepository, GroupRepository groupRepository) {
-        this.cbuMemberRepository = cbuMemberRepository;
-        this.groupMemberRepository = groupMemberRepository;
-        this.groupRepository = groupRepository;
-    }
-
-
 
     public GroupDTO.GroupInfoDTO toGroupInfoDTO(Group group) {
         return GroupDTO.GroupInfoDTO.builder()
@@ -36,9 +19,7 @@ public class GroupUtil {
                 .activeMemberCount((int) group.getMembers().stream()
                         .filter(m -> m.getGroupMemberStatus() == GroupMemberStatus.ACTIVE)
                         .count())
-                .maxMembers
-
-(group.getMaxActiveMembers())
+                .maxMembers(group.getMaxActiveMembers())
                 .minMembers(group.getMinActiveMembers())
                 .members(group.getMembers().stream().map(m->toGroupMemberInfoDTO(m)).toList())
                 .groupRecruitmentStatus(group.getRecruitmentStatus())
@@ -70,9 +51,7 @@ public class GroupUtil {
         return GroupDTO.GroupCreateResponseDTO.builder()
                 .groupId(group.getId())
                 .groupName(group.getGroupName())
-                .maxMembers
-
-(group.getMaxActiveMembers())
+                .maxMembers(group.getMaxActiveMembers())
                 .minMembers(group.getMinActiveMembers())
                 .createdAt(group.getCreatedAt())
                 .leader(toGroupMemberInfoDTO(leader))
@@ -102,9 +81,7 @@ public class GroupUtil {
                 .activeMemberCount((int) group.getMembers().stream()
                         .filter(m -> m.getGroupMemberStatus() == GroupMemberStatus.ACTIVE)
                         .count())
-                .maxMembers
-
-(group.getMaxActiveMembers() != null ? group.getMaxActiveMembers() : 0)
+                .maxMembers(group.getMaxActiveMembers() != null ? group.getMaxActiveMembers() : 0)
                 .leaderId(leader != null ? leader.getCbuMember().getCbuMemberId() : null)
                 .leaderGeneration(leader != null ? leader.getCbuMember().getGeneration() : null)
                 .leaderName(leader != null ? leader.getCbuMember().getName() : null)
@@ -121,6 +98,7 @@ public class GroupUtil {
         return GroupDTO.MyGroupApplicationListDTO.builder()
                 .groupId(group.getId())
                 .postId(group.getPostId())
+                .category(group.getCategory())
                 .groupName(group.getGroupName())
                 .createdAt(group.getCreatedAt())
                 .groupStatus(group.getStatus())
@@ -128,9 +106,7 @@ public class GroupUtil {
                 .activeMemberCount((int) group.getMembers().stream()
                         .filter(m -> m.getGroupMemberStatus() == GroupMemberStatus.ACTIVE)
                         .count())
-                .maxMembers
-
-(group.getMaxActiveMembers() != null ? group.getMaxActiveMembers() : 0)
+                .maxMembers(group.getMaxActiveMembers() != null ? group.getMaxActiveMembers() : 0)
                 .leaderId(leader != null ? leader.getCbuMember().getCbuMemberId() : null)
                 .leaderGeneration(leader != null ? leader.getCbuMember().getGeneration() : null)
                 .leaderName(leader != null ? leader.getCbuMember().getName() : null)
