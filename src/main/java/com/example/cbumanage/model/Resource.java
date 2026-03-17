@@ -47,9 +47,11 @@ public class Resource {
      */
 
     // Open Graph 대표 이미지 URL
+    @Column(columnDefinition = "TEXT")
     private String ogImage;
 
     // Open Graph 설명
+    @Column(columnDefinition = "TEXT")
     private String ogDescription;
 
     // Open Graph 마지막 갱신 시간
