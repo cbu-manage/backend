@@ -87,9 +87,9 @@ public class ProblemController {
      * @param request 수정할 문제 내용
      * @return 수정된 문제 정보
      */
-    @PatchMapping("/problems/{id}")
+    @PatchMapping("/problems/{postId}")
     @Operation(summary = "문제 정보 수정",
-            description = "ID에 해당하는 문제의 정보를 수정합니다. 수정할 필드만 사용하여 수정할 수 있습니다.",
+            description = "postId에 해당하는 문제의 정보를 수정합니다. 수정할 필드만 사용하여 수정할 수 있습니다.",
             requestBody = @RequestBody(
                     required = true,
                     content = @Content(
@@ -109,10 +109,10 @@ public class ProblemController {
             @ApiResponse(responseCode = "403", description = "수정 권한 없음 (작성자만 수정 가능)"),
             @ApiResponse(responseCode = "404", description = "문제를 찾을 수 없음")
     })
-    public ResponseEntity<ResultResponse<ProblemResponseDTO>> updateProblem(@PathVariable Long id,
+    public ResponseEntity<ResultResponse<ProblemResponseDTO>> updateProblem(@PathVariable Long postId,
                                                                             AccessToken accessToken,
                                                                             @Valid @RequestBody ProblemUpdateRequestDTO request) {
-        ProblemResponseDTO response = problemService.updateProblem(id, accessToken.getUserId(), request);
+        ProblemResponseDTO response = problemService.updateProblem(postId, accessToken.getUserId(), request);
         return ResultResponse.ok(SuccessCode.UPDATED, response);
     }
 
@@ -121,8 +121,8 @@ public class ProblemController {
      *
      * @param id 삭제할 문제의 ID
      */
-    @DeleteMapping("/problems/{id}")
-    @Operation(summary = "문제 삭제", description = "ID에 해당하는 문제를 삭제합니다.")
+    @DeleteMapping("/problems/{postId}")
+    @Operation(summary = "문제 삭제", description = "postId에 해당하는 문제를 삭제합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "문제 삭제 성공"),
             @ApiResponse(responseCode = "401", description = "인증 실패 (토큰 없음 또는 만료)"),
@@ -130,9 +130,9 @@ public class ProblemController {
             @ApiResponse(responseCode = "404", description = "문제를 찾을 수 없음")
     })
 
-    public ResponseEntity<ResultResponse<Void>> deleteProblem(@PathVariable Long id,
+    public ResponseEntity<ResultResponse<Void>> deleteProblem(@PathVariable Long postId,
                                                               AccessToken accessToken) {
-        problemService.deleteProblem(id, accessToken.getUserId());
+        problemService.deleteProblem(postId, accessToken.getUserId());
         return ResultResponse.ok(SuccessCode.DELETED);
     }
 
@@ -188,14 +188,14 @@ public class ProblemController {
         return ResultResponse.ok(SuccessCode.SUCCESS, problems);
     }
 
-    @GetMapping("/problems/{id}")
-    @Operation(summary = "문제 상세 정보 조회", description = "ID를 사용하여 특정 문제의 상세 정보를 조회합니다. 조회할때마다 조회수가 증가합니다.")
+    @GetMapping("/problems/{postId}")
+    @Operation(summary = "문제 상세 정보 조회", description = "postId를 사용하여 특정 문제의 상세 정보를 조회합니다. 조회할때마다 조회수가 증가합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "문제 조회 성공"),
             @ApiResponse(responseCode = "404", description = "문제를 찾을 수 없음")
     })
-    public ResponseEntity<ResultResponse<ProblemResponseDTO>> getProblem(@PathVariable Long id) {
-        ProblemResponseDTO problem = problemService.getProblem(id);
+    public ResponseEntity<ResultResponse<ProblemResponseDTO>> getProblem(@PathVariable Long postId) {
+        ProblemResponseDTO problem = problemService.getProblem(postId);
         return ResultResponse.ok(SuccessCode.SUCCESS, problem);
     }
 

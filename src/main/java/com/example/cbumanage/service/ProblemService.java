@@ -98,9 +98,9 @@ public class ProblemService {
      * @return 수정된 문제 정보 DTO
      */
     @Transactional
-    public ProblemResponseDTO updateProblem(Long problemId, Long memberId, ProblemUpdateRequestDTO request) {
-        Problem problem = problemRepository.findById(problemId)
-                .orElseThrow(() -> new EntityNotFoundException("ID가 " + problemId + "인 문제를 찾을 수 없습니다."));
+    public ProblemResponseDTO updateProblem(Long postId, Long memberId, ProblemUpdateRequestDTO request) {
+        Problem problem = problemRepository.findByPostId(postId)
+                .orElseThrow(() -> new EntityNotFoundException("postId가 " + postId + "인 문제를 찾을 수 없습니다."));
 
         if (!Objects.equals(problem.getPost().getAuthorId(), memberId)) {
             throw new MemberDoesntHavePermissionException("이 문제를 수정할 권한이 없습니다.");
@@ -134,7 +134,7 @@ public class ProblemService {
         CbuMember author = cbuMemberRepository.findById(problem.getPost().getAuthorId())
                 .orElseThrow(() -> new MemberNotExistsException("작성자를 찾을 수 없습니다."));
 
-        Long commentCount = commentRepository.countByPostId(problemId);
+        Long commentCount = commentRepository.countByPostId(postId);
         return ProblemResponseDTO.from(problem, author, commentCount);
     }
 
@@ -145,9 +145,9 @@ public class ProblemService {
      * @param memberId  삭제 요청을 한 회원의 ID
      */
     @Transactional
-    public void deleteProblem(Long problemId, Long memberId) {
-        Problem problem = problemRepository.findById(problemId)
-                .orElseThrow(() -> new EntityNotFoundException("ID가 " + problemId + "인 문제를 찾을 수 없습니다."));
+    public void deleteProblem(Long postId, Long memberId) {
+        Problem problem = problemRepository.findByPostId(postId)
+                .orElseThrow(() -> new EntityNotFoundException("postId가 " + postId + "인 문제를 찾을 수 없습니다."));
 
         if (!Objects.equals(problem.getPost().getAuthorId(), memberId)) {
             throw new MemberDoesntHavePermissionException("이 문제를 삭제할 권한이 없습니다.");
@@ -186,7 +186,7 @@ public class ProblemService {
                 .map(p -> {
                     CbuMember author = cbuMemberRepository.findById(p.getPost().getAuthorId())
                             .orElseThrow(() -> new MemberNotExistsException("작성자를 찾을 수 없습니다."));
-                    return ProblemListItemDTO.from(p, author, commentRepository.countByPostId(p.getProblemId()));
+                    return ProblemListItemDTO.from(p, author, commentRepository.countByPostId(p.getPost().getId()));
                 });
     }
 
@@ -198,16 +198,16 @@ public class ProblemService {
      * @return 문제 상세 정보 DTO
      */
     @Transactional
-    public ProblemResponseDTO getProblem(Long problemId) {
-        Problem problem = problemRepository.findById(problemId)
-                .orElseThrow(() -> new EntityNotFoundException("ID가 " + problemId + "인 문제를 찾을 수 없습니다."));
+    public ProblemResponseDTO getProblem(Long postId) {
+        Problem problem = problemRepository.findByPostId(postId)
+                .orElseThrow(() -> new EntityNotFoundException("postId가 " + postId + "인 문제를 찾을 수 없습니다."));
 
-        postRepository.incrementViewCount(problem.getPost().getId());
+        postRepository.incrementViewCount(postId);
 
         CbuMember author = cbuMemberRepository.findById(problem.getPost().getAuthorId())
                 .orElseThrow(() -> new MemberNotExistsException("작성자를 찾을 수 없습니다."));
 
-        Long commentCount = commentRepository.countByPostId(problemId);
+        Long commentCount = commentRepository.countByPostId(postId);
         return ProblemResponseDTO.from(problem, author, commentCount);
     }
 
@@ -222,7 +222,7 @@ public class ProblemService {
         CbuMember member = cbuMemberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberNotExistsException("ID가 " + memberId + "인 회원을 찾을 수 없습니다."));
         return problemRepository.findByPostAuthorId(memberId, pageable)
-                .map(p -> ProblemListItemDTO.from(p, member, commentRepository.countByPostId(p.getProblemId())));
+                .map(p -> ProblemListItemDTO.from(p, member, commentRepository.countByPostId(p.getPost().getId())));
     }
 
     /**
