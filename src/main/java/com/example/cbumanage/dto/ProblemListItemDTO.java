@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 @Getter
 public class ProblemListItemDTO {
     private final Long problemId;
+    private final Long postId;
     private final String platformName;
     private final List<String> categories;
     private final String languageName;
@@ -25,10 +26,11 @@ public class ProblemListItemDTO {
     private final Long commentCount;
 
     @Builder
-    public ProblemListItemDTO(Long problemId, String platformName, List<String> categories, String languageName,
+    public ProblemListItemDTO(Long problemId, Long postId, String platformName, List<String> categories, String languageName,
                               String title, String authorName, ProblemStatus problemStatus,
                               Long viewCount, Long commentCount) {
         this.problemId = problemId;
+        this.postId = postId;
         this.platformName = platformName;
         this.categories = categories;
         this.languageName = languageName;
@@ -42,6 +44,7 @@ public class ProblemListItemDTO {
     public static ProblemListItemDTO from(Problem problem, CbuMember author, Long commentCount) {
         return ProblemListItemDTO.builder()
                 .problemId(problem.getProblemId())
+                .postId(problem.getPost().getId())
                 .platformName(problem.getPlatform().getName())
                 .categories(problem.getCategories().stream()
                         .map(c -> c.getName())

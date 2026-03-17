@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class ProblemResponseDTO {
 
     private final Long problemId;
+    private final Long postId;
     private final String authorName;
     private final Long authorGeneration;
     private final List<String> categories;
@@ -35,11 +36,12 @@ public class ProblemResponseDTO {
     private final LocalDateTime updatedAt;
 
     @Builder
-    public ProblemResponseDTO(Long problemId, String authorName, Long authorGeneration, List<String> categories,
+    public ProblemResponseDTO(Long problemId, Long postId, String authorName, Long authorGeneration, List<String> categories,
                               String platformName, String languageName, String title, String content, ProblemGrade grade,
                               String problemUrl, ProblemStatus problemStatus, Long viewCount, Long commentCount,
                               LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.problemId = problemId;
+        this.postId = postId;
         this.authorName = authorName;
         this.authorGeneration = authorGeneration;
         this.categories = categories;
@@ -59,6 +61,7 @@ public class ProblemResponseDTO {
     public static ProblemResponseDTO from(Problem problem, CbuMember author, Long commentCount) {
         return ProblemResponseDTO.builder()
                 .problemId(problem.getProblemId())
+                .postId(problem.getPost().getId())
                 .authorName(author.getName())
                 .authorGeneration(author.getGeneration())
                 .platformName(problem.getPlatform().getName())
