@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -143,6 +142,8 @@ public class GroupDTO {
         private Long groupId;
         @Schema(description = "연결된 게시글 ID. 해당 프로젝트/스터디 상세 이동 시 사용", example = "101")
         private Long postId;
+        @Schema(description = "그룹 카테고리 번호 (스터디=1, 프로젝트=2)", example = "2")
+        private Integer category;
         @Schema(description = "그룹명")
         private String groupName;
         @Schema(description = "그룹 생성일")
@@ -165,12 +166,13 @@ public class GroupDTO {
         private GroupMemberStatus myStatus;
 
         @Builder
-        public MyGroupApplicationListDTO(Long groupId, Long postId, String groupName, LocalDateTime createdAt,
+        public MyGroupApplicationListDTO(Long groupId, Long postId, Integer category, String groupName, LocalDateTime createdAt,
                                          int activeMemberCount, int maxMembers, GroupStatus groupStatus,
                                          GroupRecruitmentStatus groupRecruitmentStatus, Long leaderId, Long leaderGeneration, String leaderName,
                                          GroupMemberStatus myStatus) {
             this.groupId = groupId;
             this.postId = postId;
+            this.category = category;
             this.groupName = groupName;
             this.createdAt = createdAt;
             this.activeMemberCount = activeMemberCount;

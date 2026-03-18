@@ -162,7 +162,7 @@ public class ProjectService {
         PostDTO.PostCreateDTO postCreateDTO = postMapper.toPostCreateDTO(req, userId);
         Post post = postService.createPost(postCreateDTO);
         String groupName = post.getTitle();
-        Group group = groupService.createGroup(groupName, post.getAuthorId(), req.getMaxMembers(), post.getId());
+        Group group = groupService.createGroup(groupName, post.getAuthorId(), req.getMaxMembers(), post.getId(), post.getCategory());
         PostDTO.ProjectCreateDTO projectCreateDTO = postMapper.toProjectCreateDTO(req, post.getId());
         Project project = createProject(projectCreateDTO,group);
         CbuMember author = cbuMemberRepository.findById(post.getAuthorId())

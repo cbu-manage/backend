@@ -157,7 +157,7 @@ public class StudyService {
         PostDTO.PostCreateDTO postCreateDTO = postMapper.toPostCreateDTO(req, userId);
         Post post = postService.createPost(postCreateDTO);
         String groupName = req.getStudyName() + " #" + post.getId();
-        Group group = groupService.createGroup(groupName, userId, req.getMaxMembers(), post.getId());
+        Group group = groupService.createGroup(groupName, userId, req.getMaxMembers(), post.getId(), post.getCategory());
         PostDTO.StudyCreateDTO studyCreateDTO = postMapper.toStudyCreateDTO(req, post.getId());
         Study study = createStudy(studyCreateDTO, group);
         CbuMember author = cbuMemberRepository.findById(post.getAuthorId()).orElse(null);

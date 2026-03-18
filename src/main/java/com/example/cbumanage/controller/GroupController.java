@@ -6,22 +6,21 @@ import com.example.cbumanage.model.enums.GroupMemberStatus;
 import com.example.cbumanage.response.ResultResponse;
 import com.example.cbumanage.response.SuccessCode;
 import com.example.cbumanage.service.GroupService;
-import com.example.cbumanage.utils.JwtProvider;
 import com.example.cbumanage.utils.UserIdExtractor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/groups")
@@ -76,14 +75,28 @@ public class GroupController {
 
     @Operation(
             summary = "내가 신청한 그룹 목록 (승인/대기/거절/비활동)",
-            description = "본인이 신청한 그룹을 상태별로 조회."+
+            description = "본인이 신청한 그룹을 카테고리별로 조회."+
                     "myStatus로 프론트에서 라벨 분기: PENDING=승인 대기중, ACTIVE=승인, REJECTED=거절됨, INACTIVE=비활동. " +
                     "신청 취소는 myStatus가 PENDING일 때만 노출"
     )
+    @Parameters({
+            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
+            @Parameter(name = "size", description = "한 페이지당 출력 개수", example = "10"),
+            @Parameter(name = "category", description = "카테고리 번호 (스터디=1, 프로젝트=2). 미입력시(null) 전체보기", example = "2")
+    })
     @GetMapping("/my/applications")
-    public ResponseEntity<ResultResponse<List<GroupDTO.MyGroupApplicationListDTO>>> getMyAppliedGroups(HttpServletRequest request) {
+    public ResponseEntity<ResultResponse<Page<GroupDTO.MyGroupApplicationListDTO>>> getMyAppliedGroups(
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam(required = false) Integer category,
+            HttpServletRequest request
+    ) {
         Long userId = userIdExtractor.extractUserIdFromCookie(request);
-        List<GroupDTO.MyGroupApplicationListDTO> list = groupService.getMyAppliedGroups(userId);
+        Pageable pageable = PageRequest.of(
+                page, size, Sort.by(Sort.Order.desc("createdAt"))
+        );
+        Page<GroupDTO.MyGroupApplicationListDTO> list =
+                groupService.getMyAppliedGroupsByCategory(userId, category, pageable);
         return ResultResponse.ok(SuccessCode.SUCCESS, list);
     }
 
@@ -204,47 +217,6 @@ public class GroupController {
 
 
 
-    /*-------------------------------------------------------------------*/
-//    @Operation(
-//            summary = "그룹 생성 요청",
-//            description = "req과 그룹을 생성하는 userId를 받아 그룹을 생성하고 생성자를 그룹의 leader로 추가하여 반환합니다"
-//    )
-//    @PostMapping("/group")
-//    public ResponseEntity<ResultResponse<GroupDTO.GroupCreateResponseDTO>> createGroup(@RequestBody GroupDTO.GroupCreateRequestDTO req,
-//                                                                                       HttpServletRequest httpServletRequest) {
-//        Long userId = extractUserIdFromCookie(httpServletRequest);
-//        GroupDTO.GroupCreateResponseDTO groupCreateResponseDTO = groupService.createGroup(req,userId);
-//        return ResultResponse.ok(SuccessCode.CREATED, groupCreateResponseDTO);
-//    }
-//
-//
-//    @Operation(
-//            summary = "그룹 이름 검색 메소드",
-//            description = "그룹을 그룹의 이름으로 검색하는 메소드 입니다."
-//    )
-//    @GetMapping("/group/search")
-//    public ResponseEntity<ResultResponse<List<GroupDTO.GroupInfoDTO>>> searchGroupByGroupName(@RequestParam("groupName") String groupName){
-//        List<GroupDTO.GroupInfoDTO> groupInfoDTOS = groupService.getGroupByGroupNameAndStatus(groupName);
-//        return ResultResponse.ok(SuccessCode.SUCCESS, groupInfoDTOS);
-//    }
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
 }
 
