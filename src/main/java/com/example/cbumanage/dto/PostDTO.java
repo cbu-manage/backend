@@ -365,6 +365,7 @@ public class PostDTO {
 
         @Schema(description = "게시글 카테고리 식별 번호", example = "2")
         private int category;
+
     }
 
     @Schema(description = "프로젝트 게시글 생성 응답 데이터")
