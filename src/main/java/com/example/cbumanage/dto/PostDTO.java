@@ -132,7 +132,7 @@ public class PostDTO {
         @Schema(description = "s3버킷에 사진을 업로드 하고 반환받은 url을 넣습니다")
         private String reportImage;
 
-        @Schema(description = "서브 테이블의 카테고리 번호 입니다, 보고서는 기본적으로 7을 번호로 사용합니다")
+        @Schema(description = "카테고리 번호 (서버에서 7로 고정 처리되며 클라이언트 입력값은 무시됩니다)", example = "7", accessMode = Schema.AccessMode.READ_ONLY)
         private int category;
 
         //보고서에 그룹을 연결합니다
@@ -363,7 +363,7 @@ public class PostDTO {
         @Schema(description = "최대 모집 인원",example="10")
         private Integer maxMembers;
 
-        @Schema(description = "게시글 카테고리 식별 번호", example = "2")
+        @Schema(description = "카테고리 번호 (서버에서 2로 고정 처리되며 클라이언트 입력값은 무시됩니다)", example = "2", accessMode = Schema.AccessMode.READ_ONLY)
         private int category;
 
     }
@@ -721,7 +721,7 @@ public class PostDTO {
         @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
         private int maxMembers;
 
-        @Schema(description = "게시글 카테고리 번호 (스터디: 1)", example = "1")
+        @Schema(description = "카테고리 번호 (서버에서 1로 고정 처리되며 클라이언트 입력값은 무시됩니다)", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
         private int category;
     }
 
