@@ -2,6 +2,7 @@ package com.example.cbumanage.utils;
 
 import com.example.cbumanage.dto.PostDTO;
 import com.example.cbumanage.model.*;
+import com.example.cbumanage.model.enums.PostCategory;
 import com.example.cbumanage.model.enums.ProjectFieldType;
 import com.example.cbumanage.repository.CbuMemberRepository;
 import com.example.cbumanage.repository.CommentRepository;
@@ -62,7 +63,7 @@ public class PostMapper {
                 .authorId(userId)
                 .title(req.getTitle())
                 .content(req.getContent())
-                .category(req.getCategory())
+                .category(PostCategory.REPORT.getValue())
                 .build();
     }
 
@@ -71,7 +72,7 @@ public class PostMapper {
                 .authorId(userId)
                 .title(req.getTitle())
                 .content(req.getContent())
-                .category(req.getCategory())
+                .category(PostCategory.PROJECT.getValue())
                 .build();
     }
 
@@ -80,7 +81,7 @@ public class PostMapper {
                 .authorId(userId)
                 .title(req.getTitle())
                 .content(req.getContent())
-                .category(req.getCategory())
+                .category(PostCategory.STUDY.getValue())
                 .build();
     }
 
