@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,22 +26,12 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.Map;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/report")
 @Tag(name = "보고서 게시글 관리 컨트롤러")
 public class PostReportController {
-    private final PostService postService;
-    private final JwtProvider jwtProvider;
     private final PostReportService postReportService;
     private final UserIdExtractor userIdExtractor;
-
-    @Autowired
-    public PostReportController(PostService postService, JwtProvider jwtProvider, PostReportService postReportService, UserIdExtractor userIdExtractor) {
-
-        this.postService = postService;
-        this.jwtProvider = jwtProvider;
-        this.postReportService = postReportService;
-        this.userIdExtractor = userIdExtractor;
-    }
 
 
 

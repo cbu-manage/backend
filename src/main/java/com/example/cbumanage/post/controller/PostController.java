@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +29,7 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RequestMapping("/api/v1/")
 @Tag(name = "포스트 관리 컨트롤러")
+@RequiredArgsConstructor
 public class PostController {
     private final PostService postService;
     private final UserIdExtractor userIdExtractor;
@@ -36,24 +38,6 @@ public class PostController {
     private final PostReportService postReportService;
     private final ProblemService problemService;
     private final ResourceService resourceService;
-
-    @Autowired
-    public PostController(PostService postService,
-                          UserIdExtractor userIdExtractor,
-                          StudyService studyService,
-                          ProjectService projectService,
-                          PostReportService postReportService,
-                          ProblemService problemService,
-                          ResourceService resourceService
-                          ){
-        this.postService = postService;
-        this.userIdExtractor = userIdExtractor;
-        this.studyService = studyService;
-        this.projectService = projectService;
-        this.postReportService = postReportService;
-        this.problemService = problemService;
-        this.resourceService = resourceService;
-    }
 
     /*
     페이징 기능 구현입니다

@@ -12,6 +12,7 @@ import com.example.cbumanage.post.util.PostMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
+@RequiredArgsConstructor
 public class PostService {
 
     private PostRepository postRepository;
@@ -29,17 +31,6 @@ public class PostService {
     private CbuMemberRepository cbuMemberRepository;
     private GroupRepository groupRepository;
     private GroupMemberRepository groupMemberRepository;
-
-
-    @Autowired
-    public PostService(PostRepository postRepository, PostReportRepository postReportRepository, PostMapper postMapper, CbuMemberRepository cbuMemberRepository,GroupRepository groupRepository, GroupMemberRepository groupMemberRepository) {
-        this.postRepository = postRepository;
-        this.postReportRepository = postReportRepository;
-        this.postMapper = postMapper;
-        this.cbuMemberRepository = cbuMemberRepository;
-        this.groupRepository = groupRepository;
-        this.groupMemberRepository = groupMemberRepository;
-    }
 
     public Post createPost(PostDTO.PostCreateDTO postCreateDTO) {
         CbuMember author = cbuMemberRepository.findById(postCreateDTO.getAuthorId()).orElseThrow(() -> new EntityNotFoundException("User Not Found"));

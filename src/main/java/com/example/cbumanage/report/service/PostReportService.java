@@ -16,6 +16,7 @@ import com.example.cbumanage.group.repository.GroupMemberRepository;
 import com.example.cbumanage.post.util.PostMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
+@RequiredArgsConstructor
 public class PostReportService {
 
     private  PostService postService;
@@ -33,25 +35,6 @@ public class PostReportService {
     private  CbuMemberRepository cbuMemberRepository;
     private  GroupRepository groupRepository;
     private  GroupMemberRepository groupMemberRepository;
-
-    @Autowired
-    public PostReportService(PostService postService,
-                             PostRepository postRepository,
-                             PostReportRepository postReportRepository,
-                             PostMapper postMapper,
-                             CbuMemberRepository cbuMemberRepository,
-                             GroupRepository groupRepository,
-                             GroupMemberRepository groupMemberRepository
-                             )
-    {
-        this.postService = postService;
-        this.postRepository = postRepository;
-        this.postReportRepository = postReportRepository;
-        this.postMapper = postMapper;
-        this.cbuMemberRepository = cbuMemberRepository;
-        this.groupRepository = groupRepository;
-        this.groupMemberRepository = groupMemberRepository;
-    }
 
     public PostReport createReport(PostDTO.ReportCreateDTO req) {
         Post post = postRepository.findById(req.getPostId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));

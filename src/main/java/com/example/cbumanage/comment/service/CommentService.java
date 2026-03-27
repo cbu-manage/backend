@@ -10,6 +10,7 @@ import com.example.cbumanage.problem.repository.ProblemRepository;
 import com.example.cbumanage.comment.util.CommentMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -18,22 +19,12 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class CommentService {
 
     private final CommentRepository commentRepository;
     private final CommentMapper commentMapper;
     private final PostRepository postRepository;
-    private final ProblemRepository problemRepository;
-
-    @Autowired
-    public CommentService(CommentRepository commentRepository, CommentMapper commentMapper, PostRepository postRepository,
-                          ProblemRepository problemRepository) {
-        this.commentRepository = commentRepository;
-        this.commentMapper = commentMapper;
-        this.postRepository = postRepository;
-        this.problemRepository = problemRepository;
-    }
-
 
     @Transactional
     public CommentDTO.CommentCreateResponseDTO createComment(CommentDTO.CommentCreateRequestDTO req,
@@ -73,18 +64,6 @@ public class CommentService {
         return comments.stream().map(comment -> commentMapper.toCommentInfoDTO(comment)).toList();
     }
 
-//    // Problem(코딩테스트 페이지) 댓글 생성을 위한 메소드
-//    @Transactional
-//    public CommentDTO.CommentCreateResponseDTO createCommentProblem(CommentDTO.CommentCreateRequestDTO req,
-//                                                                    Long userId,
-//                                                                    Long problemId) {
-//        Problem problem = problemRepository.findById(problemId).orElseThrow(() -> new EntityNotFoundException(
-//                "Problem not found"));
-//        Comment comment = new Comment(problem, userId, null, req.getContent());
-//        Comment saved = commentRepository.save(comment);
-//        return commentMapper.toCommentCreateResponseDTO(saved);
-//    }
-
     /*
     댓글과 답글의 엔티티는 같기에, update에서는 다르게 취급하지 않습니다
      */
@@ -96,14 +75,6 @@ public class CommentService {
         }
         comment.changeContent(req.getContent());
     }
-
-//    // Problem(코딩테스트 페이지) 댓글 조회를 위한 메소드
-//    public List<CommentDTO.CommentInfoDTO> getCommentsProblemId(Long problemId) {
-//        Problem problem = problemRepository.findById(problemId).orElseThrow(() -> new EntityNotFoundException(
-//                "Problem not found"));
-//        List<Comment> comments = commentRepository.findRootsProblemId(problemId);
-//        return comments.stream().map(commentMapper::toCommentInfoDTO).toList();
-//    }
 
     @Transactional
     public void deleteComment(Long commentId,Long userId) {
