@@ -25,12 +25,9 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class PostService {
 
-    private PostRepository postRepository;
-    private PostReportRepository postReportRepository;
-    private PostMapper postMapper;
-    private CbuMemberRepository cbuMemberRepository;
-    private GroupRepository groupRepository;
-    private GroupMemberRepository groupMemberRepository;
+    private final PostRepository postRepository;
+    private final PostMapper postMapper;
+    private final CbuMemberRepository cbuMemberRepository;
 
     public Post createPost(PostDTO.PostCreateDTO postCreateDTO) {
         CbuMember author = cbuMemberRepository.findById(postCreateDTO.getAuthorId()).orElseThrow(() -> new EntityNotFoundException("User Not Found"));

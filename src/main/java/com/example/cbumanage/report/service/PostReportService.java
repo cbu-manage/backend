@@ -28,13 +28,13 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class PostReportService {
 
-    private  PostService postService;
-    private  PostRepository postRepository;
-    private  PostReportRepository postReportRepository;
-    private  PostMapper postMapper;
-    private  CbuMemberRepository cbuMemberRepository;
-    private  GroupRepository groupRepository;
-    private  GroupMemberRepository groupMemberRepository;
+    private final PostService postService;
+    private final PostRepository postRepository;
+    private final PostReportRepository postReportRepository;
+    private final PostMapper postMapper;
+    private final CbuMemberRepository cbuMemberRepository;
+    private final GroupRepository groupRepository;
+    private final GroupMemberRepository groupMemberRepository;
 
     public PostReport createReport(PostDTO.ReportCreateDTO req) {
         Post post = postRepository.findById(req.getPostId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
