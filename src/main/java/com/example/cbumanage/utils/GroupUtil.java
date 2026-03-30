@@ -24,6 +24,7 @@ public class GroupUtil {
                 .members(group.getMembers().stream().map(m->toGroupMemberInfoDTO(m)).toList())
                 .groupRecruitmentStatus(group.getRecruitmentStatus())
                 .groupStatus(group.getStatus())
+                .rejectReason(group.getRejectReason())
                 .build();
     }
 
@@ -37,6 +38,7 @@ public class GroupUtil {
                 .major(member.getCbuMember().getMajor())
                 .groupMemberRole(member.getGroupMemberRole())
                 .groupMemberStatus(member.getGroupMemberStatus())
+                .memberRejectReason(member.getMemberRejectReason())
                 .createdAt(member.getCreatedAt())
                 .build();
 
@@ -77,6 +79,7 @@ public class GroupUtil {
                 .groupName(group.getGroupName())
                 .createdAt(group.getCreatedAt())
                 .groupStatus(group.getStatus())
+                .rejectReason(group.getRejectReason())
                 .groupRecruitmentStatus(group.getRecruitmentStatus())
                 .activeMemberCount((int) group.getMembers().stream()
                         .filter(m -> m.getGroupMemberStatus() == GroupMemberStatus.ACTIVE)
@@ -111,6 +114,7 @@ public class GroupUtil {
                 .leaderGeneration(leader != null ? leader.getCbuMember().getGeneration() : null)
                 .leaderName(leader != null ? leader.getCbuMember().getName() : null)
                 .myStatus(groupMember.getGroupMemberStatus())
+                .memberRejectReason(groupMember.getMemberRejectReason())
                 .build();
     }
 }

@@ -50,6 +50,9 @@ public class GroupMember {
     @Comment("그룹 내 멤버 상태 (PENDING: 가입 대기, ACTIVE: 활동, INACTIVE: 비활동, REJECTED: 가입거절)")
     private GroupMemberStatus groupMemberStatus;
 
+    @Comment("가입 거절 사유")
+    private String memberRejectReason;
+
     @Enumerated(EnumType.STRING)
     @Comment("그룹 내 멤버 권한 (LEADER, MEMBER)")
     private GroupMemberRole groupMemberRole;
@@ -71,6 +74,10 @@ public class GroupMember {
 
     public void changeStatus(GroupMemberStatus groupMemberStatus) {
         this.groupMemberStatus = groupMemberStatus;
+    }
+    public void reject(String reason) {
+        this.groupMemberStatus = GroupMemberStatus.REJECTED;
+        this.memberRejectReason = reason;
     }
 
     public void changeRole(GroupMemberRole groupMemberRole) {

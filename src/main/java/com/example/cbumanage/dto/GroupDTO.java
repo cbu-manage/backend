@@ -55,12 +55,14 @@ public class GroupDTO {
         private int minMembers;
     }
 
-    @Schema(description = "그룹 상태 변환 요청 DTO")
+    @Schema(description = "그룹 승인 여부 요청 DTO")
     @Getter
     @NoArgsConstructor
-    public static class GroupStatusRequestDTO {
-        @Schema(description = "그룹의 상태 (ACTIVE: 활성, INACTIVE: 비활성)", example = "ACTIVE")
-        private GroupStatus groupStatus;
+    public static class GroupReviewRequestDTO {
+        @Schema(description = "그룹 승인 여부 (APPROVE: 승인, REJECT: 반려)", example = "REJECT")
+        private GroupApprovalAction action;
+        @Schema(description = "반려시 사유", example="너무 많이 개설해서")
+        private String reason;
     }
 
     @Schema(description = "그룹 모집 상태 변환 요청 DTO")
@@ -77,6 +79,8 @@ public class GroupDTO {
     public static class GroupMemberStatusRequestDTO {
         @Schema(description = "멤버 상태 (PENDING: 대기, ACTIVE: 활동, INACTIVE: 비활동, REJECTED:가입 거절)", example = "ACTIVE")
         private GroupMemberStatus groupMemberStatus;
+        @Schema(description = "가입 거절 사유")
+        private String memberRejectReason;
     }
 
     @Schema(description = "전체 그룹 리스트 요약 정보")
@@ -95,8 +99,10 @@ public class GroupDTO {
         private int activeMemberCount;
         @Schema(description = "최대 모집 인원 수. 활동수와 함께 N/M 형태 표시용", example = "10")
         private int maxMembers;
-        @Schema(description = "현재 그룹 활성화 상태", example = "ACTIVE")
+        @Schema(description = "현재 그룹 상태", example = "REJECTED")
         GroupStatus groupStatus;
+        @Schema(description = "승인 반려 사유", example = "너무 많이 만들어서")
+        private String rejectReason;
         @Schema(description = "현재 그룹 모집 상태",example="OPEN")
         GroupRecruitmentStatus groupRecruitmentStatus;
         @Schema(description = "현재 그룹 리더 ID", example="10")
@@ -115,6 +121,7 @@ public class GroupDTO {
                 int activeMemberCount,
                 int maxMembers,
                 GroupStatus groupStatus,
+                String rejectReason,
                 GroupRecruitmentStatus groupRecruitmentStatus,
                 Long leaderId,
                 Long leaderGeneration,
@@ -125,6 +132,7 @@ public class GroupDTO {
             this.groupName = groupName;
             this.createdAt = createdAt;
             this.groupStatus = groupStatus;
+            this.rejectReason = rejectReason;
             this.groupRecruitmentStatus = groupRecruitmentStatus;
             this.activeMemberCount = activeMemberCount;
             this.maxMembers = maxMembers;
@@ -164,12 +172,14 @@ public class GroupDTO {
         private String leaderName;
         @Schema(description = "내 신청/가입 상태. PENDING=승인 대기중, ACTIVE=승인, REJECTED=거절됨, INACTIVE=비활동. 프론트 라벨·버튼(신청취소/다시신청 등) 분기용", example = "PENDING")
         private GroupMemberStatus myStatus;
+        @Schema(description = "가입 거절 사유")
+        private String memberRejectReason;
 
         @Builder
         public MyGroupApplicationListDTO(Long groupId, Long postId, Integer category, String groupName, LocalDateTime createdAt,
                                          int activeMemberCount, int maxMembers, GroupStatus groupStatus,
                                          GroupRecruitmentStatus groupRecruitmentStatus, Long leaderId, Long leaderGeneration, String leaderName,
-                                         GroupMemberStatus myStatus) {
+                                         GroupMemberStatus myStatus, String memberRejectReason) {
             this.groupId = groupId;
             this.postId = postId;
             this.category = category;
@@ -183,6 +193,7 @@ public class GroupDTO {
             this.leaderGeneration = leaderGeneration;
             this.leaderName = leaderName;
             this.myStatus = myStatus;
+            this.memberRejectReason = memberRejectReason;
         }
     }
 
@@ -204,8 +215,10 @@ public class GroupDTO {
         private LocalDateTime updatedAt;
         @Schema(description = "현재 모집 상태", example = "OPEN")
         private GroupRecruitmentStatus groupRecruitmentStatus;
-        @Schema(description = "현재 그룹 상태", example = "ACTIVE")
+        @Schema(description = "현재 그룹 상태", example = "APPROVED")
         private GroupStatus groupStatus;
+        @Schema(description = "승인 반려 사유", example = "너무 많이 만들어서")
+        private String rejectReason;
         @Schema(description = "현재 활동 중인 인원 수", example = "5")
         private int activeMemberCount;
         @Schema(description = "최대 인원 제한", example = "10")
@@ -223,6 +236,7 @@ public class GroupDTO {
                 LocalDateTime updatedAt,
                 GroupRecruitmentStatus groupRecruitmentStatus,
                 GroupStatus  groupStatus,
+                String rejectReason,
                 int activeMemberCount,
                 int maxMembers,
                 int minMembers,
@@ -234,6 +248,7 @@ public class GroupDTO {
             this.updatedAt = updatedAt;
             this.groupRecruitmentStatus = groupRecruitmentStatus;
             this.groupStatus = groupStatus;
+            this.rejectReason = rejectReason;
             this.activeMemberCount = activeMemberCount;
             this.maxMembers = maxMembers;
             this.minMembers = minMembers;
@@ -265,6 +280,8 @@ public class GroupDTO {
         private GroupMemberRole groupMemberRole;
         @Schema(description = "멤버 활동 상태", example = "ACTIVE")
         private GroupMemberStatus groupMemberStatus;
+        @Schema(description = "가입 거절 사유", example= "모집 요건과 맞지 않아서")
+        private String memberRejectReason;
         @Schema(description = "가입/신청 일시")
         private LocalDateTime createdAt;
 
@@ -278,6 +295,7 @@ public class GroupDTO {
                 String major,
                 GroupMemberRole groupMemberRole,
                 GroupMemberStatus groupMemberStatus,
+                String memberRejectReason,
                 LocalDateTime createdAt
         ){
             this.groupMemberId = groupMemberId;
@@ -288,6 +306,7 @@ public class GroupDTO {
             this.major=major;
             this.groupMemberRole = groupMemberRole;
             this.groupMemberStatus = groupMemberStatus;
+            this.memberRejectReason = memberRejectReason;
             this.createdAt = createdAt;
         }
     }
@@ -310,7 +329,9 @@ public class GroupDTO {
     @Getter
     @NoArgsConstructor
     public static class ApplicantActionRequestDTO {
-        @Schema(description = "처리 액션 (ACCEPT: 수락, REJECT: 거절)", example = "ACCEPT", allowableValues = {"ACCEPT", "REJECT"})
-        private ApplicantAction action;
+        @Schema(description = "처리 액션 (ACCEPT: 수락, REJECT: 거절)", example = "REJECT", allowableValues = {"ACCEPT", "REJECT"})
+        private MemberApprovalAction action;
+        @Schema(description = "가입 거절 사유(ACCEPT 시 NULL)")
+        private String memberRejeactReason;
     }
 }
