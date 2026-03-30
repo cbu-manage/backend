@@ -70,7 +70,7 @@ public class PostMapper {
     }
 
     public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostProjectCreateRequestDTO req, Long userId) {
-        return new PostDTO.PostCreateDTO(userId, req.getTitle(), req.getContent(), PostCategory.PROJECT.getValue());
+        return new PostDTO.PostCreateDTO(userId, req.title(), req.content(), PostCategory.PROJECT.getValue());
     }
 
     public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostStudyCreateRequestDTO req, Long userId) {
@@ -179,7 +179,7 @@ public class PostMapper {
     }
 
     public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostProjectUpdateRequestDTO req) {
-        return new PostDTO.PostUpdateDTO(req.getTitle(), req.getContent());
+        return new PostDTO.PostUpdateDTO(req.title(), req.content());
     }
 
     public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostStudyUpdateRequestDTO req) {
