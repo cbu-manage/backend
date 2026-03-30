@@ -1,6 +1,7 @@
 package com.example.cbumanage.post.dto;
 
 import com.example.cbumanage.group.dto.GroupDTO;
+import com.example.cbumanage.group.entity.enums.GroupRecruitmentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import com.example.cbumanage.report.entity.enums.PostReportGroupType;
 import jakarta.validation.constraints.*;
@@ -575,6 +576,9 @@ public class PostDTO {
         @Schema(description = "최대 모집 인원(팀장 포함). activeMemberCount와 함께 상세 화면에서 예) 2/4 형태 표시용", example = "4")
         private int maxMembers;
 
+        @Schema(description = "그룹 모집 상태")
+        private GroupRecruitmentStatus groupRecruitmentStatus;
+
         @Builder
         public ProjectInfoDetailDTO(
                 Long postId,
@@ -592,7 +596,8 @@ public class PostDTO {
                 LocalDate deadline,
                 Long viewCount,
                 int activeMemberCount,
-                int maxMembers
+                int maxMembers,
+                GroupRecruitmentStatus groupRecruitmentStatus
         ) {
             this.postId = postId;
             this.title = title;
@@ -610,6 +615,7 @@ public class PostDTO {
             this.viewCount = viewCount;
             this.activeMemberCount = activeMemberCount;
             this.maxMembers = maxMembers;
+            this.groupRecruitmentStatus = groupRecruitmentStatus;
         }
     }
 

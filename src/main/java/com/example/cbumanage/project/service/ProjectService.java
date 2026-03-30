@@ -18,15 +18,16 @@ import com.example.cbumanage.post.repository.PostRepository;
 import com.example.cbumanage.global.response.ErrorCode;
 import com.example.cbumanage.post.util.PostMapper;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
@@ -37,23 +38,6 @@ public class ProjectService {
     private final PostService postService;
     private final GroupService groupService;
 
-    @Autowired
-    public ProjectService(ProjectRepository projectRepository,
-                          PostRepository postRepository,
-                          CbuMemberRepository cbuMemberRepository,
-                          GroupRepository groupRepository,
-                          PostMapper postMapper,
-                          PostService postService,
-                          GroupService groupService
-    ) {
-        this.projectRepository = projectRepository;
-        this.postRepository = postRepository;
-        this.cbuMemberRepository = cbuMemberRepository;
-        this.groupRepository = groupRepository;
-        this.postMapper = postMapper;
-        this.postService = postService;
-        this.groupService= groupService;
-    }
 
     //프로젝트 게시글 생성 메서드
     public Project createProject(PostDTO.ProjectCreateDTO req, Group group) {
