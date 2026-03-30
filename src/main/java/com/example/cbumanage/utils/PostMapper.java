@@ -257,6 +257,7 @@ public class PostMapper {
                 .viewCount(project.getPost().getViewCount())
                 .activeMemberCount(activeMemberCount)
                 .maxMembers(maxMember)
+                .groupRecruitmentStatus(project.getGroup().getRecruitmentStatus())
                 .build();
     }
 
