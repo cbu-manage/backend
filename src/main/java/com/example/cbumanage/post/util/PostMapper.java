@@ -37,27 +37,28 @@ public class PostMapper {
 
     public PostDTO.PostInfoDTO toPostInfoDTO(Post post) {
         CbuMember author = cbuMemberRepository.findById(post.getAuthorId()).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        return  PostDTO.PostInfoDTO.builder().postId(post.getId())
-                .authorId(post.getAuthorId())
-                .authorName(author.getName())
-                .generation(author.getGeneration())
-                .title(post.getTitle())
-                .content(post.getContent())
-                .createdAt(post.getCreatedAt())
-                .updatedAt(post.getUpdatedAt()).build();
+        return new PostDTO.PostInfoDTO(
+                post.getId(),
+                author.getName(),
+                author.getGeneration(),
+                post.getAuthorId(),
+                post.getTitle(),
+                post.getContent(),
+                post.getCreatedAt(),
+                post.getUpdatedAt()
+        );
     }
 
     public PostDTO.ReportInfoDTO toReportInfoDTO(PostReport report) {
         Group group = groupRepository.findById(report.getGroupId()).orElseThrow(EntityNotFoundException::new);
-
-        return PostDTO.ReportInfoDTO.builder()
-                .location(report.getLocation())
-                .reportImage(report.getReportImage())
-                .date(report.getDate())
-                .type(report.getType())
-                .groupInfoDTO(groupUtil.toGroupInfoDTO(group))
-                .isAccepted(report.isAccepted())
-                .build();
+        return new PostDTO.ReportInfoDTO(
+                report.getLocation(),
+                report.getReportImage(),
+                report.getDate(),
+                groupUtil.toGroupInfoDTO(group),
+                report.getType(),
+                report.isAccepted()
+        );
     }
 
     /*
@@ -65,44 +66,29 @@ public class PostMapper {
     매개변수의 DTO 를 바꾸면서 오버로딩하시면서 메소드 추가 하시면 됩니다
      */
     public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostReportCreateRequestDTO req, Long userId) {
-        return PostDTO.PostCreateDTO.builder()
-                .authorId(userId)
-                .title(req.getTitle())
-                .content(req.getContent())
-                .category(PostCategory.REPORT.getValue())
-                .build();
+        return new PostDTO.PostCreateDTO(userId, req.title(), req.content(), PostCategory.REPORT.getValue());
     }
 
     public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostProjectCreateRequestDTO req, Long userId) {
-        return PostDTO.PostCreateDTO.builder()
-                .authorId(userId)
-                .title(req.getTitle())
-                .content(req.getContent())
-                .category(PostCategory.PROJECT.getValue())
-                .build();
+        return new PostDTO.PostCreateDTO(userId, req.getTitle(), req.getContent(), PostCategory.PROJECT.getValue());
     }
 
     public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostStudyCreateRequestDTO req, Long userId) {
-        return PostDTO.PostCreateDTO.builder()
-                .authorId(userId)
-                .title(req.getTitle())
-                .content(req.getContent())
-                .category(PostCategory.STUDY.getValue())
-                .build();
+        return new PostDTO.PostCreateDTO(userId, req.getTitle(), req.getContent(), PostCategory.STUDY.getValue());
     }
 
     /*
     아래는 게시물의 맞게 CreateDTO 를 반환해주는 메소드 입니다.Post 생성후에 postId를 매개변숯로 추가합니다
      */
-    public PostDTO.ReportCreateDTO toReportCreateDTO(PostDTO.PostReportCreateRequestDTO req,Long postId) {
-        return PostDTO.ReportCreateDTO.builder().
-                postId(postId).
-                location(req.getLocation()).
-                reportImage(req.getReportImage()).
-                date(req.getDate()).
-                groupId(req.getGroupId()).
-                type(req.getType()).
-                build();
+    public PostDTO.ReportCreateDTO toReportCreateDTO(PostDTO.PostReportCreateRequestDTO req, Long postId) {
+        return new PostDTO.ReportCreateDTO(
+                postId,
+                req.location(),
+                req.reportImage(),
+                req.date(),
+                req.groupId(),
+                req.type()
+        );
     }
 
 
@@ -111,21 +97,19 @@ public class PostMapper {
      */
     public PostDTO.PostReportCreateResponseDTO toPostReportCreateResponseDTO(Post post, PostReport report) {
         Group group = groupRepository.findById(report.getGroupId()).orElseThrow(() -> new EntityNotFoundException("Group not found"));
-
-        return PostDTO.PostReportCreateResponseDTO.builder()
-                .postId(post.getId())
-                .authorId(post.getAuthorId())
-                .title(post.getTitle())
-                .content(post.getContent())
-                .location(report.getLocation())
-                .reportImage(report.getReportImage())
-                .createdAt(post.getCreatedAt())
-                .date(report.getDate())
-                .category(post.getCategory())
-                .groupInfoDTO(groupUtil.toGroupInfoDTO(group))
-                .type(report.getType())
-                .build();
-
+        return new PostDTO.PostReportCreateResponseDTO(
+                post.getId(),
+                post.getAuthorId(),
+                groupUtil.toGroupInfoDTO(group),
+                post.getTitle(),
+                post.getContent(),
+                report.getLocation(),
+                report.getReportImage(),
+                report.getDate(),
+                post.getCreatedAt(),
+                post.getCategory(),
+                report.getType()
+        );
     }
 
     public PostDTO.ProjectCreateDTO toProjectCreateDTO(PostDTO.PostProjectCreateRequestDTO req,Long postId) {
@@ -191,22 +175,15 @@ public class PostMapper {
      */
 
     public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostReportUpdateRequestDTO req) {
-        return PostDTO.PostUpdateDTO.builder()
-                .title(req.getTitle())
-                .content(req.getContent()).build();
+        return new PostDTO.PostUpdateDTO(req.title(), req.content());
     }
 
     public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostProjectUpdateRequestDTO req) {
-        return PostDTO.PostUpdateDTO.builder()
-                .title(req.getTitle())
-                .content(req.getContent()).build();
+        return new PostDTO.PostUpdateDTO(req.getTitle(), req.getContent());
     }
 
     public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostStudyUpdateRequestDTO req) {
-        return PostDTO.PostUpdateDTO.builder()
-                .title(req.getTitle())
-                .content(req.getContent())
-                .build();
+        return new PostDTO.PostUpdateDTO(req.getTitle(), req.getContent());
     }
 
     public PostDTO.StudyUpdateDTO toStudyUpdateDTO(PostDTO.PostStudyUpdateRequestDTO req) {
@@ -218,13 +195,13 @@ public class PostMapper {
     }
 
     public PostDTO.ReportUpdateDTO topostReportUpdateDTO(PostDTO.PostReportUpdateRequestDTO req) {
-        return PostDTO.ReportUpdateDTO.builder()
-                .location(req.getLocation())
-                .reportImage(req.getReportImage())
-                .date(req.getDate())
-                .groupId(req.getGroupId())
-                .type(req.getType())
-                .build();
+        return new PostDTO.ReportUpdateDTO(
+                req.location(),
+                req.reportImage(),
+                req.date(),
+                req.groupId(),
+                req.type()
+        );
     }
 
     public PostDTO.ProjectUpdateDTO toPostProjectUpdateDTO(PostDTO.PostProjectUpdateRequestDTO req) {
@@ -332,11 +309,7 @@ public class PostMapper {
     }
 
     public PostDTO.PostReportViewDTO toPostReportViewDTO(Post post, PostReport report) {
-        return PostDTO.PostReportViewDTO
-                .builder()
-                .postInfoDTO(toPostInfoDTO(post))
-                .reportInfoDTO(toReportInfoDTO(report))
-                .build();
+        return new PostDTO.PostReportViewDTO(toPostInfoDTO(post), toReportInfoDTO(report));
     }
 
     public PostDTO.PostMyPageViewDTO  toPostMyPageViewDTO(Post post,CbuMember author) {

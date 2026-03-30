@@ -30,8 +30,8 @@ public class PostService {
     private final CbuMemberRepository cbuMemberRepository;
 
     public Post createPost(PostDTO.PostCreateDTO postCreateDTO) {
-        CbuMember author = cbuMemberRepository.findById(postCreateDTO.getAuthorId()).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        Post post = Post.create(author.getCbuMemberId(), postCreateDTO.getTitle(), postCreateDTO.getContent(), postCreateDTO.getCategory());
+        CbuMember author = cbuMemberRepository.findById(postCreateDTO.authorId()).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        Post post = Post.create(author.getCbuMemberId(), postCreateDTO.title(), postCreateDTO.content(), postCreateDTO.category());
         Post saved = postRepository.save(post);
         return saved;
     }
@@ -54,11 +54,11 @@ public class PostService {
      Setter 를 사용하지 않고 클래스 내부에 변환메소드를 만들어 사용합니다
      */
     public void updatePost(PostDTO.PostUpdateDTO postUpdateDTO,Post post) {
-        if (postUpdateDTO.getTitle() != null) {
-            post.changeTitle(postUpdateDTO.getTitle());
+        if (postUpdateDTO.title() != null) {
+            post.changeTitle(postUpdateDTO.title());
         }
-        if (postUpdateDTO.getContent() != null) {
-            post.changeContent(postUpdateDTO.getContent());
+        if (postUpdateDTO.content() != null) {
+            post.changeContent(postUpdateDTO.content());
         }
     }
 

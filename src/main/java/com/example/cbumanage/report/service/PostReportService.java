@@ -37,9 +37,9 @@ public class PostReportService {
     private final GroupMemberRepository groupMemberRepository;
 
     public PostReport createReport(PostDTO.ReportCreateDTO req) {
-        Post post = postRepository.findById(req.getPostId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        Group group = groupRepository.findById(req.getGroupId());
-        PostReport report = PostReport.create(post, req.getGroupId(), req.getType(),req.getDate(),req.getLocation(),req.getReportImage());
+        Post post = postRepository.findById(req.postId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        Group group = groupRepository.findById(req.groupId());
+        PostReport report = PostReport.create(post, req.groupId(), req.type(), req.date(), req.location(), req.reportImage());
         PostReport saved = postReportRepository.save(report);
         return saved;
     }
@@ -118,9 +118,9 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
     }
 
     public void updateReport(PostDTO.ReportUpdateDTO postUpdateDTO,PostReport postReport) {
-        postReport.changeDate(postUpdateDTO.getDate());
-        postReport.changeLocation(postUpdateDTO.getLocation());
-        postReport.changeReportImage(postUpdateDTO.getReportImage());
-        postReport.changeType(postUpdateDTO.getType());
+        postReport.changeDate(postUpdateDTO.date());
+        postReport.changeLocation(postUpdateDTO.location());
+        postReport.changeReportImage(postUpdateDTO.reportImage());
+        postReport.changeType(postUpdateDTO.type());
     }
 }
