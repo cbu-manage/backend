@@ -1,7 +1,7 @@
 package com.example.cbumanage.controller;
 
 import com.example.cbumanage.dto.GroupDTO;
-import com.example.cbumanage.model.enums.ApplicantAction;
+import com.example.cbumanage.model.enums.MemberApprovalAction;
 import com.example.cbumanage.model.enums.GroupMemberStatus;
 import com.example.cbumanage.response.ResultResponse;
 import com.example.cbumanage.response.SuccessCode;
@@ -12,28 +12,23 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/groups")
 @Tag(name = "Group API", description = "그룹 생성, 가입 신청 및 관리 관련 API")
+@RequiredArgsConstructor
 public class GroupController {
     private final GroupService groupService;
     private final UserIdExtractor userIdExtractor;
-
-    @Autowired
-    public GroupController(GroupService groupService, UserIdExtractor userIdExtractor) {
-        this.groupService = groupService;
-        this.userIdExtractor = userIdExtractor;
-    }
 
     /* ============================================================
      * [ 일반 유저 및 본인 관련 API ]
@@ -111,19 +106,19 @@ public class GroupController {
     /* ============================================================
      * [ 팀장(Leader) 전용 API ]
      * ============================================================ */
-//    @Operation(
-//            summary = "신청 인원 확인 (팀장 전용)",
-//            description = "가입 대기(PENDING) 유저만 조회. 수락/거절 버튼용. 전체 상태가 필요하면 GET .../applicants/overview 사용."
-//    )
-//    @GetMapping("/{groupId}/applicants")
-//    public ResponseEntity<ResultResponse<List<GroupDTO.GroupMemberInfoDTO>>> getGroupApplicants(
-//            @Parameter(description = "조회할 그룹의 ID", example = "1")
-//            @PathVariable Long groupId,
-//            HttpServletRequest httpServletRequest) {
-//        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
-//        List<GroupDTO.GroupMemberInfoDTO> applicants = groupService.getPendingGroupMember(groupId, userId);
-//        return ResultResponse.ok(SuccessCode.SUCCESS, applicants);
-//    }
+    @Operation(
+            summary = "신청 인원 확인 (팀장 전용)",
+            description = "가입 대기(PENDING) 유저만 조회. 수락/거절 버튼용. 전체 상태가 필요하면 GET .../applicants/overview 사용."
+    )
+    @GetMapping("/{groupId}/applicants")
+    public ResponseEntity<ResultResponse<List<GroupDTO.GroupMemberInfoDTO>>> getGroupApplicants(
+            @Parameter(description = "조회할 그룹의 ID", example = "1")
+            @PathVariable Long groupId,
+            HttpServletRequest httpServletRequest) {
+        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
+        List<GroupDTO.GroupMemberInfoDTO> applicants = groupService.getPendingGroupMember(groupId, userId);
+        return ResultResponse.ok(SuccessCode.SUCCESS, applicants);
+    }
 
     @Operation(
             summary = "신청 인원 상태 전체 보기(팀장 전용)",
@@ -165,7 +160,7 @@ public class GroupController {
             @RequestBody GroupDTO.GroupMemberStatusRequestDTO req,
             HttpServletRequest httpServletRequest) {
         Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
-        groupService.updateStatusGroupMember(groupMemberId, userId, req.getGroupMemberStatus());
+        groupService.updateStatusGroupMember(groupMemberId, userId, req.getGroupMemberStatus(), req.getMemberRejectReason());
         return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
 
@@ -178,10 +173,10 @@ public class GroupController {
             @Parameter(description = "그룹 멤버 고유 식별자(groupMemberId)", example = "50") @PathVariable Long groupMemberId,
             @RequestBody GroupDTO.ApplicantActionRequestDTO req, HttpServletRequest httpServletRequest) {
         Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
-        GroupMemberStatus targetStatus = (req.getAction() == ApplicantAction.ACCEPT)
+        GroupMemberStatus targetStatus = (req.getAction() == MemberApprovalAction.ACCEPT)
                 ? GroupMemberStatus.ACTIVE
                 : GroupMemberStatus.REJECTED;
-        groupService.updateStatusGroupMember(groupMemberId, userId, targetStatus);
+        groupService.updateStatusGroupMember(groupMemberId, userId, targetStatus,req.getMemberRejeactReason());
         return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
 
@@ -200,16 +195,16 @@ public class GroupController {
     }
 
     @Operation(
-            summary = "그룹 상태 변경하기(관리자 전용)",
-            description = "개설된 그룹의 활성/비활성 상태를 변경합니다. 운영자가 관리합니다"
+            summary = "그룹 승인 여부 변경하기(관리자 전용)",
+            description = "개설된 그룹의 승인 상태(APPROVE/REJECT) 여부를 변경하며 반려시 사유를 추가합니다. 운영자가 관리합니다 "
     )
     @PatchMapping("/{groupId}/admin/status")
     public ResponseEntity<ResultResponse<Void>> changeGroupStatus(
             @PathVariable Long groupId ,
-            @Parameter(description = "ACTIVE,INACTIVE로 구분되며 원하는 상태를 보냅니다") @RequestBody GroupDTO.GroupStatusRequestDTO req,
+            @Parameter(description = "APPROVE,REJECT 구분되며 원하는 상태를 보냅니다") @RequestBody GroupDTO.GroupReviewRequestDTO req,
             HttpServletRequest httpServletRequest) {
         Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
-        groupService.updateGroupStatusAdmin(groupId, userId, req.getGroupStatus());
+        groupService.updateGroupStatusAdmin(groupId, userId, req);
         return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
 

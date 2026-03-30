@@ -16,7 +16,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.json.JSONArray;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,22 +24,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.server.ResponseStatusException;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "프로젝트 관리 컨트롤러")
+@RequiredArgsConstructor
 public class ProjectController {
     private final ProjectService projectService;
     private final UserIdExtractor userIdExtractor;
-
-
-    @Autowired
-    public ProjectController(ProjectService projectService, UserIdExtractor userIdExtractor) {
-        this.projectService = projectService;
-        this.userIdExtractor=userIdExtractor;
-    }
 
     @Operation(
             summary = "프로젝트 게시글 생성",

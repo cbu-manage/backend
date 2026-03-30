@@ -9,10 +9,8 @@ import com.example.cbumanage.model.enums.*;
 import com.example.cbumanage.repository.*;
 import com.example.cbumanage.response.ErrorCode;
 import com.example.cbumanage.utils.GroupUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,9 +18,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class GroupService {
-    private static final Logger log = LoggerFactory.getLogger(GroupService.class);
-
     private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final CbuMemberRepository cbuMemberRepository;
@@ -30,23 +27,6 @@ public class GroupService {
     private final ProjectRepository projectRepository;
     private final StudyRepository studyRepository;
     private final GroupUtil groupUtil;
-
-    @Autowired
-    public GroupService(GroupRepository groupRepository,
-                        GroupMemberRepository groupMemberRepository,
-                        CbuMemberRepository cbuMemberRepository,
-                        CommentRepository commentRepository,
-                        ProjectRepository projectRepository,
-                        StudyRepository studyRepository,
-                        GroupUtil groupUtil) {
-        this.groupRepository = groupRepository;
-        this.groupMemberRepository = groupMemberRepository;
-        this.cbuMemberRepository = cbuMemberRepository;
-        this.commentRepository = commentRepository;
-        this.projectRepository = projectRepository;
-        this.studyRepository = studyRepository;
-        this.groupUtil = groupUtil;
-    }
 
     /**
      게시글 생성 시 자동 생성되는 그룹.
@@ -124,7 +104,7 @@ public class GroupService {
     최대인원을 초과하면 그룹을 CLOSE 상태로 변경시키고 게시글의 모집중을 모집완료로 변경합니다.
      **/
     @Transactional
-    public void updateStatusGroupMember(Long groupMemberId,Long userId,GroupMemberStatus targetStatus) {
+    public void updateStatusGroupMember(Long groupMemberId,Long userId,GroupMemberStatus targetStatus, String reason) {
         GroupMember groupMember = groupMemberRepository.findById(groupMemberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 멤버를 찾을 수 없습니다."));
         Group group = groupMember.getGroup();
@@ -137,6 +117,8 @@ public class GroupService {
                 projectRepository.findByGroupId(group.getId()).ifPresent(project -> project.updateRecruiting(false));
                 studyRepository.findByGroupId(group.getId()).ifPresent(study -> study.updateRecruiting(false));
             }
+        }else{
+            groupMember.reject(reason);
         }
     }
 
@@ -166,6 +148,7 @@ public class GroupService {
         pending.forEach(member -> member.changeStatus(GroupMemberStatus.REJECTED));
     }
 
+
     /* 신청 취소: PENDING 상태인 본인 신청만 삭제 */
     @Transactional
     public void cancelApplication(Long groupId, Long userId) {
@@ -184,6 +167,17 @@ public class GroupService {
         return pending.stream().map(groupUtil::toGroupMemberInfoDTO).toList();
     }
 
+    //팀장 전용: 신청인원 전체 상태 한눈에 확인(PENDING/ACTIVE/REJECTED/INACTIVE 팀원 목록)
+    @Transactional(readOnly = true)
+    public List<GroupDTO.GroupMemberInfoDTO> getGroupApplicantsOverview(Long groupId, Long userId) {
+        assertIsGroupLeader(groupId, userId);
+        List<GroupMember> members = groupMemberRepository.findByGroupId(groupId);
+        return members.stream()
+                .filter(m -> m.getGroupMemberRole() != GroupMemberRole.LEADER)
+                .map(groupUtil::toGroupMemberInfoDTO)
+                .toList();
+    }
+
     /* 해당 그룹에 해당 유저가 PENDING(신청 대기) 상태로 있는지 여부 */
     @Transactional(readOnly = true)
     public Boolean hasAppliedToGroup(Long groupId, Long userId) {
@@ -197,16 +191,21 @@ public class GroupService {
         return null; // ACTIVE, INACTIVE → 가입 완료
     }
 
-    /*관리자 전용: 그룹 상태를 ACTIVE 또는 INACTIVE로 변경합니다.*/
+    /*관리자 전용: 그룹 승인 상태를 APPROVED 또는 REJECTED로 변경합니다.*/
     @Transactional
-    public void updateGroupStatusAdmin(Long groupId, Long adminId, GroupStatus targetStatus) {
+    public void updateGroupStatusAdmin(Long groupId, Long adminId, GroupDTO.GroupReviewRequestDTO req) {
 //        assertIsAdmin(adminId);
         Group group = groupRepository.findByIdAndIsDeletedFalse(groupId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 그룹을 찾을 수 없습니다."));
-        if (targetStatus == GroupStatus.ACTIVE) {
-            group.activate();
+        if (req.getAction() == GroupApprovalAction.APPROVE) {
+            group.approve();
         } else {
-            group.deactivate();
+            group.reject(req.getReason());
+            group.openRecruitment();
+            projectRepository.findByGroupId(groupId)
+                    .ifPresent(project -> project.updateRecruiting(true));
+            studyRepository.findByGroupId(groupId)
+                    .ifPresent(study -> study.updateRecruiting(true));
         }
     }
 
@@ -248,17 +247,6 @@ public class GroupService {
                 pageable
         );
         return members.map(groupUtil::toMyGroupApplicationListDTO);
-    }
-
-    //팀장 전용: 신청인원 전체 상태 한눈에 확인(PENDING/ACTIVE/REJECTED/INACTIVE 팀원 목록)
-    @Transactional(readOnly = true)
-    public List<GroupDTO.GroupMemberInfoDTO> getGroupApplicantsOverview(Long groupId, Long userId) {
-        assertIsGroupLeader(groupId, userId);
-        List<GroupMember> members = groupMemberRepository.findByGroupId(groupId);
-        return members.stream()
-                .filter(m -> m.getGroupMemberRole() != GroupMemberRole.LEADER)
-                .map(groupUtil::toGroupMemberInfoDTO)
-                .toList();
     }
 
     //그룹을 이름으로 검색하는 기능입니다.
