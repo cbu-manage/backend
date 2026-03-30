@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,16 +28,10 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/")
 @Tag(name = "댓글 관리 컨트롤러")
+@RequiredArgsConstructor
 public class CommentController {
     private final CommentService commentService;
     private final UserIdExtractor userIdExtractor;
-
-    @Autowired
-    public CommentController(CommentService commentService,UserIdExtractor userIdExtractor) {
-        this.commentService = commentService;
-        this.userIdExtractor = userIdExtractor;
-    }
-
 
     @Operation(
             summary = "코멘트 작성 요청",
@@ -62,30 +57,6 @@ public class CommentController {
         List<CommentDTO.CommentInfoDTO> commentLists = commentService.getComments(postId);
         return ResultResponse.ok(SuccessCode.SUCCESS, commentLists);
     }
-
-//    @Operation(
-//            summary = "코딩테스트 문제 댓글 작성",
-//            description= "problemId를 통해 코딩테스트 문제에 댓글 추가"
-//    )
-//    @PostMapping("problems/{problemId}/comment")
-//    public ResponseEntity<ResultResponse<CommentDTO.CommentCreateResponseDTO>> createProblemComment(@RequestBody CommentDTO.CommentCreateRequestDTO req,
-//                                                                                                    @PathVariable Long problemId,
-//                                                                                                     HttpServletRequest httpServletRequest) {
-//        Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
-//        CommentDTO.CommentCreateResponseDTO responseDTO = commentService.createCommentProblem(req, userId, problemId);
-//        return ResultResponse.ok(SuccessCode.CREATED, responseDTO);
-//    }
-
-//    @Operation(
-//            summary = "코딩테스트 문제 댓글 목록 작성",
-//            description= "problemId를 통해 문제의 댓글 목록을 불러온다. 댓글-답글 트리가 1계층으로 반환된다."
-//    )
-//    @GetMapping("problems/{problemId}/comment")
-//    public ResponseEntity<ResultResponse<List<CommentDTO.CommentInfoDTO>>> getProblemComments(@PathVariable Long problemId) {
-//        List<CommentDTO.CommentInfoDTO> commentLists = commentService.getCommentsProblemId(problemId);
-//        return ResultResponse.ok(SuccessCode.SUCCESS, commentLists);
-//    }
-
     /*
     댓글에 답글을 추가하는 함수입니다
     입력되는 commentId가 답글이여도, 해당 답글의 부모댓글과 연결되어서 단일계층의 댓글-답글 구조가 유지됩니다

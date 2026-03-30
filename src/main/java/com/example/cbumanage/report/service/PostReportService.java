@@ -16,6 +16,7 @@ import com.example.cbumanage.group.repository.GroupMemberRepository;
 import com.example.cbumanage.post.util.PostMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,39 +25,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
+@RequiredArgsConstructor
 public class PostReportService {
 
-    private  PostService postService;
-    private  PostRepository postRepository;
-    private  PostReportRepository postReportRepository;
-    private  PostMapper postMapper;
-    private  CbuMemberRepository cbuMemberRepository;
-    private  GroupRepository groupRepository;
-    private  GroupMemberRepository groupMemberRepository;
-
-    @Autowired
-    public PostReportService(PostService postService,
-                             PostRepository postRepository,
-                             PostReportRepository postReportRepository,
-                             PostMapper postMapper,
-                             CbuMemberRepository cbuMemberRepository,
-                             GroupRepository groupRepository,
-                             GroupMemberRepository groupMemberRepository
-                             )
-    {
-        this.postService = postService;
-        this.postRepository = postRepository;
-        this.postReportRepository = postReportRepository;
-        this.postMapper = postMapper;
-        this.cbuMemberRepository = cbuMemberRepository;
-        this.groupRepository = groupRepository;
-        this.groupMemberRepository = groupMemberRepository;
-    }
+    private final PostService postService;
+    private final PostRepository postRepository;
+    private final PostReportRepository postReportRepository;
+    private final PostMapper postMapper;
+    private final CbuMemberRepository cbuMemberRepository;
+    private final GroupRepository groupRepository;
+    private final GroupMemberRepository groupMemberRepository;
 
     public PostReport createReport(PostDTO.ReportCreateDTO req) {
-        Post post = postRepository.findById(req.getPostId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        Group group = groupRepository.findById(req.getGroupId());
-        PostReport report = PostReport.create(post, req.getGroupId(), req.getType(),req.getDate(),req.getLocation(),req.getReportImage());
+        Post post = postRepository.findById(req.postId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        Group group = groupRepository.findById(req.groupId());
+        PostReport report = PostReport.create(post, req.groupId(), req.type(), req.date(), req.location(), req.reportImage());
         PostReport saved = postReportRepository.save(report);
         return saved;
     }
@@ -135,9 +118,9 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
     }
 
     public void updateReport(PostDTO.ReportUpdateDTO postUpdateDTO,PostReport postReport) {
-        postReport.changeDate(postUpdateDTO.getDate());
-        postReport.changeLocation(postUpdateDTO.getLocation());
-        postReport.changeReportImage(postUpdateDTO.getReportImage());
-        postReport.changeType(postUpdateDTO.getType());
+        postReport.changeDate(postUpdateDTO.date());
+        postReport.changeLocation(postUpdateDTO.location());
+        postReport.changeReportImage(postUpdateDTO.reportImage());
+        postReport.changeType(postUpdateDTO.type());
     }
 }

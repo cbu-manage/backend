@@ -12,6 +12,7 @@ import com.example.cbumanage.post.util.PostMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -21,29 +22,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
+@RequiredArgsConstructor
 public class PostService {
 
-    private PostRepository postRepository;
-    private PostReportRepository postReportRepository;
-    private PostMapper postMapper;
-    private CbuMemberRepository cbuMemberRepository;
-    private GroupRepository groupRepository;
-    private GroupMemberRepository groupMemberRepository;
-
-
-    @Autowired
-    public PostService(PostRepository postRepository, PostReportRepository postReportRepository, PostMapper postMapper, CbuMemberRepository cbuMemberRepository,GroupRepository groupRepository, GroupMemberRepository groupMemberRepository) {
-        this.postRepository = postRepository;
-        this.postReportRepository = postReportRepository;
-        this.postMapper = postMapper;
-        this.cbuMemberRepository = cbuMemberRepository;
-        this.groupRepository = groupRepository;
-        this.groupMemberRepository = groupMemberRepository;
-    }
+    private final PostRepository postRepository;
+    private final PostMapper postMapper;
+    private final CbuMemberRepository cbuMemberRepository;
 
     public Post createPost(PostDTO.PostCreateDTO postCreateDTO) {
-        CbuMember author = cbuMemberRepository.findById(postCreateDTO.getAuthorId()).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        Post post = Post.create(author.getCbuMemberId(), postCreateDTO.getTitle(), postCreateDTO.getContent(), postCreateDTO.getCategory());
+        CbuMember author = cbuMemberRepository.findById(postCreateDTO.authorId()).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        Post post = Post.create(author.getCbuMemberId(), postCreateDTO.title(), postCreateDTO.content(), postCreateDTO.category());
         Post saved = postRepository.save(post);
         return saved;
     }
@@ -66,11 +54,11 @@ public class PostService {
      Setter 를 사용하지 않고 클래스 내부에 변환메소드를 만들어 사용합니다
      */
     public void updatePost(PostDTO.PostUpdateDTO postUpdateDTO,Post post) {
-        if (postUpdateDTO.getTitle() != null) {
-            post.changeTitle(postUpdateDTO.getTitle());
+        if (postUpdateDTO.title() != null) {
+            post.changeTitle(postUpdateDTO.title());
         }
-        if (postUpdateDTO.getContent() != null) {
-            post.changeContent(postUpdateDTO.getContent());
+        if (postUpdateDTO.content() != null) {
+            post.changeContent(postUpdateDTO.content());
         }
     }
 

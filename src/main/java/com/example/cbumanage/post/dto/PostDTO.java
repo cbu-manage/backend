@@ -22,95 +22,53 @@ public class PostDTO {
     Post 의 핵심 내용을 가지고 있는 DTO 입니다.
     게시글 목록, 게시글 상세 불러오기 등을 할때  해당 DTO 를 불러옵니다
      */
-    @Getter
-    @NoArgsConstructor
     @Schema(description = "포스트 메인테이블의 정보를 담는 DTO입니다")
-    public static class PostInfoDTO{
-        private Long postId;
+    public record PostInfoDTO(
+            Long postId,
 
-        @Schema(description = "작성자의 이름입니다")
-        private String authorName;
+            @Schema(description = "작성자의 이름입니다")
+            String authorName,
 
-        @Schema(description = "작성자의 기수 입니다")
-        private Long generation;
+            @Schema(description = "작성자의 기수 입니다")
+            Long generation,
 
-        private Long authorId;
+            Long authorId,
 
-        private String title;
+            String title,
 
-        private String content;
+            String content,
 
-        private LocalDateTime createdAt;
+            LocalDateTime createdAt,
 
-        private LocalDateTime updatedAt;
-
-        @Builder
-        public PostInfoDTO(
-                Long postId,
-                String authorName,
-                Long generation,
-                Long authorId,
-                String title,
-                String content,
-                LocalDateTime createdAt,
-                LocalDateTime updatedAt
-        )
-        {
-            this.postId = postId;
-            this.authorName = authorName;
-            this.generation = generation;
-            this.authorId = authorId;
-            this.title = title;
-            this.content = content;
-            this.createdAt = createdAt;
-            this.updatedAt = updatedAt;
-        }
-
+            LocalDateTime updatedAt
+    ) {
     }
+
 
     /*
     Post-Report 의 핵심 내용을 가지고 있는 DTO 입니다.
     보고서 게시글 상세보기를 할때 해당 DTO 가 PostInfoDTO 와 함께 불러와 집니다
      */
-    @Getter
-    @NoArgsConstructor
     @Schema(description = "보고서 테이블의 정보를 담는 DTO입니다")
-    public static class ReportInfoDTO{
+    public record ReportInfoDTO(
+            String location,
 
-        private String location;
+            @Schema(description = "s3버킷 url을 통해 이미지를 보여줍니다")
+            String reportImage,
 
-        @Schema(description = "s3버킷 url을 통해 이미지를 보여줍니다")
-        private String reportImage;
+            LocalDateTime date,
 
-        private LocalDateTime date;
+            //그룹의 정보를 담고 있습니다
+            @Schema(description = "보고서를 작성한 그룹의 정보를 담고 있습니다")
+            GroupDTO.GroupInfoDTO groupInfoDTO,
 
-        //그룹의 정보를 담고 있습니다
-        @Schema(description = "보고서를 작성한 그룹의 정보를 담고 있습니다")
-        private GroupDTO.GroupInfoDTO groupInfoDTO;
+            @Schema(description = "보고서에 기록할 활동의 타입입니다", example = "STUDY / PROJECT / MENTORING")
+            PostReportGroupType type,
 
-        @Schema(description = "보고서에 기록할 활동의 타입입니다" , example = "STUDY / PROJECT / MENTORING")
-        private PostReportGroupType type;
-
-        @Schema(description = "보고서의 승인 여부입니다")
-        private boolean isAccepted;
-
-        @Builder
-        public ReportInfoDTO(String location,
-                             String reportImage,
-                             LocalDateTime date,
-                             GroupDTO.GroupInfoDTO groupInfoDTO,
-                             PostReportGroupType type,
-                             boolean isAccepted) {
-            this.location = location;
-            this.reportImage = reportImage;
-            this.date = date;
-            this.groupInfoDTO = groupInfoDTO;
-            this.type = type;
-            this.isAccepted = isAccepted;
-
-        }
+            @Schema(description = "보고서의 승인 여부입니다")
+            boolean isAccepted
+    ) {
     }
-
 
 
     /*
@@ -118,217 +76,151 @@ public class PostDTO {
     해당 DTO 를 Controller 에서 받아와, Service 에서 PostCreateDTO, PostReportCreateDTO 를 생성하고,
     각 DTO 를 통해 Post 데이터와 Report 데이터를 생성해 연결합니다
      */
-    @Getter
-    @NoArgsConstructor
     @Schema(description = "보고서 게시글을 생성하는 requestDTO 입니다. 포스트 메인테이블과 포스트-보고서 서브테이블의 정보를 한번에 생성합니다")
-    public static class PostReportCreateRequestDTO{
+    public record PostReportCreateRequestDTO(
 
-        private String title;
+    String title,
 
-        private String content;
+    String content,
 
-        private String location;
+    String location,
 
-        private LocalDateTime date;
+    LocalDateTime date,
 
-        @Schema(description = "s3버킷에 사진을 업로드 하고 반환받은 url을 넣습니다")
-        private String reportImage;
+    @Schema(description = "s3버킷에 사진을 업로드 하고 반환받은 url을 넣습니다")
+    String reportImage,
 
-        @Schema(description = "카테고리 번호 (서버에서 7로 고정 처리되며 클라이언트 입력값은 무시됩니다)", example = "7", accessMode = Schema.AccessMode.READ_ONLY)
-        private int category;
+    @Schema(description = "카테고리 번호 (서버에서 7로 고정 처리되며 클라이언트 입력값은 무시됩니다)", example = "7", accessMode = Schema.AccessMode.READ_ONLY)
+    int category,
 
-        //보고서에 그룹을 연결합니다
-        @Schema(description = "보고서와 연결될 그룹의 ID(글을 쓰고있는 활동의 그룹 ID)를 넣습니다")
-        private long groupId;
+    //보고서에 그룹을 연결합니다
+    @Schema(description = "보고서와 연결될 그룹의 ID(글을 쓰고있는 활동의 그룹 ID)를 넣습니다")
+    long groupId,
 
-        @Schema(description = "보고서에 기록할 활동의 타입입니다" , example = "STUDY / PROJECT / MENTORING")
-        private PostReportGroupType type;
-
-
-    }
+    @Schema(description = "보고서에 기록할 활동의 타입입니다", example = "STUDY / PROJECT / MENTORING")
+    PostReportGroupType type
+    )
+        {}
 
 
 
     /*
     보고서 게시글을 생성하고 반환하는 DTO 입니다
      */
-    @Getter
-    @NoArgsConstructor
-    public static class PostReportCreateResponseDTO{
-        private Long postId;
+    public record PostReportCreateResponseDTO(
+        Long postId,
 
-        private Long authorId;
+        Long authorId,
 
         @Schema(description = "보고서에 추가된 group의 정보를 담는 DTO입니다")
-        private GroupDTO.GroupInfoDTO groupInfoDTO;
+        GroupDTO.GroupInfoDTO groupInfoDTO,
 
-        private String title;
+        String title,
 
-        private String content;
+        String content,
 
-        private String location;
+        String location,
 
-        private String reportImage;
+        String reportImage,
 
-        private LocalDateTime date;
+        LocalDateTime date,
 
-        private LocalDateTime createdAt;
+        LocalDateTime createdAt,
 
-        private int category;
+        int category,
 
-        private PostReportGroupType type;
+        PostReportGroupType type
+)
 
-        @Builder
-        public PostReportCreateResponseDTO(Long postId,
-                                           Long authorId,
-                                           GroupDTO.GroupInfoDTO groupInfoDTO,
-                                           String title,
-                                           String content,
-                                           String location,
-                                           String reportImage,
-                                           LocalDateTime date,
-                                           LocalDateTime createdAt,
-                                           int category,
-                                           PostReportGroupType type) {
-            this.postId = postId;
-            this.authorId = authorId;
-            this.groupInfoDTO = groupInfoDTO;
-            this.title = title;
-            this.content = content;
-            this.location = location;
-            this.reportImage = reportImage;
-            this.date = date;
-            this.createdAt = createdAt;
-            this.category = category;
-            this.type = type;
-
-        }
-    }
+    {}
 
     /*
     Post{...}CreateRequestDTO 에서 Post 를 생성할 정보만 빼내어 Post 를 생성하기 위한 DTO 입니다
      */
-    @Getter
-    @NoArgsConstructor
     @Schema(description = "포스트 메인테이블을 만드는 DTO입니다.")
-    public static class PostCreateDTO{
-        private Long authorId;
+    public record PostCreateDTO(
+        Long authorId,
 
-        private String title;
+        String title,
 
-        private String content;
+        String content,
 
-        private int category;
-
-        @Builder
-        public PostCreateDTO( Long authorId, String title, String content, int category ){
-            this.authorId = authorId;
-            this.title = title;
-            this.content = content;
-            this.category = category;
-
-        }
+        int category
+    )
+    {
 
     }
 
-    @Getter
-    @NoArgsConstructor
     @Schema(description = "보고서 서브 테이블을 생성하는 코드입니다. postReportCreateRequestDTO에서 분리됩니다")
-    public static class ReportCreateDTO{
-        private Long postId;
+    public record ReportCreateDTO(
+        Long postId,
 
-        private String location;
+        String location,
 
-        private String reportImage;
+        String reportImage,
 
-        private LocalDateTime date;
+        LocalDateTime date,
 
-        private long groupId;
+        long groupId,
 
-        private PostReportGroupType type;
-
-        @Builder
-        public ReportCreateDTO(Long postId,String location, String reportImage, LocalDateTime date, long groupId, PostReportGroupType type) {
-            this.postId = postId;
-            this.location = location;
-            this.reportImage = reportImage;
-            this.date = date;
-            this.groupId = groupId;
-            this.type = type;
-        }
-    }
+        PostReportGroupType type
+    ){}
 
     /*
     보고서 게시물을 수정하기 위해 유저쪽에서 보내는 DTO 입니다.
     CreateRequest 와 마찬가지로 Service 계층에서 PostUpdateDTO 와  PostReportUpdateDTO 를 분리해서 사용합니다
      */
-    @Getter
-    @NoArgsConstructor
     @Schema(description = "보고서 게시글을 수정하는 DTO입니다. 포스트 메인테이블과 보고서 서브테이블의 수정을 한번에 처리합니다 ")
-    public static class PostReportUpdateRequestDTO{
+    public record PostReportUpdateRequestDTO(
 
-        private String title;
+        String title,
 
-        private String content;
+        String content,
 
-        private String location;
+        String location,
 
-        private String reportImage;
+        String reportImage,
 
-        private LocalDateTime date;
+        LocalDateTime date,
 
-        private long groupId;
+        long groupId,
 
-        private PostReportGroupType type;
+        PostReportGroupType type
 
-    }
+    ){}
 
     /*
     Post{...}UpdateRequestDTO 에서 Post 를 Update 데이터만 추출하여 사용하기 위한  DTO 입니다
      */
-    @Getter
-    @NoArgsConstructor
+
     @Schema(description = "포스트 메인테이블의 정보들을 수정하는 DTO입니다")
-    public static class PostUpdateDTO{
+    public record PostUpdateDTO(
 
-        private String title;
+        String title,
 
-        private String content;
-
-        @Builder
-        public PostUpdateDTO(String title, String content){
-            this.title = title;
-            this.content = content;
-        }
-    }
+        String content
+    )
+        {}
 
     /*
     PostReportUpdateDTO 에서 Report 데이터를 Update 시킲 데이터만 추출해서 사용하기 위한 DTO 입니다
      */
-    @Getter
-    @NoArgsConstructor
     @Schema(description = "보고서 서브 테이블을 수정하는 DTO입니다. PostReportUpdateRequestDTO에서 분리됩니다")
-    public static class ReportUpdateDTO{
+    public record ReportUpdateDTO(
 
-        private String location;
+        String location,
 
-        private String reportImage;
+        String reportImage,
 
-        private LocalDateTime date;
+        LocalDateTime date,
 
-        private long groupId;
+        long groupId,
 
-        private PostReportGroupType type;
+        PostReportGroupType type
 
-        @Builder
-        public ReportUpdateDTO(String location, String reportImage, LocalDateTime date, long groupId, PostReportGroupType type) {
-            this.location = location;
-            this.reportImage = reportImage;
-            this.date = date;
-            this.groupId = groupId;
-            this.type = type;
-        }
-    }
+    )
+    {}
+
 
     //--------------------------PROJECT 관련 DTO---------------------//
     /*
@@ -852,58 +744,31 @@ public class PostDTO {
     }
 
     //보고서 게시글 미리보기 DTO의 보고서 관련 내용을 담고있는 DTO입니다
-    @Getter
-    @NoArgsConstructor
     @Schema(description = "보고서 목록에서 보고서 게시글을 미리보기 하기위한 DTO입니다")
-    public static class PostReportPreviewDTO{
-        private Long postId;
-        private String title;
-        private LocalDateTime createdAt;
-        private Long authorId;
-        private String authorName;
+    public record PostReportPreviewDTO(
+        Long postId,
+        String title,
+        LocalDateTime createdAt,
+        Long authorId,
+        String authorName,
 
-        private PostReportGroupType type;
+        PostReportGroupType type,
         @Schema(description = "보고서 승인 여부 입니다, 보고서 게시글이 생셩될때 기본값은 false로 생성되며, 운영진이 승인할 경우 True로 변겯됩니다")
-        private boolean isAccepted;
+        boolean isAccepted,
 
         @Schema(description = "보고서를 작성한 그룹의 ID입니다")
-        private Long groupId;
+        Long groupId,
         @Schema(description = "보고서를 작성한 그룹의 이름입니다")
-        private String groupName;
+        String groupName,
         @Schema(description = "그룹의 활동인원 (status가 ACTIVE인 인원)의 수를 표기합니다")
-        private Long groupMemberCount;
+        Long groupMemberCount
+    ) {}
 
-        @Builder
-        public PostReportPreviewDTO(Long postId,String title,LocalDateTime createdAt,Long authorId,String authorName,PostReportGroupType type,boolean isAccepted,Long groupId,String groupName,Long groupMemberCount){
-            this.postId = postId;
-            this.title = title;
-            this.createdAt = createdAt;
-            this.authorId = authorId;
-            this.authorName = authorName;
-            this.type = type;
-            this.isAccepted = isAccepted;
-            this.groupId = groupId;
-            this.groupName = groupName;
-            this.groupMemberCount = groupMemberCount;
-        }
-
-
-    }
-
-    @Getter
-    @NoArgsConstructor
     @Schema(description = "보고서 게시글을 단건조회 할때 포스트+보고서의 정보를 종합적으로 담은 게시글 입니다")
-    public static class PostReportViewDTO{
-        private PostInfoDTO postInfoDTO;
-        private ReportInfoDTO reportInfoDTO;
-
-        @Builder
-        public PostReportViewDTO(PostInfoDTO postInfoDTO, ReportInfoDTO reportInfoDTO){
-            this.postInfoDTO = postInfoDTO;
-            this.reportInfoDTO = reportInfoDTO;
-        }
-
-    }
+    public record PostReportViewDTO(
+        PostInfoDTO postInfoDTO,
+        ReportInfoDTO reportInfoDTO
+    ){}
 
     @Getter
     @NoArgsConstructor
