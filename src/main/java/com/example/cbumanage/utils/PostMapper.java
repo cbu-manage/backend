@@ -70,8 +70,8 @@ public class PostMapper {
     public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostProjectCreateRequestDTO req, Long userId) {
         return PostDTO.PostCreateDTO.builder()
                 .authorId(userId)
-                .title(req.getTitle())
-                .content(req.getContent())
+                .title(req.title())
+                .content(req.content())
                 .category(PostCategory.PROJECT.getValue())
                 .build();
     }
@@ -125,9 +125,9 @@ public class PostMapper {
     public PostDTO.ProjectCreateDTO toProjectCreateDTO(PostDTO.PostProjectCreateRequestDTO req,Long postId) {
         return PostDTO.ProjectCreateDTO.builder()
                 .postId(postId)
-                .recruitmentFields(req.getRecruitmentFields())
-                .recruiting(req.getRecruiting())
-                .deadline(req.getDeadline())
+                .recruitmentFields(req.recruitmentFields())
+                .recruiting(req.recruiting())
+                .deadline(req.deadline())
                 .build();
     }
 
@@ -192,8 +192,8 @@ public class PostMapper {
 
     public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostProjectUpdateRequestDTO req) {
         return PostDTO.PostUpdateDTO.builder()
-                .title(req.getTitle())
-                .content(req.getContent()).build();
+                .title(req.title())
+                .content(req.content()).build();
     }
 
     public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostStudyUpdateRequestDTO req) {
@@ -223,9 +223,9 @@ public class PostMapper {
 
     public PostDTO.ProjectUpdateDTO toPostProjectUpdateDTO(PostDTO.PostProjectUpdateRequestDTO req) {
         return PostDTO.ProjectUpdateDTO.builder()
-                .recruitmentFields(req.getRecruitmentFields())
-                .recruiting(req.getRecruiting())
-                .deadline(req.getDeadline())
+                .recruitmentFields(req.recruitmentFields())
+                .recruiting(req.recruiting())
+                .deadline(req.deadline())
                 .build();
     }
 

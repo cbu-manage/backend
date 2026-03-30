@@ -146,7 +146,7 @@ public class GroupController {
              @Parameter(description = "OPEN,CLOSED 중 원하는 상태를 보냅니다.") @RequestBody GroupDTO.GroupRecruitmentStatusRequestDTO req,
              HttpServletRequest httpServletRequest) {
         Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
-        groupService.updateGroupRecruitment(groupId, userId, req.getGroupRecruitmentStatus());
+        groupService.updateGroupRecruitment(groupId, userId, req.groupRecruitmentStatus());
         return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
 
@@ -160,7 +160,7 @@ public class GroupController {
             @RequestBody GroupDTO.GroupMemberStatusRequestDTO req,
             HttpServletRequest httpServletRequest) {
         Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
-        groupService.updateStatusGroupMember(groupMemberId, userId, req.getGroupMemberStatus(), req.getMemberRejectReason());
+        groupService.updateStatusGroupMember(groupMemberId, userId, req.groupMemberStatus(), req.memberRejectReason());
         return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
 
@@ -173,10 +173,10 @@ public class GroupController {
             @Parameter(description = "그룹 멤버 고유 식별자(groupMemberId)", example = "50") @PathVariable Long groupMemberId,
             @RequestBody GroupDTO.ApplicantActionRequestDTO req, HttpServletRequest httpServletRequest) {
         Long userId = userIdExtractor.extractUserIdFromCookie(httpServletRequest);
-        GroupMemberStatus targetStatus = (req.getAction() == MemberApprovalAction.ACCEPT)
+        GroupMemberStatus targetStatus = (req.action() == MemberApprovalAction.ACCEPT)
                 ? GroupMemberStatus.ACTIVE
                 : GroupMemberStatus.REJECTED;
-        groupService.updateStatusGroupMember(groupMemberId, userId, targetStatus,req.getMemberRejeactReason());
+        groupService.updateStatusGroupMember(groupMemberId, userId, targetStatus,req.memberRejectReason());
         return ResultResponse.ok(SuccessCode.UPDATED, null);
     }
 
