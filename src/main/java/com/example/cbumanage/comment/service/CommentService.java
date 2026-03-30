@@ -31,7 +31,7 @@ public class CommentService {
                                                              Long userId,
                                                              Long postId) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post not found"));
-        Comment comment = new Comment(post, userId, null, req.getContent());
+        Comment comment = new Comment(post, userId, null, req.content());
         Comment saved = commentRepository.save(comment);
         return commentMapper.toCommentCreateResponseDTO(saved);
     }
@@ -48,7 +48,7 @@ public class CommentService {
                                                          Long commentId) {
 
         Comment target = commentRepository.findById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment not found"));
-        Comment reply = new Comment(target.getPost(), userId, target, req.getContent());
+        Comment reply = new Comment(target.getPost(), userId, target, req.content());
         target.addReply(reply);
         Comment saved = commentRepository.save(reply);
         return commentMapper.toReplyCreateResponseDTO(saved);
@@ -73,7 +73,7 @@ public class CommentService {
         if(!isAuthor(userId,comment)){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
-        comment.changeContent(req.getContent());
+        comment.changeContent(req.content());
     }
 
     @Transactional
