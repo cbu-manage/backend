@@ -335,16 +335,14 @@ public class PostDTO {
     Project 게시글 상세 조회에 사용되는 DTO
     */
     @Schema(description = "프로젝트 게시글 생성 요청 데이터")
-    @Getter
-    @NoArgsConstructor
-    public static class PostProjectCreateRequestDTO{
+    public record PostProjectCreateRequestDTO(
         @Schema(description = "게시글 제목", example = "스프링부트 기반 커뮤니티 개발 프로젝트")
         @NotBlank(message = "제목은 필수 입력값입니다.")
-        private String title;
+        String title,
 
         @Schema(description = "게시글 상세 내용", example = "함께 협업하며 성장할 팀원을 모집합니다...")
         @NotBlank(message = "내용은 필수 입력값입니다.")
-        private String content;
+        String content,
 
         @Schema(
                 description = "모집 분야 (복수 입력 가능)",
@@ -352,346 +350,222 @@ public class PostDTO {
                 allowableValues = {"BACKEND", "FRONTEND", "DEV", "PLANNING", "DESIGN", "ETC"}
         )
         @NotEmpty(message = "최소 하나 이상의 모집 분야를 선택해야 합니다.")
-        private List<String> recruitmentFields;
+        List<String> recruitmentFields,
 
         @Schema(description = "현재 모집 여부 (true: 모집중, false: 모집마감)", example = "true")
-        private Boolean recruiting;
+        Boolean recruiting,
 
         @Schema(description = "모집 마감 기한")
         @FutureOrPresent(message = "마감일은 과거일 수 없습니다.")
-        private LocalDate deadline;
+        LocalDate deadline,
 
         @Min(1)
         @Schema(description = "최대 모집 인원",example="10")
-        private Integer maxMembers;
+        Integer maxMembers,
 
         @Schema(description = "카테고리 번호 (서버에서 2로 고정 처리되며 클라이언트 입력값은 무시됩니다)", example = "2", accessMode = Schema.AccessMode.READ_ONLY)
-        private int category;
-
-    }
+        int category
+    ){}
 
     @Schema(description = "프로젝트 게시글 생성 응답 데이터")
-    @Getter
-    @NoArgsConstructor
-    public static class PostProjectCreateResponseDTO{
+    @Builder
+    public record PostProjectCreateResponseDTO(
         @Schema(description = "생성된 포스트 ID", example = "101")
-        private Long postId;
+        Long postId,
 
         @Schema(description = "작성자 유저 ID", example = "15")
-        private Long authorId;
+        Long authorId,
 
         @Schema(description = "자동 생성된 프로젝트 그룹 ID", example = "50")
-        private Long groupId;
+        Long groupId,
 
         @Schema(description = "작성자 기수")
-        private Long authorGeneration;
+        Long authorGeneration,
 
         @Schema(description = "작성자 이름")
-        private String authorName;
+        String authorName,
 
         @Schema(description = "게시글 제목")
-        private String title;
+        String title,
 
         @Schema(description = "게시글 내용")
-        private String content;
+        String content,
 
         @Schema(description = "설정된 모집 분야")
-        private List<String> recruitmentFields;
+        List<String> recruitmentFields,
 
         @Schema(description = "모집 여부")
-        private Boolean recruiting;
+        Boolean recruiting,
 
         @Schema(description = "생성 일시")
-        private LocalDateTime createdAt;
+        LocalDateTime createdAt,
 
         @Schema(description = "모집 마감 기한")
-        private LocalDate deadline;
+        LocalDate deadline,
 
         @Schema(description = "최대 모집 인원")
-        private Integer maxMembers;
+        Integer maxMembers,
 
         @Schema(description = "카테고리 번호")
-        private int category;
-
-        @Builder
-        public PostProjectCreateResponseDTO(Long postId,
-                                            Long authorId,
-                                            Long groupId,
-                                            Long authorGeneration,
-                                            String authorName,
-                                            String title,
-                                            String content,
-                                            List<String> recruitmentFields,
-                                            Boolean recruiting,
-                                            LocalDateTime createdAt,
-                                            LocalDate deadline,
-                                            Integer maxMembers,
-                                            int category){
-            this.postId = postId;
-            this.authorId = authorId;
-            this.groupId = groupId;
-            this.authorGeneration = authorGeneration;
-            this.authorName = authorName;
-            this.title = title;
-            this.content = content;
-            this.recruitmentFields = recruitmentFields;
-            this.recruiting = recruiting;
-            this.createdAt = createdAt;
-            this.deadline = deadline;
-            this.maxMembers = maxMembers;
-            this.category = category;
-        }
-    }
+        int category
+    ){}
 
 
-    @Getter
-    @NoArgsConstructor
-    public static class ProjectCreateDTO{
-        private Long postId;
-        private List<String> recruitmentFields;
-        private Boolean recruiting;
-        private LocalDate deadline;
-        private int maxMembers;
-
-        @Builder
-        public ProjectCreateDTO(Long postId,List<String> recruitmentFields, Boolean recruiting, LocalDate deadline, int maxMembers) {
-            this.postId = postId;
-            this.recruitmentFields = recruitmentFields;
-            this.recruiting = recruiting;
-            this.deadline = deadline;
-            this.maxMembers = maxMembers;
-        }
-    }
+    @Builder
+    public record ProjectCreateDTO(
+        Long postId,
+        List<String> recruitmentFields,
+        Boolean recruiting,
+        LocalDate deadline,
+        int maxMembers
+    ){}
 
     @Schema(description = "프로젝트 게시글 수정 요청 데이터")
-    @Getter
-    @NoArgsConstructor
-    public static class PostProjectUpdateRequestDTO{
+    public record PostProjectUpdateRequestDTO(
         @Schema(description = "수정할 제목", example = "[수정] 스프링부트 프로젝트")
         @NotBlank(message = "제목은 필수 입력값입니다.")
-        private String title;
+        String title,
 
         @Schema(description = "수정할 내용", example = "프로젝트 내용이 변경되었습니다.")
         @NotBlank(message = "내용은 필수 입력값입니다.")
-        private String content;
+        String content,
 
         @Schema(description = "수정할 모집 분야", example = "[\"BACKEND\", \"DESIGN\"]")
         @NotEmpty(message = "최소 하나 이상의 모집 분야를 선택해야 합니다.")
-        private List<String> recruitmentFields;
+        List<String> recruitmentFields,
 
         @Schema(description = "모집 여부 상태 변경", example = "false")
-        private Boolean recruiting;
+        Boolean recruiting,
 
         @Schema(description = "모집 마감 기한 변경")
         @FutureOrPresent(message = "마감일은 과거일 수 없습니다.")
-        private LocalDate deadline;
+        LocalDate deadline,
 
         @Min(1)
         @Schema(description = "최대 모집 인원 변경 (생략 시 기존 값 유지)")
-        private Integer maxMembers;
-    }
+        Integer maxMembers
+    ){}
 
-    @Getter
-    @NoArgsConstructor
-    public static class ProjectUpdateDTO{
-
+    @Builder
+    public record ProjectUpdateDTO(
         @Schema(description = "모집 분야 변경")
-        private List<String> recruitmentFields;
+        List<String> recruitmentFields,
 
         @Schema(description = "모집 여부 상태 변경")
-        private Boolean recruiting;
+        Boolean recruiting,
 
         @Schema(description = "모집 마감 기한 변경")
-        private LocalDate deadline;
+        LocalDate deadline,
 
         @Schema(description = "최대 모집 인원 변경")
-        private Integer maxMembers;
-
-        @Builder
-        public ProjectUpdateDTO(List<String> recruitmentFields, Boolean recruiting, LocalDate deadline, Integer maxMembers) {
-            this.recruitmentFields = recruitmentFields;
-            this.recruiting = recruiting;
-            this.deadline = deadline;
-            this.maxMembers = maxMembers;
-        }
-    }
+        Integer maxMembers
+    ){}
 
     /*
     Project 게시글 상제 조회에 사용되는 DTO
     제목, 모집분야, 작성자, 생성시간, 모집여부를 포함합니다
      */
     @Schema(description = "프로젝트 게시글 상세 정보 (조회 유저의 권한 정보 포함)")
-    @Getter
-    @NoArgsConstructor
-    public static class ProjectInfoDetailDTO {
+    @Builder
+    public record ProjectInfoDetailDTO(
         @Schema(description = "포스트 ID", example = "101")
-        private Long postId;
+        Long postId,
 
         @Schema(description = "게시글 제목")
-        private String title;
+        String title,
 
         @Schema(description = "게시글 상세 내용")
-        private String content;
+        String content,
 
         @Schema(description = "모집 분야 리스트")
-        private List<String> recruitmentFields;
+        List<String> recruitmentFields,
 
         @Schema(description = "작성자 ID", example = "15")
-        private Long authorId;
+        Long authorId,
 
         @Schema(description = "작성자 기수", example = "34")
-        private Long authorGeneration;
+        Long authorGeneration,
 
         @Schema(description = "작성자 이름", example = "홍길동")
-        private String authorName;
+        String authorName,
 
         @Schema(description = "연결된 그룹 ID", example = "50")
-        private Long groupId;
+        Long groupId,
 
         @Schema(description = "조회한 유저가 해당 프로젝트의 팀장(작성자)인지 여부. " +
                 "true일 경우: '신청 인원 확인' 버튼 노출", example = "false")
-        private boolean isLeader;
+        boolean isLeader,
 
         @Schema(description = "조회한 유저의 가입 신청 상태. " +
                 "1. true: 이미 신청함 -> '신청 취소하기' 버튼 노출 " +
                 "2. false: 신청 이력 없음 -> '신청하기' 버튼 노출 " +
                 "3. null: 이미 그룹 멤버(승인됨) -> '가입 완료' 표시(버튼 비활성)", example = "false")
-        private Boolean hasApplied;
+        Boolean hasApplied,
 
         @Schema(description = "작성 일시")
-        private LocalDateTime createdAt;
+        LocalDateTime createdAt,
 
         @Schema(description = "모집 여부 (모집 중:true, 모집 완료:false)", example = "true")
-        private Boolean recruiting;
+        Boolean recruiting,
 
         @Schema(description = "모집 마감 기한")
-        private LocalDate deadline;
+        LocalDate deadline,
 
         @Schema(description = "조회 수 ")
-        private Long viewCount;
+        Long viewCount,
 
         @Schema(description = "현재 활동 중인 멤버 수(팀장 포함). maxMember와 함께 상세 화면에서 예) 2/4 형태 표시용", example = "2")
-        private int activeMemberCount;
+        int activeMemberCount,
 
         @Schema(description = "최대 모집 인원(팀장 포함). activeMemberCount와 함께 상세 화면에서 예) 2/4 형태 표시용", example = "4")
-        private int maxMembers;
+        int maxMembers,
 
         @Schema(description = "그룹 모집 상태")
-        private GroupRecruitmentStatus groupRecruitmentStatus;
-
-        @Builder
-        public ProjectInfoDetailDTO(
-                Long postId,
-                String title,
-                String content,
-                List<String> recruitmentFields,
-                Long authorId,
-                Long authorGeneration,
-                String authorName,
-                Long groupId,
-                boolean isLeader,
-                Boolean hasApplied,
-                LocalDateTime createdAt,
-                Boolean recruiting,
-                LocalDate deadline,
-                Long viewCount,
-                int activeMemberCount,
-                int maxMembers,
-                GroupRecruitmentStatus groupRecruitmentStatus
-        ) {
-            this.postId = postId;
-            this.title = title;
-            this.content = content;
-            this.recruitmentFields = recruitmentFields;
-            this.authorId = authorId;
-            this.authorGeneration = authorGeneration;
-            this.authorName = authorName;
-            this.groupId = groupId;
-            this.isLeader = isLeader;
-            this.hasApplied = hasApplied;
-            this.createdAt = createdAt;
-            this.recruiting = recruiting;
-            this.deadline = deadline;
-            this.viewCount = viewCount;
-            this.activeMemberCount = activeMemberCount;
-            this.maxMembers = maxMembers;
-            this.groupRecruitmentStatus = groupRecruitmentStatus;
-        }
-    }
+        GroupRecruitmentStatus groupRecruitmentStatus
+    ){}
 
     @Schema(description = "프로젝트 목록 조회용 요약 데이터")
-    @Getter
-    @NoArgsConstructor
-    public static class ProjectListDTO {
+    @Builder
+    public record ProjectListDTO (
         @Schema(description = "포스트 ID", example = "101")
-        private Long postId;
+        Long postId,
 
         @Schema(description = "게시글 제목")
-        private String title;
+        String title,
 
         @Schema(description = "게시글 내용")
-        private String content;
+        String content,
 
         @Schema(description = "모집 분야")
-        private List<String> recruitmentFields;
+        List<String> recruitmentFields,
 
         @Schema(description = "작성자 ID")
-        private Long authorId;
+        Long authorId,
 
         @Schema(description = "작성자 기수")
-        private Long authorGeneration;
+        Long authorGeneration,
 
         @Schema(description = "작성자 이름")
-        private String authorName;
+        String authorName,
 
         @Schema(description = "작성 일시")
-        private LocalDateTime createdAt;
+        LocalDateTime createdAt,
 
         @Schema(description = "모집 여부 (모집 중:true, 모집 완료:false)", example = "true")
-        private Boolean recruiting;
+        Boolean recruiting,
 
         @Schema(description = "모집 마감 기한")
-        private LocalDate deadline;
+        LocalDate deadline,
 
         @Schema(description = "조회 수 ")
-        private Long viewCount;
+        Long viewCount,
 
         @Schema(description = "현재 활동 중인 멤버 수(팀장 포함). maxMember와 함께 목록에서 예) 2/4 형태 표시용", example = "2")
-        private int activeMemberCount;
+        int activeMemberCount,
 
         @Schema(description = "최대 모집 인원(팀장 포함). activeMemberCount와 함께 목록에서 예) 2/4 형태 표시용", example = "4")
-        private int maxMembers;
-
-        @Builder
-        public ProjectListDTO(Long postId,
-                              String title,
-                              String content,
-                              List<String> recruitmentFields,
-                              Long authorId,
-                              Long authorGeneration,
-                              String authorName,
-                              LocalDateTime createdAt,
-                              Boolean recruiting,
-                              LocalDate deadline,
-                              Long viewCount,
-                              int activeMemberCount,
-                              int maxMembers
-        ) {
-            this.postId = postId;
-            this.title = title;
-            this.content = content;
-            this.recruitmentFields = recruitmentFields;
-            this.authorId = authorId;
-            this.authorGeneration=authorGeneration;
-            this.authorName=authorName;
-            this.createdAt = createdAt;
-            this.recruiting = recruiting;
-            this.deadline = deadline;
-            this.viewCount = viewCount;
-            this.activeMemberCount = activeMemberCount;
-            this.maxMembers = maxMembers;
-        }
-    }
+        int maxMembers
+    ){}
 
     //보고서 게시글 미리보기입니다 보고서미리보기/게시글정보/그룹미리보기 를 담고있습니다
     //--------------------------STUDY 관련 DTO---------------------//

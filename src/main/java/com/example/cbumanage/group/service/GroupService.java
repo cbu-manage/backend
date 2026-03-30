@@ -206,10 +206,10 @@ public class GroupService {
 //        assertIsAdmin(adminId);
         Group group = groupRepository.findByIdAndIsDeletedFalse(groupId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 그룹을 찾을 수 없습니다."));
-        if (req.getAction() == GroupApprovalAction.APPROVE) {
+        if (req.action() == GroupApprovalAction.APPROVE) {
             group.approve();
         } else {
-            group.reject(req.getReason());
+            group.reject(req.reason());
             group.openRecruitment();
             projectRepository.findByGroupId(groupId)
                     .ifPresent(project -> project.updateRecruiting(true));
