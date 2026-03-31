@@ -2,8 +2,10 @@ package com.example.cbumanage.user.controller;
 
 import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.global.common.TokenInfo;
+import com.example.cbumanage.user.dto.MyInfoResponse;
 import com.example.cbumanage.user.dto.PasswordChangeRequest;
 import com.example.cbumanage.user.dto.UserLoginRequest;
+import com.example.cbumanage.user.dto.UserLoginResponse;
 import com.example.cbumanage.user.dto.UserSignUpRequest;
 import com.example.cbumanage.user.service.LoginService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,10 +34,18 @@ public class LoginController {
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "로그인 후 쿠키에 토큰 반환", description = "학번과 비밀번호로 로그인")
-    public ApiResponse<Void> login(@RequestBody UserLoginRequest userLoginRequest, HttpServletResponse response) {
-        TokenInfo tokenInfo = loginService.login(userLoginRequest);
-        addTokenCookies(response, tokenInfo);
-        return ApiResponse.success();
+    public ApiResponse<UserLoginResponse> login(@RequestBody UserLoginRequest userLoginRequest, HttpServletResponse response) {
+        LoginService.LoginResult result = loginService.login(userLoginRequest);
+        addTokenCookies(response, result.tokenInfo());
+        return ApiResponse.success(new UserLoginResponse(result.name(), result.email(), result.role()));
+    }
+
+    @GetMapping("/me")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "내 정보 조회", description = "로그인한 사용자의 정보를 반환")
+    public ApiResponse<MyInfoResponse> getMyInfo(Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
+        return ApiResponse.success(loginService.getMyInfo(userId));
     }
 
     @PostMapping("/refresh")
@@ -48,7 +58,7 @@ public class LoginController {
         return ApiResponse.success();
     }
 
-    @PostMapping("/logout")
+    @DeleteMapping
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "로그아웃", description = "refreshToken 무효화 및 쿠키 삭제")
     public ApiResponse<Void> logout(Authentication authentication, HttpServletResponse response) {
@@ -58,7 +68,7 @@ public class LoginController {
         return ApiResponse.success();
     }
 
-    @DeleteMapping
+    @DeleteMapping("/account")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "회원 탈퇴")
     public ApiResponse<Void> deleteUser(Authentication authentication, HttpServletResponse response) {

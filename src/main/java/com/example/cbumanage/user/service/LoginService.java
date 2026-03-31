@@ -9,6 +9,7 @@ import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.global.util.RedisUtil;
 import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.member.repository.CbuMemberRepository;
+import com.example.cbumanage.user.dto.MyInfoResponse;
 import com.example.cbumanage.user.dto.PasswordChangeRequest;
 import com.example.cbumanage.user.dto.UserLoginRequest;
 import com.example.cbumanage.user.dto.UserSignUpRequest;
@@ -72,7 +73,7 @@ public class LoginService {
         cbuMemberRepository.save(member);
     }
 
-    public TokenInfo login(UserLoginRequest request) {
+    public LoginResult login(UserLoginRequest request) {
         User user = userRepository.findByStudentNumber(request.studentNumber())
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
@@ -92,7 +93,29 @@ public class LoginService {
                 refreshExpireTime / 1000
         );
 
-        return tokenInfo;
+        String name = cbuMemberRepository.findNameByStudentNumber(user.getStudentNumber());
+        return new LoginResult(tokenInfo, name, user.getEmail(), user.getRole().name());
+    }
+
+    public record LoginResult(TokenInfo tokenInfo, String name, String email, String role) {}
+
+    public MyInfoResponse getMyInfo(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        CbuMember member = cbuMemberRepository.findByStudentNumber(user.getStudentNumber())
+                .orElse(null);
+
+        return new MyInfoResponse(
+                user.getUserId(),
+                member != null ? member.getName() : null,
+                user.getEmail(),
+                user.getRole().name(),
+                user.getStudentNumber(),
+                member != null ? member.getMajor() : null,
+                member != null ? member.getGrade() : null,
+                member != null ? member.getGeneration() : null
+        );
     }
 
     public TokenInfo refresh(String refreshToken) {
