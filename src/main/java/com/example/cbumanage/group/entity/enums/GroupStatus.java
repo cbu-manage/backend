@@ -12,6 +12,9 @@ public enum GroupStatus {
     @Schema(description = "그룹 승인 반려")
     REJECTED,
 
+    @Schema(description = "그룹 승인 재요청")
+    RESUBMITTED,
+
     @Schema(description = "활동 종료 또는 비활성화")
     INACTIVE
 }
