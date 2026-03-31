@@ -4,6 +4,8 @@ import com.example.cbumanage.group.entity.Group;
 import com.example.cbumanage.group.entity.enums.GroupMemberStatus;
 import com.example.cbumanage.group.entity.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.group.entity.enums.GroupStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+
 
 @Repository
 public interface GroupRepository extends JpaRepository<Group, Long> {
@@ -24,6 +27,18 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
     Optional<Group> findByIdAndIsDeletedFalse(Long id);
 
     List<Group> findByGroupNameContaining(String groupName);
+
+    //전체 그룹 상태 별로 조회
+    @Query("""
+    select g
+    from Group g
+    where g.isDeleted = false
+      and (:groupStatus is null or g.status = :groupStatus)
+      and g.recruitmentStatus = :recruitmentStatus
+    """)
+    Page<Group> findByGroupStatus(@Param("groupStatus") GroupStatus groupStatus,
+                                  @Param("recruitmentStatus") GroupRecruitmentStatus recruitmentStatus,
+                                  Pageable pageable);
 
 
     //특정 Status인 멤버만 카운트하는 메소드입니다

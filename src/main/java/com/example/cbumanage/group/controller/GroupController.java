@@ -1,8 +1,8 @@
 package com.example.cbumanage.group.controller;
 
 import com.example.cbumanage.group.dto.GroupDTO;
-import com.example.cbumanage.group.entity.enums.ApplicantAction;
 import com.example.cbumanage.group.entity.enums.GroupMemberStatus;
+import com.example.cbumanage.group.entity.enums.GroupStatus;
 import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.group.entity.enums.MemberApprovalAction;
 import com.example.cbumanage.group.service.GroupService;
@@ -182,14 +182,26 @@ public class GroupController {
      * [ 관리자(Admin) 전용 API ]
      * ============================================================ */
     @Operation(
-            summary = "그룹 전체 조회 하기 (관리자 전용)",
-            description = "개설된 그룹들을 활성화 시키기 위해 현재 개설 되어 있는 그룹을 조회 할 수 있도록 합니다."
+            summary = "전체 그룹 상태 카테고리별로 조회 하기 (관리자 전용)",
+            description = "개설된 그룹들을 상태 카테고리별로 분류하여 확인할 수 있습니다."
     )
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Parameters({
+            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
+            @Parameter(name = "size", description = "한 페이지당 출력 개수", example = "10"),
+            @Parameter(name = "groupStatus", description = "그룹 승인 상태 필터 (미입력시 전체) " +
+                    "APPROVED=승인완료, PENDING=승인 대기중, REJECTED=승인 거절, " +
+                    "RESUBMITTED=승인 재요청, INACTIVE=활동종료", example = "APPROVED")
+    })
     @GetMapping("/admin")
-    public ApiResponse<List<GroupDTO.GroupListDTO>> getAllGroups(Authentication authentication) {
+    public ApiResponse<Page<GroupDTO.GroupListDTO>> getAllGroups(
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam(required = false) GroupStatus groupStatus,
+            Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
-        List<GroupDTO.GroupListDTO> groupAllList = groupService.getAllGroups(userId);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
+        Page<GroupDTO.GroupListDTO> groupAllList = groupService.getAllGroups(userId, groupStatus, pageable);
         return ApiResponse.success(groupAllList);
     }
 
