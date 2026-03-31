@@ -3,7 +3,7 @@ package com.example.cbumanage.member.util;
 import com.example.cbumanage.member.dto.MemberCreateDTO;
 import com.example.cbumanage.member.dto.MemberDTO;
 import com.example.cbumanage.member.dto.MemberUpdateDTO;
-import com.example.cbumanage.global.exception.InvalidMapperSetupException;
+import com.example.cbumanage.global.error.InvalidMapperSetupException;
 import com.example.cbumanage.member.entity.CbuMember;
 import org.springframework.stereotype.Component;
 

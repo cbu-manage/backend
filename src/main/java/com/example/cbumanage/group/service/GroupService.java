@@ -1,7 +1,7 @@
 package com.example.cbumanage.group.service;
 
 import com.example.cbumanage.group.dto.GroupDTO;
-import com.example.cbumanage.global.exception.CustomException;
+import com.example.cbumanage.global.error.CustomException;
 import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.group.entity.Group;
 import com.example.cbumanage.group.entity.GroupMember;
@@ -16,7 +16,7 @@ import com.example.cbumanage.member.repository.CbuMemberRepository;
 import com.example.cbumanage.comment.repository.CommentRepository;
 import com.example.cbumanage.project.repository.ProjectRepository;
 import com.example.cbumanage.study.repository.StudyRepository;
-import com.example.cbumanage.global.response.ErrorCode;
+import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.group.util.GroupUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;

@@ -2,7 +2,7 @@ package com.example.cbumanage.study.service;
 
 import com.example.cbumanage.group.service.GroupService;
 import com.example.cbumanage.post.dto.PostDTO;
-import com.example.cbumanage.global.exception.CustomException;
+import com.example.cbumanage.global.error.CustomException;
 import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.group.entity.Group;
 import com.example.cbumanage.post.entity.Post;
@@ -15,7 +15,7 @@ import com.example.cbumanage.group.repository.GroupMemberRepository;
 import com.example.cbumanage.group.repository.GroupRepository;
 import com.example.cbumanage.post.repository.PostRepository;
 import com.example.cbumanage.study.repository.StudyRepository;
-import com.example.cbumanage.global.response.ErrorCode;
+import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.post.util.PostMapper;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
