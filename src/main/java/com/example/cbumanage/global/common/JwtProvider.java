@@ -12,6 +12,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtProvider {
@@ -29,20 +30,21 @@ public class JwtProvider {
 		this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
 	}
 
-	public TokenInfo createToken(Long userId, String userName, Role role) {
+	public TokenInfo createToken(UUID userUuid, String userName, Role role) {
 
 		Date now = new Date();
 		Date accessTokenValidity = new Date(now.getTime() + accessExpireTime);
 		String accessToken = Jwts.builder()
-				.subject(String.valueOf(userId))
+				.subject(userUuid.toString())
 				.claim("userName", userName)
-				.claim("role", role)
+				.claim("role", role.name())
 				.expiration(accessTokenValidity)
 				.signWith(key)
 				.compact();
 
 		Date refreshTokenValidity = new Date(now.getTime() + refreshExpireTime);
 		String refreshToken = Jwts.builder()
+				.subject(userUuid.toString())
 				.expiration(refreshTokenValidity)
 				.signWith(key)
 				.compact();

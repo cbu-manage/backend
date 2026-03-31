@@ -6,6 +6,7 @@ import com.example.cbumanage.global.common.JwtProvider;
 import com.example.cbumanage.global.common.TokenInfo;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
+import com.example.cbumanage.global.util.RedisUtil;
 import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.member.repository.CbuMemberRepository;
 import com.example.cbumanage.user.dto.PasswordChangeRequest;
@@ -13,6 +14,7 @@ import com.example.cbumanage.user.dto.UserLoginRequest;
 import com.example.cbumanage.user.dto.UserSignUpRequest;
 import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.user.repository.UserRepository;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -31,9 +34,15 @@ public class LoginService {
     private final CbuMemberRepository cbuMemberRepository;
     private final JwtProvider jwtProvider;
     private final SuccessCandidateRepository successCandidateRepository;
+    private final RedisUtil redisUtil;
+
+    private static final String REFRESH_KEY_PREFIX = "refresh:";
 
     @Value("${cbu.login.salt}")
     private String salt;
+
+    @Value("${cbu.jwt.refreshExpireTime}")
+    private Long refreshExpireTime;
 
     @Transactional
     public void signUp(UserSignUpRequest request) {
@@ -71,17 +80,60 @@ public class LoginService {
             throw new BaseException(ErrorCode.INVALID_PASSWORD);
         }
 
-        return jwtProvider.createToken(
-                user.getUserId(),
+        TokenInfo tokenInfo = jwtProvider.createToken(
+                user.getUserUuid(),
                 String.valueOf(user.getStudentNumber()),
                 user.getRole()
         );
+
+        redisUtil.setDataExpire(
+                REFRESH_KEY_PREFIX + user.getUserId(),
+                tokenInfo.refreshToken(),
+                refreshExpireTime / 1000
+        );
+
+        return tokenInfo;
+    }
+
+    public TokenInfo refresh(String refreshToken) {
+        if (refreshToken == null || !jwtProvider.validateToken(refreshToken)) {
+            throw new BaseException(ErrorCode.UNAUTHORIZED);
+        }
+
+        Claims claims = jwtProvider.getClaims(refreshToken);
+        UUID userUuid = UUID.fromString(claims.getSubject());
+        User user = userRepository.findByUserUuid(userUuid)
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        String storedToken = redisUtil.getData(REFRESH_KEY_PREFIX + user.getUserId());
+        if (storedToken == null || !storedToken.equals(refreshToken)) {
+            throw new BaseException(ErrorCode.UNAUTHORIZED);
+        }
+
+        TokenInfo newToken = jwtProvider.createToken(
+                user.getUserUuid(),
+                String.valueOf(user.getStudentNumber()),
+                user.getRole()
+        );
+
+        redisUtil.setDataExpire(
+                REFRESH_KEY_PREFIX + user.getUserId(),
+                newToken.refreshToken(),
+                refreshExpireTime / 1000
+        );
+
+        return newToken;
+    }
+
+    public void logout(Long userId) {
+        redisUtil.deleteData(REFRESH_KEY_PREFIX + userId);
     }
 
     @Transactional
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+        redisUtil.deleteData(REFRESH_KEY_PREFIX + userId);
         userRepository.delete(user);
     }
 
@@ -95,6 +147,7 @@ public class LoginService {
         }
 
         user.changePassword(hashPassword(request.newPassword()));
+        redisUtil.deleteData(REFRESH_KEY_PREFIX + userId);
     }
 
     private String hashPassword(String password) {

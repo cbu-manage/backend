@@ -1,17 +1,11 @@
 package com.example.cbumanage.user.controller;
 
 import com.example.cbumanage.global.common.ApiResponse;
-import com.example.cbumanage.global.common.JwtProvider;
 import com.example.cbumanage.global.common.TokenInfo;
-import com.example.cbumanage.global.error.BaseException;
-import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.user.dto.PasswordChangeRequest;
 import com.example.cbumanage.user.dto.UserLoginRequest;
 import com.example.cbumanage.user.dto.UserSignUpRequest;
-import com.example.cbumanage.user.entity.User;
-import com.example.cbumanage.user.repository.UserRepository;
 import com.example.cbumanage.user.service.LoginService;
-import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
@@ -31,15 +25,13 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "로그인 컨트롤러", description = "")
 public class LoginController {
     private final LoginService loginService;
-    private final JwtProvider jwtProvider;
-    private final UserRepository userRepository;
 
     @Value("${cbu.jwt.secureCookie:false}")
     private boolean secureCookie;
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "로그인 후 쿠키에 토큰 반환", description = "헤더에 학번과 비밀번호를 넣어 요청")
+    @Operation(summary = "로그인 후 쿠키에 토큰 반환", description = "학번과 비밀번호로 로그인")
     public ApiResponse<Void> login(@RequestBody UserLoginRequest userLoginRequest, HttpServletResponse response) {
         TokenInfo tokenInfo = loginService.login(userLoginRequest);
         addTokenCookies(response, tokenInfo);
@@ -51,33 +43,28 @@ public class LoginController {
     @Operation(summary = "토큰 갱신", description = "refreshToken 쿠키로 accessToken 재발급")
     public ApiResponse<Void> refresh(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = extractCookie(request, "refreshToken");
-        if (refreshToken == null || !jwtProvider.validateToken(refreshToken)) {
-            throw new BaseException(ErrorCode.UNAUTHORIZED);
-        }
-
-        String accessToken = extractCookie(request, "accessToken");
-        Claims claims;
-        try {
-            claims = jwtProvider.getClaims(accessToken);
-        } catch (Exception e) {
-            claims = jwtProvider.getClaimsIgnoreExpiration(accessToken);
-        }
-
-        Long userId = Long.parseLong(claims.getSubject());
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
-
-        TokenInfo newToken = jwtProvider.createToken(userId, String.valueOf(user.getStudentNumber()), user.getRole());
+        TokenInfo newToken = loginService.refresh(refreshToken);
         addTokenCookies(response, newToken);
+        return ApiResponse.success();
+    }
+
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "로그아웃", description = "refreshToken 무효화 및 쿠키 삭제")
+    public ApiResponse<Void> logout(Authentication authentication, HttpServletResponse response) {
+        Long userId = Long.parseLong(authentication.getName());
+        loginService.logout(userId);
+        clearTokenCookies(response);
         return ApiResponse.success();
     }
 
     @DeleteMapping
     @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "로그인 엔티티 삭제")
-    public ApiResponse<Void> deleteUser(Authentication authentication) {
+    @Operation(summary = "회원 탈퇴")
+    public ApiResponse<Void> deleteUser(Authentication authentication, HttpServletResponse response) {
         Long userId = Long.parseLong(authentication.getName());
         loginService.deleteUser(userId);
+        clearTokenCookies(response);
         return ApiResponse.success();
     }
 
@@ -117,6 +104,15 @@ public class LoginController {
 
         response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+    }
+
+    private void clearTokenCookies(HttpServletResponse response) {
+        ResponseCookie accessClear = ResponseCookie.from("accessToken", "")
+                .httpOnly(true).secure(secureCookie).path("/").maxAge(0).sameSite("Strict").build();
+        ResponseCookie refreshClear = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true).secure(secureCookie).path("/").maxAge(0).sameSite("Strict").build();
+        response.addHeader(HttpHeaders.SET_COOKIE, accessClear.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshClear.toString());
     }
 
     private String extractCookie(HttpServletRequest request, String name) {

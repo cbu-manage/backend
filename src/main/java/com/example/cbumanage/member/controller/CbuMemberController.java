@@ -41,6 +41,7 @@ public class CbuMemberController {
     @GetMapping("member/{id}")
     @Operation(summary = "원하는 id에 따른 회원정보 취득", description = "id 하나하나에 따른 회원정보를 받아옵니다.")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public MemberDTO getMember(@PathVariable Long id) {
         CbuMember cbuMember = cbuMemberRepository.findById(id).orElseThrow();
         return cbuMemberMapper.map(cbuMember);

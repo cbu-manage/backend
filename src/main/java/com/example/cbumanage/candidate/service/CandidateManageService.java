@@ -22,7 +22,12 @@ public class CandidateManageService {
         if(cbuMemberRepository.findCbuMemberByStudentNumber(successCandidateDTO.getStudentNumber())!=null){
             throw new BaseException(ErrorCode.ALREADY_JOINED_MEMBER);
         }
-        return candidateManageRepository.findByStudentNumberAndNickName(successCandidateDTO.getStudentNumber(), successCandidateDTO.getNickName());
+        SuccessCandidate candidate = candidateManageRepository.findByStudentNumberAndNickName(
+                successCandidateDTO.getStudentNumber(), successCandidateDTO.getNickName());
+        if (candidate == null) {
+            throw new BaseException(ErrorCode.SUCCESS_MEMBER_NOT_FOUND);
+        }
+        return candidate;
     }
 
 }

@@ -10,10 +10,10 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum ErrorCode {
-    INVALID_REQUEST("E-COMMON-0001", "잘못된 요청", HttpStatus.BAD_REQUEST),
-    UNAUTHORIZED("E-AUTH-0001", "인증 필요", HttpStatus.UNAUTHORIZED),
-    FORBIDDEN("E-AUTH-0002", "권한 없음", HttpStatus.FORBIDDEN),
-    SUCCESS_MEMBER_NOT_FOUND("E-AUTH-0003", "합격자 중 해당 학번이 존재하지 않습니다. ", HttpStatus.NOT_FOUND),
+    INVALID_REQUEST("E-COMMON-0001", "잘못된 요청입니다. ", HttpStatus.BAD_REQUEST),
+    UNAUTHORIZED("E-AUTH-0001", "인증이 필요합니다. ", HttpStatus.UNAUTHORIZED),
+    FORBIDDEN("E-AUTH-0002", "권한이 없습니다. ", HttpStatus.FORBIDDEN),
+    SUCCESS_MEMBER_NOT_FOUND("E-AUTH-0003", "합격자 중 존재하지 않습니다. ", HttpStatus.NOT_FOUND),
     NOT_FOUND("E-COMMON-0002", "리소스를 찾을 수 없음", HttpStatus.NOT_FOUND),
     DUPLICATE_RESOURCE("E-COMMON-0003", "중복 리소스", HttpStatus.CONFLICT),
     NOT_ALLOWED_FILETYPE("E-COMMON-0004","잘못된 파일 타입", HttpStatus.CONFLICT),
