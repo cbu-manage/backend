@@ -1,7 +1,7 @@
 package com.example.cbumanage.email.service;
 
-import com.example.cbumanage.auth.entity.LoginEntity;
-import com.example.cbumanage.auth.repository.LoginRepository;
+import com.example.cbumanage.user.entity.User;
+import com.example.cbumanage.user.repository.UserRepository;
 import com.example.cbumanage.email.dto.EmailAuthResponseDTO;
 import com.example.cbumanage.member.dto.MemberMailUpdateDTO;
 import com.example.cbumanage.member.entity.CbuMember;
@@ -52,7 +52,7 @@ public class EmailService {
     private final RedisUtil redisUtil;
 
     @Autowired
-    LoginRepository loginRepository;
+    UserRepository userRepository;
 
     @Autowired
     CbuMemberRepository cbuMemberRepository;
@@ -145,12 +145,13 @@ public class EmailService {
 
     @Transactional
     public void updateUserMail(MemberMailUpdateDTO memberMailUpdateDTO) throws IOException {
-        LoginEntity loginEntity = loginRepository.findLoginEntityByStudentNumber(memberMailUpdateDTO.getStudentNumber());
+        User user = userRepository.findByStudentNumber(memberMailUpdateDTO.getStudentNumber())
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         CbuMember cbuMember = cbuMemberRepository.findCbuMemberByStudentNumber(memberMailUpdateDTO.getStudentNumber());
 
         cbuMember.setEmail(memberMailUpdateDTO.getEmail());
-        loginEntity.setEmail(memberMailUpdateDTO.getEmail());
-        loginRepository.save(loginEntity);
+        user.changeEmail(memberMailUpdateDTO.getEmail());
+        userRepository.save(user);
         cbuMemberRepository.save(cbuMember);
 
         updateSheetEmail(cbuMember);

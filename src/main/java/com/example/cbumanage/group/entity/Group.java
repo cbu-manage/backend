@@ -1,6 +1,6 @@
 package com.example.cbumanage.group.entity;
 
-import com.example.cbumanage.global.exception.CustomException;
+import com.example.cbumanage.global.error.CustomException;
 import com.example.cbumanage.group.entity.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.group.entity.enums.GroupStatus;
 import jakarta.persistence.*;
@@ -11,7 +11,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.hibernate.annotations.Comment;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import com.example.cbumanage.global.response.ErrorCode;
+import com.example.cbumanage.global.error.ErrorCode;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

@@ -1,6 +1,5 @@
 package com.example.cbumanage.candidate.controller;
 
-import com.example.cbumanage.auth.dto.AccessToken;
 import com.example.cbumanage.candidate.service.SuccessCandidateSyncService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,7 +18,7 @@ public class SuccessCandidateController {
 
     @PostMapping("candidate/sync")
     @Operation(summary = "스프레드시트 -> 데이터베이스 데이터 연동", description = "스프레드시트의 데이터를 데이터베이스에 주입합니다.")
-    public String candidateSync(AccessToken accessToken) {
+    public String candidateSync() {
         successCandidateSyncService.syncSuccessCandidatesFromGoogleSheet();      //스프레드시트에서 데이터베이스로 데이터 값 주입
         return "멤버 저장 성공!";
     }
