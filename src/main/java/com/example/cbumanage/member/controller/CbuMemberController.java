@@ -1,5 +1,6 @@
 package com.example.cbumanage.member.controller;
 
+import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.member.dto.MemberCreateDTO;
 import com.example.cbumanage.member.dto.MemberDTO;
 import com.example.cbumanage.member.dto.MemberUpdateDTO;
@@ -13,10 +14,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestClientException;
 
 import java.util.List;
 
@@ -33,55 +32,51 @@ public class CbuMemberController {
     @PostMapping("members/sync")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "스프레드시트 -> 데이터베이스 데이터 연동", description = "스프레드시트의 데이터를 데이터베이스에 주입합니다.")
-    public String memberSync() {
+    public ApiResponse<Void> memberSync() {
         cbuMemberSyncService.syncMembersFromGoogleSheet();
-        return "멤버 저장 성공!";
+        return ApiResponse.success();
     }
 
     @GetMapping("member/{id}")
     @Operation(summary = "원하는 id에 따른 회원정보 취득", description = "id 하나하나에 따른 회원정보를 받아옵니다.")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public MemberDTO getMember(@PathVariable Long id) {
+    public ApiResponse<MemberDTO> getMember(@PathVariable Long id) {
         CbuMember cbuMember = cbuMemberRepository.findById(id).orElseThrow();
-        return cbuMemberMapper.map(cbuMember);
+        return ApiResponse.success(cbuMemberMapper.map(cbuMember));
     }
 
     @PostMapping("member")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "회원 추가", description = "회원 정보를 데이터베이스에 추가합니다.")
     @ResponseStatus(HttpStatus.CREATED)
-    public Long postMember(@RequestBody @Valid MemberCreateDTO memberCreateDTO) {
+    public ApiResponse<Long> postMember(@RequestBody @Valid MemberCreateDTO memberCreateDTO) {
         CbuMember member = cbuMemberManageService.createMember(memberCreateDTO);
-        return member.getCbuMemberId();
+        return ApiResponse.success(member.getCbuMemberId());
     }
 
     @PatchMapping("member")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "데이터베이스의 회원 정보를 변경", description = "데이터베이스의 회원 정보를 변경합니다.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void patchMember(@RequestBody MemberUpdateDTO memberDTO) {
+    public ApiResponse<Void> patchMember(@RequestBody MemberUpdateDTO memberDTO) {
         cbuMemberManageService.updateUser(memberDTO);
+        return ApiResponse.success();
     }
 
     @DeleteMapping("member/{studentNumber}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "회원 정보 삭제", description = "데이터베이스의 회원 정보를 삭제합니다.")
-    public void deleteMember(@PathVariable Long studentNumber) {
+    public ApiResponse<Void> deleteMember(@PathVariable Long studentNumber) {
         cbuMemberManageService.deleteMember(studentNumber);
+        return ApiResponse.success();
     }
 
     @GetMapping("members")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "전체 회원 정보 취득", description = "데이터베이스의 모든 회원정보를 받아옵니다.")
-    public ResponseEntity<List<MemberDTO>> getMembers(@RequestParam(name = "page", required = false) Integer page) {
+    public ApiResponse<List<MemberDTO>> getMembers(@RequestParam(name = "page", required = false) Integer page) {
         if (page == null) page = 0;
-        return ResponseEntity.ok(cbuMemberMapper.map(cbuMemberManageService.getMembers(page)));
-    }
-
-    @ExceptionHandler(RestClientException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public String restClientException(RestClientException e) {
-        return "Fail to request data while RestTemplate";
+        return ApiResponse.success(cbuMemberMapper.map(cbuMemberManageService.getMembers(page)));
     }
 }

@@ -5,6 +5,6 @@ public record UserSignUpRequest(
         String password,
         String name,
         Long studentNumber,
-        String nickName
+        String nickname
 ) {
 }
