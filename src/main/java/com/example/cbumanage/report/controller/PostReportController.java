@@ -54,6 +54,21 @@ public class PostReportController {
     }
 
     @Operation(
+            summary = "그룹별 보고서 게시글 미리보기 페이징 조회",
+            description = "groupId 기준으로 해당 그룹의 보고서 게시글 목록을 페이징으로 불러옵니다.<br>" +
+                    "반환되는 형태는 PostReportPreviewDTO를 통해 미리보기 형태로 반환됩니다."
+    )
+    @GetMapping("/group/{groupId}")
+    public ApiResponse<Page<PostDTO.PostReportPreviewDTO>> getPostReportPreviewsByGroup(
+            @PathVariable Long groupId,
+            @RequestParam int page,
+            @RequestParam int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
+        Page<PostDTO.PostReportPreviewDTO> postReportPreviewDTOs = postReportService.getGroupPostReportPreviewDTOList(pageable, groupId);
+        return ApiResponse.success(postReportPreviewDTOs);
+    }
+
+    @Operation(
             summary = "보고서 게시글 단건 조회",
             description = "보고서 게시글 단건 조회 메소드입니다. Post와 Report(+Group)를 한번의 요청에 담아 처리합니다.<br>" +
                     "PostReportViewDTO를 반환합니다. 해당 DTO 안에는 PostInfoDTO,PostReportInfoDTO가 담겨있습니다<br>" +

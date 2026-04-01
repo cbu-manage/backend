@@ -5,7 +5,9 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
@@ -20,6 +22,8 @@ public class User {
     private Long userId;
 
     @UuidGenerator
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(name = "user_uuid", length = 36, nullable = false, unique = true)
     private UUID userUuid;
 
     @Column(unique = true, nullable = false)
