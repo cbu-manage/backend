@@ -59,13 +59,13 @@ public class PostReportController {
                     "반환되는 형태는 PostReportPreviewDTO를 통해 미리보기 형태로 반환됩니다."
     )
     @GetMapping("/group/{groupId}")
-    public ResponseEntity<ResultResponse<Page<PostDTO.PostReportPreviewDTO>>> getPostReportPreviewsByGroup(
+    public ApiResponse<Page<PostDTO.PostReportPreviewDTO>> getPostReportPreviewsByGroup(
             @PathVariable Long groupId,
             @RequestParam int page,
             @RequestParam int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
-        Page<PostDTO.PostReportPreviewDTO> result = postReportService.getGroupPostReportPreviewDTOList(pageable, groupId);
-        return ResultResponse.ok(SuccessCode.SUCCESS, result);
+        Page<PostDTO.PostReportPreviewDTO> postReportPreviewDTOs = postReportService.getGroupPostReportPreviewDTOList(pageable, groupId);
+        return ApiResponse.success(postReportPreviewDTOs);
     }
 
     @Operation(
