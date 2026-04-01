@@ -2,7 +2,7 @@ package com.example.cbumanage.project.service;
 
 import com.example.cbumanage.group.service.GroupService;
 import com.example.cbumanage.post.dto.PostDTO;
-import com.example.cbumanage.global.exception.CustomException;
+import com.example.cbumanage.global.error.CustomException;
 import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.group.entity.Group;
 import com.example.cbumanage.post.entity.Post;
@@ -15,18 +15,19 @@ import com.example.cbumanage.member.repository.CbuMemberRepository;
 import com.example.cbumanage.group.repository.GroupRepository;
 import com.example.cbumanage.project.repository.ProjectRepository;
 import com.example.cbumanage.post.repository.PostRepository;
-import com.example.cbumanage.global.response.ErrorCode;
+import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.post.util.PostMapper;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
@@ -37,32 +38,15 @@ public class ProjectService {
     private final PostService postService;
     private final GroupService groupService;
 
-    @Autowired
-    public ProjectService(ProjectRepository projectRepository,
-                          PostRepository postRepository,
-                          CbuMemberRepository cbuMemberRepository,
-                          GroupRepository groupRepository,
-                          PostMapper postMapper,
-                          PostService postService,
-                          GroupService groupService
-    ) {
-        this.projectRepository = projectRepository;
-        this.postRepository = postRepository;
-        this.cbuMemberRepository = cbuMemberRepository;
-        this.groupRepository = groupRepository;
-        this.postMapper = postMapper;
-        this.postService = postService;
-        this.groupService= groupService;
-    }
 
     //프로젝트 게시글 생성 메서드
     public Project createProject(PostDTO.ProjectCreateDTO req, Group group) {
-        Post post = postRepository.findById(req.getPostId())
+        Post post = postRepository.findById(req.postId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"게시글이 생성되지 않았습니다."));
-        List<String> fields = (req.getRecruitmentFields() != null)
-                ? req.getRecruitmentFields()
+        List<String> fields = (req.recruitmentFields() != null)
+                ? req.recruitmentFields()
                 : new ArrayList<>();
-        Project project = Project.create(post, fields, req.getRecruiting(),req.getDeadline(),group);
+        Project project = Project.create(post, fields, req.recruiting(),req.deadline(),group);
         return projectRepository.save(project);
     }
 
@@ -126,9 +110,9 @@ public class ProjectService {
 
     //프로젝트 게시글 수정 메서드
     public void updateProject(PostDTO.ProjectUpdateDTO dto, Project project) {
-        project.updateRecruitmentFields(dto.getRecruitmentFields());
-        project.updateRecruiting(dto.getRecruiting());
-        project.updateDeadline(dto.getDeadline());
+        project.updateRecruitmentFields(dto.recruitmentFields());
+        project.updateRecruiting(dto.recruiting());
+        project.updateDeadline(dto.deadline());
     }
 
     //프로젝트 게시글 수정 트랜잭션
@@ -144,15 +128,15 @@ public class ProjectService {
                 orElseThrow(()->new CustomException(ErrorCode.NOT_FOUND,"해당 게시글을 찾을 수 없습니다."));
         PostDTO.ProjectUpdateDTO projectUpdateDTO = postMapper.toPostProjectUpdateDTO(req);
         if (project.getGroup() != null) {
-            if (req.getTitle() != null) {
+            if (req.title() != null) {
                 String newGroupName = post.getTitle();
                 project.getGroup().changeGroupName(newGroupName);
             }
             updateProject(projectUpdateDTO, project);
-            if (req.getMaxMembers() != null) {
-                groupService.updateGroupMaxMember(project.getGroup().getId(), req.getMaxMembers());
+            if (req.maxMembers() != null) {
+                groupService.updateGroupMaxMember(project.getGroup().getId(), req.maxMembers());
             }
-            GroupRecruitmentStatus status = req.getRecruiting()
+            GroupRecruitmentStatus status = req.recruiting()
                     ? GroupRecruitmentStatus.OPEN : GroupRecruitmentStatus.CLOSED;
             groupService.updateGroupRecruitment(project.getGroup().getId(), userId, status);
         }
@@ -164,7 +148,7 @@ public class ProjectService {
         PostDTO.PostCreateDTO postCreateDTO = postMapper.toPostCreateDTO(req, userId);
         Post post = postService.createPost(postCreateDTO);
         String groupName = post.getTitle();
-        Group group = groupService.createGroup(groupName, post.getAuthorId(), req.getMaxMembers(), post.getId(), post.getCategory());
+        Group group = groupService.createGroup(groupName, post.getAuthorId(), req.maxMembers(), post.getId(), post.getCategory());
         PostDTO.ProjectCreateDTO projectCreateDTO = postMapper.toProjectCreateDTO(req, post.getId());
         Project project = createProject(projectCreateDTO,group);
         CbuMember author = cbuMemberRepository.findById(post.getAuthorId())

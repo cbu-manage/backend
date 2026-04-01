@@ -2,8 +2,6 @@ package com.example.cbumanage.global.util;
 
 import net.coobird.thumbnailator.Thumbnails;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;

@@ -2,45 +2,28 @@ package com.example.cbumanage.project.controller;
 
 import com.example.cbumanage.post.dto.PostDTO;
 import com.example.cbumanage.project.entity.enums.ProjectFieldType;
-import com.example.cbumanage.global.response.ResultResponse;
-import com.example.cbumanage.global.response.SuccessCode;
+import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.project.service.ProjectService;
-import com.example.cbumanage.global.util.JwtProvider;
-import com.example.cbumanage.auth.util.UserIdExtractor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.json.JSONArray;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.util.Map;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "프로젝트 관리 컨트롤러")
+@RequiredArgsConstructor
 public class ProjectController {
     private final ProjectService projectService;
-    private final UserIdExtractor userIdExtractor;
-
-
-    @Autowired
-    public ProjectController(ProjectService projectService, UserIdExtractor userIdExtractor) {
-        this.projectService = projectService;
-        this.userIdExtractor=userIdExtractor;
-    }
 
     @Operation(
             summary = "프로젝트 게시글 생성",
@@ -49,12 +32,12 @@ public class ProjectController {
                     "프로젝트를 관리할 그룹이 자동으로 생성되며, 작성자는 그룹장이 됩니다."
     )
     @PostMapping("/post/project")
-    public ResponseEntity<ResultResponse<PostDTO.PostProjectCreateResponseDTO>> createPostProject(
-            @Valid @RequestBody PostDTO.PostProjectCreateRequestDTO req, HttpServletRequest request) {
-        Long userId = userIdExtractor.extractUserIdFromCookie(request);
+    public ApiResponse<PostDTO.PostProjectCreateResponseDTO> createPostProject(
+            @Valid @RequestBody PostDTO.PostProjectCreateRequestDTO req, Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
         PostDTO.PostProjectCreateResponseDTO responseDTO =
                 projectService.createPostProject(req, userId);
-        return ResultResponse.ok(SuccessCode.CREATED, responseDTO);
+        return ApiResponse.success(responseDTO);
     }
 
     @Operation(
@@ -68,7 +51,7 @@ public class ProjectController {
             @Parameter(name = "recruiting", description = "모집 중 여부 (true: 모집 중, false: 전체/마감 포함)")
     })
     @GetMapping("/post/project")
-    public ResponseEntity<ResultResponse<Page<PostDTO.ProjectListDTO>>> getProjects(
+    public ApiResponse<Page<PostDTO.ProjectListDTO>> getProjects(
             @RequestParam int page,
             @RequestParam int size,
             @RequestParam int category,
@@ -78,12 +61,12 @@ public class ProjectController {
                 page,size, Sort.by(Sort.Order.desc("post.createdAt"))
         );
         Page<PostDTO.ProjectListDTO> posts=projectService.getPostsByCategory(pageable,recruiting,category);
-        return ResultResponse.ok(SuccessCode.SUCCESS, posts);
+        return ApiResponse.success(posts);
     }
 
     @Operation(
             summary = "내가 작성한 프로젝트 게시글 목록 조회",
-            description = "쿠키에서 userId를 가져와서 자신이 작성한 프로젝트 게시글만 조회 합니다."
+            description = "자신이 작성한 프로젝트 게시글만 조회 합니다."
     )
     @Parameters({
             @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
@@ -91,18 +74,18 @@ public class ProjectController {
             @Parameter(name = "category", description = "카테고리 번호", example = "2")
     })
     @GetMapping("/post/project/me")
-    public ResponseEntity<ResultResponse<Page<PostDTO.ProjectListDTO>>> getMyProjects(
+    public ApiResponse<Page<PostDTO.ProjectListDTO>> getMyProjects(
             @RequestParam int page,
             @RequestParam int size,
             @RequestParam int category,
-            HttpServletRequest request
+            Authentication authentication
     ){
         Pageable pageable= PageRequest.of(
                 page,size, Sort.by(Sort.Order.desc("post.createdAt"))
         );
-        Long userId = userIdExtractor.extractUserIdFromCookie(request);
+        Long userId = Long.parseLong(authentication.getName());
         Page<PostDTO.ProjectListDTO> posts=projectService.getMyProjectsByUserId(pageable, userId,category);
-        return ResultResponse.ok(SuccessCode.SUCCESS, posts);
+        return ApiResponse.success(posts);
     }
 
     @Operation(
@@ -112,11 +95,11 @@ public class ProjectController {
                     "(버튼 분기 로직은 응답 DTO 필드 설명 참조)"
     )
     @GetMapping("/post/project/{postId}")
-    public ResponseEntity<ResultResponse<PostDTO.ProjectInfoDetailDTO>> getPostProject(
-            @Parameter(description = "게시글 ID", example = "100") @PathVariable Long postId, HttpServletRequest request) {
-        Long userId = userIdExtractor.extractUserIdFromCookie(request);
+    public ApiResponse<PostDTO.ProjectInfoDetailDTO> getPostProject(
+            @Parameter(description = "게시글 ID", example = "100") @PathVariable Long postId, Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
         PostDTO.ProjectInfoDetailDTO projectInfoDetailDTO = projectService.getProjectByPostId(postId, userId);
-        return ResultResponse.ok(SuccessCode.SUCCESS, projectInfoDetailDTO);
+        return ApiResponse.success(projectInfoDetailDTO);
     }
 
     @Operation(
@@ -124,16 +107,13 @@ public class ProjectController {
             description = "프로젝트 게시글 ID를 기준으로 메인 테이블인 post와 서브테이블인 프로젝트 정보를 수정합니다."
     )
     @PatchMapping("/post/project/{postId}")
-    public ResponseEntity<ResultResponse<Void>> updateProject(
+    public ApiResponse<Void> updateProject(
             @PathVariable Long postId,
             @Valid @RequestBody PostDTO.PostProjectUpdateRequestDTO req,
-            HttpServletRequest request) {
-
-        Long userId = userIdExtractor.extractUserIdFromCookie(request);
-
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
         projectService.updatePostProject(req, postId, userId);
-
-        return ResultResponse.ok(SuccessCode.UPDATED, null);
+        return ApiResponse.success();
     }
 
     @Operation(
@@ -142,15 +122,12 @@ public class ProjectController {
                     "목록 및 상세조회에서 제외 됩니다."
     )
     @DeleteMapping("/post/project/{postId}")
-    public ResponseEntity<ResultResponse<Void>> deletePost(
+    public ApiResponse<Void> deletePost(
             @PathVariable Long postId,
-            HttpServletRequest request) {
-
-        Long userId = userIdExtractor.extractUserIdFromCookie(request);
-
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
         projectService.softDeletePost(postId, userId);
-
-        return ResultResponse.ok(SuccessCode.DELETED, null);
+        return ApiResponse.success();
     }
 
     @Operation(
@@ -159,7 +136,7 @@ public class ProjectController {
                     "포함이 된다면 조회가 가능합니다."
     )
     @GetMapping("/post/project/filter")
-    public ResponseEntity<ResultResponse<Page<PostDTO.ProjectListDTO>>> filterProjectsByFields(
+    public ApiResponse<Page<PostDTO.ProjectListDTO>> filterProjectsByFields(
             @Parameter(description = "페이지번호") @RequestParam int page,
             @Parameter(description = "페이지당 project 게시글 갯수") @RequestParam int size,
             @Parameter(description = "필터링할 모집 분야", schema = @Schema(implementation = ProjectFieldType.class))
@@ -167,7 +144,6 @@ public class ProjectController {
             @RequestParam(required = false) Boolean recruiting) {
         Pageable pageable= PageRequest.of(page,size, Sort.by(Sort.Order.desc("id")));
         Page<PostDTO.ProjectListDTO> result = projectService.searchByField(fields, recruiting, pageable);
-
-        return ResultResponse.ok(SuccessCode.SUCCESS,result);
+        return ApiResponse.success(result);
     }
 }

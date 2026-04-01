@@ -70,7 +70,7 @@ public class PostMapper {
     }
 
     public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostProjectCreateRequestDTO req, Long userId) {
-        return new PostDTO.PostCreateDTO(userId, req.getTitle(), req.getContent(), PostCategory.PROJECT.getValue());
+        return new PostDTO.PostCreateDTO(userId, req.title(), req.content(), PostCategory.PROJECT.getValue());
     }
 
     public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostStudyCreateRequestDTO req, Long userId) {
@@ -115,9 +115,9 @@ public class PostMapper {
     public PostDTO.ProjectCreateDTO toProjectCreateDTO(PostDTO.PostProjectCreateRequestDTO req,Long postId) {
         return PostDTO.ProjectCreateDTO.builder()
                 .postId(postId)
-                .recruitmentFields(req.getRecruitmentFields())
-                .recruiting(req.getRecruiting())
-                .deadline(req.getDeadline())
+                .recruitmentFields(req.recruitmentFields())
+                .recruiting(req.recruiting())
+                .deadline(req.deadline())
                 .build();
     }
 
@@ -179,7 +179,7 @@ public class PostMapper {
     }
 
     public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostProjectUpdateRequestDTO req) {
-        return new PostDTO.PostUpdateDTO(req.getTitle(), req.getContent());
+        return new PostDTO.PostUpdateDTO(req.title(), req.content());
     }
 
     public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostStudyUpdateRequestDTO req) {
@@ -206,9 +206,9 @@ public class PostMapper {
 
     public PostDTO.ProjectUpdateDTO toPostProjectUpdateDTO(PostDTO.PostProjectUpdateRequestDTO req) {
         return PostDTO.ProjectUpdateDTO.builder()
-                .recruitmentFields(req.getRecruitmentFields())
-                .recruiting(req.getRecruiting())
-                .deadline(req.getDeadline())
+                .recruitmentFields(req.recruitmentFields())
+                .recruiting(req.recruiting())
+                .deadline(req.deadline())
                 .build();
     }
 
@@ -240,6 +240,7 @@ public class PostMapper {
                 .viewCount(project.getPost().getViewCount())
                 .activeMemberCount(activeMemberCount)
                 .maxMembers(maxMember)
+                .groupRecruitmentStatus(project.getGroup().getRecruitmentStatus())
                 .build();
     }
 

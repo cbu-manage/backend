@@ -1,6 +1,6 @@
 package com.example.cbumanage.group.entity;
 
-import com.example.cbumanage.global.exception.CustomException;
+import com.example.cbumanage.global.error.CustomException;
 import com.example.cbumanage.group.entity.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.group.entity.enums.GroupStatus;
 import jakarta.persistence.*;
@@ -11,7 +11,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.hibernate.annotations.Comment;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import com.example.cbumanage.global.response.ErrorCode;
+import com.example.cbumanage.global.error.ErrorCode;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -62,13 +62,17 @@ public class Group {
     private GroupRecruitmentStatus recruitmentStatus;
 
     @Enumerated(EnumType.STRING)
-    @Comment("그룹 활성화 상태 (ACTIVE: 활동, INACTIVE: 비활동)")
+    @Column(length = 20)
+    @Comment("그룹 승인 상태 (ACCEPTED: 승인, REJECTED: 반려, PENDING: 승인 대기중, INACTIVE:활동종료")
     private GroupStatus status ;
+
+    @Comment("반려 사유")
+    private String rejectReason ;
 
     @Comment("그룹 삭제 여부(Soft Delete")
     private Boolean isDeleted = false;
 
-    //그룹의 생성자, 상태들은 기본적으로 모집 안함, 비활성 상태로 시작
+    //그룹의 생성자, 상태들은 기본적으로 모집 안함, 승인 대기중 상태로 시작
     public Group(String groupName, int minActiveMembers, Integer maxActiveMembers, Long postId, int category)  {
         if (maxActiveMembers < 2) {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "최대 모집 인원은 본인을 포함해 최소 2명 이상이어야 합니다.");
@@ -79,7 +83,7 @@ public class Group {
         this.postId = postId;
         this.category = category;
         this.recruitmentStatus = GroupRecruitmentStatus.CLOSED;
-        this.status = GroupStatus.INACTIVE;
+        this.status = GroupStatus.PENDING;
     }
 
     public static Group create(String groupName, int minActiveMembers, Integer maxActiveMembers, Long postId, int category) {
@@ -104,16 +108,20 @@ public class Group {
     }
 
     /*
-    그룹의 활동 상황을 바꾸는 메소드 입니다
+    그룹의 승인 상태를 바꾸는 메소드 입니다
      */
-    public void activate() {
-        if( this.status == GroupStatus.ACTIVE) return ;
-        this.status = GroupStatus.ACTIVE;
+    public void approve() {
+        this.status = GroupStatus.APPROVED;
+        this.rejectReason = null; // 승인 시 반려 사유 초기화
     }
 
-    public void deactivate() {
-        if( this.status == GroupStatus.INACTIVE) return ;
-        this.status = GroupStatus.INACTIVE;
+    public void reject(String rejectReason) {
+        this.status = GroupStatus.REJECTED;
+        this.rejectReason = rejectReason;
+    }
+
+    public void resubmit() {
+        this.status = GroupStatus.RESUBMITTED;
     }
 
     /*
@@ -121,12 +129,10 @@ public class Group {
      */
 
     public void openRecruitment() {
-        if (this.recruitmentStatus == GroupRecruitmentStatus.OPEN) return;
         this.recruitmentStatus = GroupRecruitmentStatus.OPEN;
     }
 
     public void closeRecruitment() {
-        if (this.recruitmentStatus == GroupRecruitmentStatus.CLOSED) return;
         this.recruitmentStatus = GroupRecruitmentStatus.CLOSED;
     }
 
