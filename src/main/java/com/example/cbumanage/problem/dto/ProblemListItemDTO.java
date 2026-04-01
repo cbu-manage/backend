@@ -21,13 +21,14 @@ public class ProblemListItemDTO {
     private final String languageName;
     private final String title;
     private final String authorName;
+    private final Long authorGeneration;
     private final ProblemStatus problemStatus;
     private final Long viewCount;
     private final Long commentCount;
 
     @Builder
     public ProblemListItemDTO(Long problemId, Long postId, String platformName, List<String> categories, String languageName,
-                              String title, String authorName, ProblemStatus problemStatus,
+                              String title, String authorName, Long authorGeneration, ProblemStatus problemStatus,
                               Long viewCount, Long commentCount) {
         this.problemId = problemId;
         this.postId = postId;
@@ -36,6 +37,7 @@ public class ProblemListItemDTO {
         this.languageName = languageName;
         this.title = title;
         this.authorName = authorName;
+        this.authorGeneration = authorGeneration;
         this.problemStatus = problemStatus;
         this.viewCount = viewCount;
         this.commentCount = commentCount;
@@ -52,6 +54,7 @@ public class ProblemListItemDTO {
                 .languageName(problem.getLanguage().getName())
                 .title(problem.getPost().getTitle())
                 .authorName(author.getName())
+                .authorGeneration(author.getGeneration())
                 .problemStatus(problem.getProblemStatus())
                 .viewCount(problem.getPost().getViewCount())
                 .commentCount(commentCount)
