@@ -1,6 +1,6 @@
 package com.example.cbumanage.group.entity;
 
-import com.example.cbumanage.global.exception.CustomException;
+import com.example.cbumanage.global.error.CustomException;
 import com.example.cbumanage.group.entity.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.group.entity.enums.GroupStatus;
 import jakarta.persistence.*;
@@ -11,7 +11,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.hibernate.annotations.Comment;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import com.example.cbumanage.global.response.ErrorCode;
+import com.example.cbumanage.global.error.ErrorCode;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -112,6 +112,7 @@ public class Group {
      */
     public void approve() {
         this.status = GroupStatus.APPROVED;
+        this.rejectReason = null; // 승인 시 반려 사유 초기화
     }
 
     public void reject(String rejectReason) {
@@ -119,17 +120,19 @@ public class Group {
         this.rejectReason = rejectReason;
     }
 
+    public void resubmit() {
+        this.status = GroupStatus.RESUBMITTED;
+    }
+
     /*
     그룹의 모집 상태를 변경시키는 메소드 입니다
      */
 
     public void openRecruitment() {
-        if (this.recruitmentStatus == GroupRecruitmentStatus.OPEN) return;
         this.recruitmentStatus = GroupRecruitmentStatus.OPEN;
     }
 
     public void closeRecruitment() {
-        if (this.recruitmentStatus == GroupRecruitmentStatus.CLOSED) return;
         this.recruitmentStatus = GroupRecruitmentStatus.CLOSED;
     }
 

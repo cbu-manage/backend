@@ -73,12 +73,16 @@ public class GroupMember {
     }
 
 
-    public void changeStatus(GroupMemberStatus groupMemberStatus) {
-        this.groupMemberStatus = groupMemberStatus;
+    public void active(){
+        this.groupMemberStatus = GroupMemberStatus.ACTIVE;
+        this.memberRejectReason = null;
     }
     public void reject(String reason) {
         this.groupMemberStatus = GroupMemberStatus.REJECTED;
         this.memberRejectReason = reason;
+    }
+    public void pending(){
+        this.groupMemberStatus = GroupMemberStatus.PENDING;
     }
 
     public void changeRole(GroupMemberRole groupMemberRole) {

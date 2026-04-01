@@ -63,6 +63,10 @@ fetch join -> 해결
         return reportPreviewDTOS;
     }
 
+    public Page<PostDTO.PostReportPreviewDTO> getGroupPostReportPreviewDTOList(Pageable pageable, Long groupId) {
+        return postReportRepository.findPostReportPreviewsByGroupId(pageable, 7, groupId);
+    }
+
     public Page<PostDTO.PostReportPreviewDTO> getMyPostReportPreviewDTOList(Pageable pageable,Long userId) {
         Page<PostDTO.PostReportPreviewDTO> myReportPreviewDTOS=postReportRepository.findMyPostReportPreviews(pageable,7,userId);
         return myReportPreviewDTOS;
