@@ -323,7 +323,7 @@ public class PostMapper {
                 .authorId(author.getCbuMemberId())
                 .authorName(author.getName())
                 .authorGeneration(author.getGeneration())
-                .viewCount(post.getViewCount())
+                .viewCount(post.getCategory() == 6 ? null : post.getViewCount())
                 .commentCount(commentRepository.countByPostId(post.getId()))
                 .build();
 
