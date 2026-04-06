@@ -111,7 +111,7 @@ public class Group {
     그룹의 승인 상태를 바꾸는 메소드 입니다
      */
     public void approve() {
-        this.status = GroupStatus.APPROVED;
+        this.status = GroupStatus.ACTIVE;
         this.rejectReason = null; // 승인 시 반려 사유 초기화
     }
 

@@ -213,7 +213,7 @@ public class GroupService {
         return null; // ACTIVE, INACTIVE → 가입 완료
     }
 
-    /*관리자 전용: 그룹 승인 상태를 APPROVED 또는 REJECTED로 변경합니다.*/
+    /*관리자 전용: 그룹 승인 상태를 ACTIVE 또는 REJECTED로 변경합니다.*/
     @Transactional
     public void updateGroupStatusAdmin(Long groupId, Long adminId, GroupDTO.GroupReviewRequestDTO req) {
 //        assertIsAdmin(adminId);
