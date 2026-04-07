@@ -724,11 +724,14 @@ public class PostDTO {
         private int activeMemberCount;
         @Schema(description = "최대 모집 인원 (팀장 포함). activeMemberCount와 함께 목록에서 예) 2/4 형태 표시용", example = "5")
         private int maxMembers;
+        @Schema(description = "조회수", example = "1")
+        private Long viewCount;
 
         @Builder
         public StudyListDTO(Long postId, String title, List<String> studyTags, String studyName,
                             Long authorId, Long authorGeneration, String authorName,
-                            LocalDateTime createdAt, boolean recruiting, int activeMemberCount, int maxMembers) {
+                            LocalDateTime createdAt, boolean recruiting, int activeMemberCount, int maxMembers,
+                            Long viewCount) {
             this.postId = postId;
             this.title = title;
             this.studyTags = studyTags;
@@ -740,6 +743,7 @@ public class PostDTO {
             this.recruiting = recruiting;
             this.activeMemberCount = activeMemberCount;
             this.maxMembers = maxMembers;
+            this.viewCount = viewCount;
         }
     }
 
