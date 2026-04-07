@@ -73,10 +73,6 @@ public class PostMapper {
         return new PostDTO.PostCreateDTO(userId, req.title(), req.content(), PostCategory.PROJECT.getValue());
     }
 
-    public PostDTO.PostCreateDTO toPostCreateDTO(PostDTO.PostStudyCreateRequestDTO req, Long userId) {
-        return new PostDTO.PostCreateDTO(userId, req.getTitle(), req.getContent(), PostCategory.STUDY.getValue());
-    }
-
     /*
     아래는 게시물의 맞게 CreateDTO 를 반환해주는 메소드 입니다.Post 생성후에 postId를 매개변숯로 추가합니다
      */
@@ -142,34 +138,6 @@ public class PostMapper {
                 .build();
     }
 
-    public PostDTO.StudyCreateDTO toStudyCreateDTO(PostDTO.PostStudyCreateRequestDTO req, Long postId) {
-        return PostDTO.StudyCreateDTO.builder()
-                .postId(postId)
-                .studyTags(req.getStudyTags())
-                .studyName(req.getStudyName())
-                .recruiting(req.getRecruiting())
-                .maxMembers(req.getMaxMembers())
-                .build();
-    }
-
-    public PostDTO.PostStudyCreateResponseDTO toPostStudyCreateResponseDTO(Post post, Study study, Group group, CbuMember author) {
-        return PostDTO.PostStudyCreateResponseDTO.builder()
-                .postId(post.getId())
-                .authorId(post.getAuthorId())
-                .groupId(group.getId())
-                .authorGeneration(author != null ? author.getGeneration() : null)
-                .authorName(author != null ? author.getName() : null)
-                .title(post.getTitle())
-                .content(post.getContent())
-                .studyTags(study.getStudyTags())
-                .studyName(study.getStudyName())
-                .recruiting(study.isRecruiting())
-                .maxMembers(study.getMaxMembers())
-                .createdAt(post.getCreatedAt())
-                .category(post.getCategory())
-                .build();
-    }
-
     /*
     아래는 Post{...}UpdateRequestDTO 를 각 카테고리에 맞게 분리해 주는 Mapper 입니다
      */
@@ -180,18 +148,6 @@ public class PostMapper {
 
     public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostProjectUpdateRequestDTO req) {
         return new PostDTO.PostUpdateDTO(req.title(), req.content());
-    }
-
-    public PostDTO.PostUpdateDTO toPostUpdateDTO(PostDTO.PostStudyUpdateRequestDTO req) {
-        return new PostDTO.PostUpdateDTO(req.getTitle(), req.getContent());
-    }
-
-    public PostDTO.StudyUpdateDTO toStudyUpdateDTO(PostDTO.PostStudyUpdateRequestDTO req) {
-        return PostDTO.StudyUpdateDTO.builder()
-                .studyTags(req.getStudyTags())
-                .studyName(req.getStudyName())
-                .maxMembers(req.getMaxMembers())
-                .build();
     }
 
     public PostDTO.ReportUpdateDTO topostReportUpdateDTO(PostDTO.PostReportUpdateRequestDTO req) {
@@ -265,13 +221,33 @@ public class PostMapper {
                 .build();
     }
 
-    // 스터디 게시글 상세 조회 DTO 변환 (활동인원/최대인원 포함)
+    // 스터디 생성 응답 DTO 변환
+    public PostDTO.PostStudyCreateResponseDTO toPostStudyCreateResponseDTO(Post post, Study study, Group group, CbuMember author) {
+        return PostDTO.PostStudyCreateResponseDTO.builder()
+                .postId(post.getId())
+                .authorId(post.getAuthorId())
+                .groupId(group.getId())
+                .authorGeneration(author.getGeneration())
+                .authorName(author.getName())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .studyTags(study.getStudyTags())
+                .studyName(study.getStudyName())
+                .recruiting(study.isRecruiting())
+                .maxMembers(group.getMaxActiveMembers())
+                .createdAt(post.getCreatedAt())
+                .category(post.getCategory())
+                .build();
+    }
+
+    // 스터디 게시글 상세 조회 DTO 변환
     public PostDTO.StudyInfoDetailDTO toStudyInfoDetailDTO(Study study,
                                                            boolean isLeader,
                                                            Boolean hasApplied,
                                                            CbuMember author,
                                                            int activeMemberCount,
-                                                           int maxMembers) {
+                                                           int maxMembers,
+                                                           Long viewCount) {
         return PostDTO.StudyInfoDetailDTO.builder()
                 .postId(study.getPost().getId())
                 .title(study.getPost().getTitle())
@@ -279,20 +255,20 @@ public class PostMapper {
                 .studyTags(study.getStudyTags())
                 .studyName(study.getStudyName())
                 .authorId(study.getPost().getAuthorId())
-                .authorGeneration(author != null ? author.getGeneration() : null)
-                .authorName(author != null ? author.getName() : null)
+                .authorGeneration(author.getGeneration())
+                .authorName(author.getName())
                 .createdAt(study.getPost().getCreatedAt())
                 .recruiting(study.isRecruiting())
                 .activeMemberCount(activeMemberCount)
                 .maxMembers(maxMembers)
-                .groupId(study.getGroup() != null ? study.getGroup().getId() : null)
+                .groupId(study.getGroup().getId())
                 .isLeader(isLeader)
                 .hasApplied(hasApplied)
-                .viewCount(study.getPost().getViewCount())
+                .viewCount(viewCount)
                 .build();
     }
 
-    // 스터디 게시글 목록 조회 DTO 변환 (activeMemberCount,maxMembes 추가)
+    // 스터디 게시글 목록 조회 DTO 변환
     public PostDTO.StudyListDTO toStudyListDTO(Study study, CbuMember author, int activeMemberCount, int maxMembers) {
         return PostDTO.StudyListDTO.builder()
                 .postId(study.getPost().getId())
@@ -327,10 +303,5 @@ public class PostMapper {
                 .viewCount(post.getCategory() == 6 ? null : post.getViewCount())
                 .commentCount(commentRepository.countByPostId(post.getId()))
                 .build();
-
     }
-
-
-
-
 }
