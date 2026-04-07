@@ -1,5 +1,6 @@
 package com.example.cbumanage.post.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.example.cbumanage.group.dto.GroupDTO;
 import com.example.cbumanage.group.entity.enums.GroupRecruitmentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -418,7 +419,7 @@ public class PostDTO {
 
     @Schema(description = "프로젝트 목록 조회용 요약 데이터")
     @Builder
-    public record ProjectListDTO (
+    public record ProjectListDTO(
         @Schema(description = "포스트 ID", example = "101")
         Long postId,
 
@@ -459,293 +460,199 @@ public class PostDTO {
         int maxMembers
     ){}
 
-    //보고서 게시글 미리보기입니다 보고서미리보기/게시글정보/그룹미리보기 를 담고있습니다
     //--------------------------STUDY 관련 DTO---------------------//
-    /*
-    Study(스터디 모집) 게시글 생성 요청 DTO
-     */
-    @Getter
-    @NoArgsConstructor
+
     @Schema(description = "스터디 모집 게시글 생성 요청 DTO")
-    public static class PostStudyCreateRequestDTO {
-        @NotBlank(message = "제목은 필수입니다.")
-        @Size(max = 200, message = "제목은 200자 이내여야 합니다.")
-        @Schema(description = "스터디 게시글 제목", example = "Spring Boot 심화 스터디 모집")
-        private String title;
+    public record PostStudyCreateRequestDTO(
+            @NotBlank(message = "제목은 필수입니다.")
+            @Size(max = 200, message = "제목은 200자 이내여야 합니다.")
+            @Schema(description = "스터디 게시글 제목", example = "Spring Boot 심화 스터디 모집")
+            String title,
 
-        @NotBlank(message = "내용은 필수입니다.")
-        @Schema(description = "스터디 게시글 내용", example = "함께 Spring Boot를 공부할 팀원을 모집합니다...")
-        private String content;
+            @NotBlank(message = "내용은 필수입니다.")
+            @Schema(description = "스터디 게시글 내용", example = "함께 Spring Boot를 공부할 팀원을 모집합니다...")
+            String content,
 
-        @Size(max = 10, message = "태그는 최대 10개까지 가능합니다.")
-        @Schema(description = "스터디 태그 목록 (자유 입력)", example = "[\"Spring\", \"Java\", \"Backend\"]")
-        private List<String> studyTags;
+            @Size(max = 10, message = "태그는 최대 10개까지 가능합니다.")
+            @Schema(description = "스터디 태그 목록 (자유 입력)", example = "[\"Spring\", \"Java\", \"Backend\"]")
+            List<String> studyTags,
 
-        @NotBlank(message = "스터디 이름은 필수입니다.")
-        @Size(max = 50, message = "스터디 이름은 50자 이내여야 합니다.")
-        @Schema(description = "스터디 이름 (마감 시 그룹 이름으로 사용)", example = "Spring 스터디")
-        private String studyName;
+            @NotBlank(message = "스터디 이름은 필수입니다.")
+            @Size(max = 50, message = "스터디 이름은 50자 이내여야 합니다.")
+            @Schema(description = "스터디 이름", example = "Spring 스터디")
+            String studyName,
 
-        @Schema(description = "모집 중 여부 (true: 모집 중, false: 모집 마감)", example = "true")
-        private Boolean recruiting;
+            @Schema(description = "모집 중 여부 (true: 모집 중, false: 모집 마감)", example = "true")
+            Boolean recruiting,
 
-        @Min(value = 2, message = "최대 인원은 팀장 포함 최소 2명 이상이어야 합니다.")
-        @Max(value = 50, message = "최대 인원은 50명을 초과할 수 없습니다.")
-        @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
-        private int maxMembers;
+            @Min(value = 2, message = "최대 인원은 팀장 포함 최소 2명 이상이어야 합니다.")
+            @Max(value = 50, message = "최대 인원은 50명을 초과할 수 없습니다.")
+            @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
+            int maxMembers,
 
-        @Schema(description = "카테고리 번호 (서버에서 1로 고정 처리되며 클라이언트 입력값은 무시됩니다)", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
-        private int category;
-    }
+            @Schema(description = "카테고리 번호 (서버에서 1로 고정 처리되며 클라이언트 입력값은 무시됩니다)", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
+            int category
+    ) {}
 
-    @Getter
-    @NoArgsConstructor
+    @Builder
     @Schema(description = "스터디 모집 게시글 생성 응답 DTO")
-    public static class PostStudyCreateResponseDTO {
-        @Schema(description = "생성된 게시글 ID", example = "101")
-        private Long postId;
-        @Schema(description = "작성자 회원 ID", example = "15")
-        private Long authorId;
-        @Schema(description = "자동 생성된 스터디 그룹 ID", example = "50")
-        private Long groupId;
-        @Schema(description = "작성자 기수")
-        private Long authorGeneration;
-        @Schema(description = "작성자 이름")
-        private String authorName;
-        @Schema(description = "스터디 게시글 제목")
-        private String title;
-        @Schema(description = "스터디 게시글 내용")
-        private String content;
-        @Schema(description = "스터디 태그 목록")
-        private List<String> studyTags;
-        @Schema(description = "스터디 이름")
-        private String studyName;
-        @Schema(description = "모집 중 여부 (true: 모집 중, false: 모집 마감)")
-        private boolean recruiting;
-        @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
-        private int maxMembers;
-        @Schema(description = "게시글 생성 시각")
-        private LocalDateTime createdAt;
-        @Schema(description = "게시글 카테고리 번호", example = "1")
-        private int category;
+    public record PostStudyCreateResponseDTO(
+            @Schema(description = "생성된 게시글 ID", example = "100")
+            Long postId,
 
-        @Builder
-        public PostStudyCreateResponseDTO(Long postId, Long authorId, Long groupId,
-                                          Long authorGeneration, String authorName,
-                                          String title, String content,
-                                          List<String> studyTags, String studyName, boolean recruiting,
-                                          int maxMembers, LocalDateTime createdAt, int category) {
-            this.postId = postId;
-            this.authorId = authorId;
-            this.groupId = groupId;
-            this.authorGeneration = authorGeneration;
-            this.authorName = authorName;
-            this.title = title;
-            this.content = content;
-            this.studyTags = studyTags;
-            this.studyName = studyName;
-            this.recruiting = recruiting;
-            this.maxMembers = maxMembers;
-            this.createdAt = createdAt;
-            this.category = category;
-        }
+            @Schema(description = "작성자 회원 ID", example = "10")
+            Long authorId,
+
+            @Schema(description = "자동 생성된 스터디 그룹 ID", example = "50")
+            Long groupId,
+
+            @Schema(description = "작성자 기수")
+            Long authorGeneration,
+
+            @Schema(description = "작성자 이름")
+            String authorName,
+
+            @Schema(description = "스터디 게시글 제목")
+            String title,
+
+            @Schema(description = "스터디 게시글 내용")
+            String content,
+
+            @Schema(description = "스터디 태그 목록")
+            List<String> studyTags,
+
+            @Schema(description = "스터디 이름")
+            String studyName,
+
+            @Schema(description = "모집 중 여부 (true: 모집 중, false: 모집 마감)")
+            boolean recruiting,
+
+            @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
+            int maxMembers,
+
+            @Schema(description = "게시글 생성 시각")
+            LocalDateTime createdAt,
+
+            @Schema(description = "게시글 카테고리 번호", example = "1")
+            int category
+    ) {
     }
 
-    @Getter
-    @NoArgsConstructor
-    @Schema(description = "스터디 서브 테이블 생성용 내부 DTO")
-    public static class StudyCreateDTO {
-        @Schema(description = "연결된 Post ID")
-        private Long postId;
-        @Schema(description = "스터디 태그 목록")
-        private List<String> studyTags;
-        @Schema(description = "스터디 이름")
-        private String studyName;
-        @Schema(description = "모집 중 여부")
-        private boolean recruiting;
-        @Schema(description = "최대 모집 인원 (팀장 포함)")
-        private int maxMembers;
-
-        @Builder
-        public StudyCreateDTO(Long postId, List<String> studyTags, String studyName, boolean recruiting, int maxMembers) {
-            this.postId = postId;
-            this.studyTags = studyTags;
-            this.studyName = studyName;
-            this.recruiting = recruiting;
-            this.maxMembers = maxMembers;
-        }
-    }
-
-    @Getter
-    @NoArgsConstructor
     @Schema(description = "스터디 게시글 수정 요청 DTO")
-    public static class PostStudyUpdateRequestDTO {
-        @Size(max = 200, message = "제목은 200자 이내여야 합니다.")
-        @Schema(description = "수정할 제목", example = "[수정] Spring Boot 스터디")
-        private String title;
+    public record PostStudyUpdateRequestDTO(
+            @Size(max = 200, message = "제목은 200자 이내여야 합니다.")
+            @Schema(description = "수정할 제목", example = "[수정] Spring Boot 스터디")
+            String title,
 
-        @Schema(description = "수정할 내용", example = "스터디 내용이 변경되었습니다.")
-        private String content;
+            @Schema(description = "수정할 내용", example = "스터디 내용이 변경되었습니다.")
+            String content,
 
-        @Size(max = 10, message = "태그는 최대 10개까지 가능합니다.")
-        @Schema(description = "수정할 태그 목록", example = "[\"Spring\", \"JPA\"]")
-        private List<String> studyTags;
+            @Size(max = 10, message = "태그는 최대 10개까지 가능합니다.")
+            @Schema(description = "수정할 태그 목록", example = "[\"Spring\", \"JPA\"]")
+            List<String> studyTags,
 
-        @Size(max = 50, message = "스터디 이름은 50자 이내여야 합니다.")
-        @Schema(description = "수정할 스터디 이름", example = "Spring 심화 스터디")
-        private String studyName;
+            @Size(max = 50, message = "스터디 이름은 50자 이내여야 합니다.")
+            @Schema(description = "수정할 스터디 이름", example = "Spring 심화 스터디")
+            String studyName,
 
-        @Min(value = 2, message = "최대 인원은 팀장 포함 최소 2명 이상이어야 합니다.")
-        @Max(value = 50, message = "최대 인원은 50명을 초과할 수 없습니다.")
-        @Schema(description = "수정할 최대 모집 인원 (팀장 포함)", example = "6")
-        private Integer maxMembers;
+            @Min(value = 2, message = "최대 인원은 팀장 포함 최소 2명 이상이어야 합니다.")
+            @Max(value = 50, message = "최대 인원은 50명을 초과할 수 없습니다.")
+            @Schema(description = "수정할 최대 모집 인원 (팀장 포함)", example = "6")
+            Integer maxMembers
+    ) {
     }
 
-    @Getter
-    @NoArgsConstructor
-    @Schema(description = "Study 엔티티 수정용 내부 DTO")
-    public static class StudyUpdateDTO {
-        @Schema(description = "수정할 태그 목록")
-        private List<String> studyTags;
-
-        @Schema(description = "수정할 스터디 이름")
-        private String studyName;
-
-        @Schema(description = "수정할 최대 모집 인원")
-        private Integer maxMembers;
-
-        @Builder
-        public StudyUpdateDTO(List<String> studyTags, String studyName, Integer maxMembers) {
-            this.studyTags = studyTags;
-            this.studyName = studyName;
-            this.maxMembers = maxMembers;
-        }
-    }
-
-    /*
-    Study 게시글 상세 조회 DTO
-     */
-    @Getter
-    @NoArgsConstructor
+    @Builder
     @Schema(description = "스터디 게시글 상세 조회 DTO")
-    public static class StudyInfoDetailDTO {
-        @Schema(description = "게시글 ID", example = "101")
-        private Long postId;
-        @Schema(description = "게시글 제목")
-        private String title;
-        @Schema(description = "게시글 내용")
-        private String content;
-        @Schema(description = "스터디 태그 목록")
-        private List<String> studyTags;
-        @Schema(description = "스터디 이름")
-        private String studyName;
-        @Schema(description = "작성자(팀장) 회원 ID", example = "15")
-        private Long authorId;
-        @Schema(description = "작성자 기수", example = "34")
-        private Long authorGeneration;
-        @Schema(description = "작성자 이름", example = "홍길동")
-        private String authorName;
-        @Schema(description = "게시글 생성 시각")
-        private LocalDateTime createdAt;
-        @Schema(description = "모집 여부 (모집 중: true, 모집 마감: false)", example = "true")
-        private boolean recruiting;
-        @Schema(description = "현재 활동 중인 멤버 수 (팀장 포함). maxMembers와 함께 상세 화면에서 예) 2/4 형태 표시용", example = "2")
-        private int activeMemberCount;
-        @Schema(description = "최대 모집 인원 (팀장 포함). activeMemberCount와 함께 상세 화면에서 예) 2/4 형태 표시용", example = "5")
-        private int maxMembers;
+    public record StudyInfoDetailDTO(
+            @Schema(description = "게시글 ID", example = "101")
+            Long postId,
 
-        @Schema(description = "마감 후 생성된 그룹 ID (모집 중이면 null)", example = "21")
-        private Long groupId;
+            @Schema(description = "게시글 제목")
+            String title,
 
-        @Schema(description = "조회한 유저가 팀장(작성자)인지 여부. true일 경우: '신청 인원 확인' 버튼 노출", example = "false")
-        private boolean isLeader;
+            @Schema(description = "게시글 내용")
+            String content,
 
-        @Schema(description = "조회한 유저의 신청 상태. " +
-                "1. true: 이미 신청함(PENDING) → '신청 취소하기' 버튼 노출 " +
-                "2. false: 신청 이력 없음 또는 비로그인 → '신청하기' 버튼 노출 " +
-                "3. null: 이미 그룹 멤버(승인됨) → '가입 완료' 표시(버튼 비활성)", example = "false")
-        private Boolean hasApplied;
+            @Schema(description = "스터디 태그 목록")
+            List<String> studyTags,
 
-        @Schema(description = "게시글 조회수", example = "42")
-        private Long viewCount;
+            @Schema(description = "스터디 이름")
+            String studyName,
 
-        @Builder
-        public StudyInfoDetailDTO(Long postId, String title, String content, List<String> studyTags,
-                                  String studyName, Long authorId, Long authorGeneration, String authorName,
-                                  LocalDateTime createdAt,
-                                  boolean recruiting, int activeMemberCount, int maxMembers, Long groupId,
-                                  boolean isLeader, Boolean hasApplied, Long viewCount) {
-            this.postId = postId;
-            this.title = title;
-            this.content = content;
-            this.studyTags = studyTags;
-            this.studyName = studyName;
-            this.authorId = authorId;
-            this.authorGeneration = authorGeneration;
-            this.authorName = authorName;
-            this.createdAt = createdAt;
-            this.recruiting = recruiting;
-            this.activeMemberCount = activeMemberCount;
-            this.maxMembers = maxMembers;
-            this.groupId = groupId;
-            this.isLeader = isLeader;
-            this.hasApplied = hasApplied;
-            this.viewCount = viewCount;
-        }
-    }
+            @Schema(description = "작성자(팀장) 회원 ID", example = "15")
+            Long authorId,
 
-    /*
-    Study 게시글 목록 조회 DTO
-    제목, 태그, 작성자, 생성시간, 모집여부를 포함합니다
-     */
-    @Getter
-    @NoArgsConstructor
+            @Schema(description = "작성자 기수", example = "34")
+            Long authorGeneration,
+
+            @Schema(description = "작성자 이름", example = "홍길동")
+            String authorName,
+
+            @Schema(description = "게시글 생성 시각")
+            LocalDateTime createdAt,
+            @Schema(description = "모집 여부 (모집 중: true, 모집 마감: false)", example = "true")
+            boolean recruiting,
+
+            @Schema(description = "현재 활동 중인 멤버 수 (팀장 포함)", example = "2")
+            int activeMemberCount,
+
+            @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
+            int maxMembers,
+
+            @Schema(description = "마감 후 생성된 그룹 ID (모집 중이면 null)", example = "21")
+            Long groupId,
+
+            @Schema(description = "조회한 유저가 팀장(작성자)인지 여부", example = "false")
+            @JsonProperty("leader")
+            boolean isLeader,
+
+            @Schema(description = "조회한 유저의 신청 상태. true=신청대기, false=미신청, null=가입완료", example = "false")
+            Boolean hasApplied,
+
+            @Schema(description = "게시글 조회수", example = "42")
+            Long viewCount
+    ) {}
+
+    @Builder
     @Schema(description = "스터디 게시글 목록 조회 DTO")
-    public static class StudyListDTO {
+    public record StudyListDTO(
         @Schema(description = "게시글 ID", example = "101")
-        private Long postId;
-        @Schema(description = "게시글 제목")
-        private String title;
-        @Schema(description = "스터디 태그 목록")
-        private List<String> studyTags;
-        @Schema(description = "스터디 이름")
-        private String studyName;
-        @Schema(description = "작성자 회원 ID", example = "15")
-        private Long authorId;
-        @Schema(description = "작성자 기수")
-        private Long authorGeneration;
-        @Schema(description = "작성자 이름")
-        private String authorName;
-        @Schema(description = "게시글 생성 시각")
-        private LocalDateTime createdAt;
-        @Schema(description = "모집 여부 (모집 중: true, 모집 마감: false)", example = "true")
-        private boolean recruiting;
-        @Schema(description = "현재 활동 중인 멤버 수 (팀장 포함). maxMembers와 함께 목록에서 예) 2/4 형태 표시용", example = "2")
-        private int activeMemberCount;
-        @Schema(description = "최대 모집 인원 (팀장 포함). activeMemberCount와 함께 목록에서 예) 2/4 형태 표시용", example = "5")
-        private int maxMembers;
-        @Schema(description = "조회수", example = "1")
-        private Long viewCount;
+        Long postId,
 
-        @Builder
-        public StudyListDTO(Long postId, String title, List<String> studyTags, String studyName,
-                            Long authorId, Long authorGeneration, String authorName,
-                            LocalDateTime createdAt, boolean recruiting, int activeMemberCount, int maxMembers,
-                            Long viewCount) {
-            this.postId = postId;
-            this.title = title;
-            this.studyTags = studyTags;
-            this.studyName = studyName;
-            this.authorId = authorId;
-            this.authorGeneration = authorGeneration;
-            this.authorName = authorName;
-            this.createdAt = createdAt;
-            this.recruiting = recruiting;
-            this.activeMemberCount = activeMemberCount;
-            this.maxMembers = maxMembers;
-            this.viewCount = viewCount;
-        }
-    }
+        @Schema(description = "게시글 제목")
+        String title,
+
+        @Schema(description = "스터디 태그 목록")
+        List<String> studyTags,
+
+        @Schema(description = "스터디 이름")
+        String studyName,
+
+        @Schema(description = "작성자 회원 ID", example = "15")
+        Long authorId,
+
+        @Schema(description = "작성자 기수")
+        Long authorGeneration,
+
+        @Schema(description = "작성자 이름")
+        String authorName,
+
+        @Schema(description = "게시글 생성 시각")
+        LocalDateTime createdAt,
+
+        @Schema(description = "모집 여부 (모집 중: true, 모집 마감: false)", example = "true")
+        boolean recruiting,
+
+        @Schema(description = "현재 활동 중인 멤버 수 (팀장 포함)", example = "2")
+        int activeMemberCount,
+
+        @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
+        int maxMembers,
+
+        @Schema(description = "조회수", example = "1")
+        Long viewCount
+    ) {}
 
     //보고서 게시글 미리보기 DTO의 보고서 관련 내용을 담고있는 DTO입니다
     @Schema(description = "보고서 목록에서 보고서 게시글을 미리보기 하기위한 DTO입니다")
@@ -804,11 +711,5 @@ public class PostDTO {
             this.viewCount = viewCount;
             this.commentCount = commentCount;
         }
-
     }
-
-
-
-
-
 }
