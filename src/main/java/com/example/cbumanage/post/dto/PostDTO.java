@@ -600,7 +600,7 @@ public class PostDTO {
             @Schema(description = "최대 모집 인원 (팀장 포함)", example = "5")
             int maxMembers,
 
-            @Schema(description = "마감 후 생성된 그룹 ID (모집 중이면 null)", example = "21")
+            @Schema(description = "스터디에 연결된 그룹 ID", example = "21")
             Long groupId,
 
             @Schema(description = "조회한 유저가 팀장(작성자)인지 여부", example = "false")
