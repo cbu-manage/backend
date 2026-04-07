@@ -11,7 +11,6 @@ import com.example.cbumanage.study.entity.Study;
 import com.example.cbumanage.group.entity.enums.GroupMemberStatus;
 import com.example.cbumanage.group.entity.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.member.repository.CbuMemberRepository;
-import com.example.cbumanage.group.repository.GroupMemberRepository;
 import com.example.cbumanage.group.repository.GroupRepository;
 import com.example.cbumanage.post.repository.PostRepository;
 import com.example.cbumanage.study.repository.StudyRepository;
@@ -39,7 +38,6 @@ public class StudyService {
     private final PostMapper postMapper;
     private final PostService postService;
     private final GroupService groupService;
-    private final GroupMemberRepository groupMemberRepository;
     private final GroupRepository groupRepository;
 
     public Study createStudy(PostDTO.StudyCreateDTO req, Group group) {
@@ -123,9 +121,7 @@ public class StudyService {
         }
 
         if (dto.getMaxMembers() != null) {
-            long activeCount = groupMemberRepository
-                    .findByGroupIdAndGroupMemberStatus(study.getGroup().getId(), GroupMemberStatus.ACTIVE)
-                    .size();
+            int activeCount = groupRepository.countByGroupIdAndStatus(study.getGroup().getId(), GroupMemberStatus.ACTIVE);
             if (dto.getMaxMembers() <= activeCount) {
                 throw new CustomException(ErrorCode.INVALID_REQUEST,
                         "이미 수락된 인원(" + activeCount + "명)보다 작거나 같은 값으로 변경할 수 없습니다.");
@@ -212,20 +208,13 @@ public class StudyService {
 
         // 최소 1명 이상 수락 확인 (팀장=ACTIVE 1명 이미 포함, 추가 ACTIVE 필요)
         Long groupId = study.getGroup().getId();
-        int activeCount = groupMemberRepository
-                .findByGroupIdAndGroupMemberStatus(groupId, GroupMemberStatus.ACTIVE).size();
+        int activeCount = groupRepository.countByGroupIdAndStatus(groupId, GroupMemberStatus.ACTIVE);
         if (activeCount <= 1) {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "최소 1명 이상의 수락된 멤버가 있어야 합니다.");
         }
 
-        // PENDING 일괄 거절
-        groupService.rejectAllPendingMembers(groupId);
-
         // 그룹 모집 마감
         groupService.updateGroupRecruitment(groupId, userId, GroupRecruitmentStatus.CLOSED);
-
-        // 스터디 모집 마감
-        study.updateRecruiting(false);
     }
 
     private Study getActiveStudy(Long postId) {
