@@ -24,7 +24,7 @@ public class Study {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id")
+    @JoinColumn(name = "post_id", nullable = false, unique = true)
     @Comment("공통 Post 테이블 FK")
     private Post post;
 
@@ -39,7 +39,7 @@ public class Study {
     private String studyName;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id", nullable = false)
+    @JoinColumn(name = "group_id", nullable = false, unique = true)
     @Comment("게시글 생성 시 자동 생성된 그룹 FK")
     private Group group;
 
