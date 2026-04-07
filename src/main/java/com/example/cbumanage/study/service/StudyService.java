@@ -40,6 +40,13 @@ public class StudyService {
     private final GroupRepository groupRepository;
     private final PostMapper postMapper;
 
+    /**
+     * Post + Study + Group을 생성하고, 작성자를 그룹 리더로 등록한다.
+     *
+     * @param req 스터디 게시글 생성 요청
+     * @param userId 작성자 회원 ID
+     * @return 생성된 스터디 게시글 응답
+     */
     @Transactional
     public PostDTO.PostStudyCreateResponseDTO createPostStudy(PostDTO.PostStudyCreateRequestDTO req, Long userId) {
         PostDTO.PostCreateDTO postCreateDTO = new PostDTO.PostCreateDTO(userId, req.title(), req.content(), PostCategory.STUDY.getValue());
@@ -57,6 +64,13 @@ public class StudyService {
         return postMapper.toPostStudyCreateResponseDTO(post, study, group, author);
     }
 
+    /**
+     * 스터디 상세 조회. 조회수를 증가시키고, 로그인 유저의 리더 여부 및 신청 상태를 포함한다.
+     *
+     * @param postId 게시글 ID
+     * @param userId 조회 유저 ID (비로그인 시 null)
+     * @return 스터디 상세 정보
+     */
     @Transactional
     public PostDTO.StudyInfoDetailDTO getStudyByPostId(Long postId, Long userId) {
         Study study = getActiveStudy(postId);
@@ -76,24 +90,53 @@ public class StudyService {
                 study.getPost().getViewCount() + 1);
     }
 
+    /**
+     * 카테고리별 스터디 목록을 페이징 조회한다.
+     *
+     * @param pageable 페이징 정보
+     * @param category 카테고리 번호
+     * @return 스터디 목록
+     */
     @Transactional(readOnly = true)
     public Page<PostDTO.StudyListDTO> getPostsByCategory(Pageable pageable, int category) {
         Page<Study> studies = studyRepository.findByPostCategoryAndPostIsDeletedFalse(category, pageable);
         return mapStudiesToStudyListDTO(studies);
     }
 
+    /**
+     * 로그인 유저가 작성한 스터디 목록을 페이징 조회한다.
+     *
+     * @param pageable 페이징 정보
+     * @param userId 작성자 회원 ID
+     * @param category 카테고리 번호
+     * @return 내가 작성한 스터디 목록
+     */
     @Transactional(readOnly = true)
     public Page<PostDTO.StudyListDTO> getMyStudiesByUserId(Pageable pageable, Long userId, int category) {
         Page<Study> studies = studyRepository.findByPostAuthorIdAndPostCategoryAndPostIsDeletedFalse(userId, category, pageable);
         return mapStudiesToStudyListDTO(studies);
     }
 
+    /**
+     * 태그명이 정확히 일치하는 스터디 목록을 페이징 조회한다.
+     *
+     * @param tag 검색할 태그명
+     * @param pageable 페이징 정보
+     * @return 태그 일치 스터디 목록
+     */
     @Transactional(readOnly = true)
     public Page<PostDTO.StudyListDTO> searchByTag(String tag, Pageable pageable) {
         Page<Study> studies = studyRepository.findByExactTagAndPostIsDeletedFalse(tag, pageable);
         return mapStudiesToStudyListDTO(studies);
     }
 
+    /**
+     * Post + Study를 수정한다. studyName 변경 시 그룹 이름도 동기화한다.
+     *
+     * @param req 스터디 게시글 수정 요청
+     * @param postId 게시글 ID
+     * @param userId 수정 요청 유저 ID
+     */
     @Transactional
     public void updatePostStudy(PostDTO.PostStudyUpdateRequestDTO req, Long postId, Long userId) {
         Post post = postRepository.findById(postId)
@@ -128,6 +171,12 @@ public class StudyService {
         }
     }
 
+    /**
+     * 게시글과 연결된 그룹을 함께 soft delete 처리한다.
+     *
+     * @param postId 게시글 ID
+     * @param userId 삭제 요청 유저 ID
+     */
     @Transactional
     public void softDeletePost(Long postId, Long userId) {
         Post post = postRepository.findById(postId)
@@ -147,6 +196,12 @@ public class StudyService {
         study.getGroup().delete();
     }
 
+    /**
+     * 스터디 모집 마감. 실제 마감 처리는 {@link GroupService#updateGroupRecruitment}
+     *
+     * @param postId 게시글 ID
+     * @param userId 마감 요청 유저 ID (팀장)
+     */
     @Transactional
     public void closeStudyRecruitment(Long postId, Long userId) {
         Study study = studyRepository.findByPostIdForUpdate(postId)
