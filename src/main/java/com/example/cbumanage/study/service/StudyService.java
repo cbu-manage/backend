@@ -18,7 +18,7 @@ import com.example.cbumanage.study.repository.StudyRepository;
 import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.post.util.PostMapper;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class StudyService {
 
     private final StudyRepository studyRepository;
@@ -40,25 +41,6 @@ public class StudyService {
     private final GroupService groupService;
     private final GroupMemberRepository groupMemberRepository;
     private final GroupRepository groupRepository;
-
-    @Autowired
-    public StudyService(StudyRepository studyRepository,
-                        PostRepository postRepository,
-                        CbuMemberRepository cbuMemberRepository,
-                        PostMapper postMapper,
-                        PostService postService,
-                        GroupService groupService,
-                        GroupMemberRepository groupMemberRepository,
-                        GroupRepository groupRepository) {
-        this.studyRepository = studyRepository;
-        this.postRepository = postRepository;
-        this.cbuMemberRepository = cbuMemberRepository;
-        this.postMapper = postMapper;
-        this.postService = postService;
-        this.groupService = groupService;
-        this.groupMemberRepository = groupMemberRepository;
-        this.groupRepository = groupRepository;
-    }
 
     public Study createStudy(PostDTO.StudyCreateDTO req, Group group) {
         Post post = postRepository.findById(req.getPostId())
