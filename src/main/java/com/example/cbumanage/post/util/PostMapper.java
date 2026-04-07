@@ -306,6 +306,7 @@ public class PostMapper {
                 .recruiting(study.isRecruiting())
                 .activeMemberCount(activeMemberCount)
                 .maxMembers(maxMembers)
+                .viewCount(study.getPost().getViewCount())
                 .build();
     }
 
