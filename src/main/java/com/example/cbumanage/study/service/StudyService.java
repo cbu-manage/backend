@@ -17,7 +17,7 @@ import com.example.cbumanage.post.repository.PostRepository;
 import com.example.cbumanage.study.repository.StudyRepository;
 import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.post.util.PostMapper;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -71,13 +71,13 @@ public class StudyService {
     }
 
     // 카테고리별 목록 조회 (삭제 게시글 제외)
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<PostDTO.StudyListDTO> getPostsByCategory(Pageable pageable, int category) {
         Page<Study> studies = studyRepository.findByPostCategoryAndPostIsDeletedFalse(category, pageable);
         return mapStudiesToStudyListDTO(studies);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<PostDTO.StudyListDTO> getMyStudiesByUserId(Pageable pageable, Long userId, int category) {
         Page<Study> studies = studyRepository.findByPostAuthorIdAndPostCategoryAndPostIsDeletedFalse(userId, category, pageable);
         return mapStudiesToStudyListDTO(studies);
@@ -184,7 +184,7 @@ public class StudyService {
     }
 
     // 태그 정확히 일치 검색
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<PostDTO.StudyListDTO> searchByTag(String tag, Pageable pageable) {
         Page<Study> studies = studyRepository.findByExactTagAndPostIsDeletedFalse(tag, pageable);
         return mapStudiesToStudyListDTO(studies);
