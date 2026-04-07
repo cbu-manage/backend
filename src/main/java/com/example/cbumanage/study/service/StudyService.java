@@ -6,12 +6,12 @@ import com.example.cbumanage.global.error.CustomException;
 import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.group.entity.Group;
 import com.example.cbumanage.post.entity.Post;
+import com.example.cbumanage.post.entity.enums.PostCategory;
 import com.example.cbumanage.post.service.PostService;
 import com.example.cbumanage.study.entity.Study;
 import com.example.cbumanage.group.entity.enums.GroupMemberStatus;
 import com.example.cbumanage.group.entity.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.member.repository.CbuMemberRepository;
-import com.example.cbumanage.group.repository.GroupMemberRepository;
 import com.example.cbumanage.group.repository.GroupRepository;
 import com.example.cbumanage.post.repository.PostRepository;
 import com.example.cbumanage.study.repository.StudyRepository;
@@ -23,7 +23,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,41 +35,47 @@ public class StudyService {
     private final StudyRepository studyRepository;
     private final PostRepository postRepository;
     private final CbuMemberRepository cbuMemberRepository;
-    private final PostMapper postMapper;
     private final PostService postService;
     private final GroupService groupService;
-    private final GroupMemberRepository groupMemberRepository;
     private final GroupRepository groupRepository;
+    private final PostMapper postMapper;
 
-    public Study createStudy(PostDTO.StudyCreateDTO req, Group group) {
-        Post post = postRepository.findById(req.getPostId())
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "게시글을 찾을 수 없습니다."));
-        List<String> tags = (req.getStudyTags() != null) ? req.getStudyTags() : new ArrayList<>();
-        Study study = Study.create(post, tags, req.getStudyName(), req.getMaxMembers(), req.isRecruiting(), group);
-        return studyRepository.save(study);
+    @Transactional
+    public PostDTO.PostStudyCreateResponseDTO createPostStudy(PostDTO.PostStudyCreateRequestDTO req, Long userId) {
+        PostDTO.PostCreateDTO postCreateDTO = new PostDTO.PostCreateDTO(userId, req.title(), req.content(), PostCategory.STUDY.getValue());
+        Post post = postService.createPost(postCreateDTO);
+
+        Group group = groupService.createGroup(req.studyName(), userId, req.maxMembers(), post.getId(), post.getCategory());
+
+        List<String> tags = (req.studyTags() != null) ? req.studyTags() : List.of();
+        Study study = Study.create(post, tags, req.studyName(), group);
+        studyRepository.save(study);
+
+        CbuMember author = cbuMemberRepository.findById(post.getAuthorId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "작성자를 찾을 수 없습니다."));
+
+        return postMapper.toPostStudyCreateResponseDTO(post, study, group, author);
     }
 
-    // 스터디 상세 조회
     @Transactional
     public PostDTO.StudyInfoDetailDTO getStudyByPostId(Long postId, Long userId) {
         Study study = getActiveStudy(postId);
-        study.getPost().upViewCount();
+
+        postRepository.incrementViewCount(postId);
+
         boolean isLeader = userId != null && study.getPost().getAuthorId().equals(userId);
-        Boolean hasApplied = groupService.hasAppliedToGroup(
-                study.getGroup() != null ? study.getGroup().getId() : null, userId);
-        CbuMember author = cbuMemberRepository.findById(study.getPost().getAuthorId()).orElse(null);
+        Boolean hasApplied = groupService.hasAppliedToGroup(study.getGroup().getId(), userId);
 
-        int active = 0;
-        int max = study.getMaxMembers();
-        if (study.getGroup() != null) {
-            active = groupRepository.countByGroupIdAndStatus(study.getGroup().getId(), GroupMemberStatus.ACTIVE);
-            max = study.getGroup().getMaxActiveMembers();
-        }
+        CbuMember author = cbuMemberRepository.findById(study.getPost().getAuthorId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "작성자를 찾을 수 없습니다."));
 
-        return postMapper.toStudyInfoDetailDTO(study, isLeader, hasApplied, author, active, max);
+        int active = groupRepository.countByGroupIdAndStatus(study.getGroup().getId(), GroupMemberStatus.ACTIVE);
+        int max = study.getGroup().getMaxActiveMembers();
+
+        return postMapper.toStudyInfoDetailDTO(study, isLeader, hasApplied, author, active, max,
+                study.getPost().getViewCount() + 1);
     }
 
-    // 카테고리별 목록 조회 (삭제 게시글 제외)
     @Transactional(readOnly = true)
     public Page<PostDTO.StudyListDTO> getPostsByCategory(Pageable pageable, int category) {
         Page<Study> studies = studyRepository.findByPostCategoryAndPostIsDeletedFalse(category, pageable);
@@ -83,118 +88,65 @@ public class StudyService {
         return mapStudiesToStudyListDTO(studies);
     }
 
-    // 스터디 목록 조회 결과에 작성자 정보 및 활동인원/최대인원 매핑
-    private Page<PostDTO.StudyListDTO> mapStudiesToStudyListDTO(Page<Study> studies) {
-        if (studies.getContent().isEmpty()) {
-            return studies.map(s -> toStudyListDTOWithMemberCounts(s, null));
-        }
-        Set<Long> authorIds = studies.getContent().stream()
-                .map(s -> s.getPost().getAuthorId())
-                .collect(Collectors.toSet());
-        Map<Long, CbuMember> authorMap = cbuMemberRepository.findAllById(authorIds).stream()
-                .collect(Collectors.toMap(CbuMember::getCbuMemberId, m -> m));
-        return studies.map(s -> toStudyListDTOWithMemberCounts(s, authorMap.get(s.getPost().getAuthorId())));
-    }
-
-    private PostDTO.StudyListDTO toStudyListDTOWithMemberCounts(Study s, CbuMember author) {
-        int active = 0;
-        int max = s.getMaxMembers();
-        if (s.getGroup() != null) {
-            active = groupRepository.countByGroupIdAndStatus(s.getGroup().getId(), GroupMemberStatus.ACTIVE);
-            max = s.getGroup().getMaxActiveMembers();
-        }
-        return postMapper.toStudyListDTO(s, author, active, max);
-    }
-
-    // Study 고유 필드 수정 (태그, 스터디명, 최대인원). updatePostStudy()에서 호출.
-    public void updateStudy(PostDTO.StudyUpdateDTO dto, Study study) {
-        if (dto.getStudyTags() != null) {
-            study.updateStudyTags(dto.getStudyTags());
-        }
-
-        // 마감 후에는 studyName, maxMembers 변경 불가
-        if (!study.isRecruiting() && (dto.getStudyName() != null || dto.getMaxMembers() != null)) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST,
-                    "모집이 마감된 스터디의 이름과 최대 인원은 수정할 수 없습니다.");
-        }
-
-        if (dto.getStudyName() != null) {
-            study.changeStudyName(dto.getStudyName());
-        }
-
-        if (dto.getMaxMembers() != null) {
-            long activeCount = groupMemberRepository
-                    .findByGroupIdAndGroupMemberStatus(study.getGroup().getId(), GroupMemberStatus.ACTIVE)
-                    .size();
-            if (dto.getMaxMembers() <= activeCount) {
-                throw new CustomException(ErrorCode.INVALID_REQUEST,
-                        "이미 수락된 인원(" + activeCount + "명)보다 작거나 같은 값으로 변경할 수 없습니다.");
-            }
-            study.changeMaxMembers(dto.getMaxMembers());
-            groupService.updateGroupMaxMember(study.getGroup().getId(), dto.getMaxMembers());
-        }
-    }
-
-    // Post + Study 한번에 생성 (게시글 생성 시 즉시 Group 생성)
-    @Transactional
-    public PostDTO.PostStudyCreateResponseDTO createPostStudy(PostDTO.PostStudyCreateRequestDTO req, Long userId) {
-        PostDTO.PostCreateDTO postCreateDTO = postMapper.toPostCreateDTO(req, userId);
-        Post post = postService.createPost(postCreateDTO);
-        String groupName = req.getStudyName() + " #" + post.getId();
-        Group group = groupService.createGroup(groupName, userId, req.getMaxMembers(), post.getId(), post.getCategory());
-        PostDTO.StudyCreateDTO studyCreateDTO = postMapper.toStudyCreateDTO(req, post.getId());
-        Study study = createStudy(studyCreateDTO, group);
-        CbuMember author = cbuMemberRepository.findById(post.getAuthorId()).orElse(null);
-        return postMapper.toPostStudyCreateResponseDTO(post, study, group, author);
-    }
-
-    // Post + Study 한번에 수정. recruiting은 여기서 변경할수 없고, 마감 API로만 변경 가능.
-    @Transactional
-    public void updatePostStudy(PostDTO.PostStudyUpdateRequestDTO req, Long postId, Long userId) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
-        if (post.isDeleted()) {
-            throw new CustomException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
-        }
-        validateStudyOwner(post, userId);
-        PostDTO.PostUpdateDTO postUpdateDTO = postMapper.toPostUpdateDTO(req);
-        postService.updatePost(postUpdateDTO, post);
-        Study study = studyRepository.findByPostId(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "스터디를 찾을 수 없습니다."));
-        PostDTO.StudyUpdateDTO studyUpdateDTO = postMapper.toStudyUpdateDTO(req);
-        updateStudy(studyUpdateDTO, study);
-    }
-
-    // 소프트 삭제 (게시글 + 연결된 그룹 함께 삭제)
-    @Transactional
-    public void softDeletePost(Long postId, Long userId) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
-        if (post.isDeleted()) {
-            throw new CustomException(ErrorCode.NOT_FOUND, "이미 삭제된 게시글입니다.");
-        }
-        validateStudyOwner(post, userId);
-        post.delete();
-
-        Study study = studyRepository.findByPostId(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "스터디를 찾을 수 없습니다."));
-        if (study.getGroup() != null) {
-            study.getGroup().delete();
-        }
-    }
-
-    // 태그 정확히 일치 검색
     @Transactional(readOnly = true)
     public Page<PostDTO.StudyListDTO> searchByTag(String tag, Pageable pageable) {
         Page<Study> studies = studyRepository.findByExactTagAndPostIsDeletedFalse(tag, pageable);
         return mapStudiesToStudyListDTO(studies);
     }
 
-    /**
-     * 모집 마감.
-     * Group은 게시글 생성 시 이미 만들어져 있으므로, 여기서는 모집 종료 처리만 수행.
-     * 마감 → PENDING 일괄 거절 → Group 모집 CLOSED → Study recruiting false.
-     */
+    @Transactional
+    public void updatePostStudy(PostDTO.PostStudyUpdateRequestDTO req, Long postId, Long userId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
+
+        if (post.isDeleted()) {
+            throw new CustomException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+        }
+
+        validateStudyOwner(post, userId);
+
+        postService.updatePost(new PostDTO.PostUpdateDTO(req.title(), req.content()), post);
+
+        Study study = studyRepository.findByPostId(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "스터디를 찾을 수 없습니다."));
+
+        if (req.studyName() != null) {
+            study.changeStudyName(req.studyName());
+            study.getGroup().changeGroupName(req.studyName());
+        }
+
+        if (req.studyTags() != null) {
+            study.updateStudyTags(req.studyTags());
+        }
+
+        if (req.maxMembers() != null) {
+            if (!study.isRecruiting()) {
+                throw new CustomException(ErrorCode.INVALID_REQUEST,
+                        "모집이 마감된 스터디의 최대 인원은 수정할 수 없습니다.");
+            }
+            groupService.updateGroupMaxMember(study.getGroup().getId(), req.maxMembers());
+        }
+    }
+
+    @Transactional
+    public void softDeletePost(Long postId, Long userId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
+
+        if (post.isDeleted()) {
+            throw new CustomException(ErrorCode.NOT_FOUND, "이미 삭제된 게시글입니다.");
+        }
+
+        validateStudyOwner(post, userId);
+
+        post.delete();
+
+        Study study = studyRepository.findByPostId(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "스터디를 찾을 수 없습니다."));
+
+        study.getGroup().delete();
+    }
+
     @Transactional
     public void closeStudyRecruitment(Long postId, Long userId) {
         Study study = studyRepository.findByPostIdForUpdate(postId)
@@ -210,30 +162,24 @@ public class StudyService {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "이미 모집이 마감된 스터디입니다.");
         }
 
-        // 최소 1명 이상 수락 확인 (팀장=ACTIVE 1명 이미 포함, 추가 ACTIVE 필요)
         Long groupId = study.getGroup().getId();
-        int activeCount = groupMemberRepository
-                .findByGroupIdAndGroupMemberStatus(groupId, GroupMemberStatus.ACTIVE).size();
+        int activeCount = groupRepository.countByGroupIdAndStatus(groupId, GroupMemberStatus.ACTIVE);
+
         if (activeCount <= 1) {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "최소 1명 이상의 수락된 멤버가 있어야 합니다.");
         }
 
-        // PENDING 일괄 거절
-        groupService.rejectAllPendingMembers(groupId);
-
-        // 그룹 모집 마감
         groupService.updateGroupRecruitment(groupId, userId, GroupRecruitmentStatus.CLOSED);
-
-        // 스터디 모집 마감
-        study.updateRecruiting(false);
     }
 
     private Study getActiveStudy(Long postId) {
         Study study = studyRepository.findByPostId(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "스터디를 찾을 수 없습니다."));
+
         if (study.getPost().isDeleted()) {
             throw new CustomException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
         }
+
         return study;
     }
 
@@ -243,4 +189,22 @@ public class StudyService {
         }
     }
 
+    private Page<PostDTO.StudyListDTO> mapStudiesToStudyListDTO(Page<Study> studies) {
+        if (studies.getContent().isEmpty()) {
+            return studies.map(s -> postMapper.toStudyListDTO(s, null, 0, s.getGroup().getMaxActiveMembers()));
+        }
+
+        Set<Long> authorIds = studies.getContent().stream()
+                .map(s -> s.getPost().getAuthorId())
+                .collect(Collectors.toSet());
+
+        Map<Long, CbuMember> authorMap = cbuMemberRepository.findAllById(authorIds).stream()
+                .collect(Collectors.toMap(CbuMember::getCbuMemberId, m -> m));
+
+        return studies.map(s -> {
+            int active = groupRepository.countByGroupIdAndStatus(s.getGroup().getId(), GroupMemberStatus.ACTIVE);
+            int max = s.getGroup().getMaxActiveMembers();
+            return postMapper.toStudyListDTO(s, authorMap.get(s.getPost().getAuthorId()), active, max);
+        });
+    }
 }
