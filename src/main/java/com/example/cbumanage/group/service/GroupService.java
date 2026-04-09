@@ -1,7 +1,7 @@
 package com.example.cbumanage.group.service;
 
 import com.example.cbumanage.group.dto.GroupDTO;
-import com.example.cbumanage.global.error.CustomException;
+import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.group.entity.Group;
 import com.example.cbumanage.group.entity.GroupMember;
@@ -10,7 +10,6 @@ import com.example.cbumanage.group.entity.enums.GroupMemberStatus;
 import com.example.cbumanage.group.entity.enums.GroupApprovalAction;
 import com.example.cbumanage.group.entity.enums.GroupStatus;
 import com.example.cbumanage.group.entity.enums.GroupRecruitmentStatus;
-import com.example.cbumanage.member.entity.enums.Role;
 import com.example.cbumanage.group.repository.GroupRepository;
 import com.example.cbumanage.group.repository.GroupMemberRepository;
 import com.example.cbumanage.member.repository.CbuMemberRepository;
@@ -48,7 +47,7 @@ public class GroupService {
         Group group = Group.create(groupName, 1, maxMember, postId, category);
         groupRepository.save(group);
         CbuMember member = cbuMemberRepository.findById(leaderId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"유저 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
         GroupMember leader = GroupMember.create(group, member, GroupMemberStatus.ACTIVE, GroupMemberRole.LEADER);
         group.addMember(leader);
         groupMemberRepository.save(leader);
@@ -63,12 +62,12 @@ public class GroupService {
     public GroupDTO.GroupMemberInfoDTO addGroupMember(Long groupId,
                                                       Long memberId) {
         Group group = groupRepository.findByIdAndIsDeletedFalse(groupId)
-                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"그룹 정보를 찾을 수 없습니다."));
+                .orElseThrow(()-> new BaseException(ErrorCode.GROUP_NOT_FOUND));
 
 
         // 모집 종료(CLOSED) 상태에서는 신청 불가
         if (group.getRecruitmentStatus() != GroupRecruitmentStatus.OPEN) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST, "모집중인 그룹이 아닙니다.");
+            throw new BaseException(ErrorCode.GROUP_NOT_RECRUITING);
         }
 
         GroupMember existing = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, memberId);
@@ -77,10 +76,10 @@ public class GroupService {
                 existing.pending();
                 return groupUtil.toGroupMemberInfoDTO(existing);
             }
-            throw new CustomException(ErrorCode.ALREADY_JOINED_MEMBER,"중복 신청이 불가합니다.");
+            throw new BaseException(ErrorCode.ALREADY_JOINED_MEMBER,"중복 신청이 불가합니다.");
         }
         CbuMember member = cbuMemberRepository.findById(memberId)
-                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"유저 정보를 찾을 수 없습니다."));
+                .orElseThrow(()-> new BaseException(ErrorCode.USER_NOT_FOUND));
         GroupMember groupMember = GroupMember.create(group,member,GroupMemberStatus.PENDING,GroupMemberRole.MEMBER);
         group.addMember(groupMember);
         groupMemberRepository.save(groupMember);
@@ -94,7 +93,7 @@ public class GroupService {
     @Transactional(readOnly=true)
     public GroupDTO.GroupInfoDTO getGroupById(Long groupId){
         Group group = groupRepository.findByIdAndIsDeletedFalse(groupId)
-                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"해당 그룹을 찾을 수 없습니다."));
+                .orElseThrow(()-> new BaseException(ErrorCode.GROUP_NOT_FOUND));
         return groupUtil.toGroupInfoDTO(group);
     }
 
@@ -102,7 +101,7 @@ public class GroupService {
     @Transactional
     public void updateGroupRecruitment(Long groupId, Long userId, GroupRecruitmentStatus targetStatus) {
         Group group = groupRepository.findByIdAndIsDeletedFalse(groupId)
-                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"해당 그룹을 찾을 수 없습니다."));
+                .orElseThrow(()-> new BaseException(ErrorCode.GROUP_NOT_FOUND));
         assertIsGroupLeader(groupId, userId);
         boolean recruiting = (targetStatus == GroupRecruitmentStatus.OPEN);
         if (recruiting) {
@@ -127,7 +126,7 @@ public class GroupService {
     @Transactional
     public void updateStatusGroupMember(Long groupMemberId,Long userId,GroupMemberStatus targetStatus, String reason) {
         GroupMember groupMember = groupMemberRepository.findById(groupMemberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 멤버를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.GROUP_MEMBER_NOT_FOUND));
         Group group = groupMember.getGroup();
         assertIsGroupLeader(group.getId(), userId);
         if (targetStatus == GroupMemberStatus.ACTIVE) {
@@ -147,20 +146,10 @@ public class GroupService {
     private void assertIsGroupLeader(Long groupId, Long userId){
         GroupMember groupMember = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, userId);
         if(groupMember == null || groupMember.getGroupMemberRole() != GroupMemberRole.LEADER){
-            throw new CustomException(ErrorCode.FORBIDDEN,"해당 그룹에 리더가 아닙니다.");
+            throw new BaseException(ErrorCode.NOT_GROUP_LEADER);
         }
     }
 
-    //시전한 user가 관리자가 맞는지 확인하는 메서드
-    private void assertIsAdmin(Long userId){
-        CbuMember cbuMember = cbuMemberRepository.findById(userId)
-                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"유저 정보를 찾을 수 없습니다."));
-        boolean isAdmin = cbuMember.getRole().stream()
-                .anyMatch(role -> role==Role.ADMIN);
-        if (!isAdmin) {
-            throw new CustomException(ErrorCode.FORBIDDEN,"관리자가 아닙니다");
-        }
-    }
 
     /* PENDING 상태인 모든 멤버를 일괄 거절 (모집 마감 시 사용) */
     @Transactional
@@ -176,7 +165,7 @@ public class GroupService {
     public void cancelApplication(Long groupId, Long userId) {
         GroupMember gm = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, userId);
         if (gm == null || gm.getGroupMemberStatus() != GroupMemberStatus.PENDING) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST,"PENDING 상태가 아닙니다.");
+            throw new BaseException(ErrorCode.INVALID_REQUEST,"PENDING 상태가 아닙니다.");
         }
         groupMemberRepository.delete(gm);
     }
@@ -213,12 +202,11 @@ public class GroupService {
         return null; // ACTIVE, INACTIVE → 가입 완료
     }
 
-    /*관리자 전용: 그룹 승인 상태를 APPROVED 또는 REJECTED로 변경합니다.*/
+    /*관리자 전용: 그룹 승인 상태를 ACTIVE 또는 REJECTED로 변경합니다.*/
     @Transactional
     public void updateGroupStatusAdmin(Long groupId, Long adminId, GroupDTO.GroupReviewRequestDTO req) {
-//        assertIsAdmin(adminId);
         Group group = groupRepository.findByIdAndIsDeletedFalse(groupId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 그룹을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.GROUP_NOT_FOUND));
         if (req.action() == GroupApprovalAction.APPROVE) {
             group.approve();
         } else {
@@ -235,10 +223,10 @@ public class GroupService {
     @Transactional
     public void updateGroupMaxMember(Long groupId, int maxMember){
         Group group =  groupRepository.findByIdAndIsDeletedFalse(groupId)
-                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"그룹을 찾을 수 없습니다."));
+                .orElseThrow(()-> new BaseException(ErrorCode.GROUP_NOT_FOUND));
         int activeCount = groupRepository.countByGroupIdAndStatus(group.getId(), GroupMemberStatus.ACTIVE);
         if (activeCount >= maxMember) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST,
+            throw new BaseException(ErrorCode.INVALID_REQUEST,
                     "현재 참여 인원(" + activeCount + "명)보다 적은 인원으로 수정할 수 없습니다.");
         }
         group.changeMaxActiveMembers(maxMember);
@@ -247,7 +235,6 @@ public class GroupService {
     //개설되어 있는 그룹 전체를 조회하는 기능입니다. (관리자 전용)
     @Transactional(readOnly = true)
     public Page<GroupDTO.GroupListDTO> getAllGroups(Long userId, GroupStatus groupStatus, Pageable pageable) {
-//        assertIsAdmin(userId);
         Page<Group> groups = groupRepository.findByGroupStatus(groupStatus, GroupRecruitmentStatus.CLOSED, pageable);
         return groups.map(groupUtil::toGroupListDTO);
     }

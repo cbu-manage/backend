@@ -11,6 +11,7 @@ import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.member.repository.CbuMemberRepository;
 import com.example.cbumanage.user.dto.MyInfoResponse;
 import com.example.cbumanage.user.dto.PasswordChangeRequest;
+import com.example.cbumanage.user.dto.PasswordResetRequest;
 import com.example.cbumanage.user.dto.UserLoginRequest;
 import com.example.cbumanage.user.dto.UserSignUpRequest;
 import com.example.cbumanage.user.entity.User;
@@ -171,6 +172,30 @@ public class LoginService {
 
         user.changePassword(hashPassword(request.newPassword()));
         redisUtil.deleteData(REFRESH_KEY_PREFIX + userId);
+    }
+
+    @Transactional
+    public void resetPassword(PasswordResetRequest request) {
+        if (request.studentNumber() == null || request.email() == null
+                || request.authCode() == null || request.newPassword() == null) {
+            throw new BaseException(ErrorCode.INVALID_REQUEST);
+        }
+
+        User user = userRepository.findByStudentNumber(request.studentNumber())
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        if (user.getEmail() == null || !user.getEmail().equals(request.email())) {
+            throw new BaseException(ErrorCode.UNAUTHORIZED);
+        }
+
+        String storedAuthCode = redisUtil.getData(request.email());
+        if (storedAuthCode == null || !storedAuthCode.equals(request.authCode())) {
+            throw new BaseException(ErrorCode.UNAUTHORIZED);
+        }
+
+        user.changePassword(hashPassword(request.newPassword()));
+        redisUtil.deleteData(REFRESH_KEY_PREFIX + user.getUserId());
+        redisUtil.deleteData(request.email());
     }
 
     private String hashPassword(String password) {
