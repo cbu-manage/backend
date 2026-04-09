@@ -4,6 +4,7 @@ import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.global.common.TokenInfo;
 import com.example.cbumanage.user.dto.MyInfoResponse;
 import com.example.cbumanage.user.dto.PasswordChangeRequest;
+import com.example.cbumanage.user.dto.PasswordResetRequest;
 import com.example.cbumanage.user.dto.UserLoginRequest;
 import com.example.cbumanage.user.dto.UserLoginResponse;
 import com.example.cbumanage.user.dto.UserSignUpRequest;
@@ -92,6 +93,14 @@ public class LoginController {
     public ApiResponse<Void> changePassword(@RequestBody PasswordChangeRequest request, Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         loginService.changePassword(userId, request);
+        return ApiResponse.success();
+    }
+
+    @PostMapping("/password/reset")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "비밀번호 초기화", description = "학번/이메일/인증코드 검증 후 비밀번호를 재설정합니다.")
+    public ApiResponse<Void> resetPassword(@RequestBody PasswordResetRequest request) {
+        loginService.resetPassword(request);
         return ApiResponse.success();
     }
 
