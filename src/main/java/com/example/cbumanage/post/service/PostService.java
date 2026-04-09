@@ -5,21 +5,13 @@ import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.post.entity.Post;
 import com.example.cbumanage.member.repository.CbuMemberRepository;
 import com.example.cbumanage.post.repository.PostRepository;
-import com.example.cbumanage.report.repository.PostReportRepository;
-import com.example.cbumanage.group.repository.GroupRepository;
-import com.example.cbumanage.group.repository.GroupMemberRepository;
 import com.example.cbumanage.post.util.PostMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.User;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -73,7 +65,4 @@ public class PostService {
         Page<Post> posts = postRepository.findByAuthorIdAndIsDeletedFalse(userId,pageable);
         return posts.map(post -> postMapper.toPostMyPageViewDTO(post,cbuMember));
     }
-
-
-
 }
