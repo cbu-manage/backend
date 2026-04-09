@@ -1,6 +1,6 @@
 package com.example.cbumanage.group.entity;
 
-import com.example.cbumanage.global.error.CustomException;
+import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.group.entity.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.group.entity.enums.GroupStatus;
 import jakarta.persistence.*;
@@ -75,7 +75,7 @@ public class Group {
     //그룹의 생성자, 상태들은 기본적으로 모집 안함, 승인 대기중 상태로 시작
     public Group(String groupName, int minActiveMembers, Integer maxActiveMembers, Long postId, int category)  {
         if (maxActiveMembers < 2) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST, "최대 모집 인원은 본인을 포함해 최소 2명 이상이어야 합니다.");
+            throw new BaseException(ErrorCode.INVALID_REQUEST, "최대 모집 인원은 본인을 포함해 최소 2명 이상이어야 합니다.");
         }
         this.groupName = groupName;
         this.minActiveMembers = minActiveMembers;

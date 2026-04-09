@@ -2,7 +2,7 @@ package com.example.cbumanage.project.service;
 
 import com.example.cbumanage.group.service.GroupService;
 import com.example.cbumanage.post.dto.PostDTO;
-import com.example.cbumanage.global.error.CustomException;
+import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.group.entity.Group;
 import com.example.cbumanage.post.entity.Post;
@@ -42,7 +42,7 @@ public class ProjectService {
     //프로젝트 게시글 생성 메서드
     public Project createProject(PostDTO.ProjectCreateDTO req, Group group) {
         Post post = postRepository.findById(req.postId())
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"게시글이 생성되지 않았습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.POST_NOT_FOUND));
         List<String> fields = (req.recruitmentFields() != null)
                 ? req.recruitmentFields()
                 : new ArrayList<>();
@@ -54,7 +54,7 @@ public class ProjectService {
     @Transactional
     public PostDTO.ProjectInfoDetailDTO getProjectByPostId(Long postId, Long userId) {
         Project project = projectRepository.findByPostId(postId)
-                .orElseThrow(()-> new CustomException(ErrorCode.NOT_FOUND,"해당 게시글을 찾을 수 없습니다."));
+                .orElseThrow(()-> new BaseException(ErrorCode.POST_NOT_FOUND));
         Long groupId = project.getGroup() != null ? project.getGroup().getId() : null;
         Boolean hasApplied = groupService.hasAppliedToGroup(groupId, userId);
         Post post =project.getPost();
@@ -119,13 +119,13 @@ public class ProjectService {
     @Transactional
     public void updatePostProject(PostDTO.PostProjectUpdateRequestDTO req, Long postId, Long userId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.POST_NOT_FOUND));
         //권한 확인
         validateProjectOwner(post, userId);
         PostDTO.PostUpdateDTO postUpdateDTO = postMapper.toPostUpdateDTO(req);
         postService.updatePost(postUpdateDTO, post);
         Project project = projectRepository.findByPostId(postId).
-                orElseThrow(()->new CustomException(ErrorCode.NOT_FOUND,"해당 게시글을 찾을 수 없습니다."));
+                orElseThrow(()->new BaseException(ErrorCode.POST_NOT_FOUND));
         PostDTO.ProjectUpdateDTO projectUpdateDTO = postMapper.toPostProjectUpdateDTO(req);
         if (project.getGroup() != null) {
             if (req.title() != null) {
@@ -152,7 +152,7 @@ public class ProjectService {
         PostDTO.ProjectCreateDTO projectCreateDTO = postMapper.toProjectCreateDTO(req, post.getId());
         Project project = createProject(projectCreateDTO,group);
         CbuMember author = cbuMemberRepository.findById(post.getAuthorId())
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
         return postMapper.toPostProjectCreateResponseDTO(post, project, group, author);
     }
 
@@ -160,11 +160,11 @@ public class ProjectService {
     @Transactional
     public void softDeletePost(Long postId,Long userId) {
         Post post=postRepository.findById(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.POST_NOT_FOUND));
         //권한 확인
         validateProjectOwner(post, userId);
         Project project = projectRepository.findByPostId(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND,"해당 게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.POST_NOT_FOUND));
         post.delete();
         //group도 동시에 soft delete 처리
         if(project.getGroup()!=null) {project.getGroup().delete();}
@@ -180,7 +180,7 @@ public class ProjectService {
     //유효 권한 확인 메서드
     private void validateProjectOwner(Post post, Long userId) {
         if (!post.getAuthorId().equals(userId)) {
-            throw new CustomException(ErrorCode.FORBIDDEN);
+            throw new BaseException(ErrorCode.FORBIDDEN);
         }
     }
 }
