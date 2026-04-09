@@ -163,6 +163,7 @@ docker run -p 8080:8080 --env-file .env cbu-backend
 | POST | `/api/v1/login/refresh` | ❌ | AccessToken 재발급 |
 | GET | `/api/v1/login/me` | ✅ | 내 정보 조회 |
 | PATCH | `/api/v1/login/password` | ✅ | 비밀번호 변경 |
+| POST | `/api/v1/login/password/reset` | ❌ | 이메일 인증코드 기반 비밀번호 초기화 |
 | DELETE | `/api/v1/login` | ✅ | 로그아웃 |
 | DELETE | `/api/v1/login/account` | ✅ | 회원 탈퇴 |
 
