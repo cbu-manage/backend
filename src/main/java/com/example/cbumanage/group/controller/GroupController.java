@@ -190,8 +190,8 @@ public class GroupController {
             @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
             @Parameter(name = "size", description = "한 페이지당 출력 개수", example = "10"),
             @Parameter(name = "groupStatus", description = "그룹 승인 상태 필터 (미입력시 전체) " +
-                    "APPROVED=승인완료, PENDING=승인 대기중, REJECTED=승인 거절, " +
-                    "RESUBMITTED=승인 재요청, INACTIVE=활동종료", example = "APPROVED")
+                    "ACTIVE=승인완료, PENDING=승인 대기중, REJECTED=승인 거절, " +
+                    "RESUBMITTED=승인 재요청, INACTIVE=활동종료", example = "ACTIVE")
     })
     @GetMapping("/admin")
     public ApiResponse<Page<GroupDTO.GroupListDTO>> getAllGroups(

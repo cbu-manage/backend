@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 public enum GroupStatus {
     @Schema(description = "그룹 승인 완료(활동 중)")
-    APPROVED,
+    ACTIVE,
 
     @Schema(description = "그룹 승인 대기중")
     PENDING,

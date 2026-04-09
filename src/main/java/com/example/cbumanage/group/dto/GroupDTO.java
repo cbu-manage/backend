@@ -137,7 +137,7 @@ public class GroupDTO {
         LocalDateTime updatedAt,
         @Schema(description = "현재 모집 상태", example = "OPEN")
         GroupRecruitmentStatus groupRecruitmentStatus,
-        @Schema(description = "현재 그룹 상태", example = "APPROVED")
+        @Schema(description = "현재 그룹 상태", example = "ACTIVE")
         GroupStatus groupStatus,
         @Schema(description = "승인 반려 사유", example = "너무 많이 만들어서")
         String rejectReason,
