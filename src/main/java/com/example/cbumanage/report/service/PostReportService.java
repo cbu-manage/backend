@@ -14,6 +14,8 @@ import com.example.cbumanage.member.repository.CbuMemberRepository;
 import com.example.cbumanage.group.repository.GroupRepository;
 import com.example.cbumanage.group.repository.GroupMemberRepository;
 import com.example.cbumanage.post.util.PostMapper;
+import com.example.cbumanage.reportmember.entity.ReportMember;
+import com.example.cbumanage.reportmember.repository.ReportMemberRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +39,7 @@ public class PostReportService {
     private final CbuMemberRepository cbuMemberRepository;
     private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
+    private final ReportMemberRepository reportMemberRepository;
 
     public PostReport createReport(PostDTO.ReportCreateDTO req) {
         Post post = postRepository.findById(req.postId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
@@ -50,7 +55,15 @@ public class PostReportService {
         Post post = postService.createPost(postCreateDTO);
         PostDTO.ReportCreateDTO reportCreateDTO = postMapper.toReportCreateDTO(req, post.getId());
         PostReport report = createReport(reportCreateDTO);
+        saveReportMembers(report.getId(), req.memberIds());
         return postMapper.toPostReportCreateResponseDTO(post, report);
+    }
+
+    private void saveReportMembers(Long reportId, List<Long> memberIds) {
+        if (memberIds == null || memberIds.isEmpty()) return;
+        memberIds.stream()
+                .map(memberId -> ReportMember.create(reportId, memberId))
+                .forEach(reportMemberRepository::save);
     }
 
     /*
@@ -109,6 +122,8 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
         PostReport report =postReportRepository.findByPostId(postId);
         PostDTO.ReportUpdateDTO reportUpdateDTO=postMapper.topostReportUpdateDTO(req);
         updateReport(reportUpdateDTO,report);
+        reportMemberRepository.deleteByReportId(report.getId());
+        saveReportMembers(report.getId(), req.memberIds());
     }
 
     @Transactional

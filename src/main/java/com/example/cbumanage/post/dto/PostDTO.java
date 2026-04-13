@@ -2,6 +2,7 @@ package com.example.cbumanage.post.dto;
 
 import com.example.cbumanage.group.dto.GroupDTO;
 import com.example.cbumanage.group.entity.enums.GroupRecruitmentStatus;
+import com.example.cbumanage.reportmember.dto.ReportMemberDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import com.example.cbumanage.report.entity.enums.PostReportGroupType;
 import jakarta.validation.constraints.*;
@@ -66,7 +67,10 @@ public class PostDTO {
             PostReportGroupType type,
 
             @Schema(description = "보고서의 승인 여부입니다")
-            boolean isAccepted
+            boolean isAccepted,
+
+            @Schema(description = "보고서에 참여한 멤버 목록입니다")
+            List<ReportMemberDTO.ReportMemberInfoDTO> reportMembers
     ) {
     }
 
@@ -79,14 +83,19 @@ public class PostDTO {
     @Schema(description = "보고서 게시글을 생성하는 requestDTO 입니다. 포스트 메인테이블과 포스트-보고서 서브테이블의 정보를 한번에 생성합니다")
     public record PostReportCreateRequestDTO(
 
+    @NotBlank(message = "제목은 필수입니다.")
     String title,
 
+    @NotBlank(message = "내용은 필수입니다.")
     String content,
 
+    @NotBlank(message = "활동 장소는 필수입니다.")
     String location,
 
+    @NotNull(message = "활동 일시는 필수입니다.")
     LocalDateTime date,
 
+    @NotBlank(message = "활동 사진은 필수입니다.")
     @Schema(description = "s3버킷에 사진을 업로드 하고 반환받은 url을 넣습니다")
     String reportImage,
 
@@ -97,6 +106,11 @@ public class PostDTO {
     @Schema(description = "보고서와 연결될 그룹의 ID(글을 쓰고있는 활동의 그룹 ID)를 넣습니다")
     long groupId,
 
+    @NotEmpty(message = "참여 멤버는 최소 1명 이상이어야 합니다.")
+    @Schema(description = "해당 활동에 참여한 유저의 ID목록")
+    List<Long> memberIds,
+
+    @NotNull(message = "활동 유형은 필수입니다.")
     @Schema(description = "보고서에 기록할 활동의 타입입니다", example = "STUDY / PROJECT / MENTORING")
     PostReportGroupType type
     )
@@ -129,7 +143,10 @@ public class PostDTO {
 
         int category,
 
-        PostReportGroupType type
+        PostReportGroupType type,
+
+        @Schema(description = "보고서에 참여한 멤버 목록입니다")
+        List<ReportMemberDTO.ReportMemberInfoDTO> reportMembers
 )
 
     {}
@@ -162,8 +179,11 @@ public class PostDTO {
         LocalDateTime date,
 
         long groupId,
+        
 
         PostReportGroupType type
+
+
     ){}
 
     /*
@@ -173,19 +193,29 @@ public class PostDTO {
     @Schema(description = "보고서 게시글을 수정하는 DTO입니다. 포스트 메인테이블과 보고서 서브테이블의 수정을 한번에 처리합니다 ")
     public record PostReportUpdateRequestDTO(
 
+        @NotBlank(message = "제목은 필수입니다.")
         String title,
 
+        @NotBlank(message = "내용은 필수입니다.")
         String content,
 
+        @NotBlank(message = "활동 장소는 필수입니다.")
         String location,
 
+        @NotBlank(message = "활동 사진은 필수입니다.")
         String reportImage,
 
+        @NotNull(message = "활동 일시는 필수입니다.")
         LocalDateTime date,
 
         long groupId,
 
-        PostReportGroupType type
+        @NotNull(message = "활동 유형은 필수입니다.")
+        PostReportGroupType type,
+
+        @NotEmpty(message = "참여 멤버는 최소 1명 이상이어야 합니다.")
+        @Schema(description = "해당 활동에 참여한 유저의 ID목록")
+        List<Long> memberIds
 
     ){}
 

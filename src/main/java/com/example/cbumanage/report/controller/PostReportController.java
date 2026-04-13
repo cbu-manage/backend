@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,7 +35,7 @@ public class PostReportController {
     public ApiResponse<PostDTO.PostReportCreateResponseDTO> createPostReport(
             @Parameter(description = "현재 게시글에서 테스트 할때는 category를 7로하고 테스트합니다, reportImage는 ImageController에서 생성한 url을 넣습니다" +
                     "보고서를 생성하는 DTO의 이름은 PostReportCreateRequestDTO이고, 반환되는 DTO는 PostReportCreateResponseDTO입니다")
-            @RequestBody PostDTO.PostReportCreateRequestDTO req,
+            @RequestBody @Valid PostDTO.PostReportCreateRequestDTO req,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         PostDTO.PostReportCreateResponseDTO responseDTO = postReportService.createPostReport(req, userId);
@@ -91,7 +92,7 @@ public class PostReportController {
     @Operation(summary = "보고서 게시글 수정 메소드",description = "보고서 게시글 수정메소드 입니다. 작성자 여부를 확인하고 아닐시 거부합니다 ")
     @PatchMapping("/{postId}")
     public ApiResponse<Void> updatePostReport(@PathVariable Long postId,
-                                                                 @RequestBody PostDTO.PostReportUpdateRequestDTO req,
+                                                                 @RequestBody @Valid PostDTO.PostReportUpdateRequestDTO req,
                                                                  Authentication authentication){
         Long userId = Long.parseLong(authentication.getName());
         try {

@@ -13,10 +13,14 @@ import com.example.cbumanage.project.entity.enums.ProjectFieldType;
 import com.example.cbumanage.member.repository.CbuMemberRepository;
 import com.example.cbumanage.comment.repository.CommentRepository;
 import com.example.cbumanage.group.repository.GroupRepository;
+import com.example.cbumanage.reportmember.dto.ReportMemberDTO;
+import com.example.cbumanage.reportmember.entity.ReportMember;
+import com.example.cbumanage.reportmember.repository.ReportMemberRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -26,12 +30,15 @@ public class PostMapper {
     private final GroupRepository groupRepository;
     private final CbuMemberRepository cbuMemberRepository;
     private final CommentRepository commentRepository;
+    private final ReportMemberRepository reportMemberRepository;
+
     @Autowired
-    public PostMapper(GroupUtil groupUtil, GroupRepository groupRepository, CbuMemberRepository cbuMemberRepository, CommentRepository commentRepository) {
+    public PostMapper(GroupUtil groupUtil, GroupRepository groupRepository, CbuMemberRepository cbuMemberRepository, CommentRepository commentRepository, ReportMemberRepository reportMemberRepository) {
         this.groupUtil = groupUtil;
         this.groupRepository = groupRepository;
         this.cbuMemberRepository = cbuMemberRepository;
         this.commentRepository = commentRepository;
+        this.reportMemberRepository = reportMemberRepository;
     }
 
 
@@ -51,14 +58,31 @@ public class PostMapper {
 
     public PostDTO.ReportInfoDTO toReportInfoDTO(PostReport report) {
         Group group = groupRepository.findById(report.getGroupId()).orElseThrow(EntityNotFoundException::new);
+        List<ReportMemberDTO.ReportMemberInfoDTO> reportMembers = toReportMemberInfoDTOList(report.getId());
         return new PostDTO.ReportInfoDTO(
                 report.getLocation(),
                 report.getReportImage(),
                 report.getDate(),
                 groupUtil.toGroupInfoDTO(group),
                 report.getType(),
-                report.isAccepted()
+                report.isAccepted(),
+                reportMembers
         );
+    }
+
+    private List<ReportMemberDTO.ReportMemberInfoDTO> toReportMemberInfoDTOList(Long reportId) {
+        return reportMemberRepository.findByReportId(reportId).stream()
+                .map(rm -> {
+                    CbuMember member = cbuMemberRepository.findById(rm.getMemberId())
+                            .orElseThrow(() -> new EntityNotFoundException("Member Not Found: " + rm.getMemberId()));
+                    return new ReportMemberDTO.ReportMemberInfoDTO(
+                            member.getCbuMemberId(),
+                            member.getName(),
+                            member.getStudentNumber(),
+                            member.getMajor()
+                    );
+                })
+                .collect(Collectors.toList());
     }
 
     /*
@@ -97,6 +121,7 @@ public class PostMapper {
      */
     public PostDTO.PostReportCreateResponseDTO toPostReportCreateResponseDTO(Post post, PostReport report) {
         Group group = groupRepository.findById(report.getGroupId()).orElseThrow(() -> new EntityNotFoundException("Group not found"));
+        List<ReportMemberDTO.ReportMemberInfoDTO> reportMembers = toReportMemberInfoDTOList(report.getId());
         return new PostDTO.PostReportCreateResponseDTO(
                 post.getId(),
                 post.getAuthorId(),
@@ -108,7 +133,8 @@ public class PostMapper {
                 report.getDate(),
                 post.getCreatedAt(),
                 post.getCategory(),
-                report.getType()
+                report.getType(),
+                reportMembers
         );
     }
 
