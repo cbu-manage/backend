@@ -148,8 +148,20 @@ public class PostDTO {
         @Schema(description = "보고서에 참여한 멤버 목록입니다")
         List<ReportMemberDTO.ReportMemberInfoDTO> reportMembers
 )
-
     {}
+
+    /*
+    HWP 파일을 만들기 위해 repor에서 추출하는 DTO입니다
+     */
+    public record PostReportToHWPDTO(
+            String title,
+            String authorName,
+            String content,
+            String location,
+            String reportImage,
+            LocalDateTime date,
+            List<ReportMemberDTO.ReportMemberInfoDTO> reportMembers
+    ){}
 
     /*
     Post{...}CreateRequestDTO 에서 Post 를 생성할 정보만 빼내어 Post 를 생성하기 위한 DTO 입니다
@@ -794,6 +806,8 @@ public class PostDTO {
         Long groupMemberCount
     ) {}
 
+
+
     @Schema(description = "보고서 게시글을 단건조회 할때 포스트+보고서의 정보를 종합적으로 담은 게시글 입니다")
     public record PostReportViewDTO(
         PostInfoDTO postInfoDTO,
@@ -832,8 +846,6 @@ public class PostDTO {
         }
 
     }
-
-
 
 
 
