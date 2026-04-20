@@ -43,5 +43,7 @@ src/main/resources/*.yml
 src/main/resources/*.json
 
 src/main/resources/application.properties
+src/main/resources/teplates/HWPTemplate.hwp
 .DS_Store
 /.omx/
+

@@ -1,16 +1,16 @@
 package com.example.cbumanage.report.service;
 
 import com.example.cbumanage.post.dto.PostDTO;
-import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.group.entity.Group;
 import com.example.cbumanage.post.entity.Post;
 import com.example.cbumanage.report.entity.PostReport;
 import com.example.cbumanage.group.entity.enums.GroupMemberStatus;
-import com.example.cbumanage.member.entity.enums.Role;
+import com.example.cbumanage.user.entity.Role;
+import com.example.cbumanage.user.entity.User;
+import com.example.cbumanage.user.repository.UserRepository;
 import com.example.cbumanage.post.service.PostService;
 import com.example.cbumanage.post.repository.PostRepository;
 import com.example.cbumanage.report.repository.PostReportRepository;
-import com.example.cbumanage.member.repository.CbuMemberRepository;
 import com.example.cbumanage.group.repository.GroupRepository;
 import com.example.cbumanage.group.repository.GroupMemberRepository;
 import com.example.cbumanage.post.util.PostMapper;
@@ -36,7 +36,7 @@ public class PostReportService {
     private final PostRepository postRepository;
     private final PostReportRepository postReportRepository;
     private final PostMapper postMapper;
-    private final CbuMemberRepository cbuMemberRepository;
+    private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final ReportMemberRepository reportMemberRepository;
@@ -91,8 +91,8 @@ fetch join -> 해결
     public PostDTO.PostReportViewDTO getPostReportViewDTO(Long postId,Long userId){
         PostReport report = postReportRepository.findByPostId(postId);
         Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        CbuMember user = cbuMemberRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        boolean isAdmin = user.getRole().contains(Role.ADMIN);
+        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        boolean isAdmin = user.getRole() == Role.ROLE_ADMIN || user.getRole() == Role.ROLE_MANAGER;
         boolean isAuthor = post.getAuthorId().equals(userId);
         boolean isActiveMember =
                 groupMemberRepository.existsActiveMember(
@@ -128,8 +128,8 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
 
     @Transactional
     public void acceptReport(Long postId,Long userId) {
-        CbuMember cbuMember = cbuMemberRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        if (!cbuMember.getRole().contains(Role.ADMIN)) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        if (user.getRole() != Role.ROLE_ADMIN) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         PostReport report = postReportRepository.findByPostId(postId);

@@ -151,7 +151,7 @@ public class PostDTO {
     {}
 
     /*
-    HWP 파일을 만들기 위해 repor에서 추출하는 DTO입니다
+    HWP 파일을 만들기 위해 report에서 추출하는 DTO입니다
      */
     public record PostReportToHWPDTO(
             String title,
@@ -160,6 +160,8 @@ public class PostDTO {
             String location,
             String reportImage,
             LocalDateTime date,
+            String month,
+            int memberCount,
             List<ReportMemberDTO.ReportMemberInfoDTO> reportMembers
     ){}
 

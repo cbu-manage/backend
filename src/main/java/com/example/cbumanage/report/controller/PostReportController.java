@@ -4,6 +4,7 @@ import com.example.cbumanage.post.dto.PostDTO;
 import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
+import com.example.cbumanage.report.service.PostReportHWPService;
 import com.example.cbumanage.report.service.PostReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,9 +16,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,6 +32,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Tag(name = "보고서 게시글 관리 컨트롤러")
 public class PostReportController {
     private final PostReportService postReportService;
+    private final PostReportHWPService postReportHWPService;
 
     @Operation(
             summary = "보고서 게시글 생성",
@@ -117,6 +125,41 @@ public class PostReportController {
         }
         catch (EntityNotFoundException e){
             throw new BaseException(ErrorCode.NOT_FOUND);
+        }
+    }
+
+    @Operation(
+            summary = "보고서 한글 파일 추출",
+            description = "보고서 게시글의 내용을 바탕으로 HWP 파일을 생성하여 즉시 다운로드합니다.<br>" +
+                    "ADMIN 권한이 있는 경우에만 요청 가능합니다.<br>" +
+                    "클라이언트에서는 responseType: 'blob' 으로 받아 Blob 처리 후 다운로드해야 합니다."
+    )
+    @GetMapping("/{postId}/export")
+    public ResponseEntity<byte[]> exportPostReportToHWP(
+            @PathVariable Long postId,
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
+        try {
+            PostReportHWPService.HWPExportResult result = postReportHWPService.exportToHWP(postId, userId);
+            byte[] hwpBytes = result.hwpBytes();
+            String fileName = result.title() + ".hwp";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDisposition(
+                    ContentDisposition.attachment()
+                            .filename(fileName, StandardCharsets.UTF_8)
+                            .build()
+            );
+            headers.setContentType(MediaType.parseMediaType("application/haansofthwp"));
+            headers.setContentLength(hwpBytes.length);
+
+            return ResponseEntity.ok().headers(headers).body(hwpBytes);
+        } catch (ResponseStatusException e) {
+            throw new BaseException(ErrorCode.FORBIDDEN);
+        } catch (EntityNotFoundException e) {
+            throw new BaseException(ErrorCode.NOT_FOUND);
+        } catch (Exception e) {
+            throw new BaseException(ErrorCode.INVALID_REQUEST);
         }
     }
 }
