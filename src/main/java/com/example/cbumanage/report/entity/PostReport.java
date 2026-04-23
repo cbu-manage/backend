@@ -61,7 +61,7 @@ public class PostReport {
         this.date = date;
     }
 
-    public void changeGroup(Group group) {this.groupId = groupId;}
+    public void changeGroup(Group group) {this.groupId = group.getId();}
 
     public void changeType(PostReportGroupType type) {this.type = type;}
 
@@ -69,7 +69,9 @@ public class PostReport {
         this.location = location;
     }
 
-    public void changeReportImage(String reportImage) {}
+    public void changeReportImage(String reportImage) {
+        this.reportImage = reportImage;
+    }
 
     public void Accept() {
         this.isAccepted = true;

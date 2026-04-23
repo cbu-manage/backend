@@ -58,6 +58,7 @@ dependencies {
     implementation "net.coobird:thumbnailator:0.4.20"
     implementation "com.github.gotson.nightmonkeys:imageio-heif:1.1.0"
     implementation 'org.jsoup:jsoup:1.17.2'
+    implementation 'kr.dogfoot:hwplib:1.1.9'
 
 
 }
