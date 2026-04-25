@@ -1,0 +1,57 @@
+﻿name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: backend-deploy-main
+  cancel-in-progress: true
+
+env:
+  APP_DIR: ${{ secrets.SERVER_APP_DIR || '/root/TUK-cbu-manage/backend' }}
+  COMPOSE_DIR: deploy
+
+jobs:
+  deploy:
+    name: Deploy on main push
+    environment: production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Validate backend build
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean build -x test --no-daemon
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script_stop: true
+          envs: APP_DIR,COMPOSE_DIR
+          script: |
+            set -e
+            cd "$APP_DIR"
+            git fetch origin main
+            git checkout main
+            git reset --hard origin/main
+            cd "$COMPOSE_DIR"
+            docker compose down --remove-orphans
+            docker compose up --build -d
+            docker compose ps
+
+
