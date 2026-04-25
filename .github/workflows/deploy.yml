@@ -50,8 +50,23 @@ jobs:
             git checkout main
             git reset --hard origin/main
             cd "$COMPOSE_DIR"
-            docker compose down --remove-orphans
-            docker compose up --build -d
-            docker compose ps
+            if docker compose version >/dev/null 2>&1; then
+              COMPOSE="docker compose"
+            elif command -v docker-compose >/dev/null 2>&1; then
+              COMPOSE="docker-compose"
+            else
+              echo "Docker Compose is not installed. Install docker-compose-plugin or docker-compose." >&2
+              exit 1
+            fi
+            $COMPOSE down --remove-orphans
+            $COMPOSE up --build -d
+            $COMPOSE ps
+
+            # Keep running containers intact, but remove unused images/build cache
+            # that accumulate after repeated --build deployments.
+            docker image prune -af
+            docker builder prune -af --filter until=24h || true
+
+
 
 
