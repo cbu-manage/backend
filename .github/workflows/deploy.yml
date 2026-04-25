@@ -17,7 +17,7 @@ env:
 jobs:
   deploy:
     name: Deploy on main push
-    environment: production
+    environment: "SERVER CI/CD"
     runs-on: ubuntu-latest
 
     steps:
@@ -35,6 +35,11 @@ jobs:
           chmod +x ./gradlew
           ./gradlew clean build -x test --no-daemon
 
+      - name: Validate deployment secrets
+        run: |
+          test -n "${{ secrets.SERVER_IP }}" || (echo "Missing secret: SERVER_IP" && exit 1)
+          test -n "${{ secrets.SERVER_USER }}" || (echo "Missing secret: SERVER_USER" && exit 1)
+          test -n "${{ secrets.SERVER_SSH_KEY }}" || (echo "Missing secret: SERVER_SSH_KEY" && exit 1)
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -66,6 +71,8 @@ jobs:
             # that accumulate after repeated --build deployments.
             docker image prune -af
             docker builder prune -af --filter until=24h || true
+
+
 
 
 
