@@ -4,19 +4,27 @@ import com.example.cbumanage.post.dto.PostDTO;
 import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
+import com.example.cbumanage.report.service.PostReportHWPService;
 import com.example.cbumanage.report.service.PostReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,6 +32,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Tag(name = "보고서 게시글 관리 컨트롤러")
 public class PostReportController {
     private final PostReportService postReportService;
+    private final PostReportHWPService postReportHWPService;
 
     @Operation(
             summary = "보고서 게시글 생성",
@@ -34,7 +43,7 @@ public class PostReportController {
     public ApiResponse<PostDTO.PostReportCreateResponseDTO> createPostReport(
             @Parameter(description = "현재 게시글에서 테스트 할때는 category를 7로하고 테스트합니다, reportImage는 ImageController에서 생성한 url을 넣습니다" +
                     "보고서를 생성하는 DTO의 이름은 PostReportCreateRequestDTO이고, 반환되는 DTO는 PostReportCreateResponseDTO입니다")
-            @RequestBody PostDTO.PostReportCreateRequestDTO req,
+            @RequestBody @Valid PostDTO.PostReportCreateRequestDTO req,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         PostDTO.PostReportCreateResponseDTO responseDTO = postReportService.createPostReport(req, userId);
@@ -91,7 +100,7 @@ public class PostReportController {
     @Operation(summary = "보고서 게시글 수정 메소드",description = "보고서 게시글 수정메소드 입니다. 작성자 여부를 확인하고 아닐시 거부합니다 ")
     @PatchMapping("/{postId}")
     public ApiResponse<Void> updatePostReport(@PathVariable Long postId,
-                                                                 @RequestBody PostDTO.PostReportUpdateRequestDTO req,
+                                                                 @RequestBody @Valid PostDTO.PostReportUpdateRequestDTO req,
                                                                  Authentication authentication){
         Long userId = Long.parseLong(authentication.getName());
         try {
@@ -116,6 +125,41 @@ public class PostReportController {
         }
         catch (EntityNotFoundException e){
             throw new BaseException(ErrorCode.NOT_FOUND);
+        }
+    }
+
+    @Operation(
+            summary = "보고서 한글 파일 추출",
+            description = "보고서 게시글의 내용을 바탕으로 HWP 파일을 생성하여 즉시 다운로드합니다.<br>" +
+                    "ADMIN , MANAGER 권한이 있는 경우에만 요청 가능합니다.<br>" +
+                    "클라이언트에서는 responseType: 'blob' 으로 받아 Blob 처리 후 다운로드해야 합니다."
+    )
+    @GetMapping("/{postId}/export")
+    public ResponseEntity<byte[]> exportPostReportToHWP(
+            @PathVariable Long postId,
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
+        try {
+            PostReportHWPService.HWPExportResult result = postReportHWPService.exportToHWP(postId, userId);
+            byte[] hwpBytes = result.hwpBytes();
+            String fileName = result.title() + ".hwp";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDisposition(
+                    ContentDisposition.attachment()
+                            .filename(fileName, StandardCharsets.UTF_8)
+                            .build()
+            );
+            headers.setContentType(MediaType.parseMediaType("application/haansofthwp"));
+            headers.setContentLength(hwpBytes.length);
+
+            return ResponseEntity.ok().headers(headers).body(hwpBytes);
+        } catch (ResponseStatusException e) {
+            throw new BaseException(ErrorCode.FORBIDDEN);
+        } catch (EntityNotFoundException e) {
+            throw new BaseException(ErrorCode.NOT_FOUND);
+        } catch (Exception e) {
+            throw new BaseException(ErrorCode.INVALID_REQUEST);
         }
     }
 }
