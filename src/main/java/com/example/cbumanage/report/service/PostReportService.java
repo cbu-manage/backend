@@ -89,7 +89,8 @@ fetch join -> 해결
 보고서 포스트 자세히 보기 메소드입니다. post와 report를 한번에 가져옵니다
  */
     public PostDTO.PostReportViewDTO getPostReportViewDTO(Long postId,Long userId){
-        PostReport report = postReportRepository.findByPostId(postId);
+        PostReport report = postReportRepository.findByPostId(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Report Not Found"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
         boolean isAdmin = user.getRole() == Role.ROLE_ADMIN || user.getRole() == Role.ROLE_MANAGER;
@@ -119,7 +120,8 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
         }
         PostDTO.PostUpdateDTO postUpdateDTO = postMapper.toPostUpdateDTO(req);
         postService.updatePost(postUpdateDTO,post);
-        PostReport report =postReportRepository.findByPostId(postId);
+        PostReport report = postReportRepository.findByPostId(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Report Not Found"));
         PostDTO.ReportUpdateDTO reportUpdateDTO=postMapper.topostReportUpdateDTO(req);
         updateReport(reportUpdateDTO,report);
         reportMemberRepository.deleteByReportId(report.getId());
@@ -132,7 +134,8 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
         if (user.getRole() != Role.ROLE_ADMIN) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
-        PostReport report = postReportRepository.findByPostId(postId);
+        PostReport report = postReportRepository.findByPostId(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Report Not Found"));
         report.Accept();
     }
 

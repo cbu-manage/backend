@@ -131,7 +131,7 @@ public class PostReportController {
     @Operation(
             summary = "보고서 한글 파일 추출",
             description = "보고서 게시글의 내용을 바탕으로 HWP 파일을 생성하여 즉시 다운로드합니다.<br>" +
-                    "ADMIN 권한이 있는 경우에만 요청 가능합니다.<br>" +
+                    "ADMIN , MANAGER 권한이 있는 경우에만 요청 가능합니다.<br>" +
                     "클라이언트에서는 responseType: 'blob' 으로 받아 Blob 처리 후 다운로드해야 합니다."
     )
     @GetMapping("/{postId}/export")

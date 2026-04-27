@@ -17,7 +17,6 @@ import com.example.cbumanage.reportmember.entity.ReportMember;
 import com.example.cbumanage.reportmember.repository.ReportMemberRepository;
 import jakarta.persistence.EntityNotFoundException;
 import kr.dogfoot.hwplib.object.HWPFile;
-import kr.dogfoot.hwplib.object.bindata.EmbeddedBinaryData;
 import kr.dogfoot.hwplib.object.bodytext.Section;
 import kr.dogfoot.hwplib.object.bodytext.control.Control;
 import kr.dogfoot.hwplib.object.bodytext.control.ControlTable;
@@ -72,7 +71,6 @@ public class PostReportHWPService {
      * ADMIN / MANAGER 권한 확인 후 보고서 HWP 파일 생성
      */
     public HWPExportResult exportToHWP(Long postId, Long userId) throws Exception {
-        // 권한 확인
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User Not Found"));
         if (user.getRole() != Role.ROLE_ADMIN && user.getRole() != Role.ROLE_MANAGER) {
@@ -82,7 +80,8 @@ public class PostReportHWPService {
         // 데이터 조회
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        PostReport report = postReportRepository.findByPostId(postId);
+        PostReport report = postReportRepository.findByPostId(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Report Not Found"));
         CbuMember author = cbuMemberRepository.findById(post.getAuthorId())
                 .orElseThrow(() -> new EntityNotFoundException("Author Not Found"));
 
@@ -146,7 +145,7 @@ public class PostReportHWPService {
     // -----------------------------------------------------------------------
 
     private byte[] generateHWP(PostDTO.PostReportToHWPDTO dto, byte[] imageBytes) throws Exception {
-        InputStream is = getClass().getResourceAsStream("/teplates/HWPTemplate.hwp");
+        InputStream is = getClass().getResourceAsStream("/templates/HWPTemplate.hwp");
         if (is == null) throw new IllegalStateException("HWP 템플릿 파일을 찾을 수 없습니다.");
         HWPFile hwpFile = HWPReader.fromInputStream(is);
 
