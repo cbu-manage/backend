@@ -14,17 +14,6 @@ public class CommentDTO {
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {}
-
-    public record ReplyInfoDTO(
-            Long id,
-            Long userId,
-            String userName,
-            Long generation,
-            String content,
-            LocalDateTime createdAt,
-            LocalDateTime updatedAt
-    ) {}
-
     public record CommentCreateRequestDTO(String content) {}
 
     public record CommentCreateResponseDTO(
@@ -46,4 +35,11 @@ public class CommentDTO {
             LocalDateTime createdAt,
             String content
     ) {}
+
+    public record CommentAnonymousInfoDTO(
+            Long commentId,
+            String content,
+            LocalDateTime createdAt,
+            Long parentCommentId
+    ){}
 }

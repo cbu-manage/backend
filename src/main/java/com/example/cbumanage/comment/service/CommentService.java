@@ -2,6 +2,7 @@ package com.example.cbumanage.comment.service;
 
 import com.example.cbumanage.comment.dto.CommentDTO;
 import com.example.cbumanage.comment.entity.Comment;
+import com.example.cbumanage.freeboard.repository.PostFreeboardRepository;
 import com.example.cbumanage.post.entity.Post;
 import com.example.cbumanage.problem.entity.Problem;
 import com.example.cbumanage.comment.repository.CommentRepository;
@@ -25,6 +26,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final CommentMapper commentMapper;
     private final PostRepository postRepository;
+    private final PostFreeboardRepository postFreeboardRepository;
 
     @Transactional
     public CommentDTO.CommentCreateResponseDTO createComment(CommentDTO.CommentCreateRequestDTO req,
@@ -83,6 +85,15 @@ public class CommentService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         comment.Delete();
+    }
+
+    public List<CommentDTO.CommentAnonymousInfoDTO> getAnonymousComments(Long postId) {
+        postFreeboardRepository.findByPostId(postId)
+                .filter(fb -> fb.isAnonymous())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "익명 게시글이 아닙니다"));
+        return commentRepository.findByPostId(postId).stream()
+                .map(commentMapper::toCommentAnonymousInfoDTO)
+                .toList();
     }
 
     boolean isAuthor(Long userId,Comment comment){
