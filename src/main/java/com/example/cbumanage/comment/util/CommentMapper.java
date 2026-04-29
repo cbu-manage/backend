@@ -32,6 +32,15 @@ public class CommentMapper {
         );
     }
 
+    public CommentDTO.CommentAnonymousInfoDTO toCommentAnonymousInfoDTO(Comment comment) {
+        return new CommentDTO.CommentAnonymousInfoDTO(
+                comment.getId(),
+                comment.isDeleted() ? "삭제된 댓글입니다" : comment.getContent(),
+                comment.getCreatedAt(),
+                comment.getParentComment() != null ? comment.getParentComment().getId() : null
+        );
+    }
+
     public CommentDTO.CommentCreateResponseDTO toCommentCreateResponseDTO(Comment comment) {
         return new CommentDTO.CommentCreateResponseDTO(
                 comment.getId(),

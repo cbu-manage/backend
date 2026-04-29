@@ -5,6 +5,7 @@ import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.comment.service.CommentService;
+import jakarta.persistence.EntityNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,6 +36,22 @@ public class CommentController {
     @GetMapping("post/{postId}/comment")
     public ApiResponse<List<CommentDTO.CommentInfoDTO>> getComments(@PathVariable Long postId) {
         return ApiResponse.success(commentService.getComments(postId));
+    }
+
+    @Operation(
+            summary = "익명 댓글 목록 반환",
+            description = "익명 게시글(isAnonymous=true)의 댓글 목록을 작성자 정보 없이 반환합니다.<br>" +
+                    "익명 게시글이 아닌 postId로 요청 시 400을 반환합니다."
+    )
+    @GetMapping("post/{postId}/comment/anonymous")
+    public ApiResponse<List<CommentDTO.CommentAnonymousInfoDTO>> getAnonymousComments(@PathVariable Long postId) {
+        try {
+            return ApiResponse.success(commentService.getAnonymousComments(postId));
+        } catch (ResponseStatusException e) {
+            throw new BaseException(ErrorCode.INVALID_REQUEST);
+        } catch (EntityNotFoundException e) {
+            throw new BaseException(ErrorCode.NOT_FOUND);
+        }
     }
 
     @Operation(summary = "답글 추가")
