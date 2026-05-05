@@ -850,5 +850,63 @@ public class PostDTO {
     }
 
 
+    //------------자유게시판 코드
+
+    @Schema(description = "자유게시판 제작 요청 DTO입니다")
+    public record PostFreeboardCreateRequestDTO(
+            String title,
+            String content,
+            @Schema(description = "게시글의 익명 여부를 기록합니다 참이면 익명으로 테이블이 생성됩니다")
+            boolean isAnonymous
+    ){}
+
+    public record PostFreeboardCreateResponseDTO(
+            Long postId,
+            Long authorId,
+            String title,
+            String content,
+            LocalDateTime createdAt,
+            int category,
+            boolean isAnonymous
+    ){}
+
+    @Schema(description = "자유게시판-실명 게시글 정보")
+    public record PostFreeboardInfoDTO(
+            Long postId,
+            String title,
+            String content,
+            LocalDateTime createdAt,
+
+            Long authorId,
+            String authorName,
+            Long authorGeneration,
+
+            Long viewCount,
+            Long commentCount,
+
+            boolean isAnonymous
+    ){}
+
+    @Schema(description = "자유게시판-익명게시글 정보 ")
+    public record PostFreeboardAnonymousInfoDTO(
+            Long postId,
+            String title,
+            String content,
+            LocalDateTime createdAt,
+
+            Long viewCount,
+            Long commentCount,
+
+            boolean isAnonymous
+    ){}
+
+
+
+
+
+
+
+
+
 
 }

@@ -7,6 +7,7 @@ import com.example.cbumanage.post.dto.PostDTO;
 import com.example.cbumanage.post.service.PostService;
 import com.example.cbumanage.study.service.StudyService;
 import com.example.cbumanage.project.service.ProjectService;
+import com.example.cbumanage.freeboard.service.PostFreeboardService;
 import com.example.cbumanage.report.service.PostReportService;
 import com.example.cbumanage.problem.service.ProblemService;
 import com.example.cbumanage.resource.service.ResourceService;
@@ -34,6 +35,7 @@ public class PostController {
     private final PostReportService postReportService;
     private final ProblemService problemService;
     private final ResourceService resourceService;
+    private final PostFreeboardService postFreeboardService;
 
     @Operation(summary = "카테고리 별 포스트 목록 페이징 조회", description = "포스트 목록을 페이징으로 불러옵니다.")
     @GetMapping("post")
@@ -79,6 +81,9 @@ public class PostController {
             } else if (category == 7) {
                 pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
                 return ApiResponse.success(postReportService.getMyPostReportPreviewDTOList(pageable, userId));
+            } else if (category == 8) {
+                pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
+                return ApiResponse.success(postFreeboardService.getMyFreeboards(pageable, userId));
             } else {
                 throw new BaseException(ErrorCode.INVALID_REQUEST);
             }
