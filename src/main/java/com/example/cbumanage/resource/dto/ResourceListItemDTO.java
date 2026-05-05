@@ -1,6 +1,6 @@
 package com.example.cbumanage.resource.dto;
 
-import com.example.cbumanage.member.entity.CbuMember;
+import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.resource.entity.Resource;
 import lombok.Builder;
 import lombok.Getter;
@@ -51,7 +51,7 @@ public class ResourceListItemDTO {
     /**
      * Resource 엔티티를 ResourceListItemDTO로 변환합니다.
      */
-    public static ResourceListItemDTO from(Resource resource, CbuMember author) {
+    public static ResourceListItemDTO from(Resource resource, User author) {
         return ResourceListItemDTO.builder()
                 .resourceId(resource.getResourceId())
                 .title(resource.getPost().getTitle())

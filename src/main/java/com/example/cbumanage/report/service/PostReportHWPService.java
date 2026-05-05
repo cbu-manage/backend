@@ -2,8 +2,6 @@ package com.example.cbumanage.report.service;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.example.cbumanage.global.util.ImageCompressUtil;
-import com.example.cbumanage.member.entity.CbuMember;
-import com.example.cbumanage.member.repository.CbuMemberRepository;
 import com.example.cbumanage.user.entity.Role;
 import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.user.repository.UserRepository;
@@ -55,7 +53,6 @@ public class PostReportHWPService {
 
     private final PostRepository postRepository;
     private final PostReportRepository postReportRepository;
-    private final CbuMemberRepository cbuMemberRepository;
     private final ReportMemberRepository reportMemberRepository;
     private final UserRepository userRepository;
     private final AmazonS3 amazonS3;
@@ -82,17 +79,17 @@ public class PostReportHWPService {
                 .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         PostReport report = postReportRepository.findByPostId(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Report Not Found"));
-        CbuMember author = cbuMemberRepository.findById(post.getAuthorId())
+        User author = userRepository.findById(post.getAuthorId())
                 .orElseThrow(() -> new EntityNotFoundException("Author Not Found"));
 
         // 참여 멤버 조회
         List<ReportMember> reportMembers = reportMemberRepository.findByReportId(report.getId());
         List<ReportMemberDTO.ReportMemberInfoDTO> members = reportMembers.stream()
                 .map(rm -> {
-                    CbuMember m = cbuMemberRepository.findById(rm.getMemberId())
-                            .orElseThrow(() -> new EntityNotFoundException("Member Not Found: " + rm.getMemberId()));
+                    User m = userRepository.findById(rm.getUserId())
+                            .orElseThrow(() -> new EntityNotFoundException("Member Not Found: " + rm.getUserId()));
                     return new ReportMemberDTO.ReportMemberInfoDTO(
-                            m.getCbuMemberId(),
+                            m.getUserId(),
                             m.getName(),
                             m.getStudentNumber(),
                             m.getMajor()

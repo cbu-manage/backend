@@ -6,7 +6,7 @@ public class ReportMemberDTO {
 
     @Schema(description = "보고서 참여 멤버의 정보를 담는 DTO입니다")
     public record ReportMemberInfoDTO(
-            Long memberId,
+            Long userId,
             String name,
             Long studentNumber,
             String major

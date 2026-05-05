@@ -2,7 +2,6 @@ package com.example.cbumanage.group.service;
 
 import com.example.cbumanage.group.dto.GroupDTO;
 import com.example.cbumanage.global.error.BaseException;
-import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.group.entity.Group;
 import com.example.cbumanage.group.entity.GroupMember;
 import com.example.cbumanage.group.entity.enums.GroupMemberRole;
@@ -12,7 +11,8 @@ import com.example.cbumanage.group.entity.enums.GroupStatus;
 import com.example.cbumanage.group.entity.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.group.repository.GroupRepository;
 import com.example.cbumanage.group.repository.GroupMemberRepository;
-import com.example.cbumanage.member.repository.CbuMemberRepository;
+import com.example.cbumanage.user.entity.User;
+import com.example.cbumanage.user.repository.UserRepository;
 import com.example.cbumanage.comment.repository.CommentRepository;
 import com.example.cbumanage.project.repository.ProjectRepository;
 import com.example.cbumanage.study.repository.StudyRepository;
@@ -31,7 +31,7 @@ import java.util.List;
 public class GroupService {
     private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
-    private final CbuMemberRepository cbuMemberRepository;
+    private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final ProjectRepository projectRepository;
     private final StudyRepository studyRepository;
@@ -46,7 +46,7 @@ public class GroupService {
     public Group createGroup(String groupName, Long leaderId, int maxMember, Long postId, int category){
         Group group = Group.create(groupName, 1, maxMember, postId, category);
         groupRepository.save(group);
-        CbuMember member = cbuMemberRepository.findById(leaderId)
+        User member = userRepository.findById(leaderId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
         GroupMember leader = GroupMember.create(group, member, GroupMemberStatus.ACTIVE, GroupMemberRole.LEADER);
         group.addMember(leader);
@@ -70,7 +70,7 @@ public class GroupService {
             throw new BaseException(ErrorCode.GROUP_NOT_RECRUITING);
         }
 
-        GroupMember existing = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, memberId);
+        GroupMember existing = groupMemberRepository.findByGroupIdAndUserUserId(groupId, memberId);
         if (existing != null) {
             if (existing.getGroupMemberStatus() == GroupMemberStatus.REJECTED) {
                 existing.pending();
@@ -78,7 +78,7 @@ public class GroupService {
             }
             throw new BaseException(ErrorCode.ALREADY_JOINED_MEMBER,"중복 신청이 불가합니다.");
         }
-        CbuMember member = cbuMemberRepository.findById(memberId)
+        User member = userRepository.findById(memberId)
                 .orElseThrow(()-> new BaseException(ErrorCode.USER_NOT_FOUND));
         GroupMember groupMember = GroupMember.create(group,member,GroupMemberStatus.PENDING,GroupMemberRole.MEMBER);
         group.addMember(groupMember);
@@ -144,7 +144,7 @@ public class GroupService {
 
     //시전한 user가 리더가 맞는지 확인하는 메소드
     private void assertIsGroupLeader(Long groupId, Long userId){
-        GroupMember groupMember = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, userId);
+        GroupMember groupMember = groupMemberRepository.findByGroupIdAndUserUserId(groupId, userId);
         if(groupMember == null || groupMember.getGroupMemberRole() != GroupMemberRole.LEADER){
             throw new BaseException(ErrorCode.NOT_GROUP_LEADER);
         }
@@ -163,7 +163,7 @@ public class GroupService {
     /* 신청 취소: PENDING 상태인 본인 신청만 삭제 */
     @Transactional
     public void cancelApplication(Long groupId, Long userId) {
-        GroupMember gm = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, userId);
+        GroupMember gm = groupMemberRepository.findByGroupIdAndUserUserId(groupId, userId);
         if (gm == null || gm.getGroupMemberStatus() != GroupMemberStatus.PENDING) {
             throw new BaseException(ErrorCode.INVALID_REQUEST,"PENDING 상태가 아닙니다.");
         }
@@ -194,7 +194,7 @@ public class GroupService {
     public Boolean hasAppliedToGroup(Long groupId, Long userId) {
         if (userId == null) return false; // 비로그인 = 신청 이력 없음
         if (groupId == null) return null;
-        GroupMember gm = groupMemberRepository.findByGroupIdAndCbuMemberCbuMemberId(groupId, userId);
+        GroupMember gm = groupMemberRepository.findByGroupIdAndUserUserId(groupId, userId);
         if (gm == null) return false; // 미가입자
         GroupMemberStatus status = gm.getGroupMemberStatus();
         if (status == GroupMemberStatus.PENDING) return true;   // 신청 대기

@@ -5,10 +5,10 @@ import com.example.cbumanage.resource.dto.ResourceCreateRequestDTO;
 import com.example.cbumanage.resource.dto.ResourceListItemDTO;
 import com.example.cbumanage.member.exception.MemberDoesntHavePermissionException;
 import com.example.cbumanage.member.exception.MemberNotExistsException;
-import com.example.cbumanage.member.entity.CbuMember;
+import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.post.entity.Post;
 import com.example.cbumanage.resource.entity.Resource;
-import com.example.cbumanage.member.repository.CbuMemberRepository;
+import com.example.cbumanage.user.repository.UserRepository;
 import com.example.cbumanage.post.repository.PostRepository;
 import com.example.cbumanage.resource.repository.ResourceRepository;
 import com.example.cbumanage.resource.util.OgMetaParser;
@@ -27,14 +27,14 @@ public class ResourceService {
 
     private final ResourceRepository resourceRepository;
     private final PostRepository postRepository;
-    private final CbuMemberRepository cbuMemberRepository;
+    private final UserRepository userRepository;
     private final OgMetaParser ogMetaParser;
 
     public ResourceService(ResourceRepository resourceRepository, PostRepository postRepository,
-                           CbuMemberRepository cbuMemberRepository, OgMetaParser ogMetaParser) {
+                           UserRepository userRepository, OgMetaParser ogMetaParser) {
         this.resourceRepository = resourceRepository;
         this.postRepository = postRepository;
-        this.cbuMemberRepository = cbuMemberRepository;
+        this.userRepository = userRepository;
         this.ogMetaParser = ogMetaParser;
     }
 
@@ -47,7 +47,7 @@ public class ResourceService {
      */
     @Transactional
     public ResourceListItemDTO createResource(ResourceCreateRequestDTO request, Long memberId) {
-        CbuMember member = cbuMemberRepository.findById(memberId)
+        User member = userRepository.findById(memberId)
                 .orElseThrow(() -> new MemberNotExistsException("ID가 " + memberId + "인 회원을 찾을 수 없습니다."));
 
         OgMetaParser.OgMeta ogMeta = ogMetaParser.parse(request.getLink());
@@ -57,7 +57,7 @@ public class ResourceService {
             title = (ogMeta.title() != null) ? ogMeta.title() : request.getLink();
         }
 
-        Post post = Post.create(member.getCbuMemberId(), title, "", 6);
+        Post post = Post.create(member.getUserId(), title, "", 6);
         Post savedPost = postRepository.save(post);
 
         Resource resource = Resource.builder()
@@ -80,7 +80,7 @@ public class ResourceService {
     public Page<ResourceListItemDTO> getResources(Pageable pageable) {
         return resourceRepository.findAll(pageable)
                 .map(r -> {
-                    CbuMember author = cbuMemberRepository.findById(r.getPost().getAuthorId())
+                    User author = userRepository.findById(r.getPost().getAuthorId())
                             .orElseThrow(() -> new MemberNotExistsException("작성자를 찾을 수 없습니다."));
                     return ResourceListItemDTO.from(r, author);
                 });
@@ -94,7 +94,7 @@ public class ResourceService {
      * @return 페이지네이션된 내 게시글 목록 DTO
      */
     public Page<ResourceListItemDTO> getMyResources(Long memberId, Pageable pageable) {
-        CbuMember member = cbuMemberRepository.findById(memberId)
+        User member = userRepository.findById(memberId)
                 .orElseThrow(() -> new MemberNotExistsException("ID가 " + memberId + "인 회원을 찾을 수 없습니다."));
         return resourceRepository.findByPostAuthorId(memberId, pageable)
                 .map(r -> ResourceListItemDTO.from(r, member));

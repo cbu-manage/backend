@@ -3,7 +3,6 @@ package com.example.cbumanage.project.service;
 import com.example.cbumanage.group.service.GroupService;
 import com.example.cbumanage.post.dto.PostDTO;
 import com.example.cbumanage.global.error.BaseException;
-import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.group.entity.Group;
 import com.example.cbumanage.post.entity.Post;
 import com.example.cbumanage.post.service.PostService;
@@ -11,7 +10,8 @@ import com.example.cbumanage.project.entity.Project;
 import com.example.cbumanage.group.entity.enums.GroupMemberStatus;
 import com.example.cbumanage.group.entity.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.project.entity.enums.ProjectFieldType;
-import com.example.cbumanage.member.repository.CbuMemberRepository;
+import com.example.cbumanage.user.entity.User;
+import com.example.cbumanage.user.repository.UserRepository;
 import com.example.cbumanage.group.repository.GroupRepository;
 import com.example.cbumanage.project.repository.ProjectRepository;
 import com.example.cbumanage.post.repository.PostRepository;
@@ -32,7 +32,7 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final PostRepository postRepository;
-    private final CbuMemberRepository cbuMemberRepository;
+    private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private final PostMapper postMapper;
     private final PostService postService;
@@ -60,7 +60,7 @@ public class ProjectService {
         Post post =project.getPost();
         post.upViewCount();
         boolean isLeader = userId != null && userId.equals(project.getPost().getAuthorId());
-        CbuMember author = cbuMemberRepository.findById(project.getPost().getAuthorId()).orElse(null);
+        User author = userRepository.findById(project.getPost().getAuthorId()).orElse(null);
         int active = 0;
         int max = 0;
         if (project.getGroup() != null) {
@@ -93,12 +93,12 @@ public class ProjectService {
         java.util.Set<Long> authorIds = projects.getContent().stream()
                 .map(p -> p.getPost().getAuthorId())
                 .collect(java.util.stream.Collectors.toSet());
-        java.util.Map<Long, CbuMember> authorMap = cbuMemberRepository.findAllById(authorIds).stream()
-                .collect(java.util.stream.Collectors.toMap(CbuMember::getCbuMemberId, m -> m));
+        java.util.Map<Long, User> authorMap = userRepository.findAllById(authorIds).stream()
+                .collect(java.util.stream.Collectors.toMap(User::getUserId, m -> m));
         return projects.map(p -> toProjectListDTOWithMemberCounts(p, authorMap.get(p.getPost().getAuthorId())));
     }
 
-    private PostDTO.ProjectListDTO toProjectListDTOWithMemberCounts(Project p, CbuMember author) {
+    private PostDTO.ProjectListDTO toProjectListDTOWithMemberCounts(Project p, User author) {
         int active = 0;
         int max = 0;
         if (p.getGroup() != null) {
@@ -151,7 +151,7 @@ public class ProjectService {
         Group group = groupService.createGroup(groupName, post.getAuthorId(), req.maxMembers(), post.getId(), post.getCategory());
         PostDTO.ProjectCreateDTO projectCreateDTO = postMapper.toProjectCreateDTO(req, post.getId());
         Project project = createProject(projectCreateDTO,group);
-        CbuMember author = cbuMemberRepository.findById(post.getAuthorId())
+        User author = userRepository.findById(post.getAuthorId())
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
         return postMapper.toPostProjectCreateResponseDTO(post, project, group, author);
     }

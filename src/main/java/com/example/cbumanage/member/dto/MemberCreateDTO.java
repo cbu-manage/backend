@@ -1,18 +1,16 @@
 package com.example.cbumanage.member.dto;
 
-import com.example.cbumanage.member.entity.enums.Role;
+import com.example.cbumanage.user.entity.Role;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.Getter;
 
-import java.util.List;
-
 @Getter
 @Data
 public class MemberCreateDTO {
 	@NotNull
-	private List<Role> role;
+	private Role role;
 	@NotNull
 	@NotEmpty
 	private String name;
