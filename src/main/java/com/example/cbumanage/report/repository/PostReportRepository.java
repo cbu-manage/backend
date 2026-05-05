@@ -34,7 +34,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     from Post p
     left join PostReport r on r.post = p
     left join Group g on r.groupId = g.id
-    left join CbuMember m on m.cbuMemberId = p.authorId
+    left join User m on m.userId = p.authorId
     where p.category = :category
     and p.isDeleted = false
 """,
@@ -62,7 +62,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     from Post p
     left join PostReport r on r.post = p
     left join Group g on r.groupId = g.id
-    left join CbuMember m on m.cbuMemberId = p.authorId
+    left join User m on m.userId = p.authorId
     where p.category = :category and p.authorId = :userId
     and p.isDeleted = false
 """,
@@ -89,7 +89,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     from Post p
     left join PostReport r on r.post = p
     left join Group g on r.groupId = g.id
-    left join CbuMember m on m.cbuMemberId = p.authorId
+    left join User m on m.userId = p.authorId
     where p.category = :category and r.groupId = :groupId
     and p.isDeleted = false
 """,

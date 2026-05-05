@@ -19,13 +19,13 @@ public class ReportMember {
     @Column(name = "report_id", nullable = false)
     private Long reportId;
 
-    @Column(name = "member_id", nullable = false)
-    private Long memberId;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
-    public static ReportMember create(Long reportId, Long memberId) {
+    public static ReportMember create(Long reportId, Long userId) {
         ReportMember rm = new ReportMember();
         rm.reportId = reportId;
-        rm.memberId = memberId;
+        rm.userId = userId;
         return rm;
     }
 }

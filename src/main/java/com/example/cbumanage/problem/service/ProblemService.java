@@ -9,7 +9,7 @@ import com.example.cbumanage.problem.dto.PlatformResponseDTO;
 import com.example.cbumanage.problem.dto.LanguageResponseDTO;
 import com.example.cbumanage.member.exception.MemberDoesntHavePermissionException;
 import com.example.cbumanage.member.exception.MemberNotExistsException;
-import com.example.cbumanage.member.entity.CbuMember;
+import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.post.entity.Post;
 import com.example.cbumanage.problem.entity.Problem;
 import com.example.cbumanage.problem.entity.Category;
@@ -17,7 +17,7 @@ import com.example.cbumanage.problem.entity.Platform;
 import com.example.cbumanage.problem.entity.Language;
 import com.example.cbumanage.problem.repository.ProblemRepository;
 import com.example.cbumanage.post.repository.PostRepository;
-import com.example.cbumanage.member.repository.CbuMemberRepository;
+import com.example.cbumanage.user.repository.UserRepository;
 import com.example.cbumanage.problem.repository.CategoryRepository;
 import com.example.cbumanage.problem.repository.PlatformRepository;
 import com.example.cbumanage.problem.repository.LanguageRepository;
@@ -46,19 +46,19 @@ public class ProblemService {
 
     private final ProblemRepository problemRepository;
     private final PostRepository postRepository;
-    private final CbuMemberRepository cbuMemberRepository;
+    private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final PlatformRepository platformRepository;
     private final LanguageRepository languageRepository;
     private final CommentRepository commentRepository;
 
     public ProblemService(ProblemRepository problemRepository, PostRepository postRepository,
-                          CbuMemberRepository cbuMemberRepository, CategoryRepository categoryRepository,
+                          UserRepository userRepository, CategoryRepository categoryRepository,
                           PlatformRepository platformRepository, LanguageRepository languageRepository,
                           CommentRepository commentRepository) {
         this.problemRepository = problemRepository;
         this.postRepository = postRepository;
-        this.cbuMemberRepository = cbuMemberRepository;
+        this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.platformRepository = platformRepository;
         this.languageRepository = languageRepository;
@@ -74,7 +74,7 @@ public class ProblemService {
      */
     @Transactional
     public ProblemResponseDTO createProblem(ProblemCreateRequestDTO request, Long memberId) {
-        CbuMember member = cbuMemberRepository.findById(memberId)
+        User member = userRepository.findById(memberId)
                 .orElseThrow(() -> new MemberNotExistsException("ID가 " + memberId + "인 회원을 찾을 수 없습니다."));
 
         List<Category> categories = categoryRepository.findAllById(request.getCategoryIds());
@@ -88,7 +88,7 @@ public class ProblemService {
         Language language = languageRepository.findById(request.getLanguageId())
                 .orElseThrow(() -> new EntityNotFoundException("ID가 " + request.getLanguageId() + "인 언어를 찾을 수 없습니다."));
 
-        Post post = Post.create(member.getCbuMemberId(), request.getTitle(), request.getContent(), 5);
+        Post post = Post.create(member.getUserId(), request.getTitle(), request.getContent(), 5);
         Post savedPost = postRepository.save(post);
 
         Problem problem = Problem.builder()
@@ -148,7 +148,7 @@ public class ProblemService {
                 request.getProblemStatus()
         );
 
-        CbuMember author = cbuMemberRepository.findById(problem.getPost().getAuthorId())
+        User author = userRepository.findById(problem.getPost().getAuthorId())
                 .orElseThrow(() -> new MemberNotExistsException("작성자를 찾을 수 없습니다."));
 
         Long commentCount = commentRepository.countByPostId(postId);
@@ -201,7 +201,7 @@ public class ProblemService {
 
         return problemRepository.findAll(spec, pageable)
                 .map(p -> {
-                    CbuMember author = cbuMemberRepository.findById(p.getPost().getAuthorId())
+                    User author = userRepository.findById(p.getPost().getAuthorId())
                             .orElseThrow(() -> new MemberNotExistsException("작성자를 찾을 수 없습니다."));
                     return ProblemListItemDTO.from(p, author, commentRepository.countByPostId(p.getPost().getId()));
                 });
@@ -221,7 +221,7 @@ public class ProblemService {
 
         postRepository.incrementViewCount(postId);
 
-        CbuMember author = cbuMemberRepository.findById(problem.getPost().getAuthorId())
+        User author = userRepository.findById(problem.getPost().getAuthorId())
                 .orElseThrow(() -> new MemberNotExistsException("작성자를 찾을 수 없습니다."));
 
         Long commentCount = commentRepository.countByPostId(postId);
@@ -236,7 +236,7 @@ public class ProblemService {
      * @return 페이지네이션된 내 문제 목록 DTO
      */
     public Page<ProblemListItemDTO> getMyProblems(Long memberId, Pageable pageable) {
-        CbuMember member = cbuMemberRepository.findById(memberId)
+        User member = userRepository.findById(memberId)
                 .orElseThrow(() -> new MemberNotExistsException("ID가 " + memberId + "인 회원을 찾을 수 없습니다."));
         return problemRepository.findByPostAuthorId(memberId, pageable)
                 .map(p -> ProblemListItemDTO.from(p, member, commentRepository.countByPostId(p.getPost().getId())));

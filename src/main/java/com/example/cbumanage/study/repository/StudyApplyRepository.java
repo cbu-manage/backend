@@ -25,7 +25,7 @@ public interface StudyApplyRepository extends JpaRepository<StudyApply, Long> {
     List<StudyApply> findByStudyIdAndStatus(Long studyId, StudyApplyStatus status);
 
     // 특정 스터디에서 특정 사용자의 신청 조회
-    Optional<StudyApply> findByStudyIdAndApplicantCbuMemberId(Long studyId, Long applicantId);
+    Optional<StudyApply> findByStudyIdAndApplicantUserId(Long studyId, Long applicantId);
 
     // 특정 스터디에서 특정 신청 조회
     @EntityGraph(attributePaths = {"applicant"})
@@ -35,5 +35,5 @@ public interface StudyApplyRepository extends JpaRepository<StudyApply, Long> {
     long countByStudyIdAndStatus(Long studyId, StudyApplyStatus status);
 
     // 특정 사용자가 수락된 스터디 신청 목록
-    List<StudyApply> findByApplicantCbuMemberIdAndStatus(Long applicantId, StudyApplyStatus status);
+    List<StudyApply> findByApplicantUserIdAndStatus(Long applicantId, StudyApplyStatus status);
 }

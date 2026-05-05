@@ -1,6 +1,6 @@
 package com.example.cbumanage.problem.dto;
 
-import com.example.cbumanage.member.entity.CbuMember;
+import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.problem.entity.Problem;
 import com.example.cbumanage.problem.entity.enums.ProblemStatus;
 import lombok.Builder;
@@ -43,7 +43,7 @@ public class ProblemListItemDTO {
         this.commentCount = commentCount;
     }
 
-    public static ProblemListItemDTO from(Problem problem, CbuMember author, Long commentCount) {
+    public static ProblemListItemDTO from(Problem problem, User author, Long commentCount) {
         return ProblemListItemDTO.builder()
                 .problemId(problem.getProblemId())
                 .postId(problem.getPost().getId())

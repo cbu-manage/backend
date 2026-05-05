@@ -1,9 +1,9 @@
 package com.example.cbumanage.comment.util;
 
 import com.example.cbumanage.comment.dto.CommentDTO;
-import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.comment.entity.Comment;
-import com.example.cbumanage.member.repository.CbuMemberRepository;
+import com.example.cbumanage.user.entity.User;
+import com.example.cbumanage.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -11,20 +11,20 @@ import org.springframework.stereotype.Component;
 @Component
 public class CommentMapper {
 
-    private CbuMemberRepository cbuMemberRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    public CommentMapper(CbuMemberRepository cbuMemberRepository) {
-        this.cbuMemberRepository = cbuMemberRepository;
+    public CommentMapper(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     public CommentDTO.CommentInfoDTO toCommentInfoDTO(Comment comment) {
-        CbuMember cbuMember = cbuMemberRepository.findById(comment.getUserId()).orElseThrow(() -> new EntityNotFoundException("user Not Found"));
+        User user = userRepository.findById(comment.getUserId()).orElseThrow(() -> new EntityNotFoundException("user Not Found"));
         return new CommentDTO.CommentInfoDTO(
                 comment.getId(),
                 comment.getUserId(),
-                cbuMember.getGeneration(),
-                cbuMember.getName(),
+                user.getGeneration(),
+                user.getName(),
                 comment.isDeleted() ? "삭제된 댓글입니다" : comment.getContent(),
                 comment.getParentComment() != null ? comment.getParentComment().getId() : null,
                 comment.getCreatedAt(),

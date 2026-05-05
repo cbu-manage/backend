@@ -1,6 +1,6 @@
 package com.example.cbumanage.problem.dto;
 
-import com.example.cbumanage.member.entity.CbuMember;
+import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.problem.entity.Problem;
 import com.example.cbumanage.problem.entity.enums.ProblemGrade;
 import com.example.cbumanage.problem.entity.enums.ProblemStatus;
@@ -58,7 +58,7 @@ public class ProblemResponseDTO {
         this.updatedAt = updatedAt;
     }
 
-    public static ProblemResponseDTO from(Problem problem, CbuMember author, Long commentCount) {
+    public static ProblemResponseDTO from(Problem problem, User author, Long commentCount) {
         return ProblemResponseDTO.builder()
                 .problemId(problem.getProblemId())
                 .postId(problem.getPost().getId())
