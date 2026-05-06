@@ -104,6 +104,7 @@ public class PostReportHWPService {
         }
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        int successCount = 0;
         try (ZipOutputStream zos = new ZipOutputStream(baos, StandardCharsets.UTF_8)) {
             for (int i = 0; i < reports.size(); i++) {
                 PostReport report = reports.get(i);
@@ -123,7 +124,12 @@ public class PostReportHWPService {
                 zos.putNextEntry(new ZipEntry(entryName));
                 zos.write(hwpBytes);
                 zos.closeEntry();
+                successCount++;
             }
+        }
+
+        if (successCount == 0) {
+            throw new IllegalStateException("모든 보고서의 HWP 생성에 실패했습니다.");
         }
 
         String zipFileName = sanitizeFileName(group.getGroupName()) + "_report.zip";

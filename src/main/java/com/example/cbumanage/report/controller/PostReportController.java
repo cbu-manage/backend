@@ -134,7 +134,7 @@ public class PostReportController {
                     "ADMIN , MANAGER 권한이 있는 경우에만 요청 가능합니다.<br>" +
                     "클라이언트에서는 responseType: 'blob' 으로 받아 Blob 처리 후 다운로드해야 합니다."
     )
-    @GetMapping("/export/{postId}/hwp")
+    @GetMapping("/{postId}/export")
     public ResponseEntity<byte[]> exportPostReportToHWP(
             @PathVariable Long postId,
             Authentication authentication) {
