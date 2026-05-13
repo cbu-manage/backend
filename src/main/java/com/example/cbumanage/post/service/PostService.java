@@ -1,11 +1,11 @@
 package com.example.cbumanage.post.service;
 
 import com.example.cbumanage.post.dto.PostDTO;
-import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.post.entity.Post;
-import com.example.cbumanage.member.repository.CbuMemberRepository;
 import com.example.cbumanage.post.repository.PostRepository;
 import com.example.cbumanage.post.util.PostMapper;
+import com.example.cbumanage.user.entity.User;
+import com.example.cbumanage.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,11 +19,11 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final PostMapper postMapper;
-    private final CbuMemberRepository cbuMemberRepository;
+    private final UserRepository userRepository;
 
     public Post createPost(PostDTO.PostCreateDTO postCreateDTO) {
-        CbuMember author = cbuMemberRepository.findById(postCreateDTO.authorId()).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        Post post = Post.create(author.getCbuMemberId(), postCreateDTO.title(), postCreateDTO.content(), postCreateDTO.category());
+        User author = userRepository.findById(postCreateDTO.authorId()).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        Post post = Post.create(author.getUserId(), postCreateDTO.title(), postCreateDTO.content(), postCreateDTO.category());
         Post saved = postRepository.save(post);
         return saved;
     }
@@ -61,8 +61,8 @@ public class PostService {
     }
 
     public Page<PostDTO.PostMyPageViewDTO>  getMyPosts(Pageable pageable,Long userId) {
-        CbuMember cbuMember = cbuMemberRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
         Page<Post> posts = postRepository.findByAuthorIdAndIsDeletedFalse(userId,pageable);
-        return posts.map(post -> postMapper.toPostMyPageViewDTO(post,cbuMember));
+        return posts.map(post -> postMapper.toPostMyPageViewDTO(post, user));
     }
 }

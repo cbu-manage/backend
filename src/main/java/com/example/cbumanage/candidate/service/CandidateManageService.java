@@ -5,7 +5,7 @@ import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.candidate.dto.SuccessCandidateDTO;
 import com.example.cbumanage.candidate.entity.SuccessCandidate;
 import com.example.cbumanage.candidate.repository.CandidateManageRepository;
-import com.example.cbumanage.member.repository.CbuMemberRepository;
+import com.example.cbumanage.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,10 +16,10 @@ public class CandidateManageService {
     CandidateManageRepository candidateManageRepository;
 
     @Autowired
-    CbuMemberRepository cbuMemberRepository;
+    UserRepository userRepository;
 
     public SuccessCandidate validateCandidate(SuccessCandidateDTO successCandidateDTO) {
-        if(cbuMemberRepository.findCbuMemberByStudentNumber(successCandidateDTO.getStudentNumber())!=null){
+        if(userRepository.findByStudentNumber(successCandidateDTO.getStudentNumber()).isPresent()){
             throw new BaseException(ErrorCode.ALREADY_JOINED_MEMBER);
         }
         SuccessCandidate candidate = candidateManageRepository.findByStudentNumberAndNickName(

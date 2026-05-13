@@ -3,14 +3,14 @@ package com.example.cbumanage.study.service;
 import com.example.cbumanage.group.service.GroupService;
 import com.example.cbumanage.post.dto.PostDTO;
 import com.example.cbumanage.global.error.CustomException;
-import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.group.entity.Group;
 import com.example.cbumanage.post.entity.Post;
 import com.example.cbumanage.post.service.PostService;
 import com.example.cbumanage.study.entity.Study;
 import com.example.cbumanage.group.entity.enums.GroupMemberStatus;
 import com.example.cbumanage.group.entity.enums.GroupRecruitmentStatus;
-import com.example.cbumanage.member.repository.CbuMemberRepository;
+import com.example.cbumanage.user.entity.User;
+import com.example.cbumanage.user.repository.UserRepository;
 import com.example.cbumanage.group.repository.GroupMemberRepository;
 import com.example.cbumanage.group.repository.GroupRepository;
 import com.example.cbumanage.post.repository.PostRepository;
@@ -34,7 +34,7 @@ public class StudyService {
 
     private final StudyRepository studyRepository;
     private final PostRepository postRepository;
-    private final CbuMemberRepository cbuMemberRepository;
+    private final UserRepository userRepository;
     private final PostMapper postMapper;
     private final PostService postService;
     private final GroupService groupService;
@@ -44,7 +44,7 @@ public class StudyService {
     @Autowired
     public StudyService(StudyRepository studyRepository,
                         PostRepository postRepository,
-                        CbuMemberRepository cbuMemberRepository,
+                        UserRepository userRepository,
                         PostMapper postMapper,
                         PostService postService,
                         GroupService groupService,
@@ -52,7 +52,7 @@ public class StudyService {
                         GroupRepository groupRepository) {
         this.studyRepository = studyRepository;
         this.postRepository = postRepository;
-        this.cbuMemberRepository = cbuMemberRepository;
+        this.userRepository = userRepository;
         this.postMapper = postMapper;
         this.postService = postService;
         this.groupService = groupService;
@@ -76,7 +76,7 @@ public class StudyService {
         boolean isLeader = userId != null && study.getPost().getAuthorId().equals(userId);
         Boolean hasApplied = groupService.hasAppliedToGroup(
                 study.getGroup() != null ? study.getGroup().getId() : null, userId);
-        CbuMember author = cbuMemberRepository.findById(study.getPost().getAuthorId()).orElse(null);
+        User author = userRepository.findById(study.getPost().getAuthorId()).orElse(null);
 
         int active = 0;
         int max = study.getMaxMembers();
@@ -109,12 +109,12 @@ public class StudyService {
         Set<Long> authorIds = studies.getContent().stream()
                 .map(s -> s.getPost().getAuthorId())
                 .collect(Collectors.toSet());
-        Map<Long, CbuMember> authorMap = cbuMemberRepository.findAllById(authorIds).stream()
-                .collect(Collectors.toMap(CbuMember::getCbuMemberId, m -> m));
+        Map<Long, User> authorMap = userRepository.findAllById(authorIds).stream()
+                .collect(Collectors.toMap(User::getUserId, m -> m));
         return studies.map(s -> toStudyListDTOWithMemberCounts(s, authorMap.get(s.getPost().getAuthorId())));
     }
 
-    private PostDTO.StudyListDTO toStudyListDTOWithMemberCounts(Study s, CbuMember author) {
+    private PostDTO.StudyListDTO toStudyListDTOWithMemberCounts(Study s, User author) {
         int active = 0;
         int max = s.getMaxMembers();
         if (s.getGroup() != null) {
@@ -162,7 +162,7 @@ public class StudyService {
         Group group = groupService.createGroup(groupName, userId, req.getMaxMembers(), post.getId(), post.getCategory());
         PostDTO.StudyCreateDTO studyCreateDTO = postMapper.toStudyCreateDTO(req, post.getId());
         Study study = createStudy(studyCreateDTO, group);
-        CbuMember author = cbuMemberRepository.findById(post.getAuthorId()).orElse(null);
+        User author = userRepository.findById(post.getAuthorId()).orElse(null);
         return postMapper.toPostStudyCreateResponseDTO(post, study, group, author);
     }
 

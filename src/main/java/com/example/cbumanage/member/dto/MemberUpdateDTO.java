@@ -1,20 +1,18 @@
 package com.example.cbumanage.member.dto;
 
-import com.example.cbumanage.member.entity.enums.Role;
+import com.example.cbumanage.user.entity.Role;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
-
-import java.util.List;
 
 @Getter
 @AllArgsConstructor
 @Data
 @JsonNaming
 public class MemberUpdateDTO {
-	private Long cbuMemberId = null;
-	private List<Role> role = null;
+	private Long userId = null;
+	private Role role = null;
 	private String 	name = null;            //이름
 	private String  phoneNumber = null;     //전화번호
 	private String  major = null;           //학과

@@ -31,11 +31,11 @@ public class GroupUtil {
     public GroupDTO.GroupMemberInfoDTO toGroupMemberInfoDTO(GroupMember member) {
         return GroupDTO.GroupMemberInfoDTO.builder()
                 .groupMemberId(member.getId())
-                .userId(member.getCbuMember().getCbuMemberId())
-                .userGeneration(member.getCbuMember().getGeneration())
-                .userName(member.getCbuMember().getName())
-                .grade(member.getCbuMember().getGrade())
-                .major(member.getCbuMember().getMajor())
+                .userId(member.getUser().getUserId())
+                .userGeneration(member.getUser().getGeneration())
+                .userName(member.getUser().getName())
+                .grade(member.getUser().getGrade())
+                .major(member.getUser().getMajor())
                 .groupMemberRole(member.getGroupMemberRole())
                 .groupMemberStatus(member.getGroupMemberStatus())
                 .memberRejectReason(member.getMemberRejectReason())
@@ -85,9 +85,9 @@ public class GroupUtil {
                         .filter(m -> m.getGroupMemberStatus() == GroupMemberStatus.ACTIVE)
                         .count())
                 .maxMembers(group.getMaxActiveMembers() != null ? group.getMaxActiveMembers() : 0)
-                .leaderId(leader != null ? leader.getCbuMember().getCbuMemberId() : null)
-                .leaderGeneration(leader != null ? leader.getCbuMember().getGeneration() : null)
-                .leaderName(leader != null ? leader.getCbuMember().getName() : null)
+                .leaderId(leader != null ? leader.getUser().getUserId() : null)
+                .leaderGeneration(leader != null ? leader.getUser().getGeneration() : null)
+                .leaderName(leader != null ? leader.getUser().getName() : null)
                 .build();
     }
 
@@ -110,9 +110,9 @@ public class GroupUtil {
                         .filter(m -> m.getGroupMemberStatus() == GroupMemberStatus.ACTIVE)
                         .count())
                 .maxMembers(group.getMaxActiveMembers() != null ? group.getMaxActiveMembers() : 0)
-                .leaderId(leader != null ? leader.getCbuMember().getCbuMemberId() : null)
-                .leaderGeneration(leader != null ? leader.getCbuMember().getGeneration() : null)
-                .leaderName(leader != null ? leader.getCbuMember().getName() : null)
+                .leaderId(leader != null ? leader.getUser().getUserId() : null)
+                .leaderGeneration(leader != null ? leader.getUser().getGeneration() : null)
+                .leaderName(leader != null ? leader.getUser().getName() : null)
                 .myStatus(groupMember.getGroupMemberStatus())
                 .memberRejectReason(groupMember.getMemberRejectReason())
                 .build();

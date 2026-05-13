@@ -56,8 +56,8 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
     @Query("""
     select m.group
     from GroupMember m
-    where m.cbuMember.cbuMemberId =:userId
-    and m.groupMemberStatus =:memberStatus
+    where m.user.userId = :userId
+    and m.groupMemberStatus = :memberStatus
     and m.group.isDeleted = false
 """)
     List<Group> findByUserId(Long userId, GroupMemberStatus memberStatus);

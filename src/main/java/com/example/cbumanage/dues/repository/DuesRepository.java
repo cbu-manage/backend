@@ -11,6 +11,6 @@ import java.util.Optional;
 
 @Repository
 public interface DuesRepository extends JpaRepository<Dues, Long> {
-	Optional<Dues> findByMemberIdAndTerm(Long memberId, String term);
-	List<Dues> findAllByMemberId(Long memberId);
+	Optional<Dues> findByUserIdAndTerm(Long userId, String term);
+	List<Dues> findAllByUserId(Long userId);
 }

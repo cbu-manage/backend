@@ -60,7 +60,6 @@ public class PostReportHWPService {
 
     private final PostRepository postRepository;
     private final PostReportRepository postReportRepository;
-    private final CbuMemberRepository cbuMemberRepository;
     private final ReportMemberRepository reportMemberRepository;
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
@@ -153,15 +152,22 @@ public class PostReportHWPService {
      */
     private byte[] buildHWPBytes(Post post, PostReport report) throws Exception {
         CbuMember author = cbuMemberRepository.findById(post.getAuthorId())
+        // 데이터 조회
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        PostReport report = postReportRepository.findByPostId(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Report Not Found"));
+        User author = userRepository.findById(post.getAuthorId())
                 .orElseThrow(() -> new EntityNotFoundException("Author Not Found"));
 
+        // 참여 멤버 조회
         List<ReportMember> reportMembers = reportMemberRepository.findByReportId(report.getId());
         List<ReportMemberDTO.ReportMemberInfoDTO> members = reportMembers.stream()
                 .map(rm -> {
-                    CbuMember m = cbuMemberRepository.findById(rm.getMemberId())
-                            .orElseThrow(() -> new EntityNotFoundException("Member Not Found: " + rm.getMemberId()));
+                    User m = userRepository.findById(rm.getUserId())
+                            .orElseThrow(() -> new EntityNotFoundException("Member Not Found: " + rm.getUserId()));
                     return new ReportMemberDTO.ReportMemberInfoDTO(
-                            m.getCbuMemberId(),
+                            m.getUserId(),
                             m.getName(),
                             m.getStudentNumber(),
                             m.getMajor()

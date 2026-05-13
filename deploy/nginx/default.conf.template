@@ -1,0 +1,50 @@
+server {
+    listen 80;
+    server_name dev.tukcbu.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name dev.tukcbu.com;
+
+    # Certbot 인증서 경로
+    ssl_certificate /etc/letsencrypt/live/dev.tukcbu.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/dev.tukcbu.com/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    # Backend API 요청 처리
+    location /api/v1/ {
+        proxy_pass http://backend:8080/api/v1/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Origin $http_origin;
+    }
+
+    # Swagger UI 처리
+    location /swagger-ui/ {
+        proxy_pass http://backend:8080/swagger-ui/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # API 문서 처리
+    location /v3/api-docs/ {
+        rewrite ^/v3/api-docs/$ /v3/api-docs break;
+        proxy_pass http://backend:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # 프런트엔드 설정을 걷어냈으므로, 루트 접속 시 404 또는 특정 메시지 출력
+    location / {
+        return 404 "Frontend is disabled.";
+    }
+}

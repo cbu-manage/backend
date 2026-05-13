@@ -1,0 +1,12 @@
+﻿# Environment files must stay on the server only.
+.env
+.env.*
+!.env.example
+
+# Server-only runtime configuration.
+config/*
+!config/.gitkeep
+
+# nginx generated/runtime files.
+nginx/default.conf
+nginx/ssl/
