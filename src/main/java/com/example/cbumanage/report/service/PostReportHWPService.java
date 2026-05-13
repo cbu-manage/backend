@@ -103,8 +103,7 @@ public class PostReportHWPService {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         int successCount = 0;
         try (ZipOutputStream zos = new ZipOutputStream(baos, StandardCharsets.UTF_8)) {
-            for (int i = 0; i < reports.size(); i++) {
-                PostReport report = reports.get(i);
+            for (PostReport report : reports) {
                 Post post = postRepository.findById(report.getPost().getId())
                         .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
 
@@ -116,9 +115,7 @@ public class PostReportHWPService {
                     continue;
                 }
 
-                // 중복 파일명 방지: {순번}_{제목}.hwp
-                String entryName = (i + 1) + "_" + sanitizeFileName(post.getTitle()) + ".hwp";
-                zos.putNextEntry(new ZipEntry(entryName));
+                zos.putNextEntry(new ZipEntry(post.getTitle() + ".hwp"));
                 zos.write(hwpBytes);
                 zos.closeEntry();
                 successCount++;
