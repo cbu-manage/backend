@@ -1,0 +1,41 @@
+﻿services:
+  backend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env.dev
+    volumes:
+      - ./config/application.properties:/app/config/application.properties:ro
+    depends_on:
+      - redis
+    networks:
+      - cbu-net
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    networks:
+      - cbu-net
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    ports:
+      - "443:443"
+      - "80:80"
+    depends_on:
+      - backend
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    networks:
+      - cbu-net
+
+networks:
+  cbu-net:
+    driver: bridge

@@ -1,5 +1,6 @@
 package com.example.cbumanage.post.util;
 
+import com.example.cbumanage.freeboard.entity.PostFreeboard;
 import com.example.cbumanage.post.dto.PostDTO;
 import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.group.entity.Group;
@@ -337,6 +338,49 @@ public class PostMapper {
 
     public PostDTO.PostReportViewDTO toPostReportViewDTO(Post post, PostReport report) {
         return new PostDTO.PostReportViewDTO(toPostInfoDTO(post), toReportInfoDTO(report));
+    }
+
+    public PostDTO.PostFreeboardCreateResponseDTO toPostFreeboardCreateResponseDTO(Post post, PostFreeboard freeboard) {
+        return new PostDTO.PostFreeboardCreateResponseDTO(
+                post.getId(),
+                post.getAuthorId(),
+                post.getTitle(),
+                post.getContent(),
+                post.getCreatedAt(),
+                post.getCategory(),
+                freeboard.isAnonymous()
+        );
+    }
+
+    public PostDTO.PostFreeboardInfoDTO toPostFreeboardInfoDTO(PostFreeboard freeboard) {
+        Post post = freeboard.getPost();
+        CbuMember author = cbuMemberRepository.findById(post.getAuthorId())
+                .orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        return new PostDTO.PostFreeboardInfoDTO(
+                post.getId(),
+                post.getTitle(),
+                post.getContent(),
+                post.getCreatedAt(),
+                post.getAuthorId(),
+                author.getName(),
+                author.getGeneration(),
+                post.getViewCount(),
+                commentRepository.countByPostId(post.getId()),
+                freeboard.isAnonymous()
+        );
+    }
+
+    public PostDTO.PostFreeboardAnonymousInfoDTO toPostFreeboardAnonymousInfoDTO(PostFreeboard freeboard) {
+        Post post = freeboard.getPost();
+        return new PostDTO.PostFreeboardAnonymousInfoDTO(
+                post.getId(),
+                post.getTitle(),
+                post.getContent(),
+                post.getCreatedAt(),
+                post.getViewCount(),
+                commentRepository.countByPostId(post.getId()),
+                freeboard.isAnonymous()
+        );
     }
 
     public PostDTO.PostMyPageViewDTO  toPostMyPageViewDTO(Post post,CbuMember author) {
