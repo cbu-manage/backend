@@ -29,7 +29,10 @@ public enum ErrorCode {
     GROUP_NOT_RECRUITING("E-GROUP-0004", "모집 중인 그룹이 아닙니다.", HttpStatus.BAD_REQUEST),
 
     //POST 공용
-    POST_NOT_FOUND("E-POST-0001", "게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+    POST_NOT_FOUND("E-POST-0001", "게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+
+    //소식 게시판
+    NEWS_NOT_FOUND("E-NEWS-0001", "소식 게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
 
 
     private final String code;
