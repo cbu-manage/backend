@@ -4,8 +4,6 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.example.cbumanage.global.util.ImageCompressUtil;
 import com.example.cbumanage.group.entity.Group;
 import com.example.cbumanage.group.repository.GroupRepository;
-import com.example.cbumanage.member.entity.CbuMember;
-import com.example.cbumanage.member.repository.CbuMemberRepository;
 import com.example.cbumanage.user.entity.Role;
 import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.user.repository.UserRepository;
@@ -151,12 +149,6 @@ public class PostReportHWPService {
      * Post + PostReport 엔티티로부터 HWP 바이트 배열 생성
      */
     private byte[] buildHWPBytes(Post post, PostReport report) throws Exception {
-        CbuMember author = cbuMemberRepository.findById(post.getAuthorId())
-        // 데이터 조회
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        PostReport report = postReportRepository.findByPostId(postId)
-                .orElseThrow(() -> new EntityNotFoundException("Report Not Found"));
         User author = userRepository.findById(post.getAuthorId())
                 .orElseThrow(() -> new EntityNotFoundException("Author Not Found"));
 
