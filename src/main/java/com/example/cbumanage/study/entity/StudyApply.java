@@ -1,6 +1,6 @@
 package com.example.cbumanage.study.entity;
 
-import com.example.cbumanage.member.entity.CbuMember;
+import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.study.entity.enums.StudyApplyStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -42,8 +42,8 @@ public class StudyApply {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "applicant_id", nullable = false)
     @Schema(description = "신청자")
-    @Comment("신청자 (CbuMember) FK")
-    private CbuMember applicant;
+    @Comment("신청자 (User) FK")
+    private User applicant;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -62,13 +62,13 @@ public class StudyApply {
     @Comment("수정 일시")
     private LocalDateTime updatedAt;
 
-    public StudyApply(Study study, CbuMember applicant) {
+    public StudyApply(Study study, User applicant) {
         this.study = study;
         this.applicant = applicant;
         this.status = StudyApplyStatus.PENDING;
     }
 
-    public static StudyApply create(Study study, CbuMember applicant) {
+    public static StudyApply create(Study study, User applicant) {
         return new StudyApply(study, applicant);
     }
 

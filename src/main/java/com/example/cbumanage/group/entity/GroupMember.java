@@ -3,7 +3,7 @@ package com.example.cbumanage.group.entity;
 
 import com.example.cbumanage.group.entity.enums.GroupMemberRole;
 import com.example.cbumanage.group.entity.enums.GroupMemberStatus;
-import com.example.cbumanage.member.entity.CbuMember;
+import com.example.cbumanage.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,9 +33,9 @@ public class GroupMember {
     private Group group;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cbumember_id",nullable = false)
+    @JoinColumn(name = "user_id",nullable = false)
     @Comment("그룹에 소속된 회원 ID (FK)")
-    private CbuMember cbuMember;
+    private User user;
 
     @CreatedDate
     @Column(updatable = false)
@@ -59,17 +59,17 @@ public class GroupMember {
     private GroupMemberRole groupMemberRole;
 
     public GroupMember(Group group,
-                       CbuMember cbuMember,
+                       User user,
                        GroupMemberStatus groupMemberStatus,
                        GroupMemberRole groupMemberRole) {
         this.group = group;
-        this.cbuMember = cbuMember;
+        this.user = user;
         this.groupMemberStatus = groupMemberStatus;
         this.groupMemberRole = groupMemberRole;
     }
 
-    public static GroupMember create(Group group,CbuMember cbuMember, GroupMemberStatus groupMemberStatus, GroupMemberRole groupMemberRole) {
-        return  new GroupMember(group,cbuMember, groupMemberStatus, groupMemberRole);
+    public static GroupMember create(Group group, User user, GroupMemberStatus groupMemberStatus, GroupMemberRole groupMemberRole) {
+        return  new GroupMember(group,user, groupMemberStatus, groupMemberRole);
     }
 
 

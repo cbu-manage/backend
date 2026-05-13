@@ -4,8 +4,6 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.example.cbumanage.global.util.ImageCompressUtil;
 import com.example.cbumanage.group.entity.Group;
 import com.example.cbumanage.group.repository.GroupRepository;
-import com.example.cbumanage.member.entity.CbuMember;
-import com.example.cbumanage.member.repository.CbuMemberRepository;
 import com.example.cbumanage.user.entity.Role;
 import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.user.repository.UserRepository;
@@ -60,7 +58,6 @@ public class PostReportHWPService {
 
     private final PostRepository postRepository;
     private final PostReportRepository postReportRepository;
-    private final CbuMemberRepository cbuMemberRepository;
     private final ReportMemberRepository reportMemberRepository;
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
@@ -106,8 +103,7 @@ public class PostReportHWPService {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         int successCount = 0;
         try (ZipOutputStream zos = new ZipOutputStream(baos, StandardCharsets.UTF_8)) {
-            for (int i = 0; i < reports.size(); i++) {
-                PostReport report = reports.get(i);
+            for (PostReport report : reports) {
                 Post post = postRepository.findById(report.getPost().getId())
                         .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
 
@@ -119,9 +115,7 @@ public class PostReportHWPService {
                     continue;
                 }
 
-                // 중복 파일명 방지: {순번}_{제목}.hwp
-                String entryName = (i + 1) + "_" + sanitizeFileName(post.getTitle()) + ".hwp";
-                zos.putNextEntry(new ZipEntry(entryName));
+                zos.putNextEntry(new ZipEntry(post.getTitle() + ".hwp"));
                 zos.write(hwpBytes);
                 zos.closeEntry();
                 successCount++;
@@ -152,16 +146,17 @@ public class PostReportHWPService {
      * Post + PostReport 엔티티로부터 HWP 바이트 배열 생성
      */
     private byte[] buildHWPBytes(Post post, PostReport report) throws Exception {
-        CbuMember author = cbuMemberRepository.findById(post.getAuthorId())
+        User author = userRepository.findById(post.getAuthorId())
                 .orElseThrow(() -> new EntityNotFoundException("Author Not Found"));
 
+        // 참여 멤버 조회
         List<ReportMember> reportMembers = reportMemberRepository.findByReportId(report.getId());
         List<ReportMemberDTO.ReportMemberInfoDTO> members = reportMembers.stream()
                 .map(rm -> {
-                    CbuMember m = cbuMemberRepository.findById(rm.getMemberId())
-                            .orElseThrow(() -> new EntityNotFoundException("Member Not Found: " + rm.getMemberId()));
+                    User m = userRepository.findById(rm.getUserId())
+                            .orElseThrow(() -> new EntityNotFoundException("Member Not Found: " + rm.getUserId()));
                     return new ReportMemberDTO.ReportMemberInfoDTO(
-                            m.getCbuMemberId(),
+                            m.getUserId(),
                             m.getName(),
                             m.getStudentNumber(),
                             m.getMajor()

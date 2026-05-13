@@ -2,7 +2,6 @@ package com.example.cbumanage.post.util;
 
 import com.example.cbumanage.freeboard.entity.PostFreeboard;
 import com.example.cbumanage.post.dto.PostDTO;
-import com.example.cbumanage.member.entity.CbuMember;
 import com.example.cbumanage.group.entity.Group;
 import com.example.cbumanage.post.entity.Post;
 import com.example.cbumanage.report.entity.PostReport;
@@ -11,7 +10,8 @@ import com.example.cbumanage.study.entity.Study;
 import com.example.cbumanage.group.util.GroupUtil;
 import com.example.cbumanage.post.entity.enums.PostCategory;
 import com.example.cbumanage.project.entity.enums.ProjectFieldType;
-import com.example.cbumanage.member.repository.CbuMemberRepository;
+import com.example.cbumanage.user.entity.User;
+import com.example.cbumanage.user.repository.UserRepository;
 import com.example.cbumanage.comment.repository.CommentRepository;
 import com.example.cbumanage.group.repository.GroupRepository;
 import com.example.cbumanage.reportmember.dto.ReportMemberDTO;
@@ -29,22 +29,22 @@ public class PostMapper {
 
     private final GroupUtil groupUtil;
     private final GroupRepository groupRepository;
-    private final CbuMemberRepository cbuMemberRepository;
+   private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final ReportMemberRepository reportMemberRepository;
 
     @Autowired
-    public PostMapper(GroupUtil groupUtil, GroupRepository groupRepository, CbuMemberRepository cbuMemberRepository, CommentRepository commentRepository, ReportMemberRepository reportMemberRepository) {
+    public PostMapper(GroupUtil groupUtil, GroupRepository groupRepository, UserRepository userRepository, CommentRepository commentRepository, ReportMemberRepository reportMemberRepository) {
         this.groupUtil = groupUtil;
         this.groupRepository = groupRepository;
-        this.cbuMemberRepository = cbuMemberRepository;
+       this.userRepository = userRepository;
         this.commentRepository = commentRepository;
         this.reportMemberRepository = reportMemberRepository;
     }
 
 
     public PostDTO.PostInfoDTO toPostInfoDTO(Post post) {
-        CbuMember author = cbuMemberRepository.findById(post.getAuthorId()).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        User author = userRepository.findById(post.getAuthorId()).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
         return new PostDTO.PostInfoDTO(
                 post.getId(),
                 author.getName(),
@@ -74,10 +74,10 @@ public class PostMapper {
     private List<ReportMemberDTO.ReportMemberInfoDTO> toReportMemberInfoDTOList(Long reportId) {
         return reportMemberRepository.findByReportId(reportId).stream()
                 .map(rm -> {
-                    CbuMember member = cbuMemberRepository.findById(rm.getMemberId())
-                            .orElseThrow(() -> new EntityNotFoundException("Member Not Found: " + rm.getMemberId()));
+                    User member = userRepository.findById(rm.getUserId())
+                            .orElseThrow(() -> new EntityNotFoundException("Member Not Found: " + rm.getUserId()));
                     return new ReportMemberDTO.ReportMemberInfoDTO(
-                            member.getCbuMemberId(),
+                            member.getUserId(),
                             member.getName(),
                             member.getStudentNumber(),
                             member.getMajor()
@@ -149,7 +149,7 @@ public class PostMapper {
     }
 
     // 프로젝트 생성 응답 DTO 변환
-    public PostDTO.PostProjectCreateResponseDTO toPostProjectCreateResponseDTO(Post post, Project project, Group group, CbuMember author) {
+    public PostDTO.PostProjectCreateResponseDTO toPostProjectCreateResponseDTO(Post post, Project project, Group group, User author) {
         return PostDTO.PostProjectCreateResponseDTO.builder()
                 .postId(post.getId())
                 .authorId(post.getAuthorId())
@@ -179,7 +179,7 @@ public class PostMapper {
                 .build();
     }
 
-    public PostDTO.PostStudyCreateResponseDTO toPostStudyCreateResponseDTO(Post post, Study study, Group group, CbuMember author) {
+    public PostDTO.PostStudyCreateResponseDTO toPostStudyCreateResponseDTO(Post post, Study study, Group group, User author) {
         return PostDTO.PostStudyCreateResponseDTO.builder()
                 .postId(post.getId())
                 .authorId(post.getAuthorId())
@@ -244,7 +244,7 @@ public class PostMapper {
                                                                Long userId,
                                                                boolean isLeader,
                                                                Boolean hasApplied,
-                                                               CbuMember author,
+                                                               User author,
                                                                int activeMemberCount,
                                                                int maxMember) {
         Long groupId = project.getGroup() != null ? project.getGroup().getId() : null;
@@ -272,7 +272,7 @@ public class PostMapper {
     }
 
     // 프로젝트 게시글 목록 조회 DTO 변환 
-    public PostDTO.ProjectListDTO toProjectListDTO(Project project, CbuMember author, int activeMemberCount, int maxMembers) {
+    public PostDTO.ProjectListDTO toProjectListDTO(Project project, User author, int activeMemberCount, int maxMembers) {
         return PostDTO.ProjectListDTO.builder()
                 .postId(project.getPost().getId())
                 .title(project.getPost().getTitle())
@@ -296,7 +296,7 @@ public class PostMapper {
     public PostDTO.StudyInfoDetailDTO toStudyInfoDetailDTO(Study study,
                                                            boolean isLeader,
                                                            Boolean hasApplied,
-                                                           CbuMember author,
+                                                           User author,
                                                            int activeMemberCount,
                                                            int maxMembers) {
         return PostDTO.StudyInfoDetailDTO.builder()
@@ -320,7 +320,7 @@ public class PostMapper {
     }
 
     // 스터디 게시글 목록 조회 DTO 변환 (activeMemberCount,maxMembes 추가)
-    public PostDTO.StudyListDTO toStudyListDTO(Study study, CbuMember author, int activeMemberCount, int maxMembers) {
+    public PostDTO.StudyListDTO toStudyListDTO(Study study, User author, int activeMemberCount, int maxMembers) {
         return PostDTO.StudyListDTO.builder()
                 .postId(study.getPost().getId())
                 .title(study.getPost().getTitle())
@@ -354,7 +354,7 @@ public class PostMapper {
 
     public PostDTO.PostFreeboardInfoDTO toPostFreeboardInfoDTO(PostFreeboard freeboard) {
         Post post = freeboard.getPost();
-        CbuMember author = cbuMemberRepository.findById(post.getAuthorId())
+        User author = userRepository.findById(post.getAuthorId())
                 .orElseThrow(() -> new EntityNotFoundException("User Not Found"));
         return new PostDTO.PostFreeboardInfoDTO(
                 post.getId(),
@@ -383,14 +383,14 @@ public class PostMapper {
         );
     }
 
-    public PostDTO.PostMyPageViewDTO  toPostMyPageViewDTO(Post post,CbuMember author) {
+    public PostDTO.PostMyPageViewDTO  toPostMyPageViewDTO(Post post, User author) {
         return PostDTO.PostMyPageViewDTO.builder()
                 .postId(post.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .category(post.getCategory())
                 .createdAt(post.getCreatedAt())
-                .authorId(author.getCbuMemberId())
+                .authorId(author.getUserId())
                 .authorName(author.getName())
                 .authorGeneration(author.getGeneration())
                 .viewCount(post.getCategory() == 6 ? null : post.getViewCount())
