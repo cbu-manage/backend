@@ -1,5 +1,7 @@
 package com.example.cbumanage.post.controller;
 
+import com.example.cbumanage.flagpost.dto.FlagPostDTO;
+import com.example.cbumanage.flagpost.service.FlagPostService;
 import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
@@ -36,6 +38,7 @@ public class PostController {
     private final ProblemService problemService;
     private final ResourceService resourceService;
     private final PostFreeboardService postFreeboardService;
+    private final FlagPostService flagPostService;
 
     @Operation(summary = "카테고리 별 포스트 목록 페이징 조회", description = "포스트 목록을 페이징으로 불러옵니다.")
     @GetMapping("post")
@@ -93,4 +96,19 @@ public class PostController {
             throw new BaseException(ErrorCode.NOT_FOUND);
         }
     }
+
+    @Operation(summary = "게시글 신고 생성", description = "특정 게시글을 신고합니다.")
+    @PostMapping("post/{postId}/flag")
+    public ApiResponse<FlagPostDTO.FlagPostCreateResponse> createFlagPost(
+            @PathVariable Long postId,
+            @RequestBody FlagPostDTO.FlagPostCreateRequest req,
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
+        try {
+            return ApiResponse.success(flagPostService.createFlagPost(postId, req, userId));
+        } catch (EntityNotFoundException e) {
+            throw new BaseException(ErrorCode.POST_NOT_FOUND);
+        }
+    }
+
 }
