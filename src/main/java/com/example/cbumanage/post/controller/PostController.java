@@ -57,9 +57,16 @@ public class PostController {
 
     @Operation(summary = "포스트 단건 삭제")
     @DeleteMapping("post/{postId}")
-    public ApiResponse<Void> deletePost(@PathVariable Long postId) {
-        postService.softDeletePost(postId);
-        return ApiResponse.success();
+    public ApiResponse<Void> deletePost(@PathVariable Long postId, Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
+        try {
+            postService.softDeletePost(postId, userId);
+            return ApiResponse.success();
+        } catch (ResponseStatusException e) {
+            throw new BaseException(ErrorCode.FORBIDDEN);
+        } catch (jakarta.persistence.EntityNotFoundException e) {
+            throw new BaseException(ErrorCode.NOT_FOUND);
+        }
     }
 
     @GetMapping("post/my")

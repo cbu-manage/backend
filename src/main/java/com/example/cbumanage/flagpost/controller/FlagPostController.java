@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/flag")
+@RequestMapping("/api/v1/flag/post")
 @Tag(name = "게시글 신고 컨트롤러")
 public class FlagPostController {
 
@@ -47,7 +47,7 @@ public class FlagPostController {
 
     @Operation(summary = "게시글 신고 처리", description = "해당 postId를 가진 모든 신고를 처리(소프트 삭제)합니다. ADMIN 또는 MANAGER 권한이 필요합니다.")
     @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_MANAGER')")
-    @PatchMapping("/post/{postId}/resolve")
+    @PatchMapping("/{postId}/resolve")
     public ApiResponse<Void> resolveFlagsByPostId(@PathVariable Long postId) {
         try {
             flagPostService.resolveFlagsByPostId(postId);

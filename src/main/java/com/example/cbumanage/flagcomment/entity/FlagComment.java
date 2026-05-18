@@ -1,29 +1,29 @@
-package com.example.cbumanage.flagpost.entity;
+package com.example.cbumanage.flagcomment.entity;
+
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor
-@Table(name="flag_post")
+@Table(name="flag_comment")
 @Getter
 @EntityListeners(AuditingEntityListener.class)
-public class FlagPost {
-
+public class FlagComment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "flag_post_id")
+    @Column(name = "flag_comment_id")
     private Long id;
 
     private Long authorId;
 
-    private Long postId;
+    private Long commentId;
 
     private String content;
 
@@ -32,15 +32,14 @@ public class FlagPost {
 
     private boolean isDeleted = false;
 
-    public FlagPost(Long authorId, Long postId, String content) {
+    public FlagComment(Long authorId, Long commentId, String content) {
         this.authorId = authorId;
-        this.postId = postId;
+        this.commentId = commentId;
         this.content = content;
-
     }
 
-    public static FlagPost create(Long authorId, Long postId, String content) {
-        return new FlagPost(authorId, postId, content);
+    public static FlagComment create(Long authorId, Long commentId, String content) {
+        return new FlagComment(authorId, commentId, content);
     }
 
     public void softDelete() {

@@ -1,6 +1,7 @@
 package com.example.cbumanage.comment.controller;
 
 import com.example.cbumanage.comment.dto.CommentDTO;
+import com.example.cbumanage.flagcomment.service.FlagCommentService;
 import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
@@ -22,6 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CommentController {
     private final CommentService commentService;
+    private final FlagCommentService flagCommentService;
 
     @Operation(summary = "코멘트 작성 요청")
     @PostMapping("post/{postId}/comment")
@@ -85,6 +87,20 @@ public class CommentController {
             return ApiResponse.success();
         } catch (ResponseStatusException e) {
             throw new BaseException(ErrorCode.FORBIDDEN);
+        }
+    }
+
+    @Operation(summary = "댓글 신고 생성", description = "특정 댓글을 신고합니다.")
+    @PostMapping("comment/{commentId}/flag")
+    public ApiResponse<com.example.cbumanage.flagcomment.eto.CommentDTO.FlagCommentCreateResponse> createFlagComment(
+            @PathVariable Long commentId,
+            @RequestBody com.example.cbumanage.flagcomment.eto.CommentDTO.FlagCommentCreateRequest req,
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
+        try {
+            return ApiResponse.success(flagCommentService.createFlagComment(commentId, req, userId));
+        } catch (EntityNotFoundException e) {
+            throw new BaseException(ErrorCode.NOT_FOUND);
         }
     }
 }
