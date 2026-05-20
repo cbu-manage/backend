@@ -75,13 +75,12 @@ public class Gathering {
         return gathering;
     }
 
-    public void update(String title, GatheringType type, String description,
+    public void update(String title, String description,
                        LocalDateTime gatheringDate, String location, LocalDateTime voteDeadline) {
-        this.title = title;
-        this.type = type;
-        this.description = description;
-        this.gatheringDate = gatheringDate;
-        this.location = location;
+        if (title != null) this.title = title;
+        if (description != null) this.description = description;
+        if (gatheringDate != null) this.gatheringDate = gatheringDate;
+        if (location != null) this.location = location;
         this.voteDeadline = voteDeadline;
     }
 

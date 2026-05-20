@@ -138,7 +138,7 @@ public class GatheringService {
             throw new BaseException(ErrorCode.GATHERING_TYPE_IMMUTABLE);
         }
 
-        gathering.update(request.title(), request.type(), request.description(),
+        gathering.update(request.title(), request.description(),
                 request.gatheringDate(), request.location(), request.voteDeadline());
 
         User author = userRepository.findById(gathering.getAuthorId()).orElse(null);
