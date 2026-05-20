@@ -48,9 +48,6 @@ public class Gathering {
     @Column(nullable = false)
     private Boolean isDeleted = false;
 
-    @Column(nullable = false)
-    private Boolean isClosed = false;
-
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -59,8 +56,7 @@ public class Gathering {
     private LocalDateTime updatedAt;
 
     public boolean isVoteClosed() {
-        return Boolean.TRUE.equals(isClosed) ||
-                (voteDeadline != null && LocalDateTime.now().isAfter(voteDeadline));
+        return voteDeadline != null && LocalDateTime.now().isAfter(voteDeadline);
     }
 
     public static Gathering create(String title, GatheringType type, String description,
@@ -94,6 +90,6 @@ public class Gathering {
     }
 
     public void close() {
-        this.isClosed = true;
+        this.voteDeadline = LocalDateTime.now();
     }
 }

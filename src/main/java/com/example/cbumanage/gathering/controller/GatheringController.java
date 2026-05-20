@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,7 +34,7 @@ public class GatheringController {
                     "  - DINING은 무조건 전체 동아리원 포함, FAIR는 무조건 오픈 투표로 처리됨"
     )
     public ApiResponse<GatheringDTO.CreateResponse> createGathering(
-            @RequestBody GatheringDTO.CreateRequest request,
+            @Validated @RequestBody GatheringDTO.CreateRequest request,
             Authentication authentication) {
         Long memberId = Long.parseLong(authentication.getName());
         return ApiResponse.success(gatheringService.createGathering(request, memberId));
