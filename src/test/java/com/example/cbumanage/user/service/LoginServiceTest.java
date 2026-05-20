@@ -32,12 +32,11 @@ class LoginServiceTest {
     void deleteUserInvalidatesRefreshTokenAndSoftDeletesUser() {
         Long userId = 1L;
         User user = new User("user@example.com", 20240001L, "encoded-password");
-        when(userRepository.findByUserIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByUserIdAndDeletedAtIsNull(userId)).thenReturn(Optional.of(user));
 
         loginService.deleteUser(userId);
 
         verify(redisUtil).deleteData("refresh:" + userId);
-        assertThat(user.isDeleted()).isTrue();
         assertThat(user.getDeletedAt()).isNotNull();
         assertThat(user.getMemberStatus()).isEqualTo(MemberStatus.WITHDRAWN);
         verify(userRepository, never()).delete(any(User.class));

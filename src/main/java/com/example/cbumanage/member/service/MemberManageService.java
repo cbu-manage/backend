@@ -51,7 +51,7 @@ public class MemberManageService {
 
 	@Transactional(readOnly = true)
 	public List<User> getMembers(int page) {
-		Page<User> memberPage = userRepository.findByIsDeletedFalse(PageRequest.of(page, 10));
+		Page<User> memberPage = userRepository.findByDeletedAtIsNull(PageRequest.of(page, 10));
 		return memberPage.getContent();
 	}
 
@@ -69,14 +69,14 @@ public class MemberManageService {
 
 	@Transactional
 	public void updateUser(MemberUpdateDTO memberUpdateDTO) {
-		User user = userRepository.findByUserIdAndIsDeletedFalse(memberUpdateDTO.getUserId())
+		User user = userRepository.findByUserIdAndDeletedAtIsNull(memberUpdateDTO.getUserId())
 				.orElseThrow(MemberNotExistsException::new);
 		memberMapper.map(memberUpdateDTO, user);
 	}
 
 	@Transactional
 	public void deleteMember(final Long studentNumber) {
-		User user = userRepository.findByStudentNumberAndIsDeletedFalse(studentNumber)
+		User user = userRepository.findByStudentNumberAndDeletedAtIsNull(studentNumber)
 				.orElseThrow(MemberNotExistsException::new);
 		user.delete();
 	}

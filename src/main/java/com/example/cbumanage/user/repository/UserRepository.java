@@ -17,15 +17,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByStudentNumber(Long studentNumber);
     Optional<User> findByEmail(String email);
     Optional<User> findByUserUuid(UUID userUuid);
-    Optional<User> findByUserIdAndIsDeletedFalse(Long userId);
-    Optional<User> findByStudentNumberAndIsDeletedFalse(Long studentNumber);
-    Optional<User> findByUserUuidAndIsDeletedFalse(UUID userUuid);
-    Page<User> findByIsDeletedFalse(Pageable pageable);
+    Optional<User> findByUserIdAndDeletedAtIsNull(Long userId);
+    Optional<User> findByStudentNumberAndDeletedAtIsNull(Long studentNumber);
+    Optional<User> findByUserUuidAndDeletedAtIsNull(UUID userUuid);
+    Page<User> findByDeletedAtIsNull(Pageable pageable);
 
     @Query("""
             SELECT u
             FROM User u
-            WHERE u.isDeleted = false
+            WHERE u.deletedAt IS NULL
               AND u.userId NOT IN (SELECT d.userId FROM Dues d WHERE d.term = :term)
             """)
     List<User> findAllWithoutDues(@Param("term") String term);

@@ -1,15 +1,17 @@
 package com.example.cbumanage.email.controller;
 
 import com.example.cbumanage.email.dto.EmailAuthResponseDTO;
+import com.example.cbumanage.email.service.EmailService;
 import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.member.dto.MemberMailUpdateDTO;
-import com.example.cbumanage.email.service.EmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,8 +34,8 @@ public class EmailController {
     }
 
     @PostMapping("/update")
-    @Operation(summary = "사용자 메일 등록", description = "인증이 완료된 메일을 회원 정보에 업데이트 합니다.")
-    public ApiResponse<Void> updateMail(@RequestBody MemberMailUpdateDTO memberMailUpdateDTO) throws IOException {
+    @Operation(summary = "사용자 메일 등록", description = "인증이 완료된 메일을 회원 정보에 업데이트합니다.")
+    public ApiResponse<Void> updateMail(@RequestBody MemberMailUpdateDTO memberMailUpdateDTO) {
         emailService.updateUserMail(memberMailUpdateDTO);
         return ApiResponse.success();
     }
