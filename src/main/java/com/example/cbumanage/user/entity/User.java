@@ -66,8 +66,6 @@ public class User {
 
     private LocalDateTime deletedAt;
 
-    private boolean isDeleted = false;
-
     public User(String email, Long studentNumber, String password) {
         this.email = email;
         this.studentNumber = studentNumber;
@@ -135,7 +133,6 @@ public class User {
     }
 
     public void delete() {
-        this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
         this.memberStatus = MemberStatus.WITHDRAWN;
     }

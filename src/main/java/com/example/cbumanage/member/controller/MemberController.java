@@ -32,7 +32,7 @@ public class MemberController {
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ApiResponse<MemberDTO> getMember(@PathVariable Long id) {
-        User user = userRepository.findByUserIdAndIsDeletedFalse(id).orElseThrow();
+        User user = userRepository.findByUserIdAndDeletedAtIsNull(id).orElseThrow();
         return ApiResponse.success(memberMapper.map(user));
     }
 

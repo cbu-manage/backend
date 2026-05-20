@@ -31,11 +31,10 @@ class MemberManageServiceTest {
     void deleteMemberMarksUserAsDeletedWithoutHardDeleting() {
         Long studentNumber = 20240001L;
         User user = new User("user@example.com", studentNumber, "encoded-password");
-        when(userRepository.findByStudentNumberAndIsDeletedFalse(studentNumber)).thenReturn(Optional.of(user));
+        when(userRepository.findByStudentNumberAndDeletedAtIsNull(studentNumber)).thenReturn(Optional.of(user));
 
         memberManageService.deleteMember(studentNumber);
 
-        assertThat(user.isDeleted()).isTrue();
         assertThat(user.getDeletedAt()).isNotNull();
         assertThat(user.getMemberStatus()).isEqualTo(MemberStatus.WITHDRAWN);
         verify(userRepository, never()).delete(any(User.class));
