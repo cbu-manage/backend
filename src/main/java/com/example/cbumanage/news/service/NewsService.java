@@ -9,6 +9,7 @@ import com.example.cbumanage.news.repository.NewsRepository;
 import com.example.cbumanage.post.entity.Post;
 import com.example.cbumanage.post.entity.enums.PostCategory;
 import com.example.cbumanage.post.repository.PostRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -26,6 +27,7 @@ public class NewsService {
 
     private final NewsRepository newsRepository;
     private final PostRepository postRepository;
+    private final EntityManager entityManager;
 
     public Page<NewsDTO.NewsListItemDTO> getNewsList(Pageable pageable, NewsCategory category) {
         boolean includeDefaultCategory = category == NewsCategory.NOTICE;
@@ -43,9 +45,10 @@ public class NewsService {
     public NewsDTO.NewsDetailDTO getNewsDetail(Long newsId) {
         News news = findNewsOrThrow(newsId);
         postRepository.incrementViewCount(news.getPostId());
-        Post post = postRepository.findById(news.getPostId())
-                .orElseThrow(() -> new BaseException(ErrorCode.POST_NOT_FOUND));
-        return NewsDTO.NewsDetailDTO.from(news, post.getViewCount());
+        entityManager.clear();
+
+        News refreshedNews = findNewsOrThrow(newsId);
+        return NewsDTO.NewsDetailDTO.from(refreshedNews);
     }
 
     @Transactional
