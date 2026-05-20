@@ -29,8 +29,17 @@ public enum ErrorCode {
     GROUP_NOT_RECRUITING("E-GROUP-0004", "모집 중인 그룹이 아닙니다.", HttpStatus.BAD_REQUEST),
 
     //POST 공용
-    POST_NOT_FOUND("E-POST-0001", "게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+    POST_NOT_FOUND("E-POST-0001", "게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
+    // 회원가입 신청서 에러 코드
+    APPLICATION_NOT_FOUND("E-APP-0001", "신청서를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    APPLICATION_DUPLICATED("E-APP-0002", "이미 신청서가 존재합니다.", HttpStatus.CONFLICT),
+    APPLICATION_DECIDED("E-APP-0003", "수정기한이 지났습니다. 최종 결정된 신청서 입니다.", HttpStatus.BAD_REQUEST),
+    APPLICATION_CANCELLED("E-APP-0004", "이미 취소된 신청서 입니다.", HttpStatus.BAD_REQUEST),
+    INVALID_PIN("E-APP-0005", "PIN번호가 올바르지 않습니다.", HttpStatus.UNAUTHORIZED),
+    INVALID_APPLICATION_STATUS("E-APP-0006", "현재 상태에서 허용되지 않는 작업입니다.", HttpStatus.BAD_REQUEST),
+    QUESTION_NOT_FOUND("E-APP-0007", "질문을 찾을 수 없습니다", HttpStatus.NOT_FOUND),
+    FAIL_REASON_REQUIRED("E-APP-0009", "탈락 사유는 필수입니다. ", HttpStatus.BAD_REQUEST);
 
     private final String code;
     private final String message;
