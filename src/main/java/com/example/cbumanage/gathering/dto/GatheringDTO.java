@@ -3,7 +3,6 @@ package com.example.cbumanage.gathering.dto;
 import com.example.cbumanage.gathering.entity.enums.AttendanceStatus;
 import com.example.cbumanage.gathering.entity.enums.GatheringType;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -15,7 +14,7 @@ public class GatheringDTO {
     @Schema(description = "모임 등록 요청")
     public record CreateRequest(
             @Schema(description = "모임 제목", example = "신입생 환영 회식") String title,
-            @NotNull @Schema(description = "모임 유형 (DINING: 회식, FAIR: 박람회, OTHER: 기타)", example = "DINING") GatheringType type,
+            @Schema(description = "모임 유형 (DINING: 회식, FAIR: 박람회, OTHER: 기타)", example = "DINING") GatheringType type,
             @Schema(description = "모임 설명", example = "올해 신입생을 환영하는 자리입니다.") String description,
             @Schema(description = "모임 일시 (ISO 8601)", example = "2024-03-15T18:00:00") LocalDateTime gatheringDate,
             @Schema(description = "모임 장소", example = "학교 식당 1층") String location,
