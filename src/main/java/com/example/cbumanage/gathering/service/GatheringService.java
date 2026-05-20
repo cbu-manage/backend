@@ -10,8 +10,8 @@ import com.example.cbumanage.gathering.repository.GatheringRepository;
 import com.example.cbumanage.gathering.util.GatheringMapper;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
-import com.example.cbumanage.member.entity.CbuMember;
-import com.example.cbumanage.member.repository.CbuMemberRepository;
+import com.example.cbumanage.user.entity.User;
+import com.example.cbumanage.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +27,7 @@ public class GatheringService {
 
     private final GatheringRepository gatheringRepository;
     private final GatheringAttendanceRepository attendanceRepository;
-    private final CbuMemberRepository cbuMemberRepository;
+    private final UserRepository userRepository;
     private final GatheringMapper gatheringMapper;
 
     /**
@@ -38,7 +38,7 @@ public class GatheringService {
      */
     @Transactional
     public GatheringDTO.CreateResponse createGathering(GatheringDTO.CreateRequest request, Long memberId) {
-        CbuMember author = cbuMemberRepository.findById(memberId)
+        User author = userRepository.findById(memberId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
         boolean allMembersTarget = resolveAllMembersTarget(request.type(), request.allMembersTarget());
@@ -51,7 +51,7 @@ public class GatheringService {
         gatheringRepository.save(gathering);
 
         if (allMembersTarget) {
-            List<CbuMember> allMembers = cbuMemberRepository.findAll();
+            List<User> allMembers = userRepository.findAll();
             List<GatheringAttendance> attendances = allMembers.stream()
                     .map(m -> GatheringAttendance.create(gathering, m, AttendanceStatus.UNDECIDED))
                     .toList();
@@ -82,8 +82,8 @@ public class GatheringService {
 
         // 작성자 일괄 조회
         Set<Long> authorIds = gatherings.stream().map(Gathering::getAuthorId).collect(Collectors.toSet());
-        Map<Long, CbuMember> authorMap = cbuMemberRepository.findAllById(authorIds).stream()
-                .collect(Collectors.toMap(CbuMember::getCbuMemberId, m -> m));
+        Map<Long, User> authorMap = userRepository.findAllById(authorIds).stream()
+                .collect(Collectors.toMap(User::getUserId, m -> m));
 
         // 전체 모임의 참석 데이터 일괄 조회
         List<GatheringAttendance> allAttendances = attendanceRepository.findAllByGatheringIdIn(gatheringIds);
@@ -94,7 +94,7 @@ public class GatheringService {
 
         // 내 투표 상태 모임별 맵핑
         Map<Long, AttendanceStatus> myStatusByGathering = allAttendances.stream()
-                .filter(a -> a.getMember().getCbuMemberId().equals(memberId))
+                .filter(a -> a.getMember().getUserId().equals(memberId))
                 .collect(Collectors.toMap(a -> a.getGathering().getId(), GatheringAttendance::getStatus));
 
         return gatherings.stream()
@@ -117,9 +117,9 @@ public class GatheringService {
     @Transactional(readOnly = true)
     public GatheringDTO.GatheringResponse getGathering(Long gatheringId, Long memberId) {
         Gathering gathering = findGathering(gatheringId);
-        CbuMember author = cbuMemberRepository.findById(gathering.getAuthorId()).orElse(null);
+        User author = userRepository.findById(gathering.getAuthorId()).orElse(null);
         AttendanceStatus myStatus = attendanceRepository
-                .findByGatheringIdAndMemberCbuMemberId(gatheringId, memberId)
+                .findByGatheringIdAndMemberUserId(gatheringId, memberId)
                 .map(GatheringAttendance::getStatus)
                 .orElse(null);
         return gatheringMapper.toGatheringResponse(gathering, author, myStatus, buildSummaryByCount(gatheringId));
@@ -127,15 +127,21 @@ public class GatheringService {
 
     /**
      * 모임 정보를 수정합니다. 작성자만 수정할 수 있습니다.
-     * voteDeadline을 미래 일시로 변경하면 마감된 투표가 재오픈됩니다.
+     * 유형(type)은 변경 불가 — 변경이 필요하면 삭제 후 재생성해야 합니다.
      */
     @Transactional
     public GatheringDTO.GatheringResponse updateGathering(Long gatheringId, GatheringDTO.UpdateRequest request, Long memberId) {
         Gathering gathering = findGathering(gatheringId);
         validateCreator(gathering, memberId);
+
+        if (request.type() != null && request.type() != gathering.getType()) {
+            throw new BaseException(ErrorCode.GATHERING_TYPE_IMMUTABLE);
+        }
+
         gathering.update(request.title(), request.type(), request.description(),
                 request.gatheringDate(), request.location(), request.voteDeadline());
-        CbuMember author = cbuMemberRepository.findById(gathering.getAuthorId()).orElse(null);
+
+        User author = userRepository.findById(gathering.getAuthorId()).orElse(null);
         return gatheringMapper.toGatheringResponse(gathering, author, null, buildSummaryByCount(gatheringId));
     }
 
@@ -172,10 +178,10 @@ public class GatheringService {
             throw new BaseException(ErrorCode.VOTE_CLOSED);
         }
 
-        CbuMember member = cbuMemberRepository.findById(memberId)
+        User member = userRepository.findById(memberId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
-        attendanceRepository.findByGatheringIdAndMemberCbuMemberId(gatheringId, memberId)
+        attendanceRepository.findByGatheringIdAndMemberUserId(gatheringId, memberId)
                 .ifPresentOrElse(
                         a -> a.updateStatus(status),
                         () -> attendanceRepository.save(GatheringAttendance.create(gathering, member, status))

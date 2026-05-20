@@ -4,7 +4,7 @@ import com.example.cbumanage.gathering.dto.GatheringDTO;
 import com.example.cbumanage.gathering.entity.Gathering;
 import com.example.cbumanage.gathering.entity.GatheringAttendance;
 import com.example.cbumanage.gathering.entity.enums.AttendanceStatus;
-import com.example.cbumanage.member.entity.CbuMember;
+import com.example.cbumanage.user.entity.User;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 @Component
 public class GatheringMapper {
 
-    public GatheringDTO.CreateResponse toCreateResponse(Gathering gathering, CbuMember author) {
+    public GatheringDTO.CreateResponse toCreateResponse(Gathering gathering, User author) {
         return GatheringDTO.CreateResponse.builder()
                 .id(gathering.getId())
                 .title(gathering.getTitle())
@@ -30,7 +30,7 @@ public class GatheringMapper {
                 .build();
     }
 
-    public GatheringDTO.GatheringResponse toGatheringResponse(Gathering gathering, CbuMember author,
+    public GatheringDTO.GatheringResponse toGatheringResponse(Gathering gathering, User author,
                                                                AttendanceStatus myStatus,
                                                                GatheringDTO.AttendanceSummary summary) {
         return GatheringDTO.GatheringResponse.builder()
@@ -80,9 +80,9 @@ public class GatheringMapper {
                 .build();
     }
 
-    public GatheringDTO.MemberInfo toMemberInfo(CbuMember member) {
+    public GatheringDTO.MemberInfo toMemberInfo(User member) {
         return GatheringDTO.MemberInfo.builder()
-                .memberId(member.getCbuMemberId())
+                .memberId(member.getUserId())
                 .name(member.getName())
                 .major(member.getMajor())
                 .grade(member.getGrade())

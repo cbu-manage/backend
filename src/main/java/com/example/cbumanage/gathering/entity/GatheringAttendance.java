@@ -1,7 +1,7 @@
 package com.example.cbumanage.gathering.entity;
 
 import com.example.cbumanage.gathering.entity.enums.AttendanceStatus;
-import com.example.cbumanage.member.entity.CbuMember;
+import com.example.cbumanage.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "gathering_attendance",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"gathering_id", "cbu_member_id"}))
+        uniqueConstraints = @UniqueConstraint(columnNames = {"gathering_id", "user_id"}))
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -28,8 +28,8 @@ public class GatheringAttendance {
     private Gathering gathering;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cbu_member_id", nullable = false)
-    private CbuMember member;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User member;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -38,7 +38,7 @@ public class GatheringAttendance {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    public static GatheringAttendance create(Gathering gathering, CbuMember member, AttendanceStatus status) {
+    public static GatheringAttendance create(Gathering gathering, User member, AttendanceStatus status) {
         GatheringAttendance attendance = new GatheringAttendance();
         attendance.gathering = gathering;
         attendance.member = member;

@@ -12,7 +12,8 @@ import java.util.Optional;
 public interface GatheringAttendanceRepository extends JpaRepository<GatheringAttendance, Long> {
 
     // 단건 조회 (투표 여부 확인, 재투표 처리)
-    Optional<GatheringAttendance> findByGatheringIdAndMemberCbuMemberId(Long gatheringId, Long memberId);
+    Optional<GatheringAttendance> findByGatheringIdAndMemberUserId(Long gatheringId, Long memberId);
+
 
     // 단일 모임 참석 명단 조회 - JOIN FETCH로 member 지연로딩 N+1 방지
     @Query("SELECT a FROM GatheringAttendance a JOIN FETCH a.member WHERE a.gathering.id = :gatheringId")
