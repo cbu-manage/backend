@@ -53,6 +53,10 @@ public class News {
     @Getter(AccessLevel.NONE)
     private LocalDateTime deletedAt;
 
+    @Column(name = "search_text", columnDefinition = "TEXT")
+    @Getter(AccessLevel.NONE)
+    private String searchText = "";
+
     private News(Post post, NewsCategory category) {
         this.post = post;
         this.category = category == null ? NewsCategory.NOTICE : category;
@@ -95,6 +99,10 @@ public class News {
         if (category != null) {
             this.category = category;
         }
+    }
+
+    public void changeSearchText(String searchText) {
+        this.searchText = searchText == null ? "" : searchText;
     }
 
     public void softDelete() {

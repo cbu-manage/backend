@@ -53,6 +53,63 @@ public interface NewsRepository extends JpaRepository<News, Long> {
             @Param("includeDefaultCategory") boolean includeDefaultCategory
     );
 
+    @Query(
+            value = """
+                    SELECT n.*
+                    FROM news n
+                    JOIN post p ON p.post_id = n.post_id
+                    WHERE n.deleted_at IS NULL
+                      AND p.is_deleted = false
+                      AND n.is_pinned = false
+                      AND (:categoryName IS NULL
+                           OR n.news_category = :categoryName
+                           OR (:includeDefaultCategory = true AND n.news_category IS NULL))
+                      AND MATCH(n.search_text) AGAINST (:searchQuery IN BOOLEAN MODE)
+                    ORDER BY p.created_at DESC, n.news_id DESC
+                    """,
+            countQuery = """
+                    SELECT COUNT(*)
+                    FROM news n
+                    JOIN post p ON p.post_id = n.post_id
+                    WHERE n.deleted_at IS NULL
+                      AND p.is_deleted = false
+                      AND n.is_pinned = false
+                      AND (:categoryName IS NULL
+                           OR n.news_category = :categoryName
+                           OR (:includeDefaultCategory = true AND n.news_category IS NULL))
+                      AND MATCH(n.search_text) AGAINST (:searchQuery IN BOOLEAN MODE)
+                    """,
+            nativeQuery = true
+    )
+    Page<News> searchRegularNews(
+            @Param("categoryName") String categoryName,
+            @Param("includeDefaultCategory") boolean includeDefaultCategory,
+            @Param("searchQuery") String searchQuery,
+            Pageable pageable
+    );
+
+    @Query(
+            value = """
+                    SELECT n.*
+                    FROM news n
+                    JOIN post p ON p.post_id = n.post_id
+                    WHERE n.deleted_at IS NULL
+                      AND p.is_deleted = false
+                      AND n.is_pinned = true
+                      AND (:categoryName IS NULL
+                           OR n.news_category = :categoryName
+                           OR (:includeDefaultCategory = true AND n.news_category IS NULL))
+                      AND MATCH(n.search_text) AGAINST (:searchQuery IN BOOLEAN MODE)
+                    ORDER BY n.pinned_at DESC, n.news_id DESC
+                    """,
+            nativeQuery = true
+    )
+    List<News> searchPinnedNews(
+            @Param("categoryName") String categoryName,
+            @Param("includeDefaultCategory") boolean includeDefaultCategory,
+            @Param("searchQuery") String searchQuery
+    );
+
     @EntityGraph(attributePaths = "post")
     @Query("SELECT n FROM News n WHERE n.post.authorId = :authorId AND n.post.isDeleted = false")
     Page<News> findByAuthorId(@Param("authorId") Long authorId, Pageable pageable);
