@@ -7,8 +7,6 @@ import com.example.cbumanage.global.common.TokenInfo;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.global.util.RedisUtil;
-import com.example.cbumanage.member.entity.CbuMember;
-import com.example.cbumanage.member.repository.CbuMemberRepository;
 import com.example.cbumanage.user.dto.MyInfoResponse;
 import com.example.cbumanage.user.dto.PasswordChangeRequest;
 import com.example.cbumanage.user.dto.PasswordResetRequest;
@@ -26,14 +24,12 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
-import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class LoginService {
     private final UserRepository userRepository;
-    private final CbuMemberRepository cbuMemberRepository;
     private final JwtProvider jwtProvider;
     private final SuccessCandidateRepository successCandidateRepository;
     private final RedisUtil redisUtil;
@@ -56,26 +52,26 @@ public class LoginService {
         userRepository.findByStudentNumber(request.studentNumber()).ifPresent(u -> {
             throw new BaseException(ErrorCode.ALREADY_JOINED_MEMBER);
         });
+        userRepository.findByEmail(request.email()).ifPresent(u -> {
+            throw new BaseException(ErrorCode.DUPLICATE_RESOURCE);
+        });
 
         User user = new User(
+                null,
+                candidate.getStudentNumber(),
+                hashPassword(request.password()),
                 request.email(),
-                request.studentNumber(),
-                hashPassword(request.password())
+                candidate.getName(),
+                candidate.getPhoneNumber(),
+                candidate.getMajor(),
+                candidate.getGrade(),
+                null
         );
         userRepository.save(user);
-
-        CbuMember member = new CbuMember();
-        member.setName(candidate.getName());
-        member.setStudentNumber(candidate.getStudentNumber());
-        member.setPhoneNumber(candidate.getPhoneNumber());
-        member.setMajor(candidate.getMajor());
-        member.setGrade(candidate.getGrade());
-        member.setRole(List.of(com.example.cbumanage.member.entity.enums.Role.MEMBER));
-        cbuMemberRepository.save(member);
     }
 
     public LoginResult login(UserLoginRequest request) {
-        User user = userRepository.findByStudentNumber(request.studentNumber())
+        User user = userRepository.findByStudentNumberAndIsDeletedFalse(request.studentNumber())
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
         if (!hashPassword(request.password()).equals(user.getPassword())) {
@@ -94,28 +90,24 @@ public class LoginService {
                 refreshExpireTime / 1000
         );
 
-        String name = cbuMemberRepository.findNameByStudentNumber(user.getStudentNumber());
-        return new LoginResult(tokenInfo, name, user.getEmail(), user.getRole().name());
+        return new LoginResult(tokenInfo, user.getName(), user.getEmail(), user.getRole().name());
     }
 
     public record LoginResult(TokenInfo tokenInfo, String name, String email, String role) {}
 
     public MyInfoResponse getMyInfo(Long userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByUserIdAndIsDeletedFalse(userId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
-
-        CbuMember member = cbuMemberRepository.findByStudentNumber(user.getStudentNumber())
-                .orElse(null);
 
         return new MyInfoResponse(
                 user.getUserId(),
-                member != null ? member.getName() : null,
+                user.getName(),
                 user.getEmail(),
                 user.getRole().name(),
                 user.getStudentNumber(),
-                member != null ? member.getMajor() : null,
-                member != null ? member.getGrade() : null,
-                member != null ? member.getGeneration() : null
+                user.getMajor(),
+                user.getGrade(),
+                user.getGeneration()
         );
     }
 
@@ -126,7 +118,7 @@ public class LoginService {
 
         Claims claims = jwtProvider.getClaims(refreshToken);
         UUID userUuid = UUID.fromString(claims.getSubject());
-        User user = userRepository.findByUserUuid(userUuid)
+        User user = userRepository.findByUserUuidAndIsDeletedFalse(userUuid)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
         String storedToken = redisUtil.getData(REFRESH_KEY_PREFIX + user.getUserId());
@@ -155,15 +147,15 @@ public class LoginService {
 
     @Transactional
     public void deleteUser(Long userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByUserIdAndIsDeletedFalse(userId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
         redisUtil.deleteData(REFRESH_KEY_PREFIX + userId);
-        userRepository.delete(user);
+        user.delete();
     }
 
     @Transactional
     public void changePassword(Long userId, PasswordChangeRequest request) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByUserIdAndIsDeletedFalse(userId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
         if (!hashPassword(request.currentPassword()).equals(user.getPassword())) {
@@ -181,7 +173,7 @@ public class LoginService {
             throw new BaseException(ErrorCode.INVALID_REQUEST);
         }
 
-        User user = userRepository.findByStudentNumber(request.studentNumber())
+        User user = userRepository.findByStudentNumberAndIsDeletedFalse(request.studentNumber())
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getEmail() == null || !user.getEmail().equals(request.email())) {

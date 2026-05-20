@@ -1,16 +1,14 @@
 package com.example.cbumanage.member.dto;
 
-import com.example.cbumanage.member.entity.enums.Role;
+import com.example.cbumanage.user.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.util.List;
 
 @Data
 @AllArgsConstructor
 public class MemberDTO {
 	private Long id;
-	private List<Role> role;
+	private Role role;
 	private String name;
 	private String phoneNumber;
 	private String major;

@@ -11,7 +11,7 @@ public class StudyApplyMapper {
         return StudyApplyDTO.StudyApplyInfoDTO.builder()
                 .applyId(apply.getId())
                 .studyId(apply.getStudy().getId())
-                .applicantId(apply.getApplicant().getCbuMemberId())
+                .applicantId(apply.getApplicant().getUserId())
                 .applicantName(apply.getApplicant().getName())
                 .major(apply.getApplicant().getMajor())
                 .grade(apply.getApplicant().getGrade())
