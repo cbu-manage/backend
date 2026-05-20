@@ -1,5 +1,7 @@
 package com.example.cbumanage.news.entity;
 
+import com.example.cbumanage.global.error.BaseException;
+import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.post.entity.Post;
 import com.example.cbumanage.news.entity.enums.NewsCategory;
 import com.example.cbumanage.post.entity.enums.PostCategory;
@@ -58,8 +60,7 @@ public class News {
 
     public static News create(Post post, NewsCategory category) {
         if (post.getCategory() != PostCategory.NEWS.getValue()) {
-            throw new IllegalArgumentException(
-                    "News must be created from a Post of category NEWS, but was: " + post.getCategory());
+            throw new BaseException(ErrorCode.NEWS_INVALID_POST_CATEGORY);
         }
         return new News(post, category);
     }
