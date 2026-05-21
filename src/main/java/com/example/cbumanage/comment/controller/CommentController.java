@@ -92,9 +92,9 @@ public class CommentController {
 
     @Operation(summary = "댓글 신고 생성", description = "특정 댓글을 신고합니다.")
     @PostMapping("comment/{commentId}/flag")
-    public ApiResponse<com.example.cbumanage.flagcomment.eto.CommentDTO.FlagCommentCreateResponse> createFlagComment(
+    public ApiResponse<com.example.cbumanage.flagcomment.dto.CommentDTO.FlagCommentCreateResponse> createFlagComment(
             @PathVariable Long commentId,
-            @RequestBody com.example.cbumanage.flagcomment.eto.CommentDTO.FlagCommentCreateRequest req,
+            @RequestBody com.example.cbumanage.flagcomment.dto.CommentDTO.FlagCommentCreateRequest req,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         try {

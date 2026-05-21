@@ -46,8 +46,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -70,6 +72,19 @@ public class PostReportHWPService {
 
     public record HWPExportResult(String title, byte[] hwpBytes) {}
     public record ZipExportResult(String fileName, byte[] zipBytes) {}
+
+    public static class ZipPartialFailureException extends RuntimeException {
+        private final List<String> failedReports;
+
+        public ZipPartialFailureException(List<String> failedReports) {
+            super("일부 보고서 HWP 생성 실패");
+            this.failedReports = failedReports;
+        }
+
+        public List<String> getFailedReports() {
+            return failedReports;
+        }
+    }
 
     /**
      * ADMIN / MANAGER 권한 확인 후 보고서 HWP 파일 생성
@@ -100,30 +115,47 @@ public class PostReportHWPService {
             throw new EntityNotFoundException("해당 그룹에 보고서가 없습니다.");
         }
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        int successCount = 0;
-        try (ZipOutputStream zos = new ZipOutputStream(baos, StandardCharsets.UTF_8)) {
-            for (PostReport report : reports) {
-                Post post = postRepository.findById(report.getPost().getId())
-                        .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-
-                byte[] hwpBytes;
-                try {
-                    hwpBytes = buildHWPBytes(post, report);
-                } catch (Exception ignored) {
-                    // 개별 HWP 생성 실패 시 해당 항목만 건너뜀
-                    continue;
-                }
-
-                zos.putNextEntry(new ZipEntry(post.getTitle() + ".hwp"));
-                zos.write(hwpBytes);
-                zos.closeEntry();
-                successCount++;
+        // 1단계: 모든 보고서 HWP 생성 시도, 실패 수집
+        List<String> failedReports = new ArrayList<>();
+        List<Object[]> built = new ArrayList<>(); // [Post, byte[]]
+        for (PostReport report : reports) {
+            Post post = postRepository.findById(report.getPost().getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+            try {
+                byte[] hwpBytes = buildHWPBytes(post, report);
+                built.add(new Object[]{post, hwpBytes});
+            } catch (Exception e) {
+                failedReports.add(post.getTitle() + ": " + e.getMessage());
             }
         }
 
-        if (successCount == 0) {
-            throw new IllegalStateException("모든 보고서의 HWP 생성에 실패했습니다.");
+        if (!failedReports.isEmpty()) {
+            throw new ZipPartialFailureException(failedReports);
+        }
+
+        // 2단계: 전부 성공한 경우에만 ZIP 생성
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ZipOutputStream zos = new ZipOutputStream(baos, StandardCharsets.UTF_8)) {
+            Set<String> usedNames = new HashSet<>();
+            for (Object[] item : built) {
+                Post post = (Post) item[0];
+                byte[] hwpBytes = (byte[]) item[1];
+
+                String baseName = sanitizeFileName(post.getTitle());
+                String entryName = baseName + ".hwp";
+                if (usedNames.contains(entryName)) {
+                    int counter = 1;
+                    do {
+                        entryName = baseName + "_" + counter + ".hwp";
+                        counter++;
+                    } while (usedNames.contains(entryName));
+                }
+                usedNames.add(entryName);
+
+                zos.putNextEntry(new ZipEntry(entryName));
+                zos.write(hwpBytes);
+                zos.closeEntry();
+            }
         }
 
         String zipFileName = sanitizeFileName(group.getGroupName()) + "_report.zip";

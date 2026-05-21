@@ -4,6 +4,8 @@ import com.example.cbumanage.flagpost.dto.FlagPostDTO;
 import com.example.cbumanage.flagpost.entity.FlagPost;
 import com.example.cbumanage.flagpost.repository.FlagPostRepository;
 import com.example.cbumanage.flagpost.util.FlagPostMapper;
+import com.example.cbumanage.global.error.BaseException;
+import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.post.repository.PostRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -22,8 +24,11 @@ public class FlagPostService {
 
     @Transactional
     public FlagPostDTO.FlagPostCreateResponse createFlagPost(Long postId, FlagPostDTO.FlagPostCreateRequest req, Long userId) {
-        postRepository.findById(postId)
+        postRepository.findByIdAndIsDeletedFalse(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        if (flagPostRepository.existsByAuthorIdAndPostIdAndIsDeletedFalse(userId, postId)) {
+            throw new BaseException(ErrorCode.DUPLICATE_RESOURCE);
+        }
         FlagPost flagPost = FlagPost.create(userId, postId, req.content());
         FlagPost saved = flagPostRepository.save(flagPost);
         return flagPostMapper.toFlagPostCreateResponse(saved);

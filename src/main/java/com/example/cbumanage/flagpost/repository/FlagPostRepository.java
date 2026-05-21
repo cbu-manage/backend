@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -18,7 +17,7 @@ public interface FlagPostRepository extends JpaRepository<FlagPost, Long> {
 
     Optional<FlagPost> findByIdAndIsDeletedFalse(Long id);
 
-    List<FlagPost> findAllByPostIdAndIsDeletedFalse(Long postId);
+    boolean existsByAuthorIdAndPostIdAndIsDeletedFalse(Long authorId, Long postId);
 
     @Modifying
     @Query("UPDATE FlagPost f SET f.isDeleted = true WHERE f.postId = :postId AND f.isDeleted = false")

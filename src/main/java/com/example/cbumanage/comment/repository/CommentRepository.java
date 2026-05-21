@@ -7,9 +7,12 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
+
+    Optional<Comment> findByIdAndIsDeletedFalse(Long id);
     //부모댓글이 없는댓글(답글이 아닌 댓글)만 찾아서 선착순으로 정렬합니다
 //    List<Comment> findByPostIdAndParentCommentIsNullOrderByCreatedAtAsc(Long postId);
 

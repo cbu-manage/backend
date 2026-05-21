@@ -1,6 +1,4 @@
-package com.example.cbumanage.flagcomment.eto;
-
-import io.swagger.v3.oas.annotations.media.Schema;
+package com.example.cbumanage.flagcomment.dto;
 
 import java.time.LocalDateTime;
 
@@ -47,8 +45,4 @@ public class CommentDTO {
             String authorName,
             Long authorGeneration
     ){}
-
-
-
-
 }

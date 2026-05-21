@@ -1,7 +1,7 @@
 package com.example.cbumanage.flagcomment.repository;
 
 import com.example.cbumanage.flagcomment.entity.FlagComment;
-import com.example.cbumanage.flagcomment.eto.CommentDTO;
+import com.example.cbumanage.flagcomment.dto.CommentDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,12 +17,14 @@ public interface FlagCommentRepository extends JpaRepository<FlagComment, Long> 
 
     Optional<FlagComment> findByIdAndIsDeletedFalse(Long id);
 
+    boolean existsByAuthorIdAndCommentIdAndIsDeletedFalse(Long authorId, Long commentId);
+
     @Modifying
     @Query("UPDATE FlagComment f SET f.isDeleted = true WHERE f.commentId = :commentId AND f.isDeleted = false")
     void softDeleteAllByCommentId(@Param("commentId") Long commentId);
 
     @Query(value = """
-            select new com.example.cbumanage.flagcomment.eto.CommentDTO$FlagCommentPreviewDTO(
+            select new com.example.cbumanage.flagcomment.dto.CommentDTO$FlagCommentPreviewDTO(
                 f.id, f.content, f.createdAt,
                 c.id, c.content,
                 u.userId, u.name, u.generation

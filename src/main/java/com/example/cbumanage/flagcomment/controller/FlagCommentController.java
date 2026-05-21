@@ -1,6 +1,6 @@
 package com.example.cbumanage.flagcomment.controller;
 
-import com.example.cbumanage.flagcomment.eto.CommentDTO;
+import com.example.cbumanage.flagcomment.dto.CommentDTO;
 import com.example.cbumanage.flagcomment.service.FlagCommentService;
 import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.global.error.BaseException;

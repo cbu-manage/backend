@@ -3,7 +3,7 @@ package com.example.cbumanage.flagcomment.util;
 import com.example.cbumanage.comment.entity.Comment;
 import com.example.cbumanage.comment.repository.CommentRepository;
 import com.example.cbumanage.flagcomment.entity.FlagComment;
-import com.example.cbumanage.flagcomment.eto.CommentDTO;
+import com.example.cbumanage.flagcomment.dto.CommentDTO;
 import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
