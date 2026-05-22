@@ -59,6 +59,7 @@ dependencies {
     implementation "com.github.gotson.nightmonkeys:imageio-heif:1.1.0"
     implementation 'org.jsoup:jsoup:1.17.2'
     implementation 'kr.dogfoot:hwplib:1.1.9'
+    implementation 'org.apache.pdfbox:pdfbox:3.0.3'
 
 
 }

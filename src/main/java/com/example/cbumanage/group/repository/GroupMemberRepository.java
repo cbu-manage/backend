@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> {
@@ -37,4 +38,7 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> 
       AND gm.groupMemberStatus = :status
 """)
     boolean existsActiveMember(Long userId, Long groupId, GroupMemberStatus status);
+
+    @Query("SELECT gm.group.id FROM GroupMember gm WHERE gm.user.userId = :userId AND gm.groupMemberStatus = :status")
+    List<Long> findGroupIdsByUserIdAndStatus(Long userId, GroupMemberStatus status);
 }

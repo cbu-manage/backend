@@ -44,7 +44,7 @@ public class PostReportService {
     public PostReport createReport(PostDTO.ReportCreateDTO req) {
         Post post = postRepository.findById(req.postId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         Group group = groupRepository.findById(req.groupId());
-        PostReport report = PostReport.create(post, req.groupId(), req.type(), req.date(), req.location(), req.reportImage());
+        PostReport report = PostReport.create(post, req.groupId(), req.type(), req.date(), req.location(), req.reportImage(), req.reportFile(), req.reflection(), req.nextPlan());
         PostReport saved = postReportRepository.save(report);
         return saved;
     }
@@ -71,9 +71,19 @@ public class PostReportService {
 
 fetch join -> 해결
  */
-    public Page<PostDTO.PostReportPreviewDTO> getPostReportPreviewDTOList(Pageable pageable){
-        Page<PostDTO.PostReportPreviewDTO> reportPreviewDTOS = postReportRepository.findPostReportPreviews(pageable,7);
-        return reportPreviewDTOS;
+    public Page<PostDTO.PostReportPreviewDTO> getPostReportPreviewDTOList(Pageable pageable, Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        boolean isAdmin = user.getRole() == Role.ROLE_ADMIN || user.getRole() == Role.ROLE_MANAGER;
+
+        if (isAdmin) {
+            return postReportRepository.findPostReportPreviews(pageable, 7);
+        }
+
+        List<Long> groupIds = groupMemberRepository.findGroupIdsByUserIdAndStatus(userId, GroupMemberStatus.ACTIVE);
+        if (groupIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return postReportRepository.findPostReportPreviewsByGroupIds(pageable, 7, groupIds);
     }
 
     public Page<PostDTO.PostReportPreviewDTO> getGroupPostReportPreviewDTOList(Pageable pageable, Long groupId) {
@@ -94,7 +104,6 @@ fetch join -> 해결
         Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
         boolean isAdmin = user.getRole() == Role.ROLE_ADMIN || user.getRole() == Role.ROLE_MANAGER;
-        boolean isAuthor = post.getAuthorId().equals(userId);
         boolean isActiveMember =
                 groupMemberRepository.existsActiveMember(
                         userId,
@@ -102,7 +111,7 @@ fetch join -> 해결
                         GroupMemberStatus.ACTIVE
                 );
 
-        if (!(isAdmin || isAuthor || isActiveMember)) {
+        if (!(isAdmin || isActiveMember)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         return postMapper.toPostReportViewDTO(post, report);
@@ -143,6 +152,9 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
         postReport.changeDate(postUpdateDTO.date());
         postReport.changeLocation(postUpdateDTO.location());
         postReport.changeReportImage(postUpdateDTO.reportImage());
+        postReport.changeReportFile(postUpdateDTO.reportFile());
         postReport.changeType(postUpdateDTO.type());
+        postReport.changeReflection(postUpdateDTO.reflection());
+        postReport.changeNextPlan(postUpdateDTO.nextPlan());
     }
 }
