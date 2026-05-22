@@ -53,7 +53,7 @@ public class News {
     @Getter(AccessLevel.NONE)
     private LocalDateTime deletedAt;
 
-    @Column(name = "search_text", columnDefinition = "TEXT")
+    @Column(name = "search_text", nullable = false, columnDefinition = "TEXT")
     @Getter(AccessLevel.NONE)
     private String searchText = "";
 

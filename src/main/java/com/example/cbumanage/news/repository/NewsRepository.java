@@ -1,7 +1,7 @@
 package com.example.cbumanage.news.repository;
 
-import com.example.cbumanage.news.entity.enums.NewsCategory;
 import com.example.cbumanage.news.entity.News;
+import com.example.cbumanage.news.entity.enums.NewsCategory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -55,7 +55,7 @@ public interface NewsRepository extends JpaRepository<News, Long> {
 
     @Query(
             value = """
-                    SELECT n.*
+                    SELECT n.news_id
                     FROM news n
                     JOIN post p ON p.post_id = n.post_id
                     WHERE n.deleted_at IS NULL
@@ -78,10 +78,10 @@ public interface NewsRepository extends JpaRepository<News, Long> {
                            OR n.news_category = :categoryName
                            OR (:includeDefaultCategory = true AND n.news_category IS NULL))
                       AND MATCH(n.search_text) AGAINST (:searchQuery IN BOOLEAN MODE)
-                    """,
+            """,
             nativeQuery = true
     )
-    Page<News> searchRegularNews(
+    Page<Long> searchRegularNewsIds(
             @Param("categoryName") String categoryName,
             @Param("includeDefaultCategory") boolean includeDefaultCategory,
             @Param("searchQuery") String searchQuery,
@@ -90,7 +90,7 @@ public interface NewsRepository extends JpaRepository<News, Long> {
 
     @Query(
             value = """
-                    SELECT n.*
+                    SELECT n.news_id
                     FROM news n
                     JOIN post p ON p.post_id = n.post_id
                     WHERE n.deleted_at IS NULL
@@ -101,14 +101,18 @@ public interface NewsRepository extends JpaRepository<News, Long> {
                            OR (:includeDefaultCategory = true AND n.news_category IS NULL))
                       AND MATCH(n.search_text) AGAINST (:searchQuery IN BOOLEAN MODE)
                     ORDER BY n.pinned_at DESC, n.news_id DESC
-                    """,
+            """,
             nativeQuery = true
     )
-    List<News> searchPinnedNews(
+    List<Long> searchPinnedNewsIds(
             @Param("categoryName") String categoryName,
             @Param("includeDefaultCategory") boolean includeDefaultCategory,
             @Param("searchQuery") String searchQuery
     );
+
+    @EntityGraph(attributePaths = "post")
+    @Query("SELECT n FROM News n WHERE n.newsId IN :newsIds AND n.post.isDeleted = false")
+    List<News> findAllByNewsIdInWithPost(@Param("newsIds") List<Long> newsIds);
 
     @EntityGraph(attributePaths = "post")
     @Query("SELECT n FROM News n WHERE n.post.authorId = :authorId AND n.post.isDeleted = false")

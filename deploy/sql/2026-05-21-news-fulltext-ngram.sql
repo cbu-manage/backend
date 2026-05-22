@@ -1,4 +1,5 @@
 -- News keyword search index.
+-- Production uses ddl-auto=none, so apply this script before deploying News keyword search.
 -- Before applying, verify MySQL ngram parser is available and ngram_token_size=2.
 -- This script tolerates ddl-auto=update creating news.search_text before the migration runs.
 

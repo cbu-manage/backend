@@ -14,12 +14,16 @@ import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -108,28 +112,46 @@ public class NewsService {
     private NewsDTO.NewsListResponseDTO searchNewsList(Pageable pageable, NewsCategory category, String keyword, List<String> searchTokens) {
         boolean includeDefaultCategory = category == NewsCategory.NOTICE;
         String categoryName = category == null ? null : category.name();
+        Pageable searchPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
 
         String andQuery = NewsSearchTextNormalizer.toRequiredBooleanQuery(searchTokens);
-        List<News> pinned = newsRepository.searchPinnedNews(categoryName, includeDefaultCategory, andQuery);
-        Page<News> regular = newsRepository.searchRegularNews(categoryName, includeDefaultCategory, andQuery, pageable);
+        List<Long> pinnedIds = newsRepository.searchPinnedNewsIds(categoryName, includeDefaultCategory, andQuery);
+        Page<Long> regularIds = newsRepository.searchRegularNewsIds(categoryName, includeDefaultCategory, andQuery, searchPageable);
         NewsDTO.NewsSearchMode mode = NewsDTO.NewsSearchMode.AND;
         boolean fallbackApplied = false;
 
-        if (pinned.isEmpty() && regular.getTotalElements() == 0 && searchTokens.size() >= 2) {
+        if (pinnedIds.isEmpty() && regularIds.getTotalElements() == 0 && searchTokens.size() >= 2) {
             String orQuery = NewsSearchTextNormalizer.toOptionalBooleanQuery(searchTokens);
-            pinned = newsRepository.searchPinnedNews(categoryName, includeDefaultCategory, orQuery);
-            regular = newsRepository.searchRegularNews(categoryName, includeDefaultCategory, orQuery, pageable);
+            pinnedIds = newsRepository.searchPinnedNewsIds(categoryName, includeDefaultCategory, orQuery);
+            regularIds = newsRepository.searchRegularNewsIds(categoryName, includeDefaultCategory, orQuery, searchPageable);
             mode = NewsDTO.NewsSearchMode.OR_FALLBACK;
             fallbackApplied = true;
         }
 
-        List<NewsDTO.NewsListItemDTO> items = new ArrayList<>(pinned.size() + regular.getNumberOfElements());
+        List<News> pinned = findNewsByIdsPreservingOrder(pinnedIds);
+        List<News> regular = findNewsByIdsPreservingOrder(regularIds.getContent());
+
+        List<NewsDTO.NewsListItemDTO> items = new ArrayList<>(pinned.size() + regular.size());
         pinned.forEach(news -> items.add(NewsDTO.NewsListItemDTO.from(news)));
         regular.forEach(news -> items.add(NewsDTO.NewsListItemDTO.from(news)));
 
         return NewsDTO.NewsListResponseDTO.from(
-                new PageImpl<>(items, pageable, regular.getTotalElements()),
+                new PageImpl<>(items, pageable, regularIds.getTotalElements()),
                 new NewsDTO.NewsSearchInfoDTO(keyword, mode, fallbackApplied)
         );
+    }
+
+    private List<News> findNewsByIdsPreservingOrder(List<Long> newsIds) {
+        if (newsIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, News> newsById = newsRepository.findAllByNewsIdInWithPost(newsIds).stream()
+                .collect(Collectors.toMap(News::getNewsId, news -> news));
+
+        return newsIds.stream()
+                .map(newsById::get)
+                .filter(Objects::nonNull)
+                .toList();
     }
 }
