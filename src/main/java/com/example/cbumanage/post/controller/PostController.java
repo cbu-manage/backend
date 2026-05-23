@@ -5,7 +5,9 @@ import com.example.cbumanage.flagpost.service.FlagPostService;
 import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
+import com.example.cbumanage.news.service.NewsService;
 import com.example.cbumanage.post.dto.PostDTO;
+import com.example.cbumanage.post.entity.enums.PostCategory;
 import com.example.cbumanage.post.service.PostService;
 import com.example.cbumanage.study.service.StudyService;
 import com.example.cbumanage.project.service.ProjectService;
@@ -38,6 +40,7 @@ public class PostController {
     private final ProblemService problemService;
     private final ResourceService resourceService;
     private final PostFreeboardService postFreeboardService;
+    private final NewsService newsService;
     private final FlagPostService flagPostService;
 
     @Operation(summary = "카테고리 별 포스트 목록 페이징 조회", description = "포스트 목록을 페이징으로 불러옵니다.")
@@ -94,6 +97,9 @@ public class PostController {
             } else if (category == 8) {
                 pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
                 return ApiResponse.success(postFreeboardService.getMyFreeboards(pageable, userId));
+            } else if (category == PostCategory.NEWS.getValue()) {
+                pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
+                return ApiResponse.success(newsService.getMyNews(pageable, userId));
             } else {
                 throw new BaseException(ErrorCode.INVALID_REQUEST);
             }
