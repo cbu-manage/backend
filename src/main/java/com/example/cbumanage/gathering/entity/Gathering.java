@@ -81,7 +81,7 @@ public class Gathering {
         if (description != null) this.description = description;
         if (gatheringDate != null) this.gatheringDate = gatheringDate;
         if (location != null) this.location = location;
-        this.voteDeadline = voteDeadline;
+        if (voteDeadline != null) this.voteDeadline = voteDeadline;
     }
 
     public void delete() {

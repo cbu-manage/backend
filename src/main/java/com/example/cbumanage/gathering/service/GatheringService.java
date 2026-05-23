@@ -10,6 +10,7 @@ import com.example.cbumanage.gathering.repository.GatheringRepository;
 import com.example.cbumanage.gathering.util.GatheringMapper;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
+import com.example.cbumanage.user.entity.MemberStatus;
 import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +52,7 @@ public class GatheringService {
         gatheringRepository.save(gathering);
 
         if (allMembersTarget) {
-            List<User> allMembers = userRepository.findAll();
+            List<User> allMembers = userRepository.findAllByMemberStatus(MemberStatus.ACTIVE);
             List<GatheringAttendance> attendances = allMembers.stream()
                     .map(m -> GatheringAttendance.create(gathering, m, AttendanceStatus.UNDECIDED))
                     .toList();

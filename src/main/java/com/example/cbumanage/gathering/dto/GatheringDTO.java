@@ -14,12 +14,12 @@ public class GatheringDTO {
     @Builder
     @Schema(description = "모임 등록 요청")
     public record CreateRequest(
-            @Schema(description = "모임 제목", example = "신입생 환영 회식") String title,
+            @NotNull @Schema(description = "모임 제목", example = "신입생 환영 회식") String title,
             @NotNull @Schema(description = "모임 유형 (DINING: 회식, FAIR: 박람회, OTHER: 기타)", example = "DINING") GatheringType type,
             @Schema(description = "모임 설명", example = "올해 신입생을 환영하는 자리입니다.") String description,
-            @Schema(description = "모임 일시 (ISO 8601)", example = "2024-03-15T18:00:00") LocalDateTime gatheringDate,
+            @NotNull @Schema(description = "모임 일시 (ISO 8601)", example = "2024-03-15T18:00:00") LocalDateTime gatheringDate,
             @Schema(description = "모임 장소", example = "학교 식당 1층") String location,
-            @Schema(description = "투표 마감 일시. null이면 마감 없음", example = "2024-03-10T23:59:59", nullable = true) LocalDateTime voteDeadline,
+            @NotNull @Schema(description = "투표 마감 일시 (ISO 8601)", example = "2024-03-10T23:59:59") LocalDateTime voteDeadline,
             @Schema(description = "OTHER 타입일 때만 사용. true면 전체 동아리원 자동 포함, false면 오픈 투표. DINING은 무조건 true, FAIR는 무조건 false로 적용됨", nullable = true) Boolean allMembersTarget
     ) {}
 
@@ -31,13 +31,13 @@ public class GatheringDTO {
             @Schema(description = "모임 설명", example = "올해 신입생을 환영하는 자리입니다.") String description,
             @Schema(description = "모임 일시 (ISO 8601)", example = "2024-03-15T18:00:00") LocalDateTime gatheringDate,
             @Schema(description = "모임 장소", example = "학교 식당 1층") String location,
-            @Schema(description = "투표 마감 일시. null이면 마감 없음 / 마감된 경우 미래 일시로 변경하면 투표 재오픈됨", example = "2024-03-10T23:59:59", nullable = true) LocalDateTime voteDeadline
+            @NotNull @Schema(description = "투표 마감 일시 (ISO 8601). 미래 일시로 변경하면 마감된 투표도 재오픈됨", example = "2024-03-10T23:59:59") LocalDateTime voteDeadline
     ) {}
 
     @Builder
     @Schema(description = "참석 투표 요청")
     public record VoteRequest(
-            @Schema(description = "투표 상태 (ATTENDING: 참석, NOT_ATTENDING: 불참, UNDECIDED: 미정)", example = "ATTENDING") AttendanceStatus status
+            @NotNull @Schema(description = "투표 상태 (ATTENDING: 참석, NOT_ATTENDING: 불참, UNDECIDED: 미정)", example = "ATTENDING") AttendanceStatus status
     ) {}
 
     @Builder

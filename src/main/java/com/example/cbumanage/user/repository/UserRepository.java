@@ -1,5 +1,6 @@
 package com.example.cbumanage.user.repository;
 
+import com.example.cbumanage.user.entity.MemberStatus;
 import com.example.cbumanage.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +16,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByStudentNumber(Long studentNumber);
     Optional<User> findByEmail(String email);
     Optional<User> findByUserUuid(UUID userUuid);
+    List<User> findAllByMemberStatus(MemberStatus memberStatus);
 
     @Query("SELECT u FROM User u WHERE u.userId NOT IN (SELECT d.userId FROM Dues d WHERE d.term = :term)")
     List<User> findAllWithoutDues(@Param("term") String term);
