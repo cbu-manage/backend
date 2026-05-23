@@ -71,7 +71,7 @@ public class LoginService {
     }
 
     public LoginResult login(UserLoginRequest request) {
-        User user = userRepository.findByStudentNumber(request.studentNumber())
+        User user = userRepository.findByStudentNumberAndDeletedAtIsNull(request.studentNumber())
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
         if (!hashPassword(request.password()).equals(user.getPassword())) {
@@ -96,7 +96,7 @@ public class LoginService {
     public record LoginResult(TokenInfo tokenInfo, String name, String email, String role) {}
 
     public MyInfoResponse getMyInfo(Long userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
         return new MyInfoResponse(
@@ -118,7 +118,7 @@ public class LoginService {
 
         Claims claims = jwtProvider.getClaims(refreshToken);
         UUID userUuid = UUID.fromString(claims.getSubject());
-        User user = userRepository.findByUserUuid(userUuid)
+        User user = userRepository.findByUserUuidAndDeletedAtIsNull(userUuid)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
         String storedToken = redisUtil.getData(REFRESH_KEY_PREFIX + user.getUserId());
@@ -147,15 +147,15 @@ public class LoginService {
 
     @Transactional
     public void deleteUser(Long userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
         redisUtil.deleteData(REFRESH_KEY_PREFIX + userId);
-        userRepository.delete(user);
+        user.delete();
     }
 
     @Transactional
     public void changePassword(Long userId, PasswordChangeRequest request) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
         if (!hashPassword(request.currentPassword()).equals(user.getPassword())) {
@@ -173,7 +173,7 @@ public class LoginService {
             throw new BaseException(ErrorCode.INVALID_REQUEST);
         }
 
-        User user = userRepository.findByStudentNumber(request.studentNumber())
+        User user = userRepository.findByStudentNumberAndDeletedAtIsNull(request.studentNumber())
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getEmail() == null || !user.getEmail().equals(request.email())) {

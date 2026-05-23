@@ -9,11 +9,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     Optional<PostReport> findByPostId(Long postId);
+
+    List<PostReport> findAllByGroupId(Long groupId);
 
     /*
     카테고리에 맞는 게시글, 연결된 그룹과 보고서를 left join하여 dto로 반환하는 코드 입니다
