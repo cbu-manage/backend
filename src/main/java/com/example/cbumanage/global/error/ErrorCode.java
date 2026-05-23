@@ -29,7 +29,12 @@ public enum ErrorCode {
     GROUP_NOT_RECRUITING("E-GROUP-0004", "모집 중인 그룹이 아닙니다.", HttpStatus.BAD_REQUEST),
 
     //POST 공용
-    POST_NOT_FOUND("E-POST-0001", "게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+    POST_NOT_FOUND("E-POST-0001", "게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+
+    //모임
+    GATHERING_NOT_FOUND("E-GATHERING-0001", "모임을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    VOTE_CLOSED("E-GATHERING-0002", "투표가 마감되었습니다.", HttpStatus.BAD_REQUEST),
+    GATHERING_TYPE_IMMUTABLE("E-GATHERING-0003", "모임 유형은 변경할 수 없습니다. 삭제 후 다시 생성해주세요.", HttpStatus.BAD_REQUEST);
 
 
     private final String code;
