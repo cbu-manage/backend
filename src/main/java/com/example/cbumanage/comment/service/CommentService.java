@@ -4,15 +4,15 @@ import com.example.cbumanage.comment.dto.CommentDTO;
 import com.example.cbumanage.comment.entity.Comment;
 import com.example.cbumanage.freeboard.repository.PostFreeboardRepository;
 import com.example.cbumanage.post.entity.Post;
-import com.example.cbumanage.problem.entity.Problem;
 import com.example.cbumanage.comment.repository.CommentRepository;
 import com.example.cbumanage.post.repository.PostRepository;
-import com.example.cbumanage.problem.repository.ProblemRepository;
 import com.example.cbumanage.comment.util.CommentMapper;
+import com.example.cbumanage.user.entity.Role;
+import com.example.cbumanage.user.entity.User;
+import com.example.cbumanage.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,6 +27,7 @@ public class CommentService {
     private final CommentMapper commentMapper;
     private final PostRepository postRepository;
     private final PostFreeboardRepository postFreeboardRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public CommentDTO.CommentCreateResponseDTO createComment(CommentDTO.CommentCreateRequestDTO req,
@@ -79,9 +80,11 @@ public class CommentService {
     }
 
     @Transactional
-    public void deleteComment(Long commentId,Long userId) {
+    public void deleteComment(Long commentId, Long userId) {
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment not found"));
-        if(!isAuthor(userId,comment)){
+        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        boolean isAdminOrManager = user.getRole() == Role.ROLE_ADMIN || user.getRole() == Role.ROLE_MANAGER;
+        if (!isAdminOrManager && !isAuthor(userId, comment)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         comment.Delete();
