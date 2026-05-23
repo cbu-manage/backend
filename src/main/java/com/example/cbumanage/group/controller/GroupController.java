@@ -23,7 +23,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/groups")
-@Tag(name = "Group API", description = "그룹 생성, 가입 신청 및 관리 관련 API")
+@Tag(name = "그룹 컨트롤러", description = "그룹 생성, 가입 신청 및 관리 관련 API")
 @RequiredArgsConstructor
 public class GroupController {
     private final GroupService groupService;

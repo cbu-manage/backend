@@ -24,7 +24,10 @@ public enum PostCategory {
     REPORT(7),
 
     @Schema(description = "자유(익명) 게시판")
-    FREEBOARD(8);
+    FREEBOARD(8),
+
+    @Schema(description = "소식 게시판")
+    NEWS(11);
 
     private final int value;
 }

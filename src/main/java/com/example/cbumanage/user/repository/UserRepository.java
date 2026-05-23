@@ -1,5 +1,6 @@
 package com.example.cbumanage.user.repository;
 
+import com.example.cbumanage.user.entity.MemberStatus;
 import com.example.cbumanage.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByStudentNumber(Long studentNumber);
     Optional<User> findByEmail(String email);
     Optional<User> findByUserUuid(UUID userUuid);
+    List<User> findAllByMemberStatus(MemberStatus memberStatus);
     Optional<User> findByUserIdAndDeletedAtIsNull(Long userId);
     Optional<User> findByStudentNumberAndDeletedAtIsNull(Long studentNumber);
     Optional<User> findByUserUuidAndDeletedAtIsNull(UUID userUuid);
