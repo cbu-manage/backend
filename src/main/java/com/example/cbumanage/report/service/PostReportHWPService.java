@@ -2,6 +2,8 @@ package com.example.cbumanage.report.service;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.example.cbumanage.global.util.ImageCompressUtil;
+import com.example.cbumanage.group.entity.Group;
+import com.example.cbumanage.group.repository.GroupRepository;
 import com.example.cbumanage.user.entity.Role;
 import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.user.repository.UserRepository;
@@ -40,12 +42,17 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -55,6 +62,7 @@ public class PostReportHWPService {
     private final PostReportRepository postReportRepository;
     private final ReportMemberRepository reportMemberRepository;
     private final UserRepository userRepository;
+    private final GroupRepository groupRepository;
     private final AmazonS3 amazonS3;
 
     @Value("${aws_bucket}")
@@ -63,22 +71,113 @@ public class PostReportHWPService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일");
 
     public record HWPExportResult(String title, byte[] hwpBytes) {}
+    public record ZipExportResult(String fileName, byte[] zipBytes) {}
+
+    public static class ZipPartialFailureException extends RuntimeException {
+        private final List<String> failedReports;
+
+        public ZipPartialFailureException(List<String> failedReports) {
+            super("일부 보고서 HWP 생성 실패");
+            this.failedReports = failedReports;
+        }
+
+        public List<String> getFailedReports() {
+            return failedReports;
+        }
+    }
 
     /**
      * ADMIN / MANAGER 권한 확인 후 보고서 HWP 파일 생성
      */
     public HWPExportResult exportToHWP(Long postId, Long userId) throws Exception {
+        checkAdminOrManager(userId);
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        PostReport report = postReportRepository.findByPostId(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Report Not Found"));
+
+        byte[] hwpBytes = buildHWPBytes(post, report);
+        return new HWPExportResult(post.getTitle(), hwpBytes);
+    }
+
+    /**
+     * ADMIN / MANAGER 권한 확인 후 특정 그룹의 보고서 전체를 ZIP으로 묶어 반환
+     */
+    public ZipExportResult exportGroupToZip(Long groupId, Long userId) throws Exception {
+        checkAdminOrManager(userId);
+
+        Group group = groupRepository.findByIdAndIsDeletedFalse(groupId)
+                .orElseThrow(() -> new EntityNotFoundException("Group Not Found"));
+
+        List<PostReport> reports = postReportRepository.findAllByGroupId(groupId);
+        if (reports.isEmpty()) {
+            throw new EntityNotFoundException("해당 그룹에 보고서가 없습니다.");
+        }
+
+        // 1단계: 모든 보고서 HWP 생성 시도, 실패 수집
+        List<String> failedReports = new ArrayList<>();
+        List<Object[]> built = new ArrayList<>(); // [Post, byte[]]
+        for (PostReport report : reports) {
+            Post post = postRepository.findById(report.getPost().getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+            try {
+                byte[] hwpBytes = buildHWPBytes(post, report);
+                built.add(new Object[]{post, hwpBytes});
+            } catch (Exception e) {
+                failedReports.add(post.getTitle() + ": " + e.getMessage());
+            }
+        }
+
+        if (!failedReports.isEmpty()) {
+            throw new ZipPartialFailureException(failedReports);
+        }
+
+        // 2단계: 전부 성공한 경우에만 ZIP 생성
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ZipOutputStream zos = new ZipOutputStream(baos, StandardCharsets.UTF_8)) {
+            Set<String> usedNames = new HashSet<>();
+            for (Object[] item : built) {
+                Post post = (Post) item[0];
+                byte[] hwpBytes = (byte[]) item[1];
+
+                String baseName = sanitizeFileName(post.getTitle());
+                String entryName = baseName + ".hwp";
+                if (usedNames.contains(entryName)) {
+                    int counter = 1;
+                    do {
+                        entryName = baseName + "_" + counter + ".hwp";
+                        counter++;
+                    } while (usedNames.contains(entryName));
+                }
+                usedNames.add(entryName);
+
+                zos.putNextEntry(new ZipEntry(entryName));
+                zos.write(hwpBytes);
+                zos.closeEntry();
+            }
+        }
+
+        String zipFileName = sanitizeFileName(group.getGroupName()) + "_report.zip";
+        return new ZipExportResult(zipFileName, baos.toByteArray());
+    }
+
+    // -----------------------------------------------------------------------
+    // 내부 공통 헬퍼
+    // -----------------------------------------------------------------------
+
+    private void checkAdminOrManager(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User Not Found"));
         if (user.getRole() != Role.ROLE_ADMIN && user.getRole() != Role.ROLE_MANAGER) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
+    }
 
-        // 데이터 조회
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        PostReport report = postReportRepository.findByPostId(postId)
-                .orElseThrow(() -> new EntityNotFoundException("Report Not Found"));
+    /**
+     * Post + PostReport 엔티티로부터 HWP 바이트 배열 생성
+     */
+    private byte[] buildHWPBytes(Post post, PostReport report) throws Exception {
         User author = userRepository.findById(post.getAuthorId())
                 .orElseThrow(() -> new EntityNotFoundException("Author Not Found"));
 
@@ -97,7 +196,6 @@ public class PostReportHWPService {
                 })
                 .collect(Collectors.toList());
 
-        // DTO 빌드
         PostDTO.PostReportToHWPDTO dto = new PostDTO.PostReportToHWPDTO(
                 post.getTitle(),
                 author.getName(),
@@ -110,7 +208,7 @@ public class PostReportHWPService {
                 members
         );
 
-        // S3에서 이미지 다운로드 & JPEG 압축 — generateHWP 호출 전 별도 처리
+        // S3에서 이미지 다운로드 & JPEG 압축
         byte[] imageBytes = null;
         if (dto.reportImage() != null && !dto.reportImage().isBlank()) {
             try {
@@ -123,8 +221,13 @@ public class PostReportHWPService {
             }
         }
 
-        byte[] hwpBytes = generateHWP(dto, imageBytes);
-        return new HWPExportResult(dto.title(), hwpBytes);
+        return generateHWP(dto, imageBytes);
+    }
+
+    private String sanitizeFileName(String name) {
+        if (name == null || name.isBlank()) return "untitled";
+        // 파일명으로 쓸 수 없는 문자 제거
+        return name.replaceAll("[\\\\/:*?\"<>|]", "_").trim();
     }
 
     // -----------------------------------------------------------------------

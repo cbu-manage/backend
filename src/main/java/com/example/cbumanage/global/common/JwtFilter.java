@@ -40,7 +40,7 @@ public class JwtFilter extends OncePerRequestFilter {
             String uuidStr = claims.getSubject();
             String role = claims.get("role", String.class);
             if (uuidStr != null && role != null) {
-                User user = userRepository.findByUserUuid(UUID.fromString(uuidStr)).orElse(null);
+                User user = userRepository.findByUserUuidAndDeletedAtIsNull(UUID.fromString(uuidStr)).orElse(null);
                 if (user != null) {
                     UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                             String.valueOf(user.getUserId()), null, List.of(new SimpleGrantedAuthority(role)));
