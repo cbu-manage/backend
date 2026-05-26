@@ -1,4 +1,4 @@
-package com.example.cbumanage.application.enums;
+package com.example.cbumanage.application.entity.enums;
 
 /**
  * 재학여부(학적 상태)

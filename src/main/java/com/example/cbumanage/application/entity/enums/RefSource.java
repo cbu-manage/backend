@@ -1,4 +1,4 @@
-package com.example.cbumanage.application.enums;
+package com.example.cbumanage.application.entity.enums;
 
 /**
  * 지원 경로입니다. ETC일때만 refSourceEtc로 텍스트를 받습니다.

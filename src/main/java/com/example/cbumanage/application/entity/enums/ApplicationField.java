@@ -1,4 +1,4 @@
-package com.example.cbumanage.application.enums;
+package com.example.cbumanage.application.entity.enums;
 
 import org.hibernate.loader.BatchFetchStyle;
 
