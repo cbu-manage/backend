@@ -39,8 +39,10 @@ public class PostReport {
 
     private String reportFile;
 
+    @Column(columnDefinition = "TEXT")
     private String reflection;
 
+    @Column(columnDefinition = "TEXT")
     private String nextPlan;
 
     //운영진의 승인 여부

@@ -1,7 +1,6 @@
 package com.example.cbumanage.report.service;
 
 import com.example.cbumanage.post.dto.PostDTO;
-import com.example.cbumanage.group.entity.Group;
 import com.example.cbumanage.post.entity.Post;
 import com.example.cbumanage.report.entity.PostReport;
 import com.example.cbumanage.group.entity.enums.GroupMemberStatus;
@@ -11,7 +10,6 @@ import com.example.cbumanage.user.repository.UserRepository;
 import com.example.cbumanage.post.service.PostService;
 import com.example.cbumanage.post.repository.PostRepository;
 import com.example.cbumanage.report.repository.PostReportRepository;
-import com.example.cbumanage.group.repository.GroupRepository;
 import com.example.cbumanage.group.repository.GroupMemberRepository;
 import com.example.cbumanage.post.util.PostMapper;
 import com.example.cbumanage.reportmember.entity.ReportMember;
@@ -19,7 +17,6 @@ import com.example.cbumanage.reportmember.repository.ReportMemberRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -37,13 +34,11 @@ public class PostReportService {
     private final PostReportRepository postReportRepository;
     private final PostMapper postMapper;
     private final UserRepository userRepository;
-    private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final ReportMemberRepository reportMemberRepository;
 
     public PostReport createReport(PostDTO.ReportCreateDTO req) {
         Post post = postRepository.findById(req.postId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        Group group = groupRepository.findById(req.groupId());
         PostReport report = PostReport.create(post, req.groupId(), req.type(), req.date(), req.location(), req.reportImage(), req.reportFile(), req.reflection(), req.nextPlan());
         PostReport saved = postReportRepository.save(report);
         return saved;
