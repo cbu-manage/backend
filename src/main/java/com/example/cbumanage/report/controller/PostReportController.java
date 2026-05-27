@@ -58,9 +58,13 @@ public class PostReportController {
                     "<br>반환되는 형태는 PostReportPreviewDTO를통해 미리보기 형태로 반환됩니다.게시글의 id,이름,작성자 정보,그룹의 정보 등을 반환합니다"
     )
     @GetMapping
-    public ApiResponse<Page<PostDTO.PostReportPreviewDTO>> getPostReportPreviews(@RequestParam int page, @RequestParam int size){
+    public ApiResponse<Page<PostDTO.PostReportPreviewDTO>> getPostReportPreviews(
+            @RequestParam int page,
+            @RequestParam int size,
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
-        Page<PostDTO.PostReportPreviewDTO> postReportPreviewDTOs = postReportService.getPostReportPreviewDTOList(pageable);
+        Page<PostDTO.PostReportPreviewDTO> postReportPreviewDTOs = postReportService.getPostReportPreviewDTOList(pageable, userId);
         return ApiResponse.success(postReportPreviewDTOs);
     }
 

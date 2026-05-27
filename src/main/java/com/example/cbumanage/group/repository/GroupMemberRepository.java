@@ -37,4 +37,7 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> 
       AND gm.groupMemberStatus = :status
 """)
     boolean existsActiveMember(Long userId, Long groupId, GroupMemberStatus status);
+
+    @Query("SELECT gm.group.id FROM GroupMember gm WHERE gm.user.userId = :userId AND gm.groupMemberStatus = :status AND gm.group.isDeleted = false")
+    List<Long> findGroupIdsByUserIdAndStatus(Long userId, GroupMemberStatus status);
 }
