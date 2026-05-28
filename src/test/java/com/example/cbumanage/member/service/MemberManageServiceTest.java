@@ -1,7 +1,6 @@
 package com.example.cbumanage.member.service;
 
 import com.example.cbumanage.dues.repository.DuesRepository;
-import com.example.cbumanage.log.repository.LogRepository;
 import com.example.cbumanage.member.util.MemberMapper;
 import com.example.cbumanage.user.entity.MemberStatus;
 import com.example.cbumanage.user.entity.User;
@@ -23,7 +22,6 @@ class MemberManageServiceTest {
     private final MemberManageService memberManageService = new MemberManageService(
             userRepository,
             mock(DuesRepository.class),
-            mock(LogRepository.class),
             mock(MemberMapper.class)
     );
 

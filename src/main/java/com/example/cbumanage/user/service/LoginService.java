@@ -1,7 +1,8 @@
 package com.example.cbumanage.user.service;
 
-import com.example.cbumanage.candidate.entity.SuccessCandidate;
-import com.example.cbumanage.candidate.repository.SuccessCandidateRepository;
+import com.example.cbumanage.application.entity.MemberApplication;
+import com.example.cbumanage.application.entity.enums.ApplicationStatus;
+import com.example.cbumanage.application.repository.MemberApplicationRepository;
 import com.example.cbumanage.global.common.JwtProvider;
 import com.example.cbumanage.global.common.TokenInfo;
 import com.example.cbumanage.global.error.BaseException;
@@ -31,8 +32,8 @@ import java.util.UUID;
 public class LoginService {
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
-    private final SuccessCandidateRepository successCandidateRepository;
     private final RedisUtil redisUtil;
+    private final MemberApplicationRepository memberApplicationRepository;
 
     private static final String REFRESH_KEY_PREFIX = "refresh:";
 
@@ -44,10 +45,7 @@ public class LoginService {
 
     @Transactional
     public void signUp(UserSignUpRequest request) {
-        SuccessCandidate candidate = successCandidateRepository.findByStudentNumber(request.studentNumber());
-        if (candidate == null) {
-            throw new BaseException(ErrorCode.SUCCESS_MEMBER_NOT_FOUND);
-        }
+        MemberApplication application = findAcceptedApplication(request.studentNumber(), request.nickname());
 
         userRepository.findByStudentNumber(request.studentNumber()).ifPresent(u -> {
             throw new BaseException(ErrorCode.ALREADY_JOINED_MEMBER);
@@ -57,17 +55,24 @@ public class LoginService {
         });
 
         User user = new User(
-                null,
-                candidate.getStudentNumber(),
+                application.getId(),
+                application.getStudentNumber(),
                 hashPassword(request.password()),
                 request.email(),
-                candidate.getName(),
-                candidate.getPhoneNumber(),
-                candidate.getMajor(),
-                candidate.getGrade(),
-                null
+                application.getName(),
+                application.getPhoneNumber(),
+                application.getMajor(),
+                application.getGrade().name(),
+                application.getGeneration()
         );
         userRepository.save(user);
+        application.completeRegistration();
+    }
+
+    private MemberApplication findAcceptedApplication(Long studentNumber, String nickname) {
+        return memberApplicationRepository.findByStudentNumberAndNicknameAndStatus(
+                        studentNumber, nickname, ApplicationStatus.ADMIN_ACCEPTED)
+                .orElseThrow(() -> new BaseException(ErrorCode.ACCEPTED_APPLICATION_NOT_FOUND));
     }
 
     public LoginResult login(UserLoginRequest request) {
