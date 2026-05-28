@@ -9,11 +9,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     Optional<PostReport> findByPostId(Long postId);
+
+    List<PostReport> findAllByGroupId(Long groupId);
 
     /*
     카테고리에 맞는 게시글, 연결된 그룹과 보고서를 left join하여 dto로 반환하는 코드 입니다
@@ -101,4 +105,34 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     and p.isDeleted = false and r.groupId = :groupId
 """)
     Page<PostDTO.PostReportPreviewDTO> findPostReportPreviewsByGroupId(Pageable pageable, @Param("category") int category, @Param("groupId") Long groupId);
+
+    @Query(value = """
+    select new com.example.cbumanage.post.dto.PostDTO$PostReportPreviewDTO(
+    p.id,p.title,p.createdAt,p.authorId,m.name,
+    r.type,r.isAccepted,
+
+    g.id,g.groupName, (
+    select count(gm)
+    from GroupMember gm
+    where gm.group.id = g.id
+    and gm.groupMemberStatus=com.example.cbumanage.group.entity.enums.GroupMemberStatus.ACTIVE
+    )
+    )
+    from Post p
+    left join PostReport r on r.post = p
+    left join Group g on r.groupId = g.id
+    left join User m on m.userId = p.authorId
+    where p.category = :category
+    and r.groupId in :groupIds
+    and p.isDeleted = false
+""",
+    countQuery = """
+    select count(p)
+    from Post p
+    left join PostReport r on r.post = p
+    where p.category = :category
+    and r.groupId in :groupIds
+    and p.isDeleted = false
+""")
+    Page<PostDTO.PostReportPreviewDTO> findPostReportPreviewsByGroupIds(Pageable pageable, @Param("category") int category, @Param("groupIds") Collection<Long> groupIds);
 }

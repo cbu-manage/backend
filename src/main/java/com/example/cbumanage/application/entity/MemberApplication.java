@@ -14,9 +14,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import static jakarta.persistence.GenerationType.UUID;
-import static java.util.UUID.randomUUID;
-
 @Schema(description = "회원가입 지원서 엔티티")
 @Entity
 @Table(name = "member_application",

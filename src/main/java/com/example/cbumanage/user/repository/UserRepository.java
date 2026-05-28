@@ -1,6 +1,9 @@
 package com.example.cbumanage.user.repository;
 
+import com.example.cbumanage.user.entity.MemberStatus;
 import com.example.cbumanage.user.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,7 +18,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByStudentNumber(Long studentNumber);
     Optional<User> findByEmail(String email);
     Optional<User> findByUserUuid(UUID userUuid);
+    List<User> findAllByMemberStatus(MemberStatus memberStatus);
+    Optional<User> findByUserIdAndDeletedAtIsNull(Long userId);
+    Optional<User> findByStudentNumberAndDeletedAtIsNull(Long studentNumber);
+    Optional<User> findByUserUuidAndDeletedAtIsNull(UUID userUuid);
+    Page<User> findByDeletedAtIsNull(Pageable pageable);
 
-    @Query("SELECT u FROM User u WHERE u.userId NOT IN (SELECT d.userId FROM Dues d WHERE d.term = :term)")
+    @Query("""
+            SELECT u
+            FROM User u
+            WHERE u.deletedAt IS NULL
+              AND u.userId NOT IN (SELECT d.userId FROM Dues d WHERE d.term = :term)
+            """)
     List<User> findAllWithoutDues(@Param("term") String term);
 }

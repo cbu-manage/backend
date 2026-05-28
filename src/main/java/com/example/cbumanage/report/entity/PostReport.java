@@ -37,23 +37,33 @@ public class PostReport {
 
     private String reportImage;
 
+    private String reportFile;
+
+    @Column(columnDefinition = "TEXT")
+    private String reflection;
+
+    @Column(columnDefinition = "TEXT")
+    private String nextPlan;
+
     //운영진의 승인 여부
-    private boolean isAccepted;
+    private boolean isAccepted = false;
 
     //생성자
-    public PostReport(Post post, Long groupId,PostReportGroupType type,LocalDateTime date, String location, String reportImage) {
+    public PostReport(Post post, Long groupId,PostReportGroupType type,LocalDateTime date, String location, String reportImage, String reportFile, String reflection, String nextPlan) {
         this.post = post;
         this.groupId = groupId;
         this.type = type;
         this.date = date;
         this.location = location;
         this.reportImage = reportImage;
-        this.isAccepted = false;
+        this.reportFile = reportFile;
+        this.reflection = reflection;
+        this.nextPlan = nextPlan;
     }
 
     //생성 메소드
-    public static PostReport create(Post post,Long groupId,PostReportGroupType type ,LocalDateTime date, String location, String reportImage) {
-        return new PostReport(post,groupId,type,date, location, reportImage);
+    public static PostReport create(Post post, Long groupId, PostReportGroupType type, LocalDateTime date, String location, String reportImage, String reportFile, String reflection, String nextPlan) {
+        return new PostReport(post, groupId, type, date, location, reportImage, reportFile, reflection, nextPlan);
     }
 
     //엔티티 변경 메소드
@@ -71,6 +81,18 @@ public class PostReport {
 
     public void changeReportImage(String reportImage) {
         this.reportImage = reportImage;
+    }
+
+    public void changeReportFile(String reportFile) {
+        this.reportFile = reportFile;
+    }
+
+    public void changeReflection(String reflection) {
+        this.reflection = reflection;
+    }
+
+    public void changeNextPlan(String nextPlan) {
+        this.nextPlan = nextPlan;
     }
 
     public void Accept() {

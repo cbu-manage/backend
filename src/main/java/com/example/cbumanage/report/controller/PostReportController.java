@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -56,9 +58,13 @@ public class PostReportController {
                     "<br>반환되는 형태는 PostReportPreviewDTO를통해 미리보기 형태로 반환됩니다.게시글의 id,이름,작성자 정보,그룹의 정보 등을 반환합니다"
     )
     @GetMapping
-    public ApiResponse<Page<PostDTO.PostReportPreviewDTO>> getPostReportPreviews(@RequestParam int page, @RequestParam int size){
+    public ApiResponse<Page<PostDTO.PostReportPreviewDTO>> getPostReportPreviews(
+            @RequestParam int page,
+            @RequestParam int size,
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
-        Page<PostDTO.PostReportPreviewDTO> postReportPreviewDTOs = postReportService.getPostReportPreviewDTOList(pageable);
+        Page<PostDTO.PostReportPreviewDTO> postReportPreviewDTOs = postReportService.getPostReportPreviewDTOList(pageable, userId);
         return ApiResponse.success(postReportPreviewDTOs);
     }
 
@@ -154,6 +160,42 @@ public class PostReportController {
             headers.setContentLength(hwpBytes.length);
 
             return ResponseEntity.ok().headers(headers).body(hwpBytes);
+        } catch (ResponseStatusException e) {
+            throw new BaseException(ErrorCode.FORBIDDEN);
+        } catch (EntityNotFoundException e) {
+            throw new BaseException(ErrorCode.NOT_FOUND);
+        } catch (Exception e) {
+            throw new BaseException(ErrorCode.INVALID_REQUEST);
+        }
+    }
+
+    @Operation(
+            summary = "그룹 보고서 전체 ZIP 추출",
+            description = "특정 그룹의 보고서를 모두 HWP 파일로 생성하여 ZIP으로 묶어 다운로드합니다.<br>" +
+                    "ADMIN, MANAGER 권한이 있는 경우에만 요청 가능합니다.<br>" +
+                    "클라이언트에서는 responseType: 'blob' 으로 받아 Blob 처리 후 다운로드해야 합니다."
+    )
+    @GetMapping("/export/group/{groupId}")
+    public ResponseEntity<?> exportGroupReportsToZip(
+            @PathVariable Long groupId,
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
+        try {
+            PostReportHWPService.ZipExportResult result = postReportHWPService.exportGroupToZip(groupId, userId);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDisposition(
+                    ContentDisposition.attachment()
+                            .filename(result.fileName(), StandardCharsets.UTF_8)
+                            .build()
+            );
+            headers.setContentType(MediaType.parseMediaType("application/zip"));
+            headers.setContentLength(result.zipBytes().length);
+
+            return ResponseEntity.ok().headers(headers).body(result.zipBytes());
+        } catch (PostReportHWPService.ZipPartialFailureException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("failedReports", e.getFailedReports()));
         } catch (ResponseStatusException e) {
             throw new BaseException(ErrorCode.FORBIDDEN);
         } catch (EntityNotFoundException e) {

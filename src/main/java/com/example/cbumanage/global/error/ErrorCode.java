@@ -14,6 +14,8 @@ public enum ErrorCode {
     NOT_FOUND("E-COMMON-0002", "리소스를 찾을 수 없음", HttpStatus.NOT_FOUND),
     DUPLICATE_RESOURCE("E-COMMON-0003", "중복 리소스", HttpStatus.CONFLICT),
     NOT_ALLOWED_FILETYPE("E-COMMON-0004","잘못된 파일 타입", HttpStatus.CONFLICT),
+    FILE_SIZE_EXCEEDED("E-COMMON-0006","파일 크기가 제한을 초과했습니다 (최대 10MB)", HttpStatus.BAD_REQUEST),
+    FILE_PROCESS_FAILED("E-COMMON-0007","파일 처리에 실패했습니다. 파일이 손상되었거나 올바르지 않습니다.", HttpStatus.BAD_REQUEST),
     ALREADY_JOINED_MEMBER("E-COMMON-0005","이미 가입된 멤버",HttpStatus.CONFLICT),
 
     UNAUTHORIZED("E-AUTH-0001", "인증이 필요합니다. ", HttpStatus.UNAUTHORIZED),
@@ -30,6 +32,14 @@ public enum ErrorCode {
 
     //POST 공용
     POST_NOT_FOUND("E-POST-0001", "게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+
+    //소식 게시판
+    NEWS_NOT_FOUND("E-NEWS-0001", "소식 게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    NEWS_INVALID_POST_CATEGORY("E-NEWS-0002", "뉴스 카테고리 게시글만 소식으로 생성할 수 있습니다.", HttpStatus.BAD_REQUEST),
+    //모임
+    GATHERING_NOT_FOUND("E-GATHERING-0001", "모임을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    VOTE_CLOSED("E-GATHERING-0002", "투표가 마감되었습니다.", HttpStatus.BAD_REQUEST),
+    GATHERING_TYPE_IMMUTABLE("E-GATHERING-0003", "모임 유형은 변경할 수 없습니다. 삭제 후 다시 생성해주세요.", HttpStatus.BAD_REQUEST),
 
     // 회원가입 신청서 에러 코드
     APPLICATION_NOT_FOUND("E-APP-0001", "신청서를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),

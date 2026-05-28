@@ -1,9 +1,13 @@
 package com.example.cbumanage.post.controller;
 
+import com.example.cbumanage.flagpost.dto.FlagPostDTO;
+import com.example.cbumanage.flagpost.service.FlagPostService;
 import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
+import com.example.cbumanage.news.service.NewsService;
 import com.example.cbumanage.post.dto.PostDTO;
+import com.example.cbumanage.post.entity.enums.PostCategory;
 import com.example.cbumanage.post.service.PostService;
 import com.example.cbumanage.study.service.StudyService;
 import com.example.cbumanage.project.service.ProjectService;
@@ -36,6 +40,8 @@ public class PostController {
     private final ProblemService problemService;
     private final ResourceService resourceService;
     private final PostFreeboardService postFreeboardService;
+    private final NewsService newsService;
+    private final FlagPostService flagPostService;
 
     @Operation(summary = "카테고리 별 포스트 목록 페이징 조회", description = "포스트 목록을 페이징으로 불러옵니다.")
     @GetMapping("post")
@@ -54,9 +60,16 @@ public class PostController {
 
     @Operation(summary = "포스트 단건 삭제")
     @DeleteMapping("post/{postId}")
-    public ApiResponse<Void> deletePost(@PathVariable Long postId) {
-        postService.softDeletePost(postId);
-        return ApiResponse.success();
+    public ApiResponse<Void> deletePost(@PathVariable Long postId, Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
+        try {
+            postService.softDeletePost(postId, userId);
+            return ApiResponse.success();
+        } catch (ResponseStatusException e) {
+            throw new BaseException(ErrorCode.FORBIDDEN);
+        } catch (jakarta.persistence.EntityNotFoundException e) {
+            throw new BaseException(ErrorCode.NOT_FOUND);
+        }
     }
 
     @GetMapping("post/my")
@@ -84,6 +97,9 @@ public class PostController {
             } else if (category == 8) {
                 pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
                 return ApiResponse.success(postFreeboardService.getMyFreeboards(pageable, userId));
+            } else if (category == PostCategory.NEWS.getValue()) {
+                pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
+                return ApiResponse.success(newsService.getMyNews(pageable, userId));
             } else {
                 throw new BaseException(ErrorCode.INVALID_REQUEST);
             }
@@ -93,4 +109,19 @@ public class PostController {
             throw new BaseException(ErrorCode.NOT_FOUND);
         }
     }
+
+    @Operation(summary = "게시글 신고 생성", description = "특정 게시글을 신고합니다.")
+    @PostMapping("post/{postId}/flag")
+    public ApiResponse<FlagPostDTO.FlagPostCreateResponse> createFlagPost(
+            @PathVariable Long postId,
+            @RequestBody FlagPostDTO.FlagPostCreateRequest req,
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
+        try {
+            return ApiResponse.success(flagPostService.createFlagPost(postId, req, userId));
+        } catch (EntityNotFoundException e) {
+            throw new BaseException(ErrorCode.POST_NOT_FOUND);
+        }
+    }
+
 }
