@@ -58,7 +58,7 @@ public class ApplicationQuestion {
     @Schema(description = "최종 수정일시")
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updated_at;
+    private LocalDateTime updatedAt;
 
     @Schema(description = "삭제일시 (소프트 딜리트)")
     @Column(name = "deleted_at")

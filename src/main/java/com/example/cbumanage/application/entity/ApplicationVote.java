@@ -1,5 +1,6 @@
-package com.example.cbumanage.application.entity.enums;
+package com.example.cbumanage.application.entity;
 
+import com.example.cbumanage.application.entity.enums.VoteResult;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 @Table(name = "application_vote",
 uniqueConstraints = {
         @UniqueConstraint(name = "uk_application_vote",
-        columnNames = {"application_member_id", "voter_id"})
+        columnNames = {"member_application_id", "voter_id"})
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
