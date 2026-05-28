@@ -96,7 +96,7 @@ public class MemberApplication {
     @Column(name = "privacy_policy", nullable = false)
     private Boolean privacyPolicy;
 
-    @Schema(description = "신청서의 상태", example = "SUBMITTED, CANCELLED, ALL_REJECTED, ETC")
+    @Schema(description = "신청서의 상태", example = "SUBMITTED, CANCELLED, ALL_REJECT, ETC")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 40)
     private ApplicationStatus status;
@@ -195,6 +195,14 @@ public class MemberApplication {
     // Null이면 미발송
     public void markNotified() {
         this.notifiedAt = LocalDateTime.now();
+    }
+
+    // 승인된 신청서 기반 회원가입이 완료된 경우
+    public void completeRegistration() {
+        if (this.status != ApplicationStatus.ADMIN_ACCEPTED) {
+            throw new IllegalStateException("최종 합격 상태의 신청서만 회원가입 완료 처리할 수 있습니다.");
+        }
+        this.status = ApplicationStatus.COMPLETED;
     }
 
 

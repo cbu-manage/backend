@@ -1,7 +1,6 @@
 package com.example.cbumanage.member.service;
 
 import com.example.cbumanage.dues.repository.DuesRepository;
-import com.example.cbumanage.log.repository.LogRepository;
 import com.example.cbumanage.member.dto.MemberCreateDTO;
 import com.example.cbumanage.member.dto.MemberUpdateDTO;
 import com.example.cbumanage.member.exception.MemberNotExistsException;
@@ -29,7 +28,6 @@ public class MemberManageService {
 
 	private final UserRepository userRepository;
 	private final DuesRepository duesRepository;
-	private final LogRepository logRepository;
 	private final MemberMapper memberMapper;
 
 	@Value("${cbu.login.salt}")
@@ -41,11 +39,9 @@ public class MemberManageService {
 	@Autowired
 	public MemberManageService(UserRepository userRepository,
 								 DuesRepository duesRepository,
-								 LogRepository logRepository,
 								 MemberMapper memberMapper) {
 		this.userRepository = userRepository;
 		this.duesRepository = duesRepository;
-		this.logRepository = logRepository;
 		this.memberMapper = memberMapper;
 	}
 

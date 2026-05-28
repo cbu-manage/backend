@@ -20,7 +20,6 @@ public enum ErrorCode {
 
     UNAUTHORIZED("E-AUTH-0001", "인증이 필요합니다. ", HttpStatus.UNAUTHORIZED),
     FORBIDDEN("E-AUTH-0002", "권한이 없습니다. ", HttpStatus.FORBIDDEN),
-    SUCCESS_MEMBER_NOT_FOUND("E-AUTH-0003", "합격자 중 존재하지 않습니다. ", HttpStatus.NOT_FOUND),
     USER_NOT_FOUND("E-AUTH-0004", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     INVALID_PASSWORD("E-AUTH-0005", "비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
 
@@ -49,7 +48,8 @@ public enum ErrorCode {
     INVALID_PIN("E-APP-0005", "PIN번호가 올바르지 않습니다.", HttpStatus.UNAUTHORIZED),
     INVALID_APPLICATION_STATUS("E-APP-0006", "현재 상태에서 허용되지 않는 작업입니다.", HttpStatus.BAD_REQUEST),
     QUESTION_NOT_FOUND("E-APP-0007", "질문을 찾을 수 없습니다", HttpStatus.NOT_FOUND),
-    FAIL_REASON_REQUIRED("E-APP-0009", "탈락 사유는 필수입니다. ", HttpStatus.BAD_REQUEST);
+    FAIL_REASON_REQUIRED("E-APP-0009", "탈락 사유는 필수입니다. ", HttpStatus.BAD_REQUEST),
+    ACCEPTED_APPLICATION_NOT_FOUND("E-APP-0010", "합격자 중 존재하지 않습니다.", HttpStatus.NOT_FOUND);
 
     private final String code;
     private final String message;

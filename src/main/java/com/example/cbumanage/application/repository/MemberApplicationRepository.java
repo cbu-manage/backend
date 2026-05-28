@@ -24,6 +24,10 @@ public interface MemberApplicationRepository extends JpaRepository<MemberApplica
     // 학번 + 기수로 조회 (본인인증, 신청 현황 확인 시)
     Optional<MemberApplication> findByStudentNumberAndGeneration(Long studentNumber, Long generation);
 
+    // 학번 + 닉네임 + 상태로 조회 (회원가입 전 승인자 검증)
+    Optional<MemberApplication> findByStudentNumberAndNicknameAndStatus(
+            Long studentNumber, String nickname, ApplicationStatus status);
+
     /* 다건조회 */
 
     // 기수별 신청서 목록 (최신순)
