@@ -45,16 +45,29 @@ public class GatheringDTO {
     public record AttendanceSummary(
             @Schema(description = "참석 인원 수", example = "10") long attending,
             @Schema(description = "불참 인원 수", example = "3") long notAttending,
-            @Schema(description = "미정 인원 수", example = "2") long undecided
+            @Schema(description = "미정 인원 수", example = "2") long undecided,
+            @Schema(description = "미응답 인원 수 (allMembersTarget=false이면 항상 0)", example = "6") long unanswered,
+            @Schema(description = "전체 대상 인원 수 (allMembersTarget=true이면 전체 활성 회원 수, false이면 투표자 수)", example = "24") long total
     ) {}
 
     @Builder
-    @Schema(description = "멤버 정보")
+    @Schema(description = "멤버 정보 (일반 사용자용)")
     public record MemberInfo(
             @Schema(description = "멤버 ID", example = "1") Long memberId,
             @Schema(description = "이름", example = "홍길동") String name,
+            @Schema(description = "기수", example = "15") Long generation
+    ) {}
+
+    @Builder
+    @Schema(description = "멤버 정보 (관리자용 — 학번·학과·학년·응답일시 포함)")
+    public record AdminMemberInfo(
+            @Schema(description = "멤버 ID", example = "1") Long memberId,
+            @Schema(description = "이름", example = "홍길동") String name,
+            @Schema(description = "기수", example = "15") Long generation,
+            @Schema(description = "학번", example = "2024152011") Long studentNumber,
             @Schema(description = "학과", example = "컴퓨터공학부") String major,
-            @Schema(description = "학년", example = "2") String grade
+            @Schema(description = "학년", example = "2") String grade,
+            @Schema(description = "투표일시. 미응답자는 null", nullable = true) LocalDateTime votedAt
     ) {}
 
     @Builder
@@ -89,7 +102,8 @@ public class GatheringDTO {
             @Schema(description = "작성자 이름", example = "홍길동") String authorName,
             @Schema(description = "참석 현황 요약") AttendanceSummary summary,
             @Schema(description = "내 투표 상태 (ATTENDING / NOT_ATTENDING / UNDECIDED). 미투표 시 null", example = "ATTENDING", nullable = true) AttendanceStatus myStatus,
-            @Schema(description = "모임 등록 일시", example = "2024-03-01T10:00:00") LocalDateTime createdAt
+            @Schema(description = "모임 등록 일시", example = "2024-03-01T10:00:00") LocalDateTime createdAt,
+            @Schema(description = "조회수", example = "124") Long viewCount
     ) {}
 
     @Builder
@@ -104,5 +118,20 @@ public class GatheringDTO {
             @Schema(description = "참석 멤버 목록") List<MemberInfo> attendingMembers,
             @Schema(description = "불참 멤버 목록") List<MemberInfo> notAttendingMembers,
             @Schema(description = "미정 멤버 목록") List<MemberInfo> undecidedMembers
+    ) {}
+
+    @Builder
+    @Schema(description = "참석 명단 응답 (관리자용 — 학번·학과·학년·응답일시·미응답자 목록 포함)")
+    public record AdminAttendanceListResponse(
+            @Schema(description = "모임 ID", example = "1") Long gatheringId,
+            @Schema(description = "모임 제목", example = "신입생 환영 회식") String title,
+            @Schema(description = "모임 일시", example = "2024-03-15T18:00:00") LocalDateTime gatheringDate,
+            @Schema(description = "투표 마감 일시. null이면 마감 없음", nullable = true) LocalDateTime voteDeadline,
+            @Schema(description = "투표 마감 여부", example = "false") boolean voteClosed,
+            @Schema(description = "참석 현황 요약") AttendanceSummary summary,
+            @Schema(description = "참석 멤버 목록") List<AdminMemberInfo> attendingMembers,
+            @Schema(description = "불참 멤버 목록") List<AdminMemberInfo> notAttendingMembers,
+            @Schema(description = "미정 멤버 목록") List<AdminMemberInfo> undecidedMembers,
+            @Schema(description = "미응답 멤버 목록 (allMembersTarget=true일 때만 존재)") List<AdminMemberInfo> unansweredMembers
     ) {}
 }

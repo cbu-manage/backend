@@ -38,6 +38,10 @@ public class GatheringAttendance {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
+    // 사용자가 명시적으로 투표한 시각. 자동 초기화(UNDECIDED)된 레코드는 null
+    private LocalDateTime votedAt;
+
+    // 자동 초기화용 (allMembersTarget=true 시 UNDECIDED로 일괄 생성)
     public static GatheringAttendance create(Gathering gathering, User member, AttendanceStatus status) {
         GatheringAttendance attendance = new GatheringAttendance();
         attendance.gathering = gathering;
@@ -46,7 +50,15 @@ public class GatheringAttendance {
         return attendance;
     }
 
+    // 사용자 명시적 투표용 (신규 레코드 생성 시 votedAt 세팅)
+    public static GatheringAttendance createWithVote(Gathering gathering, User member, AttendanceStatus status) {
+        GatheringAttendance attendance = create(gathering, member, status);
+        attendance.votedAt = LocalDateTime.now();
+        return attendance;
+    }
+
     public void updateStatus(AttendanceStatus status) {
         this.status = status;
+        this.votedAt = LocalDateTime.now();
     }
 }
