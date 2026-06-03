@@ -175,6 +175,10 @@ public class GatheringService {
      */
     @Transactional
     public void vote(Long gatheringId, AttendanceStatus status, Long memberId) {
+        if (status == AttendanceStatus.NOT_RESPONDED) {
+            throw new BaseException(ErrorCode.INVALID_REQUEST);
+        }
+
         Gathering gathering = findGathering(gatheringId);
 
         if (gathering.isVoteClosed()) {

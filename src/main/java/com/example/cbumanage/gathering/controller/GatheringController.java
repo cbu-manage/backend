@@ -135,7 +135,7 @@ public class GatheringController {
                     "| `ATTENDING` | 참석 |\n" +
                     "| `NOT_ATTENDING` | 불참 |\n" +
                     "| `UNDECIDED` | 미정 |\n\n" +
-                    "> `NOT_RESPONDED`는 시스템이 자동 초기화할 때 사용하는 값으로 투표 요청에 사용할 수 없습니다.\n\n" +
+                    "> `NOT_RESPONDED`는 시스템 전용 값입니다. 투표 요청에 사용하면 **400**을 반환합니다.\n\n" +
                     "- 이미 투표한 경우 재투표하면 이전 값이 덮어씌워집니다.\n" +
                     "- 투표 마감(`voteClosed: true`)된 모임에는 투표할 수 없습니다. (400 반환)"
     )
