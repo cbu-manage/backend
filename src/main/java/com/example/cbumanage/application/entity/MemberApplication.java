@@ -92,6 +92,10 @@ public class MemberApplication {
     @Column(name = "can_ot", nullable = false)
     private Boolean canOt;
 
+    @Schema(description = "환영회 참석 여부")
+    @Column(name = "can_welcome", nullable = false)
+    private Boolean canWelcome;
+
     @Schema(description = "개인정보 수집 동의 여부")
     @Column(name = "privacy_policy", nullable = false)
     private Boolean privacyPolicy;
@@ -132,7 +136,7 @@ public class MemberApplication {
                               AcademicStatus grade, String major, String phoneNumber,
                               Long generation, ApplicationField applicationField,
                               String portfolioUrl, RefSource refSource, String refLinkEtc,
-                              Boolean canOt, Boolean privacyPolicy) {
+                              Boolean canOt, Boolean canWelcome, Boolean privacyPolicy) {
         this.applicationUuid = UUID.randomUUID().toString();
         this.studentNumber = studentNumber;
         this.email = email;
@@ -147,6 +151,7 @@ public class MemberApplication {
         this.refSource = refSource;
         this.refLinkEtc = refLinkEtc;
         this.canOt = canOt;
+        this.canWelcome = canWelcome;
         this.privacyPolicy = privacyPolicy;
         this.status = ApplicationStatus.SUBMITTED;
         this.submittedAt = LocalDateTime.now();

@@ -49,7 +49,14 @@ public enum ErrorCode {
     INVALID_APPLICATION_STATUS("E-APP-0006", "현재 상태에서 허용되지 않는 작업입니다.", HttpStatus.BAD_REQUEST),
     QUESTION_NOT_FOUND("E-APP-0007", "질문을 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     FAIL_REASON_REQUIRED("E-APP-0009", "탈락 사유는 필수입니다. ", HttpStatus.BAD_REQUEST),
-    ACCEPTED_APPLICATION_NOT_FOUND("E-APP-0010", "합격자 중 존재하지 않습니다.", HttpStatus.NOT_FOUND);
+    ACCEPTED_APPLICATION_NOT_FOUND("E-APP-0010", "합격자 중 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    VOTE_NOT_FOUND("E-APP-0011", "투표 내역이 없습니다.", HttpStatus.NOT_FOUND),
+    VOTING_NOT_COMPLETED("E-APP-0012", "아직 투표가 완료되지 않은 신청서가 있습니다.", HttpStatus.BAD_REQUEST),
+    UNDECIDED_APPLICATION_EXISTS("E-APP-0013", "최종 결정되지 않은(보류) 신청서가 있습니다.", HttpStatus.BAD_REQUEST),
+
+    // 모집(Recruitment) 에러 코드
+    RECRUITMENT_NOT_FOUND("E-REC-0001", "모집 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    RECRUITMENT_ALREADY_OPEN("E-REC-0002", "이미 진행 중인 모집이 있습니다.", HttpStatus.CONFLICT);
 
     private final String code;
     private final String message;
