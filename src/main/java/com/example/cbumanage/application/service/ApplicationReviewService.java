@@ -1,11 +1,14 @@
 package com.example.cbumanage.application.service;
 
 import com.example.cbumanage.application.dto.AdminApplicationListResponse;
+import com.example.cbumanage.application.dto.ApplicationFinalDecisionUpdateRequest;
 import com.example.cbumanage.application.dto.ApplicationDetailResponse;
 import com.example.cbumanage.application.dto.ApplicationFinalizeRequest;
 import com.example.cbumanage.application.dto.ApplicationListItemResponse;
+import com.example.cbumanage.application.entity.ApplicationNotification;
 import com.example.cbumanage.application.entity.enums.ApplicationReview;
 import com.example.cbumanage.application.entity.enums.FinalDecision;
+import com.example.cbumanage.application.entity.enums.MailNotiType;
 import com.example.cbumanage.application.dto.RecruitmentResponse;
 import com.example.cbumanage.application.dto.RecruitmentSummaryResponse;
 import com.example.cbumanage.application.dto.VoteRequest;
@@ -16,10 +19,13 @@ import com.example.cbumanage.application.entity.enums.ApplicationField;
 import com.example.cbumanage.application.entity.enums.ApplicationStatus;
 import com.example.cbumanage.application.entity.enums.VoteResult;
 import com.example.cbumanage.application.repository.ApplicationAnswerRepository;
+import com.example.cbumanage.application.repository.ApplicationNotificationRepository;
 import com.example.cbumanage.application.repository.ApplicationPortfolioUrlRepository;
 import com.example.cbumanage.application.repository.ApplicationVoteRepository;
 import com.example.cbumanage.application.repository.MemberApplicationRepository;
 import com.example.cbumanage.application.repository.RecruitmentRepository;
+import com.example.cbumanage.email.dto.EmailAuthResponseDTO;
+import com.example.cbumanage.email.service.EmailService;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.user.entity.Role;
@@ -45,7 +51,7 @@ import java.util.stream.Collectors;
 public class ApplicationReviewService {
 
     // 투표 자격 운영진 역할 (미투표자 표시 및 진행도 산정)
-    private static final List<Role> VOTER_ROLES = List.of(Role.ROLE_MANAGER, Role.ROLE_ADMIN);
+    private static final List<Role> VOTER_ROLES = Role.applicationVoterRoles();
 
     private final RecruitmentRepository recruitmentRepository;
     private final MemberApplicationRepository memberApplicationRepository;
@@ -53,6 +59,8 @@ public class ApplicationReviewService {
     private final ApplicationAnswerRepository applicationAnswerRepository;
     private final ApplicationPortfolioUrlRepository applicationPortfolioUrlRepository;
     private final UserRepository userRepository;
+    private final EmailService emailService;
+    private final ApplicationNotificationRepository applicationNotificationRepository;
 
     /**
      * 신청서 목록
@@ -101,7 +109,7 @@ public class ApplicationReviewService {
 
     /**
      * 신청서 상세 + 운영진 투표 현황.
-     * 운영진 전체를 미투표자(decision=null)까지 포함해 보여주고, 현재 사용자의 투표를 myVote로 내려준다
+     * 운영진은 서로의 투표 결과와 사유를 열람할 수 있고, 현재 사용자의 투표를 myVote로 내려준다.
      */
     @Transactional(readOnly = true)
     public ApplicationDetailResponse getDetail(String applicationUuid, Long currentUserId) {
@@ -164,6 +172,12 @@ public class ApplicationReviewService {
         MemberApplication application = memberApplicationRepository.findByApplicationUuid(applicationUuid)
                 .orElseThrow(() -> new BaseException(ErrorCode.APPLICATION_NOT_FOUND));
 
+        User voter = userRepository.findByUserIdAndDeletedAtIsNull(currentUserId)
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+        if (!voter.getRole().canVoteApplications()) {
+            throw new BaseException(ErrorCode.FORBIDDEN);
+        }
+
         if (request.decision() == VoteResult.FAIL
                 && (request.reason() == null || request.reason().isBlank())) {
             throw new BaseException(ErrorCode.FAIL_REASON_REQUIRED);
@@ -181,9 +195,6 @@ public class ApplicationReviewService {
                                 .reason(reason)
                                 .build()));
     }
-
-    // 일괄 불합격 시 개별 사유가 없으므로 내부 기록용 기본 사유를 남긴다(지원자에게 노출되지 않음).
-    private static final String BULK_REJECT_REASON = "일괄 심사 결과 불합격";
 
     /**
      * 대시보드 요약.
@@ -210,9 +221,10 @@ public class ApplicationReviewService {
         long allPass = 0, allReject = 0, hold = 0;
         for (MemberApplication application : reviewable) {
             long[] passFail = tallyByApplicationId.getOrDefault(application.getId(), new long[2]);
-            if (voterCount > 0 && passFail[0] == voterCount) {
+            FinalDecision suggested = suggestDecision(passFail[0], passFail[1], voterCount);
+            if (suggested == FinalDecision.ACCEPT) {
                 allPass++;
-            } else if (voterCount > 0 && passFail[1] == voterCount) {
+            } else if (suggested == FinalDecision.REJECT) {
                 allReject++;
             } else {
                 hold++;
@@ -251,6 +263,12 @@ public class ApplicationReviewService {
      */
     @Transactional
     public void finalizeDecisions(String recruitmentUuid, Long currentUserId, ApplicationFinalizeRequest request) {
+        User decider = userRepository.findByUserIdAndDeletedAtIsNull(currentUserId)
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+        if (!decider.getRole().isPresidentOrVicePresidentOrAdmin()) {
+            throw new BaseException(ErrorCode.FORBIDDEN);
+        }
+
         Recruitment recruitment = recruitmentRepository.findByRecruitmentUuid(recruitmentUuid)
                 .orElseThrow(() -> new BaseException(ErrorCode.RECRUITMENT_NOT_FOUND));
         int voterCount = recruitment.getVoterCount();
@@ -285,9 +303,53 @@ public class ApplicationReviewService {
             FinalDecision decision = decisionByUuid.get(application.getApplicationUuid());
             if (decision == FinalDecision.ACCEPT) {
                 application.accept(currentUserId);
+                sendResultEmail(application, true);
             } else {
-                application.reject(currentUserId, BULK_REJECT_REASON);
+                application.reject(currentUserId, null);
+                sendResultEmail(application, false);
             }
+        }
+    }
+
+    @Transactional
+    public void updateFinalDecision(String applicationUuid, Long currentUserId,
+                                    ApplicationFinalDecisionUpdateRequest request) {
+        User decider = userRepository.findByUserIdAndDeletedAtIsNull(currentUserId)
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+        if (!decider.getRole().isPresidentOrVicePresidentOrAdmin()) {
+            throw new BaseException(ErrorCode.FORBIDDEN);
+        }
+
+        MemberApplication application = memberApplicationRepository.findByApplicationUuid(applicationUuid)
+                .orElseThrow(() -> new BaseException(ErrorCode.APPLICATION_NOT_FOUND));
+
+        if (request.decision() == FinalDecision.ACCEPT) {
+            application.accept(currentUserId);
+            sendResultEmail(application, true);
+            return;
+        }
+        if (request.decision() == FinalDecision.REJECT) {
+            application.reject(currentUserId, request.reason());
+            sendResultEmail(application, false);
+            return;
+        }
+        application.hold(currentUserId, request.reason());
+    }
+
+    private void sendResultEmail(MemberApplication application, boolean accepted) {
+        EmailAuthResponseDTO result = emailService.sendApplicationResultEmail(
+                application.getEmail(), application.getName(), accepted);
+        if (result == null) {
+            result = new EmailAuthResponseDTO(false, "메일 발송 결과를 확인할 수 없습니다.");
+        }
+        MailNotiType type = accepted ? MailNotiType.ACCEPTED : MailNotiType.REJECTED;
+        ApplicationNotification notification = result.isSuccess()
+                ? ApplicationNotification.sent(application.getId(), application.getEmail(), type)
+                : ApplicationNotification.failed(application.getId(), application.getEmail(), type,
+                result.getResponseMessage());
+        applicationNotificationRepository.save(notification);
+        if (result.isSuccess()) {
+            application.markNotified();
         }
     }
 
@@ -314,13 +376,21 @@ public class ApplicationReviewService {
     }
 
     /**
-     * 만장일치 집계 기반 드롭다운 초기값 제안: 전원 PASS면 ACCEPT, 전원 FAIL이면 REJECT, 그 외 HOLD.
+     * 1차 결과 기준:
+     * - 투표 미완료: HOLD
+     * - 전원 PASS: ACCEPT
+     * - FAIL 과반수: REJECT
+     * - 일부 FAIL: HOLD
      */
     private FinalDecision suggestDecision(long passCount, long failCount, int voterCount) {
-        if (voterCount > 0 && passCount == voterCount) {
+        long totalVotes = passCount + failCount;
+        if (voterCount <= 0 || totalVotes < voterCount) {
+            return FinalDecision.HOLD;
+        }
+        if (passCount == voterCount) {
             return FinalDecision.ACCEPT;
         }
-        if (voterCount > 0 && failCount == voterCount) {
+        if (failCount > voterCount / 2) {
             return FinalDecision.REJECT;
         }
         return FinalDecision.HOLD;

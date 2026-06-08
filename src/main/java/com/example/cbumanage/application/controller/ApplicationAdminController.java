@@ -2,6 +2,7 @@ package com.example.cbumanage.application.controller;
 
 import com.example.cbumanage.application.dto.AdminApplicationListResponse;
 import com.example.cbumanage.application.dto.ApplicationDetailResponse;
+import com.example.cbumanage.application.dto.ApplicationFinalDecisionUpdateRequest;
 import com.example.cbumanage.application.dto.ApplicationFinalizeRequest;
 import com.example.cbumanage.application.entity.enums.ApplicationReview;
 import com.example.cbumanage.application.dto.RecruitmentSummaryResponse;
@@ -24,7 +25,7 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('ROLE_MANAGER')")
+@PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MANAGER', 'ROLE_TREASURER', 'ROLE_MEMBER_MANAGER', 'ROLE_EVENT_MANAGER', 'ROLE_PROMOTION_MANAGER', 'ROLE_SECRETARY')")
 @Tag(name = "신청서 심사 컨트롤러", description = "운영진이 신청서를 조회·심사합니다.")
 public class ApplicationAdminController {
 
@@ -56,6 +57,7 @@ public class ApplicationAdminController {
     }
 
     @PutMapping("/applications/{applicationUuid}/vote")
+    @PreAuthorize("hasAnyAuthority('ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MANAGER', 'ROLE_TREASURER', 'ROLE_MEMBER_MANAGER', 'ROLE_EVENT_MANAGER', 'ROLE_PROMOTION_MANAGER', 'ROLE_SECRETARY')")
     @Operation(summary = "투표 등록/수정",
             description = "합격/불합격 투표를 등록하거나 수정합니다(1인 1표). 불합격은 사유가 필수입니다.")
     public ApiResponse<Void> vote(
@@ -77,6 +79,7 @@ public class ApplicationAdminController {
     }
 
     @PostMapping("/recruitments/{recruitmentUuid}/applications/finalize")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
     @Operation(summary = "일괄 최종처리",
             description = "검토대상 신청서를 일괄 합격/불합격 처리합니다. 보류가 남아있거나 투표가 완료되지 않으면 거절됩니다.")
     public ApiResponse<Void> finalizeDecisions(
@@ -85,6 +88,19 @@ public class ApplicationAdminController {
             Authentication authentication) {
         Long currentUserId = Long.parseLong(authentication.getName());
         applicationReviewService.finalizeDecisions(recruitmentUuid, currentUserId, request);
+        return ApiResponse.success();
+    }
+
+    @PatchMapping("/applications/{applicationUuid}/final-decision")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
+    @Operation(summary = "개별 최종결정 수정",
+            description = "관리자/회장/부회장이 신청서의 최종 합격·불합격·보류 상태를 수정합니다. 최종 불합격 사유는 선택입니다.")
+    public ApiResponse<Void> updateFinalDecision(
+            @PathVariable String applicationUuid,
+            @RequestBody @Valid ApplicationFinalDecisionUpdateRequest request,
+            Authentication authentication) {
+        Long currentUserId = Long.parseLong(authentication.getName());
+        applicationReviewService.updateFinalDecision(applicationUuid, currentUserId, request);
         return ApiResponse.success();
     }
 }

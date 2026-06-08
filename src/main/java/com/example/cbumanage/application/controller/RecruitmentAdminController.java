@@ -16,7 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/admin/recruitments")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('ROLE_MANAGER')")
+@PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
 @Tag(name = "모집 회차 관리 컨트롤러", description = "운영진이 모집을 시작/마감하고 조회합니다.")
 public class RecruitmentAdminController {
 

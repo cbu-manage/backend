@@ -109,6 +109,7 @@ class ApplicationValidateServiceTest {
                 .refSource(RefSource.FRIEND)
                 .refLinkEtc(null)
                 .canOt(true)
+                .canWelcome(true)
                 .privacyPolicy(true)
                 .build();
         application.accept(1L);
@@ -116,3 +117,4 @@ class ApplicationValidateServiceTest {
         return application;
     }
 }
+

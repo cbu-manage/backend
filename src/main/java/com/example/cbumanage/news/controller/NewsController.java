@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 public class NewsController {
 
     private static final String AUTHENTICATED = "isAuthenticated()";
-    private static final String ADMIN_ROLE = "hasAuthority('ROLE_ADMIN')";
+    private static final String ADMIN_ROLE = "hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_PROMOTION_MANAGER')";
 
     private static final int DEFAULT_PAGE_SIZE = 20;
     private static final String SORT_BY_CREATED_AT = "post.createdAt";
@@ -73,7 +73,7 @@ public class NewsController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize(ADMIN_ROLE)
-    @Operation(summary = "소식 작성", description = "관리자 전용입니다. title과 content는 필수이며, category를 생략하면 NOTICE로 저장됩니다. content는 Markdown 원문을 그대로 보내면 됩니다.")
+    @Operation(summary = "소식 작성", description = "소식 관리 권한이 필요합니다. title과 content는 필수이며, category를 생략하면 NOTICE로 저장됩니다. content는 Markdown 원문을 그대로 보내면 됩니다.")
     public ApiResponse<NewsDTO.NewsDetailDTO> create(Authentication authentication, @Valid @RequestBody NewsDTO.NewsCreateRequestDTO request) {
         Long userId = Long.parseLong(authentication.getName());
         return ApiResponse.success(newsService.createNews(request, userId));
@@ -82,7 +82,7 @@ public class NewsController {
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize(ADMIN_ROLE)
-    @Operation(summary = "소식 수정", description = "관리자 전용입니다. 수정할 필드만 보내면 되고, 보내지 않은 필드는 기존 값이 유지됩니다. title 또는 content가 바뀌면 검색용 텍스트도 함께 갱신됩니다.")
+    @Operation(summary = "소식 수정", description = "소식 관리 권한이 필요합니다. 수정할 필드만 보내면 되고, 보내지 않은 필드는 기존 값이 유지됩니다. title 또는 content가 바뀌면 검색용 텍스트도 함께 갱신됩니다.")
     public ApiResponse<NewsDTO.NewsDetailDTO> update(
             @Parameter(description = "소식 ID", example = "1")
             @PathVariable Long id,
@@ -94,7 +94,7 @@ public class NewsController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize(ADMIN_ROLE)
-    @Operation(summary = "소식 삭제", description = "관리자 전용입니다. 실제 row를 삭제하지 않고 목록과 상세 조회에서 보이지 않도록 처리합니다.")
+    @Operation(summary = "소식 삭제", description = "소식 관리 권한이 필요합니다. 실제 row를 삭제하지 않고 목록과 상세 조회에서 보이지 않도록 처리합니다.")
     public ApiResponse<Void> delete(
             @Parameter(description = "소식 ID", example = "1")
             @PathVariable Long id
@@ -106,7 +106,7 @@ public class NewsController {
     @PatchMapping("/{id}/pin")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize(ADMIN_ROLE)
-    @Operation(summary = "소식 상단 고정 설정", description = "관리자 전용입니다. pinned=true이면 목록 content 앞쪽에 고정 노출되고, pinned=false이면 고정이 해제됩니다.")
+    @Operation(summary = "소식 상단 고정 설정", description = "소식 관리 권한이 필요합니다. pinned=true이면 목록 content 앞쪽에 고정 노출되고, pinned=false이면 고정이 해제됩니다.")
     public ApiResponse<NewsDTO.NewsDetailDTO> changePinned(
             @Parameter(description = "소식 ID", example = "1")
             @PathVariable Long id,

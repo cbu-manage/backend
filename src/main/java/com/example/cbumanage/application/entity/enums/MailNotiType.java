@@ -6,5 +6,6 @@ package com.example.cbumanage.application.entity.enums;
  */
 public enum MailNotiType {
     ACCEPTED,   // ACCEPTED: 지원이 승인되었을 때 발송되는 메일
-    REJECTED    // REJECTED: 지원이 거절되었을 때 발송되는 메일
+    REJECTED,   // REJECTED: 지원이 거절되었을 때 발송되는 메일
+    ONBOARDING  // ONBOARDING: 회비 확인 후 서비스 사용 안내 메일
 }

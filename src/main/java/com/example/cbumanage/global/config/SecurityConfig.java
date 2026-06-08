@@ -6,6 +6,7 @@ import com.example.cbumanage.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -36,11 +37,17 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
+                        .requestMatchers(HttpMethod.POST,
                                 "/api/v1/login", "/api/v1/login/signup", "/api/v1/login/refresh",
                                 "/api/v1/login/password/reset",
                                 "/api/v1/validate",
-                                "/api/v1/mail/send", "/api/v1/mail/verify",
+                                "/api/v1/applications", "/api/v1/applications/my",
+                                "/api/v1/mail/send", "/api/v1/mail/verify"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/applications/questions/current"
+                        ).permitAll()
+                        .requestMatchers(
                                 "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**",
                                 "/swagger-resources/**", "/webjars/**"
                         ).permitAll()

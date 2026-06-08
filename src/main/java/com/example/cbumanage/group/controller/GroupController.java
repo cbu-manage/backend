@@ -182,10 +182,10 @@ public class GroupController {
      * [ 관리자(Admin) 전용 API ]
      * ============================================================ */
     @Operation(
-            summary = "전체 그룹 상태 카테고리별로 조회 하기 (관리자 전용)",
+            summary = "전체 그룹 상태 카테고리별 조회",
             description = "개설된 그룹들을 상태 카테고리별로 분류하여 확인할 수 있습니다."
     )
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MEMBER_MANAGER')")
     @Parameters({
             @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
             @Parameter(name = "size", description = "한 페이지당 출력 개수", example = "10"),
@@ -206,10 +206,10 @@ public class GroupController {
     }
 
     @Operation(
-            summary = "그룹 승인 여부 변경하기(관리자 전용)",
+            summary = "그룹 승인 여부 변경",
             description = "개설된 그룹의 승인 상태(APPROVE/REJECT) 여부를 변경하며 반려시 사유를 추가합니다. 운영자가 관리합니다 "
     )
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MEMBER_MANAGER')")
     @PatchMapping("/{groupId}/admin/status")
     public ApiResponse<Void> changeGroupStatus(
             @PathVariable Long groupId ,

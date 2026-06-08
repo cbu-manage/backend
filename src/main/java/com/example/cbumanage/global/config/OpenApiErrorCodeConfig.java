@@ -13,15 +13,23 @@ import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springdoc.core.customizers.OperationCustomizer;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.method.HandlerMethod;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.regex.MatchResult;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Configuration
@@ -30,12 +38,30 @@ public class OpenApiErrorCodeConfig {
     private static final String APPLICATION_JSON = "application/json";
     private static final String ERROR_RESPONSE_SCHEMA = "ErrorResponse";
     private static final String ERROR_CODE_SCHEMA = "ErrorCode";
+    private static final String ACCESS_TOKEN_COOKIE_SECURITY = "accessTokenCookie";
+    private static final Pattern ROLE_PATTERN = Pattern.compile("ROLE_[A-Z_]+");
 
     @Bean
     public OpenApiCustomizer globalErrorResponsesOpenApiCustomizer() {
         return openApi -> {
             registerErrorSchemas(openApi);
+            registerSecuritySchemes(openApi);
             addErrorResponsesToOperations(openApi);
+            addAuthenticationDescriptionsToProtectedOperations(openApi);
+        };
+    }
+
+    @Bean
+    public OperationCustomizer operationAuthorityOpenApiCustomizer() {
+        return (operation, handlerMethod) -> {
+            Optional<String> expression = preAuthorizeExpression(handlerMethod);
+            if (expression.isEmpty()) {
+                return operation;
+            }
+
+            addAccessTokenCookieSecurity(operation);
+            appendPermissionDescription(operation, expression.get());
+            return operation;
         };
     }
 
@@ -48,6 +74,21 @@ public class OpenApiErrorCodeConfig {
 
         components.addSchemas(ERROR_RESPONSE_SCHEMA, errorResponseSchema());
         components.addSchemas(ERROR_CODE_SCHEMA, errorCodeSchema());
+    }
+
+    private void registerSecuritySchemes(OpenAPI openApi) {
+        Components components = openApi.getComponents();
+        if (components == null) {
+            components = new Components();
+            openApi.setComponents(components);
+        }
+
+        components.addSecuritySchemes(ACCESS_TOKEN_COOKIE_SECURITY,
+                new SecurityScheme()
+                        .type(SecurityScheme.Type.APIKEY)
+                        .in(SecurityScheme.In.COOKIE)
+                        .name("accessToken")
+                        .description("로그인 API가 발급하는 accessToken 쿠키"));
     }
 
     private Schema<?> errorResponseSchema() {
@@ -100,6 +141,21 @@ public class OpenApiErrorCodeConfig {
                 .forEach(operation -> addErrorResponses(operation, errorCodesByStatus));
     }
 
+    private void addAuthenticationDescriptionsToProtectedOperations(OpenAPI openApi) {
+        if (openApi.getPaths() == null) {
+            return;
+        }
+
+        openApi.getPaths().forEach((path, pathItem) ->
+                pathItem.readOperationsMap().forEach((method, operation) -> {
+                    if (isPublicOperation(method, path)) {
+                        return;
+                    }
+                    addAccessTokenCookieSecurity(operation);
+                    appendPermissionDescription(operation, "isAuthenticated()");
+                }));
+    }
+
     private void addErrorResponses(Operation operation, Map<HttpStatus, List<ErrorCode>> errorCodesByStatus) {
         ApiResponses responses = operation.getResponses();
         if (responses == null) {
@@ -146,5 +202,70 @@ public class OpenApiErrorCodeConfig {
                 .summary(errorCode.getCode())
                 .description(errorCode.name())
                 .value(value);
+    }
+
+    private Optional<String> preAuthorizeExpression(HandlerMethod handlerMethod) {
+        PreAuthorize methodPreAuthorize = handlerMethod.getMethodAnnotation(PreAuthorize.class);
+        if (methodPreAuthorize != null) {
+            return Optional.of(methodPreAuthorize.value());
+        }
+
+        PreAuthorize classPreAuthorize = handlerMethod.getBeanType().getAnnotation(PreAuthorize.class);
+        if (classPreAuthorize != null) {
+            return Optional.of(classPreAuthorize.value());
+        }
+
+        return Optional.empty();
+    }
+
+    private void addAccessTokenCookieSecurity(Operation operation) {
+        boolean alreadyRegistered = operation.getSecurity() != null
+                && operation.getSecurity().stream()
+                .anyMatch(requirement -> requirement.containsKey(ACCESS_TOKEN_COOKIE_SECURITY));
+        if (!alreadyRegistered) {
+            operation.addSecurityItem(new SecurityRequirement().addList(ACCESS_TOKEN_COOKIE_SECURITY));
+        }
+    }
+
+    private void appendPermissionDescription(Operation operation, String expression) {
+        String permissionDescription = permissionDescription(expression);
+        String description = operation.getDescription();
+        if (description == null || description.isBlank()) {
+            operation.setDescription(permissionDescription);
+            return;
+        }
+        if (description.contains("권한:")) {
+            return;
+        }
+        operation.setDescription(description + "\n\n" + permissionDescription);
+    }
+
+    private String permissionDescription(String expression) {
+        List<String> roles = ROLE_PATTERN.matcher(expression).results()
+                .map(MatchResult::group)
+                .distinct()
+                .toList();
+        if (roles.isEmpty()) {
+            return "권한: 로그인 필요";
+        }
+        return "권한: " + String.join(", ", roles);
+    }
+
+    private boolean isPublicOperation(PathItem.HttpMethod method, String path) {
+        if (method == PathItem.HttpMethod.POST) {
+            return path.equals("/api/v1/login")
+                    || path.equals("/api/v1/login/signup")
+                    || path.equals("/api/v1/login/refresh")
+                    || path.equals("/api/v1/login/password/reset")
+                    || path.equals("/api/v1/validate")
+                    || path.equals("/api/v1/applications")
+                    || path.equals("/api/v1/applications/my")
+                    || path.equals("/api/v1/mail/send")
+                    || path.equals("/api/v1/mail/verify");
+        }
+        if (method == PathItem.HttpMethod.GET) {
+            return path.equals("/api/v1/applications/questions/current");
+        }
+        return false;
     }
 }

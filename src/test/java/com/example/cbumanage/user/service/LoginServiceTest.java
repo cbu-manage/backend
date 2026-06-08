@@ -52,10 +52,10 @@ class LoginServiceTest {
                 studentNumber, nickname, ApplicationStatus.ADMIN_ACCEPTED))
                 .thenReturn(Optional.of(application));
         when(userRepository.findByStudentNumber(studentNumber)).thenReturn(Optional.empty());
-        when(userRepository.findByEmail("signup@example.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("applicant@example.com")).thenReturn(Optional.empty());
 
         loginService.signUp(new UserSignUpRequest(
-                "signup@example.com",
+                "applicant@example.com",
                 "password1234",
                 "요청 이름은 사용하지 않음",
                 studentNumber,
@@ -67,7 +67,7 @@ class LoginServiceTest {
 
         assertThat(savedUser.getApplicationId()).isEqualTo(application.getId());
         assertThat(savedUser.getStudentNumber()).isEqualTo(studentNumber);
-        assertThat(savedUser.getEmail()).isEqualTo("signup@example.com");
+        assertThat(savedUser.getEmail()).isEqualTo("applicant@example.com");
         assertThat(savedUser.getName()).isEqualTo("홍길동");
         assertThat(savedUser.getPhoneNumber()).isEqualTo("010-1234-5678");
         assertThat(savedUser.getMajor()).isEqualTo("컴퓨터공학과");
@@ -87,7 +87,7 @@ class LoginServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> loginService.signUp(new UserSignUpRequest(
-                "signup@example.com",
+                "applicant@example.com",
                 "password1234",
                 "홍길동",
                 studentNumber,
@@ -111,7 +111,7 @@ class LoginServiceTest {
                 .thenReturn(Optional.of(new User("joined@example.com", studentNumber, "encoded-password")));
 
         assertThatThrownBy(() -> loginService.signUp(new UserSignUpRequest(
-                "signup@example.com",
+                "applicant@example.com",
                 "password1234",
                 "홍길동",
                 studentNumber,
@@ -133,11 +133,11 @@ class LoginServiceTest {
                 studentNumber, nickname, ApplicationStatus.ADMIN_ACCEPTED))
                 .thenReturn(Optional.of(application));
         when(userRepository.findByStudentNumber(studentNumber)).thenReturn(Optional.empty());
-        when(userRepository.findByEmail("signup@example.com"))
-                .thenReturn(Optional.of(new User("signup@example.com", 2024999999L, "encoded-password")));
+        when(userRepository.findByEmail("applicant@example.com"))
+                .thenReturn(Optional.of(new User("applicant@example.com", 2024999999L, "encoded-password")));
 
         assertThatThrownBy(() -> loginService.signUp(new UserSignUpRequest(
-                "signup@example.com",
+                "applicant@example.com",
                 "password1234",
                 "홍길동",
                 studentNumber,
@@ -178,6 +178,7 @@ class LoginServiceTest {
                 .refSource(RefSource.FRIEND)
                 .refLinkEtc(null)
                 .canOt(true)
+                .canWelcome(true)
                 .privacyPolicy(true)
                 .build();
         application.accept(1L);
@@ -185,3 +186,5 @@ class LoginServiceTest {
         return application;
     }
 }
+
+

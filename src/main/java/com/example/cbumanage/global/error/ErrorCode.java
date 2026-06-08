@@ -22,6 +22,9 @@ public enum ErrorCode {
     FORBIDDEN("E-AUTH-0002", "권한이 없습니다. ", HttpStatus.FORBIDDEN),
     USER_NOT_FOUND("E-AUTH-0004", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     INVALID_PASSWORD("E-AUTH-0005", "비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
+    MEMBER_NOT_APPROVED("E-AUTH-0006", "회비 확인 및 관리자 승인이 완료되지 않았습니다.", HttpStatus.FORBIDDEN),
+    INVALID_EMAIL_DOMAIN("E-AUTH-0007", "학교 이메일(@tukorea.ac.kr)만 사용할 수 있습니다.", HttpStatus.BAD_REQUEST),
+    EMAIL_AUTH_FAILED("E-AUTH-0008", "이메일 인증이 완료되지 않았습니다.", HttpStatus.UNAUTHORIZED),
 
     //그룹 에러 코드
     GROUP_NOT_FOUND("E-GROUP-0001", "그룹을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
@@ -53,10 +56,13 @@ public enum ErrorCode {
     VOTE_NOT_FOUND("E-APP-0011", "투표 내역이 없습니다.", HttpStatus.NOT_FOUND),
     VOTING_NOT_COMPLETED("E-APP-0012", "아직 투표가 완료되지 않은 신청서가 있습니다.", HttpStatus.BAD_REQUEST),
     UNDECIDED_APPLICATION_EXISTS("E-APP-0013", "최종 결정되지 않은(보류) 신청서가 있습니다.", HttpStatus.BAD_REQUEST),
+    REQUIRED_ANSWER_MISSING("E-APP-0014", "필수 답변이 누락되었습니다.", HttpStatus.BAD_REQUEST),
 
     // 모집(Recruitment) 에러 코드
     RECRUITMENT_NOT_FOUND("E-REC-0001", "모집 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-    RECRUITMENT_ALREADY_OPEN("E-REC-0002", "이미 진행 중인 모집이 있습니다.", HttpStatus.CONFLICT);
+    RECRUITMENT_ALREADY_OPEN("E-REC-0002", "이미 진행 중인 모집이 있습니다.", HttpStatus.CONFLICT),
+    RECRUITMENT_DUPLICATED("E-REC-0003", "이미 존재하는 모집 기수입니다.", HttpStatus.CONFLICT),
+    RECRUITMENT_ALREADY_CLOSED("E-REC-0004", "이미 마감된 모집입니다.", HttpStatus.BAD_REQUEST);
 
     private final String code;
     private final String message;

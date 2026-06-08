@@ -30,14 +30,14 @@ public class MemberController {
     @GetMapping("member/{id}")
     @Operation(summary = "원하는 id에 따른 회원정보 취득", description = "id 하나하나에 따른 회원정보를 받아옵니다.")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MEMBER_MANAGER', 'ROLE_TREASURER')")
     public ApiResponse<MemberDTO> getMember(@PathVariable Long id) {
         User user = userRepository.findByUserIdAndDeletedAtIsNull(id).orElseThrow();
         return ApiResponse.success(memberMapper.map(user));
     }
 
     @PostMapping("member")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MEMBER_MANAGER')")
     @Operation(summary = "회원 추가", description = "회원 정보를 데이터베이스에 추가합니다.")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<Long> postMember(@RequestBody @Valid MemberCreateDTO memberCreateDTO) {
@@ -46,7 +46,7 @@ public class MemberController {
     }
 
     @PatchMapping("member")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MEMBER_MANAGER')")
     @Operation(summary = "데이터베이스의 회원 정보를 변경", description = "데이터베이스의 회원 정보를 변경합니다.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ApiResponse<Void> patchMember(@RequestBody MemberUpdateDTO memberDTO) {
@@ -54,8 +54,16 @@ public class MemberController {
         return ApiResponse.success();
     }
 
+    @PatchMapping("member/{id}/approve-payment")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_TREASURER')")
+    @Operation(summary = "회비 확인 후 회원 승인", description = "회비 납부 확인 후 회원 상태를 ACTIVE로 변경하고 오픈채팅/디스코드 링크 안내 메일을 발송합니다.")
+    public ApiResponse<Void> approvePayment(@PathVariable Long id) {
+        memberManageService.approvePayment(id);
+        return ApiResponse.success();
+    }
+
     @DeleteMapping("member/{studentNumber}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MEMBER_MANAGER')")
     @Operation(summary = "회원 정보 삭제", description = "데이터베이스의 회원 정보를 삭제합니다.")
     public ApiResponse<Void> deleteMember(@PathVariable Long studentNumber) {
         memberManageService.deleteMember(studentNumber);
@@ -63,7 +71,7 @@ public class MemberController {
     }
 
     @GetMapping("members")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MEMBER_MANAGER', 'ROLE_TREASURER')")
     @Operation(summary = "전체 회원 정보 취득", description = "데이터베이스의 모든 회원정보를 받아옵니다.")
     public ApiResponse<List<MemberDTO>> getMembers(@RequestParam(name = "page", required = false) Integer page) {
         if (page == null) page = 0;

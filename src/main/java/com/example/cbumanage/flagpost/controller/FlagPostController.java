@@ -24,8 +24,8 @@ public class FlagPostController {
 
     private final FlagPostService flagPostService;
 
-    @Operation(summary = "게시글 신고 목록 페이징 조회", description = "신고된 게시글 목록을 페이징으로 불러옵니다. ADMIN 또는 MANAGER 권한이 필요합니다.")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_MANAGER')")
+    @Operation(summary = "게시글 신고 목록 페이징 조회", description = "신고된 게시글 목록을 페이징으로 불러옵니다.")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
     @GetMapping
     public ApiResponse<Page<FlagPostDTO.FlagPostPreviewDTO>> getFlagPostPreviews(
             @RequestParam int page,
@@ -34,8 +34,8 @@ public class FlagPostController {
         return ApiResponse.success(flagPostService.getFlagPostPreviews(pageable));
     }
 
-    @Operation(summary = "게시글 신고 단일 조회", description = "신고 ID로 신고 상세 정보를 조회합니다. ADMIN 또는 MANAGER 권한이 필요합니다.")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_MANAGER')")
+    @Operation(summary = "게시글 신고 단일 조회", description = "신고 ID로 신고 상세 정보를 조회합니다.")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
     @GetMapping("/{flagPostId}")
     public ApiResponse<FlagPostDTO.FlagPostInfoDTO> getFlagPostInfo(@PathVariable Long flagPostId) {
         try {
@@ -45,8 +45,8 @@ public class FlagPostController {
         }
     }
 
-    @Operation(summary = "게시글 신고 처리", description = "해당 postId를 가진 모든 신고를 처리(소프트 삭제)합니다. ADMIN 또는 MANAGER 권한이 필요합니다.")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_MANAGER')")
+    @Operation(summary = "게시글 신고 처리", description = "해당 postId를 가진 모든 신고를 처리(소프트 삭제)합니다.")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
     @PatchMapping("/{postId}/resolve")
     public ApiResponse<Void> resolveFlagsByPostId(@PathVariable Long postId) {
         try {

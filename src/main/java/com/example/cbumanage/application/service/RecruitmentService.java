@@ -20,7 +20,7 @@ import java.util.List;
 public class RecruitmentService {
 
     // 투표 자격을 가진 역할 (운영진)
-    private static final List<Role> VOTER_ROLES = List.of(Role.ROLE_MANAGER, Role.ROLE_ADMIN);
+    private static final List<Role> VOTER_ROLES = Role.applicationVoterRoles();
 
     private final RecruitmentRepository recruitmentRepository;
     private final UserRepository userRepository;
@@ -33,6 +33,9 @@ public class RecruitmentService {
     public RecruitmentResponse open(RecruitmentCreateRequest request) {
         recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN).ifPresent(r -> {
             throw new BaseException(ErrorCode.RECRUITMENT_ALREADY_OPEN);
+        });
+        recruitmentRepository.findByGeneration(request.generation()).ifPresent(r -> {
+            throw new BaseException(ErrorCode.RECRUITMENT_DUPLICATED);
         });
 
         int voterCount = (int) userRepository.countByRoleInAndDeletedAtIsNull(VOTER_ROLES);
@@ -48,6 +51,9 @@ public class RecruitmentService {
     public RecruitmentResponse close(String recruitmentUuid) {
         Recruitment recruitment = recruitmentRepository.findByRecruitmentUuid(recruitmentUuid)
                 .orElseThrow(() -> new BaseException(ErrorCode.RECRUITMENT_NOT_FOUND));
+        if (!recruitment.isOpen()) {
+            throw new BaseException(ErrorCode.RECRUITMENT_ALREADY_CLOSED);
+        }
         recruitment.close();
         return RecruitmentResponse.from(recruitment);
     }
