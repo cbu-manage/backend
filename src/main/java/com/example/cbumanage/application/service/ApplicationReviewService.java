@@ -70,7 +70,8 @@ public class ApplicationReviewService {
     @Transactional(readOnly = true)
     public AdminApplicationListResponse getApplications(
             String recruitmentUuid, ApplicationField field, ApplicationReview tab,
-            LocalDateTime from, LocalDateTime to, String keyword, Pageable pageable) {
+            LocalDateTime from, LocalDateTime to, String keyword, Pageable pageable,
+            Long currentUserId) {
 
         Recruitment recruitment = recruitmentRepository.findByRecruitmentUuid(recruitmentUuid)
                 .orElseThrow(() -> new BaseException(ErrorCode.RECRUITMENT_NOT_FOUND));
@@ -81,14 +82,78 @@ public class ApplicationReviewService {
         Page<MemberApplication> page = memberApplicationRepository.searchForAdmin(
                 recruitment.getGeneration(), field, statuses, from, to, normalizedKeyword, pageable);
 
-        Map<Long, Long> progressByApplicationId = voteProgressByApplicationId(
-                page.getContent().stream().map(MemberApplication::getId).toList());
+        List<Long> applicationIds = page.getContent().stream().map(MemberApplication::getId).toList();
+        Map<Long, long[]> tallyByApplicationId = passFailByApplicationId(applicationIds);
+        Map<Long, Boolean> myReviewedByApplicationId = myReviewedByApplicationId(applicationIds, currentUserId);
+        Map<Long, String> applicationNoteById = applicationNoteById(page.getContent());
 
         Page<ApplicationListItemResponse> items = page.map(application ->
-                ApplicationListItemResponse.of(
-                        application, progressByApplicationId.getOrDefault(application.getId(), 0L)));
+        {
+            long[] passFail = tallyByApplicationId.getOrDefault(application.getId(), new long[2]);
+            FinalDecision suggestedDecision = suggestDecision(passFail[0], passFail[1], recruitment.getVoterCount());
+            return ApplicationListItemResponse.of(
+                    application,
+                    passFail[0],
+                    passFail[1],
+                    myReviewedByApplicationId.getOrDefault(application.getId(), false),
+                    finalDecisionOf(application),
+                    suggestedDecision,
+                    applicationNoteById.get(application.getId()));
+        });
 
         return new AdminApplicationListResponse(recruitment.getVoterCount(), items);
+    }
+
+    private Map<Long, Boolean> myReviewedByApplicationId(List<Long> applicationIds, Long currentUserId) {
+        if (applicationIds.isEmpty() || currentUserId == null) {
+            return Map.of();
+        }
+        return applicationVoteRepository.findByMemberApplicationIdInAndVoterId(applicationIds, currentUserId).stream()
+                .collect(Collectors.toMap(
+                        ApplicationVote::getMemberApplicationId,
+                        vote -> true,
+                        (left, right) -> true));
+    }
+
+    private Map<Long, String> applicationNoteById(List<MemberApplication> applications) {
+        if (applications.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> studentNumbers = applications.stream()
+                .map(MemberApplication::getStudentNumber)
+                .distinct()
+                .toList();
+        Map<Long, List<Long>> generationsByStudentNumber = memberApplicationRepository
+                .findByStudentNumberIn(studentNumbers).stream()
+                .collect(Collectors.groupingBy(
+                        MemberApplication::getStudentNumber,
+                        Collectors.mapping(MemberApplication::getGeneration, Collectors.toList())));
+
+        return applications.stream()
+                .collect(Collectors.toMap(
+                        MemberApplication::getId,
+                        application -> formatApplicationHistoryNote(
+                                generationsByStudentNumber.getOrDefault(
+                                        application.getStudentNumber(),
+                                        List.of(application.getGeneration())))));
+    }
+
+    private String formatApplicationHistoryNote(List<Long> generations) {
+        String generationText = generations.stream()
+                .distinct()
+                .sorted()
+                .map(String::valueOf)
+                .collect(Collectors.joining(", "));
+        return generationText + "기에 지원";
+    }
+
+    private FinalDecision finalDecisionOf(MemberApplication application) {
+        return switch (application.getStatus()) {
+            case ADMIN_ACCEPTED, COMPLETED, NOTIFIED -> FinalDecision.ACCEPT;
+            case ADMIN_REJECTED -> FinalDecision.REJECT;
+            case HOLD -> FinalDecision.HOLD;
+            default -> null;
+        };
     }
 
     /**

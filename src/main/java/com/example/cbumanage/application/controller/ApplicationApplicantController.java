@@ -1,6 +1,7 @@
 package com.example.cbumanage.application.controller;
 
 import com.example.cbumanage.application.dto.ApplicantApplicationResponse;
+import com.example.cbumanage.application.dto.ApplicationCancelRequest;
 import com.example.cbumanage.application.dto.ApplicationMyRequest;
 import com.example.cbumanage.application.dto.ApplicationQuestionResponse;
 import com.example.cbumanage.application.dto.ApplicationSubmitRequest;
@@ -45,5 +46,14 @@ public class ApplicationApplicantController {
     public ApiResponse<ApplicantApplicationResponse> getMyApplication(
             @RequestBody @Valid ApplicationMyRequest request) {
         return ApiResponse.success(applicationApplicantService.getMyApplication(request));
+    }
+
+    @DeleteMapping("/{applicationUuid}")
+    @Operation(summary = "신청서 취소", description = "학번과 @tukorea.ac.kr 이메일 인증코드 검증 후 본인이 제출한 신청서를 취소합니다.")
+    public ApiResponse<Void> cancel(
+            @PathVariable String applicationUuid,
+            @RequestBody @Valid ApplicationCancelRequest request) {
+        applicationApplicantService.cancel(applicationUuid, request);
+        return ApiResponse.success();
     }
 }

@@ -1,6 +1,7 @@
 package com.example.cbumanage.application.service;
 
 import com.example.cbumanage.application.dto.ApplicantApplicationResponse;
+import com.example.cbumanage.application.dto.ApplicationCancelRequest;
 import com.example.cbumanage.application.dto.ApplicationDetailResponse;
 import com.example.cbumanage.application.dto.ApplicationMyRequest;
 import com.example.cbumanage.application.dto.ApplicationSubmitRequest;
@@ -89,6 +90,23 @@ public class ApplicationApplicantService {
                         request.studentNumber(), request.email())
                 .orElseThrow(() -> new BaseException(ErrorCode.APPLICATION_NOT_FOUND));
         return toApplicantResponse(application);
+    }
+
+    @Transactional
+    public void cancel(String applicationUuid, ApplicationCancelRequest request) {
+        validateTukoreaEmailAuth(request.email(), request.emailAuthCode(), false);
+        MemberApplication application = memberApplicationRepository.findByApplicationUuid(applicationUuid)
+                .orElseThrow(() -> new BaseException(ErrorCode.APPLICATION_NOT_FOUND));
+        if (!application.getStudentNumber().equals(request.studentNumber())
+                || !application.getEmail().equals(request.email())) {
+            throw new BaseException(ErrorCode.UNAUTHORIZED);
+        }
+        try {
+            application.cancel();
+        } catch (IllegalStateException e) {
+            throw new BaseException(ErrorCode.INVALID_APPLICATION_STATUS);
+        }
+        redisUtil.deleteData(request.email());
     }
 
     private void validateTukoreaEmailAuth(String email, String authCode, boolean consumeAuthCode) {
