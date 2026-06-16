@@ -61,7 +61,7 @@ public class PostService {
     public void softDeletePost(Long postId, Long userId) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        boolean isAdminOrManager = user.getRole() == Role.ROLE_ADMIN || user.getRole() == Role.ROLE_MANAGER;
+        boolean isAdminOrManager = user.getRole().isPresidentOrVicePresidentOrAdmin() || user.getRole() == Role.ROLE_MANAGER;
         if (!isAdminOrManager && !post.getAuthorId().equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }

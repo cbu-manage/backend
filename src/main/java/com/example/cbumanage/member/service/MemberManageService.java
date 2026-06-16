@@ -1,10 +1,16 @@
 package com.example.cbumanage.member.service;
 
 import com.example.cbumanage.dues.repository.DuesRepository;
+import com.example.cbumanage.application.entity.ApplicationNotification;
+import com.example.cbumanage.application.entity.enums.MailNotiType;
+import com.example.cbumanage.application.repository.ApplicationNotificationRepository;
+import com.example.cbumanage.email.dto.EmailAuthResponseDTO;
+import com.example.cbumanage.email.service.EmailService;
 import com.example.cbumanage.member.dto.MemberCreateDTO;
 import com.example.cbumanage.member.dto.MemberUpdateDTO;
 import com.example.cbumanage.member.exception.MemberNotExistsException;
 import com.example.cbumanage.member.util.MemberMapper;
+import com.example.cbumanage.user.entity.MemberStatus;
 import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +35,8 @@ public class MemberManageService {
 	private final UserRepository userRepository;
 	private final DuesRepository duesRepository;
 	private final MemberMapper memberMapper;
+	private final EmailService emailService;
+	private final ApplicationNotificationRepository applicationNotificationRepository;
 
 	@Value("${cbu.login.salt}")
 	private String salt;
@@ -39,10 +47,14 @@ public class MemberManageService {
 	@Autowired
 	public MemberManageService(UserRepository userRepository,
 								 DuesRepository duesRepository,
-								 MemberMapper memberMapper) {
+								 MemberMapper memberMapper,
+								 EmailService emailService,
+								 ApplicationNotificationRepository applicationNotificationRepository) {
 		this.userRepository = userRepository;
 		this.duesRepository = duesRepository;
 		this.memberMapper = memberMapper;
+		this.emailService = emailService;
+		this.applicationNotificationRepository = applicationNotificationRepository;
 	}
 
 	@Transactional(readOnly = true)
@@ -75,6 +87,28 @@ public class MemberManageService {
 		User user = userRepository.findByStudentNumberAndDeletedAtIsNull(studentNumber)
 				.orElseThrow(MemberNotExistsException::new);
 		user.delete();
+	}
+
+	@Transactional
+	public void approvePayment(Long userId) {
+		User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
+				.orElseThrow(MemberNotExistsException::new);
+		user.changeMemberStatus(MemberStatus.ACTIVE);
+		if (user.getEmail() == null || user.getEmail().isBlank()) {
+			return;
+		}
+		EmailAuthResponseDTO result = emailService.sendOnboardingEmail(user.getEmail(), user.getName());
+		if (result == null) {
+			result = new EmailAuthResponseDTO(false, "메일 발송 결과를 확인할 수 없습니다.");
+		}
+		if (user.getApplicationId() == null) {
+			return;
+		}
+		ApplicationNotification notification = result.isSuccess()
+				? ApplicationNotification.sent(user.getApplicationId(), user.getEmail(), MailNotiType.ONBOARDING)
+				: ApplicationNotification.failed(user.getApplicationId(), user.getEmail(), MailNotiType.ONBOARDING,
+				result.getResponseMessage());
+		applicationNotificationRepository.save(notification);
 	}
 
 	private String hashPassword(String password) {

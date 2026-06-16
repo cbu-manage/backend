@@ -13,6 +13,8 @@ import com.example.cbumanage.user.dto.PasswordChangeRequest;
 import com.example.cbumanage.user.dto.PasswordResetRequest;
 import com.example.cbumanage.user.dto.UserLoginRequest;
 import com.example.cbumanage.user.dto.UserSignUpRequest;
+import com.example.cbumanage.user.entity.MemberStatus;
+import com.example.cbumanage.user.entity.Role;
 import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
@@ -53,6 +55,9 @@ public class LoginService {
         userRepository.findByEmail(request.email()).ifPresent(u -> {
             throw new BaseException(ErrorCode.DUPLICATE_RESOURCE);
         });
+        if (!application.getEmail().equals(request.email())) {
+            throw new BaseException(ErrorCode.UNAUTHORIZED);
+        }
 
         User user = new User(
                 application.getId(),
@@ -81,6 +86,9 @@ public class LoginService {
 
         if (!hashPassword(request.password()).equals(user.getPassword())) {
             throw new BaseException(ErrorCode.INVALID_PASSWORD);
+        }
+        if (user.getRole() == Role.ROLE_USER && user.getMemberStatus() != MemberStatus.ACTIVE) {
+            throw new BaseException(ErrorCode.MEMBER_NOT_APPROVED);
         }
 
         TokenInfo tokenInfo = jwtProvider.createToken(
