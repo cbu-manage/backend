@@ -41,9 +41,11 @@ public class ApplicationAdminController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
             @RequestParam(required = false) String keyword,
-            Pageable pageable) {
+            Pageable pageable,
+            Authentication authentication) {
+        Long currentUserId = Long.parseLong(authentication.getName());
         return ApiResponse.success(applicationReviewService.getApplications(
-                recruitmentUuid, field, tab, from, to, keyword, pageable));
+                recruitmentUuid, field, tab, from, to, keyword, pageable, currentUserId));
     }
 
     @GetMapping("/applications/{applicationUuid}")

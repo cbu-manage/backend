@@ -1,11 +1,13 @@
 package com.example.cbumanage.application.service;
 
+import com.example.cbumanage.application.dto.ApplicationCancelRequest;
 import com.example.cbumanage.application.dto.ApplicationSubmitRequest;
 import com.example.cbumanage.application.entity.ApplicationQuestion;
 import com.example.cbumanage.application.entity.MemberApplication;
 import com.example.cbumanage.application.entity.Recruitment;
 import com.example.cbumanage.application.entity.enums.AcademicStatus;
 import com.example.cbumanage.application.entity.enums.ApplicationField;
+import com.example.cbumanage.application.entity.enums.ApplicationStatus;
 import com.example.cbumanage.application.entity.enums.RefSource;
 import com.example.cbumanage.application.repository.ApplicationAnswerRepository;
 import com.example.cbumanage.application.repository.ApplicationPortfolioUrlRepository;
@@ -21,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -93,6 +96,41 @@ class ApplicationApplicantServiceTest {
         verify(redisUtil).deleteData("applicant@tukorea.ac.kr");
     }
 
+    @Test
+    void cancelChangesSubmittedApplicationToCancelledAfterOwnerEmailAuth() {
+        MemberApplication application = submittedApplication();
+        when(emailManager.validEmail("applicant@tukorea.ac.kr")).thenReturn(true);
+        when(redisUtil.getData("applicant@tukorea.ac.kr")).thenReturn("123456");
+        when(memberApplicationRepository.findByApplicationUuid(application.getApplicationUuid()))
+                .thenReturn(Optional.of(application));
+
+        applicationApplicantService.cancel(
+                application.getApplicationUuid(),
+                new ApplicationCancelRequest(2024000001L, "applicant@tukorea.ac.kr", "123456"));
+
+        assertThat(application.getStatus()).isEqualTo(ApplicationStatus.CANCELLED);
+        assertThat(application.getCancelledAt()).isNotNull();
+        verify(redisUtil).deleteData("applicant@tukorea.ac.kr");
+    }
+
+    @Test
+    void cancelRejectsWhenRequesterIsNotApplicationOwner() {
+        MemberApplication application = submittedApplication();
+        when(emailManager.validEmail("other@tukorea.ac.kr")).thenReturn(true);
+        when(redisUtil.getData("other@tukorea.ac.kr")).thenReturn("123456");
+        when(memberApplicationRepository.findByApplicationUuid(application.getApplicationUuid()))
+                .thenReturn(Optional.of(application));
+
+        assertThatThrownBy(() -> applicationApplicantService.cancel(
+                application.getApplicationUuid(),
+                new ApplicationCancelRequest(2024000002L, "other@tukorea.ac.kr", "123456")))
+                .isInstanceOfSatisfying(BaseException.class,
+                        e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.UNAUTHORIZED));
+
+        assertThat(application.getStatus()).isEqualTo(ApplicationStatus.SUBMITTED);
+        verify(redisUtil, never()).deleteData("other@tukorea.ac.kr");
+    }
+
     private ApplicationSubmitRequest submitRequest(List<ApplicationSubmitRequest.AnswerRequest> answers) {
         return new ApplicationSubmitRequest(
                 2024000001L,
@@ -121,6 +159,24 @@ class ApplicationApplicantServiceTest {
                 .question(question)
                 .isRequired(true)
                 .sortOrder(sortOrder)
+                .build();
+    }
+
+    private MemberApplication submittedApplication() {
+        return MemberApplication.builder()
+                .studentNumber(2024000001L)
+                .email("applicant@tukorea.ac.kr")
+                .name("홍길동")
+                .nickname("cbu")
+                .grade(AcademicStatus.JUNIOR)
+                .major("컴퓨터공학과")
+                .phoneNumber("010-1234-5678")
+                .generation(40L)
+                .applicationField(ApplicationField.PROJECT)
+                .refSource(RefSource.FRIEND)
+                .canOt(true)
+                .canWelcome(true)
+                .privacyPolicy(true)
                 .build();
     }
 }

@@ -67,6 +67,9 @@ public interface MemberApplicationRepository extends JpaRepository<MemberApplica
     // 기수별 신청서 목록 (최신순)
     Page<MemberApplication> findByGenerationOrderBySubmittedAtDesc(Long generation, Pageable pageable);
 
+    // 신청서 목록 비고용: 같은 학번의 지원 기수 이력
+    List<MemberApplication> findByStudentNumberIn(List<Long> studentNumbers);
+
     // 기수 + 상태 필터링 (후보 테이블 無限스크롤용)
     Slice<MemberApplication> findByGenerationAndStatusOrderBySubmittedAtDesc(
             Long generation, ApplicationStatus status, Pageable pageable);

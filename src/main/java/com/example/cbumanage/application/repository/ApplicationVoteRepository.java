@@ -20,6 +20,9 @@ public interface ApplicationVoteRepository extends JpaRepository<ApplicationVote
     // 신청서에 대한 모든 운영진 투표 보기(운영진별 의견 보기)
     List<ApplicationVote> findByMemberApplicationId(Long memberApplicationId);
 
+    // 신청서 목록에서 현재 운영진의 검토 여부 일괄 조회
+    List<ApplicationVote> findByMemberApplicationIdInAndVoterId(List<Long> memberApplicationIds, Long voterId);
+
     /* 집계 함수 (만장일치 찬성(ALL_PASS)/만장일치 불함(ALL_REJECT) 판정용) */
 
     // 신청서별 PASS/FAIL 건수
