@@ -23,6 +23,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByStudentNumberAndDeletedAtIsNull(Long studentNumber);
     Optional<User> findByUserUuidAndDeletedAtIsNull(UUID userUuid);
     Page<User> findByDeletedAtIsNull(Pageable pageable);
+    long countByMemberStatus(MemberStatus memberStatus);
 
     @Query("""
             SELECT u

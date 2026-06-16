@@ -48,12 +48,19 @@ public class Gathering {
     @Column(nullable = false)
     private Boolean isDeleted = false;
 
+    @Column(nullable = false)
+    private Long viewCount = 0L;
+
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
+
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
 
     public boolean isVoteClosed() {
         return voteDeadline != null && LocalDateTime.now().isAfter(voteDeadline);
