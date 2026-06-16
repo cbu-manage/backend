@@ -83,7 +83,7 @@ public class CommentService {
     public void deleteComment(Long commentId, Long userId) {
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment not found"));
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        boolean isAdminOrManager = user.getRole() == Role.ROLE_ADMIN || user.getRole() == Role.ROLE_MANAGER;
+        boolean isAdminOrManager = user.getRole().isPresidentOrVicePresidentOrAdmin() || user.getRole() == Role.ROLE_MANAGER;
         if (!isAdminOrManager && !isAuthor(userId, comment)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }

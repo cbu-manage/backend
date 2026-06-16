@@ -1,6 +1,8 @@
 package com.example.cbumanage.member.service;
 
 import com.example.cbumanage.dues.repository.DuesRepository;
+import com.example.cbumanage.application.repository.ApplicationNotificationRepository;
+import com.example.cbumanage.email.service.EmailService;
 import com.example.cbumanage.member.util.MemberMapper;
 import com.example.cbumanage.user.entity.MemberStatus;
 import com.example.cbumanage.user.entity.User;
@@ -22,7 +24,9 @@ class MemberManageServiceTest {
     private final MemberManageService memberManageService = new MemberManageService(
             userRepository,
             mock(DuesRepository.class),
-            mock(MemberMapper.class)
+            mock(MemberMapper.class),
+            mock(EmailService.class),
+            mock(ApplicationNotificationRepository.class)
     );
 
     @Test

@@ -92,6 +92,10 @@ public class MemberApplication {
     @Column(name = "can_ot", nullable = false)
     private Boolean canOt;
 
+    @Schema(description = "환영회 참석 여부")
+    @Column(name = "can_welcome", nullable = false)
+    private Boolean canWelcome;
+
     @Schema(description = "개인정보 수집 동의 여부")
     @Column(name = "privacy_policy", nullable = false)
     private Boolean privacyPolicy;
@@ -132,7 +136,7 @@ public class MemberApplication {
                               AcademicStatus grade, String major, String phoneNumber,
                               Long generation, ApplicationField applicationField,
                               String portfolioUrl, RefSource refSource, String refLinkEtc,
-                              Boolean canOt, Boolean privacyPolicy) {
+                              Boolean canOt, Boolean canWelcome, Boolean privacyPolicy) {
         this.applicationUuid = UUID.randomUUID().toString();
         this.studentNumber = studentNumber;
         this.email = email;
@@ -147,6 +151,7 @@ public class MemberApplication {
         this.refSource = refSource;
         this.refLinkEtc = refLinkEtc;
         this.canOt = canOt;
+        this.canWelcome = canWelcome;
         this.privacyPolicy = privacyPolicy;
         this.status = ApplicationStatus.SUBMITTED;
         this.submittedAt = LocalDateTime.now();
@@ -163,7 +168,7 @@ public class MemberApplication {
 
     // 지원자가 지원서를 수정하는 경우 (취소된 지원서는 수정 불가)
     public void updateByApplicant(String nickname, String email, String phoneNumber,
-                                  String portfolioUrl, Boolean canOt) {
+                                  String portfolioUrl, Boolean canOt, Boolean canWelcome) {
         if (this.status != ApplicationStatus.SUBMITTED) {
             throw new IllegalStateException("제출 상태가 아닌 신청서는 수정할 수 없습니다.");
         }
@@ -172,6 +177,7 @@ public class MemberApplication {
         if (phoneNumber != null) this.phoneNumber = phoneNumber;
         if (portfolioUrl != null) this.portfolioUrl = portfolioUrl;
         if (canOt != null) this.canOt = canOt;
+        if (canWelcome != null) this.canWelcome = canWelcome;
     }
 
     // 관리자(회장)의 지원서 승인/반려 처리
@@ -182,10 +188,14 @@ public class MemberApplication {
     }
 
     public void reject(Long decidedByUserId, String reason) {
-        if (reason == null || reason.isBlank()) {
-            throw new IllegalArgumentException("불합격 사유는 필수입니다.");
-        }
         this.status = ApplicationStatus.ADMIN_REJECTED;
+        this.finalDecidedBy = decidedByUserId;
+        this.finalDecisionReason = reason;
+        this.decidedAt = LocalDateTime.now();
+    }
+
+    public void hold(Long decidedByUserId, String reason) {
+        this.status = ApplicationStatus.HOLD;
         this.finalDecidedBy = decidedByUserId;
         this.finalDecisionReason = reason;
         this.decidedAt = LocalDateTime.now();

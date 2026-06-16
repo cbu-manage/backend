@@ -87,7 +87,7 @@ public class PostReportHWPService {
     }
 
     /**
-     * ADMIN / MANAGER 권한 확인 후 보고서 HWP 파일 생성
+     * 개발자 슈퍼 계정 또는 회장/부회장 권한 확인 후 보고서 HWP 파일 생성
      */
     public HWPExportResult exportToHWP(Long postId, Long userId) throws Exception {
         checkAdminOrManager(userId);
@@ -102,7 +102,7 @@ public class PostReportHWPService {
     }
 
     /**
-     * ADMIN / MANAGER 권한 확인 후 특정 그룹의 보고서 전체를 ZIP으로 묶어 반환
+     * 개발자 슈퍼 계정 또는 회장/부회장 권한 확인 후 특정 그룹의 보고서 전체를 ZIP으로 묶어 반환
      */
     public ZipExportResult exportGroupToZip(Long groupId, Long userId) throws Exception {
         checkAdminOrManager(userId);
@@ -169,7 +169,7 @@ public class PostReportHWPService {
     private void checkAdminOrManager(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        if (user.getRole() != Role.ROLE_ADMIN && user.getRole() != Role.ROLE_MANAGER) {
+        if (!user.getRole().isPresidentOrVicePresidentOrAdmin()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
     }

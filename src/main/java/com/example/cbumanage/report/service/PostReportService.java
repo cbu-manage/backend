@@ -68,7 +68,7 @@ fetch join -> 해결
  */
     public Page<PostDTO.PostReportPreviewDTO> getPostReportPreviewDTOList(Pageable pageable, Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        boolean isAdmin = user.getRole() == Role.ROLE_ADMIN || user.getRole() == Role.ROLE_MANAGER;
+        boolean isAdmin = user.getRole().isPresidentOrVicePresidentOrAdmin();
 
         if (isAdmin) {
             return postReportRepository.findPostReportPreviews(pageable, 7);
@@ -98,7 +98,7 @@ fetch join -> 해결
                 .orElseThrow(() -> new EntityNotFoundException("Report Not Found"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        boolean isAdmin = user.getRole() == Role.ROLE_ADMIN || user.getRole() == Role.ROLE_MANAGER;
+        boolean isAdmin = user.getRole().isPresidentOrVicePresidentOrAdmin();
         boolean isActiveMember =
                 groupMemberRepository.existsActiveMember(
                         userId,
@@ -135,7 +135,7 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
     @Transactional
     public void acceptReport(Long postId,Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        if (user.getRole() != Role.ROLE_ADMIN) {
+        if (!user.getRole().isPresidentOrVicePresidentOrAdmin()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         PostReport report = postReportRepository.findByPostId(postId)

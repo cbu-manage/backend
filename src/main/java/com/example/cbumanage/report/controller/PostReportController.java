@@ -20,6 +20,7 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -117,8 +118,8 @@ public class PostReportController {
         }
     }
 
-    @Operation(summary = "보고서 승인 메소드",description = "보고서 승인 메소드 입니다. post의 id를 통해 report를 허용상태로 바꿉니다" +
-            "운영진의 권한 여부를 판단해 거부하며, 매개변수 없이 보고서의 현재 상태를 변경시킵니다")
+    @Operation(summary = "보고서 승인 메소드",description = "보고서 승인 메소드 입니다. post의 id를 통해 report를 허용상태로 바꿉니다. 매개변수 없이 보고서의 현재 상태를 변경시킵니다")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
     @PatchMapping("/{postId}/accept")
     public ApiResponse<Void> acceptPostReport(@PathVariable Long postId, Authentication authentication){
         Long userId = Long.parseLong(authentication.getName());
@@ -137,9 +138,9 @@ public class PostReportController {
     @Operation(
             summary = "보고서 한글 파일 추출",
             description = "보고서 게시글의 내용을 바탕으로 HWP 파일을 생성하여 즉시 다운로드합니다.<br>" +
-                    "ADMIN , MANAGER 권한이 있는 경우에만 요청 가능합니다.<br>" +
                     "클라이언트에서는 responseType: 'blob' 으로 받아 Blob 처리 후 다운로드해야 합니다."
     )
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
     @GetMapping("/{postId}/export")
     public ResponseEntity<byte[]> exportPostReportToHWP(
             @PathVariable Long postId,
@@ -172,9 +173,9 @@ public class PostReportController {
     @Operation(
             summary = "그룹 보고서 전체 ZIP 추출",
             description = "특정 그룹의 보고서를 모두 HWP 파일로 생성하여 ZIP으로 묶어 다운로드합니다.<br>" +
-                    "ADMIN, MANAGER 권한이 있는 경우에만 요청 가능합니다.<br>" +
                     "클라이언트에서는 responseType: 'blob' 으로 받아 Blob 처리 후 다운로드해야 합니다."
     )
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
     @GetMapping("/export/group/{groupId}")
     public ResponseEntity<?> exportGroupReportsToZip(
             @PathVariable Long groupId,
