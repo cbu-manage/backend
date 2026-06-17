@@ -9,6 +9,7 @@ import com.example.cbumanage.application.entity.enums.AcademicStatus;
 import com.example.cbumanage.application.entity.enums.ApplicationField;
 import com.example.cbumanage.application.entity.enums.ApplicationStatus;
 import com.example.cbumanage.application.entity.enums.RefSource;
+import com.example.cbumanage.application.entity.enums.RecruitmentStatus;
 import com.example.cbumanage.application.repository.ApplicationAnswerRepository;
 import com.example.cbumanage.application.repository.ApplicationPortfolioUrlRepository;
 import com.example.cbumanage.application.repository.MemberApplicationRepository;
@@ -20,8 +21,11 @@ import com.example.cbumanage.global.util.RedisUtil;
 import com.example.cbumanage.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.time.ZoneId;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,6 +45,11 @@ class ApplicationApplicantServiceTest {
     private final RedisUtil redisUtil = mock(RedisUtil.class);
     private final ApplicationQuestionService applicationQuestionService = mock(ApplicationQuestionService.class);
     private final EmailManager emailManager = mock(EmailManager.class);
+    private final RecruitmentGenerationPolicy generationPolicy = new RecruitmentGenerationPolicy(
+            Clock.fixed(Instant.parse("2026-06-17T00:00:00Z"), ZoneId.of("Asia/Seoul")),
+            2026,
+            RecruitmentGenerationPolicy.RecruitmentSeason.SUMMER_BREAK,
+            29);
     private final ApplicationApplicantService applicationApplicantService = new ApplicationApplicantService(
             recruitmentRepository,
             memberApplicationRepository,
@@ -49,7 +58,8 @@ class ApplicationApplicantServiceTest {
             userRepository,
             redisUtil,
             applicationQuestionService,
-            emailManager
+            emailManager,
+            generationPolicy
     );
 
     @Test
@@ -94,6 +104,28 @@ class ApplicationApplicantServiceTest {
         )));
 
         verify(redisUtil).deleteData("applicant@tukorea.ac.kr");
+    }
+
+    @Test
+    void submitUsesSeasonGenerationWhenRecruitmentIsNotOpened() {
+        ApplicationQuestion question = requiredQuestion("몰입 경험", 1);
+        when(emailManager.validEmail("applicant@tukorea.ac.kr")).thenReturn(true);
+        when(redisUtil.getData("applicant@tukorea.ac.kr")).thenReturn("123456");
+        when(recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)).thenReturn(Optional.empty());
+        when(memberApplicationRepository.findByStudentNumberAndGeneration(2024000001L, 29L))
+                .thenReturn(Optional.empty());
+        when(memberApplicationRepository.save(org.mockito.ArgumentMatchers.any(MemberApplication.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(applicationQuestionService.getQuestions(29L)).thenReturn(List.of(question));
+        when(applicationAnswerRepository.findByApplicationId(null)).thenReturn(List.of());
+        when(applicationPortfolioUrlRepository.findByMemberApplicationIdOrderBySortOrderAsc(null))
+                .thenReturn(List.of());
+
+        var response = applicationApplicantService.submit(submitRequest(List.of(
+                new ApplicationSubmitRequest.AnswerRequest(question.getQuestionUuid(), "답변입니다.")
+        )));
+
+        assertThat(response.generation()).isEqualTo(29L);
     }
 
     @Test

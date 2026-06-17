@@ -1,6 +1,7 @@
 package com.example.cbumanage.application.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
@@ -26,6 +27,7 @@ public class RecruitmentGenerationPolicy {
     private final RecruitmentSeason anchorSeason;
     private final long anchorGeneration;
 
+    @Autowired
     public RecruitmentGenerationPolicy(
             @Value("${cbu.recruitment.generation.anchor-year:2026}") int anchorYear,
             @Value("${cbu.recruitment.generation.anchor-season:SUMMER_BREAK}") RecruitmentSeason anchorSeason,

@@ -9,7 +9,6 @@ import com.example.cbumanage.application.entity.ApplicationAnswer;
 import com.example.cbumanage.application.entity.ApplicationPortfolioUrl;
 import com.example.cbumanage.application.entity.ApplicationQuestion;
 import com.example.cbumanage.application.entity.MemberApplication;
-import com.example.cbumanage.application.entity.Recruitment;
 import com.example.cbumanage.application.entity.enums.RecruitmentStatus;
 import com.example.cbumanage.application.repository.ApplicationAnswerRepository;
 import com.example.cbumanage.application.repository.ApplicationPortfolioUrlRepository;
@@ -41,6 +40,7 @@ public class ApplicationApplicantService {
     private final RedisUtil redisUtil;
     private final ApplicationQuestionService applicationQuestionService;
     private final EmailManager emailManager;
+    private final RecruitmentGenerationPolicy generationPolicy;
 
     @Transactional
     public ApplicantApplicationResponse submit(ApplicationSubmitRequest request) {
@@ -50,10 +50,9 @@ public class ApplicationApplicantService {
             throw new BaseException(ErrorCode.ALREADY_JOINED_MEMBER);
         });
 
-        Recruitment recruitment = recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)
-                .orElseThrow(() -> new BaseException(ErrorCode.RECRUITMENT_NOT_FOUND));
+        Long generation = currentApplicationGeneration();
         memberApplicationRepository.findByStudentNumberAndGeneration(
-                request.studentNumber(), recruitment.getGeneration()).ifPresent(application -> {
+                request.studentNumber(), generation).ifPresent(application -> {
             throw new BaseException(ErrorCode.APPLICATION_DUPLICATED);
         });
 
@@ -65,7 +64,7 @@ public class ApplicationApplicantService {
                 .grade(request.grade())
                 .major(request.major())
                 .phoneNumber(request.phoneNumber())
-                .generation(recruitment.getGeneration())
+                .generation(generation)
                 .applicationField(request.applicationField())
                 .portfolioUrl(resolvePrimaryPortfolioUrl(request))
                 .refSource(request.refSource())
@@ -80,6 +79,12 @@ public class ApplicationApplicantService {
         redisUtil.deleteData(request.email());
 
         return toApplicantResponse(application);
+    }
+
+    private Long currentApplicationGeneration() {
+        return recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)
+                .map(recruitment -> recruitment.getGeneration())
+                .orElseGet(generationPolicy::currentGeneration);
     }
 
     @Transactional(readOnly = true)

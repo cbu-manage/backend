@@ -81,6 +81,15 @@ class RecruitmentServiceTest {
     }
 
     @Test
+    void getCurrentApplicationGenerationUsesSeasonGenerationWhenRecruitmentIsNotOpened() {
+        when(recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)).thenReturn(Optional.empty());
+
+        var response = recruitmentService.getCurrentApplicationGeneration();
+
+        assertThat(response.generation()).isEqualTo(29L);
+    }
+
+    @Test
     void openRejectsDuplicatedGenerationBeforeSave() {
         when(recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)).thenReturn(Optional.empty());
         when(recruitmentRepository.findByGeneration(40L)).thenReturn(Optional.of(Recruitment.open(40L, 3)));

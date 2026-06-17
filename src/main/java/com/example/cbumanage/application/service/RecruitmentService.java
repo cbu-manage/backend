@@ -83,9 +83,10 @@ public class RecruitmentService {
      */
     @Transactional(readOnly = true)
     public CurrentApplicationGenerationResponse getCurrentApplicationGeneration() {
-        Recruitment recruitment = recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)
-                .orElseThrow(() -> new BaseException(ErrorCode.RECRUITMENT_NOT_FOUND));
-        return new CurrentApplicationGenerationResponse(recruitment.getGeneration());
+        Long generation = recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)
+                .map(Recruitment::getGeneration)
+                .orElseGet(generationPolicy::currentGeneration);
+        return new CurrentApplicationGenerationResponse(generation);
     }
 
     /**
