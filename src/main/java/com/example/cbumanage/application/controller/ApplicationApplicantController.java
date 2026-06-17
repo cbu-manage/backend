@@ -5,8 +5,10 @@ import com.example.cbumanage.application.dto.ApplicationCancelRequest;
 import com.example.cbumanage.application.dto.ApplicationMyRequest;
 import com.example.cbumanage.application.dto.ApplicationQuestionResponse;
 import com.example.cbumanage.application.dto.ApplicationSubmitRequest;
+import com.example.cbumanage.application.dto.CurrentApplicationGenerationResponse;
 import com.example.cbumanage.application.service.ApplicationApplicantService;
 import com.example.cbumanage.application.service.ApplicationQuestionService;
+import com.example.cbumanage.application.service.RecruitmentService;
 import com.example.cbumanage.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,6 +27,14 @@ public class ApplicationApplicantController {
 
     private final ApplicationApplicantService applicationApplicantService;
     private final ApplicationQuestionService applicationQuestionService;
+    private final RecruitmentService recruitmentService;
+
+    @GetMapping("/generation/current")
+    @Operation(summary = "현재 신청 기수 조회",
+            description = "현재 진행 중인 모집 회차의 신청 기수를 조회합니다.")
+    public ApiResponse<CurrentApplicationGenerationResponse> getCurrentGeneration() {
+        return ApiResponse.success(recruitmentService.getCurrentApplicationGeneration());
+    }
 
     @GetMapping("/questions/current")
     @Operation(summary = "현재 모집 신청서 질문 조회",

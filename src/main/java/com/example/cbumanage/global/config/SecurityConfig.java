@@ -48,7 +48,8 @@ public class SecurityConfig {
                                 "/api/v1/applications/*"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET,
-                                "/api/v1/applications/questions/current"
+                                "/api/v1/applications/questions/current",
+                                "/api/v1/applications/generation/current"
                         ).permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**",

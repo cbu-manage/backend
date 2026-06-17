@@ -2,6 +2,7 @@ package com.example.cbumanage.application.service;
 
 import com.example.cbumanage.application.dto.RecruitmentCreateRequest;
 import com.example.cbumanage.application.dto.RecruitmentResponse;
+import com.example.cbumanage.application.dto.CurrentApplicationGenerationResponse;
 import com.example.cbumanage.application.entity.Recruitment;
 import com.example.cbumanage.application.entity.enums.RecruitmentStatus;
 import com.example.cbumanage.application.repository.RecruitmentRepository;
@@ -24,6 +25,7 @@ public class RecruitmentService {
 
     private final RecruitmentRepository recruitmentRepository;
     private final UserRepository userRepository;
+    private final RecruitmentGenerationPolicy generationPolicy;
 
     /**
      * 모집 시작. 진행 중인 모집이 있으면 거부하고,
@@ -34,14 +36,22 @@ public class RecruitmentService {
         recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN).ifPresent(r -> {
             throw new BaseException(ErrorCode.RECRUITMENT_ALREADY_OPEN);
         });
-        recruitmentRepository.findByGeneration(request.generation()).ifPresent(r -> {
+        Long generation = resolveGeneration(request);
+        recruitmentRepository.findByGeneration(generation).ifPresent(r -> {
             throw new BaseException(ErrorCode.RECRUITMENT_DUPLICATED);
         });
 
         int voterCount = (int) userRepository.countByRoleInAndDeletedAtIsNull(VOTER_ROLES);
         Recruitment recruitment = recruitmentRepository.save(
-                Recruitment.open(request.generation(), voterCount));
+                Recruitment.open(generation, voterCount));
         return RecruitmentResponse.from(recruitment);
+    }
+
+    private Long resolveGeneration(RecruitmentCreateRequest request) {
+        if (request != null && request.generation() != null) {
+            return request.generation();
+        }
+        return generationPolicy.currentGeneration();
     }
 
     /**
@@ -66,6 +76,16 @@ public class RecruitmentService {
         Recruitment recruitment = recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)
                 .orElseThrow(() -> new BaseException(ErrorCode.RECRUITMENT_NOT_FOUND));
         return RecruitmentResponse.from(recruitment);
+    }
+
+    /**
+     * 현재 신청을 받고 있는 모집의 기수 조회.
+     */
+    @Transactional(readOnly = true)
+    public CurrentApplicationGenerationResponse getCurrentApplicationGeneration() {
+        Recruitment recruitment = recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)
+                .orElseThrow(() -> new BaseException(ErrorCode.RECRUITMENT_NOT_FOUND));
+        return new CurrentApplicationGenerationResponse(recruitment.getGeneration());
     }
 
     /**
