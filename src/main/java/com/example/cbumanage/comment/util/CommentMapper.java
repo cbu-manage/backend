@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CommentMapper {
 
-    private final UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
     public CommentMapper(UserRepository userRepository) {
@@ -42,7 +42,6 @@ public class CommentMapper {
     }
 
     public CommentDTO.CommentCreateResponseDTO toCommentCreateResponseDTO(Comment comment) {
-        User user = userRepository.findById(comment.getUserId()).orElseThrow(() -> new EntityNotFoundException("user Not Found"));
         return new CommentDTO.CommentCreateResponseDTO(
                 comment.getId(),
                 comment.getUserId(),
@@ -53,7 +52,6 @@ public class CommentMapper {
     }
 
     public CommentDTO.ReplyCreateResponseDTO toReplyCreateResponseDTO(Comment comment) {
-        User user = userRepository.findById(comment.getUserId()).orElseThrow(() -> new EntityNotFoundException("user Not Found"));
         return new CommentDTO.ReplyCreateResponseDTO(
                 comment.getId(),
                 comment.getUserId(),

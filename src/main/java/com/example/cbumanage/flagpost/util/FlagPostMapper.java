@@ -18,8 +18,6 @@ public class FlagPostMapper {
     private final UserRepository userRepository;
 
     public FlagPostDTO.FlagPostCreateResponse toFlagPostCreateResponse(FlagPost flagPost) {
-        User author = userRepository.findById(flagPost.getAuthorId())
-                .orElseThrow(() -> new EntityNotFoundException("Author Not Found"));
         return new FlagPostDTO.FlagPostCreateResponse(
                 flagPost.getId(),
                 flagPost.getPostId(),
@@ -47,7 +45,7 @@ public class FlagPostMapper {
                 targetUser.getUserId(),
                 targetUser.getName(),
                 targetUser.getGeneration(),
-                flagPost.getAuthorId(),
+                author.getUserId(),
                 author.getName(),
                 author.getGeneration()
         );

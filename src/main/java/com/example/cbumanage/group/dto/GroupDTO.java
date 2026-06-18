@@ -79,7 +79,7 @@ public class GroupDTO {
         String rejectReason,
         @Schema(description = "현재 그룹 모집 상태",example="OPEN")
         GroupRecruitmentStatus groupRecruitmentStatus,
-        @Schema(description = "현재 그룹 리더 UUID")
+        @Schema(description = "현재 그룹 리더 ID", example="10")
         Long leaderId,
         @Schema(description = "현재 그룹 리더 기수", example="15")
         Long leaderGeneration,
@@ -108,7 +108,7 @@ public class GroupDTO {
         GroupStatus groupStatus,
         @Schema(description = "그룹 모집 상태", example = "OPEN")
         GroupRecruitmentStatus groupRecruitmentStatus,
-        @Schema(description = "리더 UUID")
+        @Schema(description = "리더 ID", example = "10")
         Long leaderId,
         @Schema(description = "리더 기수", example = "10")
         Long leaderGeneration,
@@ -159,7 +159,7 @@ public class GroupDTO {
     public record GroupMemberInfoDTO(
         @Schema(description = "그룹-멤버 매핑 ID", example = "50")
         Long groupMemberId,
-        @Schema(description = "유저 UUID")
+        @Schema(description = "유저 고유 ID", example = "10")
         Long userId,
         @Schema(description = "유저 기수",example = "15")
         Long userGeneration,

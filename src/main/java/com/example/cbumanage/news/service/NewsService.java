@@ -109,7 +109,6 @@ public class NewsService {
                 .orElseThrow(() -> new BaseException(ErrorCode.NEWS_NOT_FOUND));
     }
 
-
     private NewsDTO.NewsListResponseDTO searchNewsList(Pageable pageable, NewsCategory category, String keyword, List<String> searchTokens) {
         boolean includeDefaultCategory = category == NewsCategory.NOTICE;
         String categoryName = category == null ? null : category.name();

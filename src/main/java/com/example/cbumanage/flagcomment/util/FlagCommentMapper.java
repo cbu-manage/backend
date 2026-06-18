@@ -18,8 +18,6 @@ public class FlagCommentMapper {
     private final UserRepository userRepository;
 
     public CommentDTO.FlagCommentCreateResponse toFlagCommentCreateResponse(FlagComment flagComment) {
-        User author = userRepository.findById(flagComment.getAuthorId())
-                .orElseThrow(() -> new EntityNotFoundException("Author Not Found"));
         return new CommentDTO.FlagCommentCreateResponse(
                 flagComment.getId(),
                 flagComment.getCommentId(),
@@ -46,7 +44,7 @@ public class FlagCommentMapper {
                 targetUser.getUserId(),
                 targetUser.getName(),
                 targetUser.getGeneration(),
-                flagComment.getAuthorId(),
+                author.getUserId(),
                 author.getName(),
                 author.getGeneration()
         );

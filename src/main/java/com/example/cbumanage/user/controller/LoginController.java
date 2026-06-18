@@ -38,7 +38,7 @@ public class LoginController {
     public ApiResponse<UserLoginResponse> login(@RequestBody UserLoginRequest userLoginRequest, HttpServletResponse response) {
         LoginService.LoginResult result = loginService.login(userLoginRequest);
         addTokenCookies(response, result.tokenInfo());
-        return ApiResponse.success(new UserLoginResponse(result.userUuid(), result.name(), result.email(), result.role()));
+        return ApiResponse.success(new UserLoginResponse(result.name(), result.email(), result.role()));
     }
 
     @GetMapping("/me")

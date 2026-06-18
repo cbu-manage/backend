@@ -1,6 +1,5 @@
 package com.example.cbumanage.user.dto;
 
-
 public record MyInfoResponse(
         Long userId,
         String name,
