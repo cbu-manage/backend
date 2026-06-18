@@ -7,18 +7,26 @@ import com.example.cbumanage.application.entity.enums.ApplicationStatus;
 import com.example.cbumanage.application.entity.enums.RefSource;
 import com.example.cbumanage.application.repository.MemberApplicationRepository;
 import com.example.cbumanage.global.common.JwtProvider;
+import com.example.cbumanage.global.common.TokenInfo;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.global.util.RedisUtil;
+import com.example.cbumanage.user.dto.UserLoginRequest;
 import com.example.cbumanage.user.dto.UserSignUpRequest;
 import com.example.cbumanage.user.entity.MemberStatus;
+import com.example.cbumanage.user.entity.Role;
 import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,11 +39,12 @@ import static org.mockito.Mockito.when;
 class LoginServiceTest {
 
     private final UserRepository userRepository = mock(UserRepository.class);
+    private final JwtProvider jwtProvider = mock(JwtProvider.class);
     private final RedisUtil redisUtil = mock(RedisUtil.class);
     private final MemberApplicationRepository memberApplicationRepository = mock(MemberApplicationRepository.class);
     private final LoginService loginService = new LoginService(
             userRepository,
-            mock(JwtProvider.class),
+            jwtProvider,
             redisUtil,
             memberApplicationRepository
     );
@@ -150,6 +159,34 @@ class LoginServiceTest {
     }
 
     @Test
+    void loginReturnsUserIdInResult() {
+        String salt = "test-salt";
+        ReflectionTestUtils.setField(loginService, "salt", salt);
+        ReflectionTestUtils.setField(loginService, "refreshExpireTime", 864000000L);
+
+        Long userId = 7L;
+        Long studentNumber = 2024000001L;
+        UUID userUuid = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        User user = new User("admin@example.com", studentNumber, hashedPassword("password1234", salt));
+        user.changeRole(Role.ROLE_ADMIN);
+        user.updateProfile("관리자", null, "컴퓨터공학과", "4학년", 39L);
+        ReflectionTestUtils.setField(user, "userId", userId);
+        ReflectionTestUtils.setField(user, "userUuid", userUuid);
+
+        when(userRepository.findByStudentNumberAndDeletedAtIsNull(studentNumber)).thenReturn(Optional.of(user));
+        when(jwtProvider.createToken(userUuid, String.valueOf(studentNumber), Role.ROLE_ADMIN))
+                .thenReturn(new TokenInfo("access-token", "refresh-token"));
+
+        LoginService.LoginResult result = loginService.login(new UserLoginRequest(studentNumber, "password1234"));
+
+        assertThat(result.userId()).isEqualTo(userId);
+        assertThat(result.name()).isEqualTo("관리자");
+        assertThat(result.email()).isEqualTo("admin@example.com");
+        assertThat(result.role()).isEqualTo(Role.ROLE_ADMIN.name());
+        verify(redisUtil).setDataExpire("refresh:" + userId, "refresh-token", 864000L);
+    }
+
+    @Test
     void deleteUserInvalidatesRefreshTokenAndSoftDeletesUser() {
         Long userId = 1L;
         User user = new User("user@example.com", 20240001L, "encoded-password");
@@ -184,6 +221,16 @@ class LoginServiceTest {
         application.accept(1L);
         ReflectionTestUtils.setField(application, "id", 10L);
         return application;
+    }
+
+    private static String hashedPassword(String password, String salt) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest((password + salt).getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
 

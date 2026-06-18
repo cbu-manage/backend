@@ -44,8 +44,12 @@ public class SecurityConfig {
                                 "/api/v1/applications", "/api/v1/applications/my",
                                 "/api/v1/mail/send", "/api/v1/mail/verify"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.DELETE,
+                                "/api/v1/applications/*"
+                        ).permitAll()
                         .requestMatchers(HttpMethod.GET,
-                                "/api/v1/applications/questions/current"
+                                "/api/v1/applications/questions/current",
+                                "/api/v1/applications/generation/current"
                         ).permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**",

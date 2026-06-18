@@ -20,12 +20,14 @@ public class ApplicationQuestionService {
 
     private final ApplicationQuestionRepository applicationQuestionRepository;
     private final RecruitmentRepository recruitmentRepository;
+    private final RecruitmentGenerationPolicy generationPolicy;
 
     @Transactional(readOnly = true)
     public List<ApplicationQuestionResponse> getCurrentQuestions() {
-        Recruitment recruitment = recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)
-                .orElseThrow(() -> new BaseException(ErrorCode.RECRUITMENT_NOT_FOUND));
-        return getQuestions(recruitment.getGeneration()).stream()
+        Long generation = recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)
+                .map(Recruitment::getGeneration)
+                .orElseGet(generationPolicy::currentGeneration);
+        return getQuestions(generation).stream()
                 .map(ApplicationQuestionResponse::from)
                 .toList();
     }

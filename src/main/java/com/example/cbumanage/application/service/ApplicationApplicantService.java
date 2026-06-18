@@ -1,6 +1,7 @@
 package com.example.cbumanage.application.service;
 
 import com.example.cbumanage.application.dto.ApplicantApplicationResponse;
+import com.example.cbumanage.application.dto.ApplicationCancelRequest;
 import com.example.cbumanage.application.dto.ApplicationDetailResponse;
 import com.example.cbumanage.application.dto.ApplicationMyRequest;
 import com.example.cbumanage.application.dto.ApplicationSubmitRequest;
@@ -8,7 +9,6 @@ import com.example.cbumanage.application.entity.ApplicationAnswer;
 import com.example.cbumanage.application.entity.ApplicationPortfolioUrl;
 import com.example.cbumanage.application.entity.ApplicationQuestion;
 import com.example.cbumanage.application.entity.MemberApplication;
-import com.example.cbumanage.application.entity.Recruitment;
 import com.example.cbumanage.application.entity.enums.RecruitmentStatus;
 import com.example.cbumanage.application.repository.ApplicationAnswerRepository;
 import com.example.cbumanage.application.repository.ApplicationPortfolioUrlRepository;
@@ -40,6 +40,7 @@ public class ApplicationApplicantService {
     private final RedisUtil redisUtil;
     private final ApplicationQuestionService applicationQuestionService;
     private final EmailManager emailManager;
+    private final RecruitmentGenerationPolicy generationPolicy;
 
     @Transactional
     public ApplicantApplicationResponse submit(ApplicationSubmitRequest request) {
@@ -49,10 +50,9 @@ public class ApplicationApplicantService {
             throw new BaseException(ErrorCode.ALREADY_JOINED_MEMBER);
         });
 
-        Recruitment recruitment = recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)
-                .orElseThrow(() -> new BaseException(ErrorCode.RECRUITMENT_NOT_FOUND));
+        Long generation = currentApplicationGeneration();
         memberApplicationRepository.findByStudentNumberAndGeneration(
-                request.studentNumber(), recruitment.getGeneration()).ifPresent(application -> {
+                request.studentNumber(), generation).ifPresent(application -> {
             throw new BaseException(ErrorCode.APPLICATION_DUPLICATED);
         });
 
@@ -64,7 +64,7 @@ public class ApplicationApplicantService {
                 .grade(request.grade())
                 .major(request.major())
                 .phoneNumber(request.phoneNumber())
-                .generation(recruitment.getGeneration())
+                .generation(generation)
                 .applicationField(request.applicationField())
                 .portfolioUrl(resolvePrimaryPortfolioUrl(request))
                 .refSource(request.refSource())
@@ -81,6 +81,12 @@ public class ApplicationApplicantService {
         return toApplicantResponse(application);
     }
 
+    private Long currentApplicationGeneration() {
+        return recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)
+                .map(recruitment -> recruitment.getGeneration())
+                .orElseGet(generationPolicy::currentGeneration);
+    }
+
     @Transactional(readOnly = true)
     public ApplicantApplicationResponse getMyApplication(ApplicationMyRequest request) {
         validateTukoreaEmailAuth(request.email(), request.emailAuthCode(), false);
@@ -89,6 +95,23 @@ public class ApplicationApplicantService {
                         request.studentNumber(), request.email())
                 .orElseThrow(() -> new BaseException(ErrorCode.APPLICATION_NOT_FOUND));
         return toApplicantResponse(application);
+    }
+
+    @Transactional
+    public void cancel(String applicationUuid, ApplicationCancelRequest request) {
+        validateTukoreaEmailAuth(request.email(), request.emailAuthCode(), false);
+        MemberApplication application = memberApplicationRepository.findByApplicationUuid(applicationUuid)
+                .orElseThrow(() -> new BaseException(ErrorCode.APPLICATION_NOT_FOUND));
+        if (!application.getStudentNumber().equals(request.studentNumber())
+                || !application.getEmail().equals(request.email())) {
+            throw new BaseException(ErrorCode.UNAUTHORIZED);
+        }
+        try {
+            application.cancel();
+        } catch (IllegalStateException e) {
+            throw new BaseException(ErrorCode.INVALID_APPLICATION_STATUS);
+        }
+        redisUtil.deleteData(request.email());
     }
 
     private void validateTukoreaEmailAuth(String email, String authCode, boolean consumeAuthCode) {

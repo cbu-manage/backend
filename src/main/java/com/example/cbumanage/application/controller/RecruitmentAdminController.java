@@ -24,7 +24,7 @@ public class RecruitmentAdminController {
 
     @PostMapping
     @Operation(summary = "모집 시작", description = "모집을 시작합니다. 시작 시점의 운영진 수를 투표 자격자 수(N)로 고정합니다.")
-    public ApiResponse<RecruitmentResponse> open(@RequestBody @Valid RecruitmentCreateRequest request) {
+    public ApiResponse<RecruitmentResponse> open(@RequestBody(required = false) @Valid RecruitmentCreateRequest request) {
         return ApiResponse.success(recruitmentService.open(request));
     }
 
