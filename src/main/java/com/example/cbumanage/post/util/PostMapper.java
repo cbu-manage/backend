@@ -49,7 +49,7 @@ public class PostMapper {
                 post.getId(),
                 author.getName(),
                 author.getGeneration(),
-                post.getAuthorId(),
+                author.getUserId(),
                 post.getTitle(),
                 post.getContent(),
                 post.getCreatedAt(),
@@ -127,11 +127,12 @@ public class PostMapper {
     아래는 각 게시물에 맞는 CreateResponseDTO 를 반환해 주는 메소드 입니다
      */
     public PostDTO.PostReportCreateResponseDTO toPostReportCreateResponseDTO(Post post, PostReport report) {
+        User author = userRepository.findById(post.getAuthorId()).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
         Group group = groupRepository.findById(report.getGroupId()).orElseThrow(() -> new EntityNotFoundException("Group not found"));
         List<ReportMemberDTO.ReportMemberInfoDTO> reportMembers = toReportMemberInfoDTOList(report.getId());
         return new PostDTO.PostReportCreateResponseDTO(
                 post.getId(),
-                post.getAuthorId(),
+                author.getUserId(),
                 groupUtil.toGroupInfoDTO(group),
                 post.getTitle(),
                 post.getContent(),
@@ -161,7 +162,7 @@ public class PostMapper {
     public PostDTO.PostProjectCreateResponseDTO toPostProjectCreateResponseDTO(Post post, Project project, Group group, User author) {
         return PostDTO.PostProjectCreateResponseDTO.builder()
                 .postId(post.getId())
-                .authorId(post.getAuthorId())
+                .authorId(author != null ? author.getUserId() : null)
                 .groupId(group.getId())
                 .authorGeneration(author!=null?author.getGeneration():null)
                 .authorName(author!=null?author.getName():null)
@@ -191,7 +192,7 @@ public class PostMapper {
     public PostDTO.PostStudyCreateResponseDTO toPostStudyCreateResponseDTO(Post post, Study study, Group group, User author) {
         return PostDTO.PostStudyCreateResponseDTO.builder()
                 .postId(post.getId())
-                .authorId(post.getAuthorId())
+                .authorId(author != null ? author.getUserId() : null)
                 .groupId(group.getId())
                 .authorGeneration(author != null ? author.getGeneration() : null)
                 .authorName(author != null ? author.getName() : null)
@@ -267,7 +268,7 @@ public class PostMapper {
                 .recruitmentFields(project.getRecruitmentFields().stream()
                         .map(ProjectFieldType::getDescription)
                         .collect(Collectors.toList()))
-                .authorId(project.getPost().getAuthorId())
+                .authorId(author != null ? author.getUserId() : null)
                 .authorGeneration(author!=null?author.getGeneration():null)
                 .authorName(author!=null?author.getName():null)
                 .groupId(groupId)
@@ -292,7 +293,7 @@ public class PostMapper {
                 .recruitmentFields(project.getRecruitmentFields().stream()
                         .map(ProjectFieldType::getDescription)
                         .collect(Collectors.toList()))
-                .authorId(project.getPost().getAuthorId())
+                .authorId(author != null ? author.getUserId() : null)
                 .authorGeneration(author!=null?author.getGeneration():null)
                 .authorName(author!=null?author.getName():null)
                 .createdAt(project.getPost().getCreatedAt())
@@ -317,7 +318,7 @@ public class PostMapper {
                 .content(study.getPost().getContent())
                 .studyTags(study.getStudyTags())
                 .studyName(study.getStudyName())
-                .authorId(study.getPost().getAuthorId())
+                .authorId(author != null ? author.getUserId() : null)
                 .authorGeneration(author != null ? author.getGeneration() : null)
                 .authorName(author != null ? author.getName() : null)
                 .createdAt(study.getPost().getCreatedAt())
@@ -338,7 +339,7 @@ public class PostMapper {
                 .title(study.getPost().getTitle())
                 .studyTags(study.getStudyTags())
                 .studyName(study.getStudyName())
-                .authorId(study.getPost().getAuthorId())
+                .authorId(author != null ? author.getUserId() : null)
                 .authorGeneration(author != null ? author.getGeneration() : null)
                 .authorName(author != null ? author.getName() : null)
                 .createdAt(study.getPost().getCreatedAt())
@@ -353,9 +354,10 @@ public class PostMapper {
     }
 
     public PostDTO.PostFreeboardCreateResponseDTO toPostFreeboardCreateResponseDTO(Post post, PostFreeboard freeboard) {
+        User author = userRepository.findById(post.getAuthorId()).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
         return new PostDTO.PostFreeboardCreateResponseDTO(
                 post.getId(),
-                post.getAuthorId(),
+                author.getUserId(),
                 post.getTitle(),
                 post.getContent(),
                 post.getCreatedAt(),
@@ -373,7 +375,7 @@ public class PostMapper {
                 post.getTitle(),
                 post.getContent(),
                 post.getCreatedAt(),
-                post.getAuthorId(),
+                author.getUserId(),
                 author.getName(),
                 author.getGeneration(),
                 post.getViewCount(),

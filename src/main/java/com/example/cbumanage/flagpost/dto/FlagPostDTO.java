@@ -41,7 +41,7 @@ public class FlagPostDTO {
             @Schema(description = "신고 대상 게시글 작성 유저 기수")
             Long targetUserGeneration,
 
-            @Schema(description = "신고자 Id")
+            @Schema(description = "신고자ID")
             Long authorId,
             @Schema(description = "신고자 이름")
             String authorName,

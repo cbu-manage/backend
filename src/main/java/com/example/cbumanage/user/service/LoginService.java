@@ -103,10 +103,10 @@ public class LoginService {
                 refreshExpireTime / 1000
         );
 
-        return new LoginResult(tokenInfo, user.getName(), user.getEmail(), user.getRole().name());
+        return new LoginResult(tokenInfo, user.getUserUuid(), user.getName(), user.getEmail(), user.getRole().name());
     }
 
-    public record LoginResult(TokenInfo tokenInfo, String name, String email, String role) {}
+    public record LoginResult(TokenInfo tokenInfo, UUID userUuid, String name, String email, String role) {}
 
     public MyInfoResponse getMyInfo(Long userId) {
         User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)

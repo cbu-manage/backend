@@ -141,7 +141,7 @@ public class NewsDTO {
             @Schema(description = "공통 Post ID입니다. 댓글처럼 Post 기반 공통 API를 호출할 때 사용합니다.", example = "15")
             Long postId,
 
-            @Schema(description = "작성자 회원 ID", example = "12")
+            @Schema(description = "작성자 회원 ID")
             Long authorId,
 
             @Schema(description = "소식 제목", example = "5월 정기 세미나 안내")

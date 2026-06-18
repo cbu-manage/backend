@@ -7,9 +7,11 @@ import com.example.cbumanage.application.entity.enums.ApplicationStatus;
 import com.example.cbumanage.application.entity.enums.RefSource;
 import com.example.cbumanage.application.repository.MemberApplicationRepository;
 import com.example.cbumanage.global.common.JwtProvider;
+import com.example.cbumanage.global.common.TokenInfo;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.global.util.RedisUtil;
+import com.example.cbumanage.user.dto.UserLoginRequest;
 import com.example.cbumanage.user.dto.UserSignUpRequest;
 import com.example.cbumanage.user.entity.MemberStatus;
 import com.example.cbumanage.user.entity.User;
@@ -18,7 +20,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,11 +38,12 @@ import static org.mockito.Mockito.when;
 class LoginServiceTest {
 
     private final UserRepository userRepository = mock(UserRepository.class);
+    private final JwtProvider jwtProvider = mock(JwtProvider.class);
     private final RedisUtil redisUtil = mock(RedisUtil.class);
     private final MemberApplicationRepository memberApplicationRepository = mock(MemberApplicationRepository.class);
     private final LoginService loginService = new LoginService(
             userRepository,
-            mock(JwtProvider.class),
+            jwtProvider,
             redisUtil,
             memberApplicationRepository
     );
@@ -150,6 +158,33 @@ class LoginServiceTest {
     }
 
     @Test
+    void loginReturnsUserUuidWithUserProfileAndRole() {
+        String salt = "test-salt";
+        ReflectionTestUtils.setField(loginService, "salt", salt);
+        ReflectionTestUtils.setField(loginService, "refreshExpireTime", 60_000L);
+
+        Long studentNumber = 2024000001L;
+        UUID userUuid = UUID.randomUUID();
+        User user = new User("user@example.com", studentNumber, hashPassword("password1234", salt));
+        user.updateProfile("홍길동", "010-1234-5678", "컴퓨터공학과", "3", 39L);
+        user.changeMemberStatus(MemberStatus.ACTIVE);
+        ReflectionTestUtils.setField(user, "userId", 1L);
+        ReflectionTestUtils.setField(user, "userUuid", userUuid);
+
+        TokenInfo tokenInfo = new TokenInfo("access-token", "refresh-token");
+        when(userRepository.findByStudentNumberAndDeletedAtIsNull(studentNumber)).thenReturn(Optional.of(user));
+        when(jwtProvider.createToken(userUuid, String.valueOf(studentNumber), user.getRole())).thenReturn(tokenInfo);
+
+        LoginService.LoginResult result = loginService.login(new UserLoginRequest(studentNumber, "password1234"));
+
+        assertThat(result.userUuid()).isEqualTo(userUuid);
+        assertThat(result.name()).isEqualTo("홍길동");
+        assertThat(result.email()).isEqualTo("user@example.com");
+        assertThat(result.role()).isEqualTo("ROLE_USER");
+        verify(redisUtil).setDataExpire("refresh:1", "refresh-token", 60L);
+    }
+
+    @Test
     void deleteUserInvalidatesRefreshTokenAndSoftDeletesUser() {
         Long userId = 1L;
         User user = new User("user@example.com", 20240001L, "encoded-password");
@@ -184,6 +219,16 @@ class LoginServiceTest {
         application.accept(1L);
         ReflectionTestUtils.setField(application, "id", 10L);
         return application;
+    }
+
+    private static String hashPassword(String password, String salt) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest((password + salt).getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
 

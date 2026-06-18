@@ -119,7 +119,7 @@ public class PostDTO {
     long groupId,
 
     @NotEmpty(message = "참여 멤버는 최소 1명 이상이어야 합니다.")
-    @Schema(description = "해당 활동에 참여한 유저의 ID목록")
+    @Schema(description = "해당 활동에 참여한 유저 UUID 목록")
     List<Long> memberIds,
 
     @NotNull(message = "활동 유형은 필수입니다.")
@@ -259,7 +259,7 @@ public class PostDTO {
         PostReportGroupType type,
 
         @NotEmpty(message = "참여 멤버는 최소 1명 이상이어야 합니다.")
-        @Schema(description = "해당 활동에 참여한 유저의 ID목록")
+        @Schema(description = "해당 활동에 참여한 유저 UUID 목록")
         List<Long> memberIds,
 
         @Schema(description = "활동 후기입니다")
@@ -352,7 +352,7 @@ public class PostDTO {
         @Schema(description = "생성된 포스트 ID", example = "101")
         Long postId,
 
-        @Schema(description = "작성자 유저 ID", example = "15")
+        @Schema(description = "작성자 유저 ID")
         Long authorId,
 
         @Schema(description = "자동 생성된 프로젝트 그룹 ID", example = "50")
@@ -459,7 +459,7 @@ public class PostDTO {
         @Schema(description = "모집 분야 리스트")
         List<String> recruitmentFields,
 
-        @Schema(description = "작성자 ID", example = "15")
+        @Schema(description = "작성자 ID")
         Long authorId,
 
         @Schema(description = "작성자 기수", example = "34")
@@ -591,7 +591,7 @@ public class PostDTO {
     public static class PostStudyCreateResponseDTO {
         @Schema(description = "생성된 게시글 ID", example = "101")
         private Long postId;
-        @Schema(description = "작성자 회원 ID", example = "15")
+        @Schema(description = "작성자 회원 ID")
         private Long authorId;
         @Schema(description = "자동 생성된 스터디 그룹 ID", example = "50")
         private Long groupId;
@@ -726,7 +726,7 @@ public class PostDTO {
         private List<String> studyTags;
         @Schema(description = "스터디 이름")
         private String studyName;
-        @Schema(description = "작성자(팀장) 회원 ID", example = "15")
+        @Schema(description = "작성자(팀장) 회원 UUID")
         private Long authorId;
         @Schema(description = "작성자 기수", example = "34")
         private Long authorGeneration;
@@ -797,7 +797,7 @@ public class PostDTO {
         private List<String> studyTags;
         @Schema(description = "스터디 이름")
         private String studyName;
-        @Schema(description = "작성자 회원 ID", example = "15")
+        @Schema(description = "작성자 회원 ID")
         private Long authorId;
         @Schema(description = "작성자 기수")
         private Long authorGeneration;
