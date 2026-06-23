@@ -63,7 +63,6 @@ public class PostMapper {
         return new PostDTO.ReportInfoDTO(
                 report.getLocation(),
                 report.getReportImage(),
-                report.getReportFile(),
                 report.getDate(),
                 groupUtil.toGroupInfoDTO(group),
                 report.getType(),
@@ -113,7 +112,6 @@ public class PostMapper {
                 postId,
                 req.location(),
                 req.reportImage(),
-                req.reportFile(),
                 req.date(),
                 req.groupId(),
                 req.type(),
@@ -137,7 +135,6 @@ public class PostMapper {
                 post.getContent(),
                 report.getLocation(),
                 report.getReportImage(),
-                report.getReportFile(),
                 report.getDate(),
                 post.getCreatedAt(),
                 post.getCategory(),
@@ -234,9 +231,7 @@ public class PostMapper {
         return new PostDTO.ReportUpdateDTO(
                 req.location(),
                 req.reportImage(),
-                req.reportFile(),
                 req.date(),
-                req.groupId(),
                 req.type(),
                 req.reflection(),
                 req.nextPlan()

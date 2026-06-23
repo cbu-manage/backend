@@ -57,9 +57,6 @@ public class PostDTO {
             @Schema(description = "s3버킷 url을 통해 이미지를 보여줍니다")
             String reportImage,
 
-            @Schema(description = "s3버킷 url을 통해 첨부파일을 제공합니다")
-            String reportFile,
-
             LocalDateTime date,
 
             //그룹의 정보를 담고 있습니다
@@ -108,9 +105,6 @@ public class PostDTO {
     @Schema(description = "s3버킷에 사진을 업로드 하고 반환받은 url을 넣습니다")
     String reportImage,
 
-    @Schema(description = "s3버킷에 첨부파일을 업로드 하고 반환받은 url을 넣습니다")
-    String reportFile,
-
     @Schema(description = "카테고리 번호 (서버에서 7로 고정 처리되며 클라이언트 입력값은 무시됩니다)", example = "7", accessMode = Schema.AccessMode.READ_ONLY)
     int category,
 
@@ -154,8 +148,6 @@ public class PostDTO {
         String location,
 
         String reportImage,
-
-        String reportFile,
 
         LocalDateTime date,
 
@@ -214,8 +206,6 @@ public class PostDTO {
 
         String reportImage,
 
-        String reportFile,
-
         LocalDateTime date,
 
         long groupId,
@@ -247,13 +237,8 @@ public class PostDTO {
         @NotBlank(message = "활동 사진은 필수입니다.")
         String reportImage,
 
-        @Schema(description = "s3버킷에 첨부파일을 업로드 하고 반환받은 url을 넣습니다")
-        String reportFile,
-
         @NotNull(message = "활동 일시는 필수입니다.")
         LocalDateTime date,
-
-        long groupId,
 
         @NotNull(message = "활동 유형은 필수입니다.")
         PostReportGroupType type,
@@ -293,11 +278,7 @@ public class PostDTO {
 
         String reportImage,
 
-        String reportFile,
-
         LocalDateTime date,
-
-        long groupId,
 
         PostReportGroupType type,
 

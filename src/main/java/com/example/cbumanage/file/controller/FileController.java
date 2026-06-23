@@ -13,7 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/api/file")
+@RequestMapping("/api/v1/file")
 @Tag(name = "파일 업로드 컨트롤러")
 @RequiredArgsConstructor
 public class FileController {

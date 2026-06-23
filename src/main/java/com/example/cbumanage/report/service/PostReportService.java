@@ -39,7 +39,7 @@ public class PostReportService {
 
     public PostReport createReport(PostDTO.ReportCreateDTO req) {
         Post post = postRepository.findById(req.postId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        PostReport report = PostReport.create(post, req.groupId(), req.type(), req.date(), req.location(), req.reportImage(), req.reportFile(), req.reflection(), req.nextPlan());
+        PostReport report = PostReport.create(post, req.groupId(), req.type(), req.date(), req.location(), req.reportImage(), req.reflection(), req.nextPlan());
         PostReport saved = postReportRepository.save(report);
         return saved;
     }
@@ -147,7 +147,6 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
         postReport.changeDate(postUpdateDTO.date());
         postReport.changeLocation(postUpdateDTO.location());
         postReport.changeReportImage(postUpdateDTO.reportImage());
-        postReport.changeReportFile(postUpdateDTO.reportFile());
         postReport.changeType(postUpdateDTO.type());
         postReport.changeReflection(postUpdateDTO.reflection());
         postReport.changeNextPlan(postUpdateDTO.nextPlan());
