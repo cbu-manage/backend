@@ -18,7 +18,7 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = e.getErrorCode();
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
-                .body(ApiResponse.error(errorCode));
+                .body(new ApiResponse<>(errorCode.getCode(), e.getMessage(), null));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

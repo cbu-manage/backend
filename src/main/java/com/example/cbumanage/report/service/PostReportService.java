@@ -2,6 +2,8 @@ package com.example.cbumanage.report.service;
 
 import com.example.cbumanage.post.dto.PostDTO;
 import com.example.cbumanage.post.entity.Post;
+import com.example.cbumanage.global.error.BaseException;
+import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.report.entity.PostReport;
 import com.example.cbumanage.group.entity.enums.GroupMemberStatus;
 import com.example.cbumanage.user.entity.Role;
@@ -23,7 +25,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +43,7 @@ public class PostReportService {
 
     public PostReport createReport(PostDTO.ReportCreateDTO req) {
         Post post = postRepository.findById(req.postId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        PostReport report = PostReport.create(post, req.groupId(), req.type(), req.date(), req.location(), req.reportImage(), req.reflection(), req.nextPlan());
+        PostReport report = PostReport.create(post, req.groupId(), req.date(), req.location(), req.reportImage(), req.reflection(), req.nextPlan());
         PostReport saved = postReportRepository.save(report);
         return saved;
     }
@@ -50,15 +54,40 @@ public class PostReportService {
         Post post = postService.createPost(postCreateDTO);
         PostDTO.ReportCreateDTO reportCreateDTO = postMapper.toReportCreateDTO(req, post.getId());
         PostReport report = createReport(reportCreateDTO);
-        saveReportMembers(report.getId(), req.memberIds());
+        saveReportMembers(report.getId(), req.groupId(), req.memberIds());
         return postMapper.toPostReportCreateResponseDTO(post, report);
     }
 
-    private void saveReportMembers(Long reportId, List<Long> memberIds) {
+    private void saveReportMembers(Long reportId, Long groupId, List<Long> memberIds) {
         if (memberIds == null || memberIds.isEmpty()) return;
+        validateReportMembers(groupId, memberIds);
+
         memberIds.stream()
+                .distinct()
                 .map(memberId -> ReportMember.create(reportId, memberId))
                 .forEach(reportMemberRepository::save);
+    }
+
+    private void validateReportMembers(Long groupId, List<Long> memberIds) {
+        Set<Long> invalidMemberIds = new LinkedHashSet<>();
+
+        for (Long memberId : memberIds) {
+            boolean isActiveGroupMember = groupMemberRepository.existsByGroupIdAndUserUserIdAndGroupMemberStatus(
+                    groupId,
+                    memberId,
+                    GroupMemberStatus.ACTIVE
+            );
+            if (!isActiveGroupMember) {
+                invalidMemberIds.add(memberId);
+            }
+        }
+
+        if (!invalidMemberIds.isEmpty()) {
+            throw new BaseException(
+                    ErrorCode.REPORT_MEMBER_NOT_IN_GROUP,
+                    "그룹에 속하지 않은 참여 멤버가 포함되어 있습니다. groupId=" + groupId + ", memberIds=" + invalidMemberIds
+            );
+        }
     }
 
     /*
@@ -129,7 +158,7 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
         PostDTO.ReportUpdateDTO reportUpdateDTO=postMapper.topostReportUpdateDTO(req);
         updateReport(reportUpdateDTO,report);
         reportMemberRepository.deleteByReportId(report.getId());
-        saveReportMembers(report.getId(), req.memberIds());
+        saveReportMembers(report.getId(), report.getGroupId(), req.memberIds());
     }
 
     @Transactional
@@ -147,7 +176,6 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
         postReport.changeDate(postUpdateDTO.date());
         postReport.changeLocation(postUpdateDTO.location());
         postReport.changeReportImage(postUpdateDTO.reportImage());
-        postReport.changeType(postUpdateDTO.type());
         postReport.changeReflection(postUpdateDTO.reflection());
         postReport.changeNextPlan(postUpdateDTO.nextPlan());
     }

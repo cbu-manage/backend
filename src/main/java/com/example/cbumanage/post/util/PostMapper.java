@@ -65,7 +65,6 @@ public class PostMapper {
                 report.getReportImage(),
                 report.getDate(),
                 groupUtil.toGroupInfoDTO(group),
-                report.getType(),
                 report.isAccepted(),
                 report.getReflection(),
                 report.getNextPlan(),
@@ -114,7 +113,6 @@ public class PostMapper {
                 req.reportImage(),
                 req.date(),
                 req.groupId(),
-                req.type(),
                 req.reflection(),
                 req.nextPlan()
         );
@@ -138,7 +136,6 @@ public class PostMapper {
                 report.getDate(),
                 post.getCreatedAt(),
                 post.getCategory(),
-                report.getType(),
                 report.getReflection(),
                 report.getNextPlan(),
                 reportMembers
@@ -232,7 +229,6 @@ public class PostMapper {
                 req.location(),
                 req.reportImage(),
                 req.date(),
-                req.type(),
                 req.reflection(),
                 req.nextPlan()
         );
