@@ -38,6 +38,9 @@ public enum ErrorCode {
     //소식 게시판
     NEWS_NOT_FOUND("E-NEWS-0001", "소식 게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     NEWS_INVALID_POST_CATEGORY("E-NEWS-0002", "뉴스 카테고리 게시글만 소식으로 생성할 수 있습니다.", HttpStatus.BAD_REQUEST),
+    NEWS_ATTACHMENT_NOT_FOUND("E-NEWS-0003", "소식 첨부파일을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    NEWS_ATTACHMENT_TYPE_NOT_ALLOWED("E-NEWS-0004", "허용되지 않는 첨부파일 형식입니다.", HttpStatus.BAD_REQUEST),
+    NEWS_ATTACHMENT_SIZE_EXCEEDED("E-NEWS-0005", "첨부파일 크기가 제한을 초과했습니다 (최대 20MB).", HttpStatus.BAD_REQUEST),
     //모임
     GATHERING_NOT_FOUND("E-GATHERING-0001", "모임을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     VOTE_CLOSED("E-GATHERING-0002", "투표가 마감되었습니다.", HttpStatus.BAD_REQUEST),

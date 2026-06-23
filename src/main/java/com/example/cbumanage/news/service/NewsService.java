@@ -5,6 +5,7 @@ import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.news.dto.NewsDTO;
 import com.example.cbumanage.news.entity.News;
 import com.example.cbumanage.news.entity.enums.NewsCategory;
+import com.example.cbumanage.news.repository.NewsAttachmentRepository;
 import com.example.cbumanage.news.repository.NewsRepository;
 import com.example.cbumanage.news.util.NewsSearchTextNormalizer;
 import com.example.cbumanage.post.entity.Post;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 public class NewsService {
 
     private final NewsRepository newsRepository;
+    private final NewsAttachmentRepository newsAttachmentRepository;
     private final PostRepository postRepository;
     private final EntityManager entityManager;
 
@@ -61,7 +63,7 @@ public class NewsService {
         entityManager.clear();
 
         News refreshedNews = findNewsOrThrow(newsId);
-        return NewsDTO.NewsDetailDTO.from(refreshedNews);
+        return NewsDTO.NewsDetailDTO.from(refreshedNews, attachmentsOf(newsId));
     }
 
     @Transactional
@@ -73,7 +75,7 @@ public class NewsService {
         news.changeSearchText(NewsSearchTextNormalizer.toSearchText(request.title(), request.content()));
         newsRepository.save(news);
 
-        return NewsDTO.NewsDetailDTO.from(news);
+        return NewsDTO.NewsDetailDTO.from(news, List.of());
     }
 
     @Transactional
@@ -82,7 +84,7 @@ public class NewsService {
         news.change(request.title(), request.content(), request.category());
         news.changeSearchText(NewsSearchTextNormalizer.toSearchText(news.getTitle(), news.getContent()));
         newsRepository.flush();
-        return NewsDTO.NewsDetailDTO.from(news);
+        return NewsDTO.NewsDetailDTO.from(news, attachmentsOf(newsId));
     }
 
     @Transactional
@@ -96,7 +98,7 @@ public class NewsService {
     public NewsDTO.NewsDetailDTO changePinned(Long newsId, boolean pinned) {
         News news = findNewsOrThrow(newsId);
         news.changePinned(pinned);
-        return NewsDTO.NewsDetailDTO.from(news);
+        return NewsDTO.NewsDetailDTO.from(news, attachmentsOf(newsId));
     }
 
     public Page<NewsDTO.NewsListItemDTO> getMyNews(Pageable pageable, Long userId) {
@@ -107,6 +109,12 @@ public class NewsService {
     private News findNewsOrThrow(Long newsId) {
         return newsRepository.findById(newsId)
                 .orElseThrow(() -> new BaseException(ErrorCode.NEWS_NOT_FOUND));
+    }
+
+    private List<NewsDTO.NewsAttachmentDTO> attachmentsOf(Long newsId) {
+        return newsAttachmentRepository.findByNews_NewsIdOrderByAttachmentIdAsc(newsId).stream()
+                .map(NewsDTO.NewsAttachmentDTO::from)
+                .toList();
     }
 
     private NewsDTO.NewsListResponseDTO searchNewsList(Pageable pageable, NewsCategory category, String keyword, List<String> searchTokens) {
