@@ -26,8 +26,8 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     @Query(value = """
     select new com.example.cbumanage.post.dto.PostDTO$PostReportPreviewDTO(
     p.id,p.title,p.createdAt,p.authorId,m.name,
-    r.type,r.isAccepted,
-    
+    r.isAccepted,
+
     g.id,g.groupName, (
     select count(gm)
     from GroupMember gm
@@ -55,8 +55,8 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     @Query(value = """
     select new com.example.cbumanage.post.dto.PostDTO$PostReportPreviewDTO(
     p.id,p.title,p.createdAt,p.authorId,m.name,
-    r.type,r.isAccepted,
-    
+    r.isAccepted,
+
     g.id,g.groupName, (
     select count(gm)
     from GroupMember gm
@@ -82,7 +82,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     @Query(value = """
     select new com.example.cbumanage.post.dto.PostDTO$PostReportPreviewDTO(
     p.id,p.title,p.createdAt,p.authorId,m.name,
-    r.type,r.isAccepted,
+    r.isAccepted,
 
     g.id,g.groupName, (
     select count(gm)
@@ -110,7 +110,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     @Query(value = """
     select new com.example.cbumanage.post.dto.PostDTO$PostReportPreviewDTO(
     p.id,p.title,p.createdAt,p.authorId,m.name,
-    r.type,r.isAccepted,
+    r.isAccepted,
 
     g.id,g.groupName, (
     select count(gm)

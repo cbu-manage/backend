@@ -31,6 +31,7 @@ public enum ErrorCode {
     GROUP_MEMBER_NOT_FOUND("E-GROUP-0002", "그룹 멤버를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     NOT_GROUP_LEADER("E-GROUP-0003", "그룹 리더가 아닙니다.", HttpStatus.FORBIDDEN),
     GROUP_NOT_RECRUITING("E-GROUP-0004", "모집 중인 그룹이 아닙니다.", HttpStatus.BAD_REQUEST),
+    REPORT_MEMBER_NOT_IN_GROUP("E-GROUP-0005", "보고서 참여 멤버는 해당 그룹의 활성 멤버여야 합니다.", HttpStatus.BAD_REQUEST),
 
     //POST 공용
     POST_NOT_FOUND("E-POST-0001", "게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
@@ -69,4 +70,3 @@ public enum ErrorCode {
     private final HttpStatus httpStatus;
 
 }
-
