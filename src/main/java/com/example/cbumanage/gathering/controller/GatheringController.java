@@ -20,7 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/gatherings")
-@Tag(name = "모임 일정 관리 컨트롤러", description = "모임 일정 관리 API (회식, MT, 박람회, 행사 등)")
+@Tag(name = "모임 일정", description = "회식·MT·박람회 등 모임 일정과 참석 투표를 관리합니다.")
 @RequiredArgsConstructor
 public class GatheringController {
 
@@ -29,9 +29,8 @@ public class GatheringController {
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_EVENT_MANAGER')")
     @Operation(
-            summary = "모임 등록",
-            description = "관리자만 모임을 등록할 수 있습니다.\n\n" +
-                    "**모임 유형(type)**\n" +
+            summary = "모임 일정 등록",
+            description = "**모임 유형(type)**\n" +
                     "| 값 | 이름 | 투표 방식 |\n" +
                     "|---|---|---|\n" +
                     "| `DINING` | 회식 | 전체 동아리원 자동 포함 (고정) |\n" +
@@ -51,7 +50,7 @@ public class GatheringController {
 
     @GetMapping
     @Operation(
-            summary = "모임 목록 조회",
+            summary = "모임 일정 목록 조회",
             description = "전체 모임 목록을 모임 일시 내림차순으로 반환합니다.\n\n" +
                     "- `myStatus`: 내가 해당 모임에 투표한 상태. 미투표 시 null\n" +
                     "- `voteClosed`: 투표 마감 여부 (voteDeadline이 지났으면 true)\n" +
@@ -66,7 +65,7 @@ public class GatheringController {
 
     @GetMapping("/{gatheringId}")
     @Operation(
-            summary = "모임 상세 조회",
+            summary = "모임 일정 상세 조회",
             description = "특정 모임의 상세 정보를 반환합니다. 조회할 때마다 `viewCount`가 1 증가합니다.\n\n" +
                     "- `myStatus`: 내 투표 상태. 미투표 시 null\n" +
                     "- `summary.total`: 전체 대상 인원 수\n" +
@@ -82,8 +81,8 @@ public class GatheringController {
     @PatchMapping("/{gatheringId}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_EVENT_MANAGER')")
     @Operation(
-            summary = "모임 수정",
-            description = "관리자(ROLE_ADMIN)이면서 본인이 등록한 모임만 수정할 수 있습니다. (다른 유저가 요청하면 403)\n" +
+            summary = "모임 일정 수정",
+            description = "본인이 등록한 모임만 수정할 수 있습니다.\n" +
                     "- 투표 마감을 연장하려면 `voteDeadline`을 미래 일시로 변경하면 됩니다."
     )
     public ApiResponse<GatheringDTO.GatheringResponse> updateGathering(
@@ -97,8 +96,8 @@ public class GatheringController {
     @PatchMapping("/{gatheringId}/close")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_EVENT_MANAGER')")
     @Operation(
-            summary = "모임 마감",
-            description = "관리자(ROLE_ADMIN)이면서 본인이 등록한 모임만 수동으로 마감할 수 있습니다. 마감 후 투표가 불가능합니다. (다른 유저가 요청하면 403)"
+            summary = "모임 투표 마감",
+            description = "본인이 등록한 모임만 수동으로 마감할 수 있습니다. 마감 후에는 투표할 수 없습니다."
     )
     public ApiResponse<Void> closeGathering(
             @Parameter(description = "마감할 모임 ID", example = "1") @PathVariable Long gatheringId,
@@ -111,8 +110,8 @@ public class GatheringController {
     @DeleteMapping("/{gatheringId}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_EVENT_MANAGER')")
     @Operation(
-            summary = "모임 삭제",
-            description = "관리자(ROLE_ADMIN)이면서 본인이 등록한 모임만 삭제할 수 있습니다. (다른 유저가 요청하면 403)\n\n소프트 딜리트 처리됩니다."
+            summary = "모임 일정 삭제",
+            description = "본인이 등록한 모임만 삭제할 수 있습니다. 삭제된 모임은 목록과 상세 조회에서 제외됩니다."
     )
     public ApiResponse<Void> deleteGathering(
             @Parameter(description = "삭제할 모임 ID", example = "1") @PathVariable Long gatheringId,

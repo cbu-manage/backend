@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/login")
 @RequiredArgsConstructor
-@Tag(name = "로그인 컨트롤러", description = "")
+@Tag(name = "인증", description = "로그인, 토큰 갱신, 회원가입, 비밀번호 변경을 처리합니다.")
 public class LoginController {
     private final LoginService loginService;
 
@@ -34,7 +34,7 @@ public class LoginController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "로그인 후 쿠키에 토큰 반환", description = "학번과 비밀번호로 로그인")
+    @Operation(summary = "로그인", description = "학번과 비밀번호를 검증하고 accessToken·refreshToken 쿠키를 발급합니다.")
     public ApiResponse<UserLoginResponse> login(@RequestBody UserLoginRequest userLoginRequest, HttpServletResponse response) {
         LoginService.LoginResult result = loginService.login(userLoginRequest);
         addTokenCookies(response, result.tokenInfo());
@@ -43,7 +43,7 @@ public class LoginController {
 
     @GetMapping("/me")
     @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "내 정보 조회", description = "로그인한 사용자의 정보를 반환")
+    @Operation(summary = "내 정보 조회", description = "로그인한 사용자의 기본 정보를 조회합니다.")
     public ApiResponse<MyInfoResponse> getMyInfo(Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         return ApiResponse.success(loginService.getMyInfo(userId));
@@ -51,7 +51,7 @@ public class LoginController {
 
     @PostMapping("/refresh")
     @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "토큰 갱신", description = "refreshToken 쿠키로 accessToken 재발급")
+    @Operation(summary = "토큰 갱신", description = "refreshToken 쿠키를 검증하고 accessToken·refreshToken 쿠키를 재발급합니다.")
     public ApiResponse<Void> refresh(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = extractCookie(request, "refreshToken");
         TokenInfo newToken = loginService.refresh(refreshToken);
@@ -61,7 +61,7 @@ public class LoginController {
 
     @DeleteMapping
     @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "로그아웃", description = "refreshToken 무효화 및 쿠키 삭제")
+    @Operation(summary = "로그아웃", description = "refreshToken을 무효화하고 인증 쿠키를 삭제합니다.")
     public ApiResponse<Void> logout(Authentication authentication, HttpServletResponse response) {
         Long userId = Long.parseLong(authentication.getName());
         loginService.logout(userId);
@@ -71,7 +71,7 @@ public class LoginController {
 
     @DeleteMapping("/account")
     @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "회원 탈퇴")
+    @Operation(summary = "회원 탈퇴", description = "로그인 사용자의 계정을 탈퇴 처리하고 인증 쿠키를 삭제합니다.")
     public ApiResponse<Void> deleteUser(Authentication authentication, HttpServletResponse response) {
         Long userId = Long.parseLong(authentication.getName());
         loginService.deleteUser(userId);
@@ -81,7 +81,7 @@ public class LoginController {
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "회원가입", description = "json 형식으로 email, password, name, studentNumber, nickname을 넣어 요청")
+    @Operation(summary = "회원가입", description = "승인된 지원서 정보를 검증한 뒤 사용자 계정을 생성합니다.")
     public ApiResponse<Void> signUp(@RequestBody UserSignUpRequest userSignUpRequest) {
         loginService.signUp(userSignUpRequest);
         return ApiResponse.success();
@@ -89,7 +89,7 @@ public class LoginController {
 
     @PatchMapping("/password")
     @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "비밀번호 변경")
+    @Operation(summary = "비밀번호 변경", description = "현재 비밀번호를 확인한 뒤 새 비밀번호로 변경합니다.")
     public ApiResponse<Void> changePassword(@RequestBody PasswordChangeRequest request, Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         loginService.changePassword(userId, request);

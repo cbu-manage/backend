@@ -6,6 +6,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.examples.Example;
+import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.ObjectSchema;
@@ -40,10 +41,23 @@ public class OpenApiErrorCodeConfig {
     private static final String ERROR_CODE_SCHEMA = "ErrorCode";
     private static final String ACCESS_TOKEN_COOKIE_SECURITY = "accessTokenCookie";
     private static final Pattern ROLE_PATTERN = Pattern.compile("ROLE_[A-Z_]+");
+    private static final Map<String, String> ROLE_DISPLAY_NAMES = Map.ofEntries(
+            Map.entry("ROLE_ADMIN", "개발자 관리자"),
+            Map.entry("ROLE_PRESIDENT", "회장"),
+            Map.entry("ROLE_VICE_PRESIDENT", "부회장"),
+            Map.entry("ROLE_MANAGER", "운영진"),
+            Map.entry("ROLE_TREASURER", "총무"),
+            Map.entry("ROLE_MEMBER_MANAGER", "인원 관리"),
+            Map.entry("ROLE_EVENT_MANAGER", "행사 관리"),
+            Map.entry("ROLE_PROMOTION_MANAGER", "홍보"),
+            Map.entry("ROLE_SECRETARY", "서기"),
+            Map.entry("ROLE_USER", "일반 부원")
+    );
 
     @Bean
     public OpenApiCustomizer globalErrorResponsesOpenApiCustomizer() {
         return openApi -> {
+            registerApiInfo(openApi);
             registerErrorSchemas(openApi);
             registerSecuritySchemes(openApi);
             addErrorResponsesToOperations(openApi);
@@ -63,6 +77,20 @@ public class OpenApiErrorCodeConfig {
             appendPermissionDescription(operation, expression.get());
             return operation;
         };
+    }
+
+    private void registerApiInfo(OpenAPI openApi) {
+        openApi.setInfo(new Info()
+                .title("CBU Manage API")
+                .version("v1")
+                .description("""
+                        CBU 운영·회원·게시판 관리를 위한 백엔드 API 문서입니다.
+
+                        인증이 필요한 API는 로그인 후 발급되는 `accessToken` 쿠키를 함께 전송해야 합니다.
+                        응답은 기본적으로 `ApiResponse` 형식으로 반환됩니다.
+
+                        권한 표기는 각 API 설명 하단의 **권한** 영역에서 확인할 수 있습니다.
+                        """));
     }
 
     private void registerErrorSchemas(OpenAPI openApi) {
@@ -234,7 +262,7 @@ public class OpenApiErrorCodeConfig {
             operation.setDescription(permissionDescription);
             return;
         }
-        if (description.contains("권한:")) {
+        if (description.contains("**권한**") || description.contains("권한:")) {
             return;
         }
         operation.setDescription(description + "\n\n" + permissionDescription);
@@ -246,9 +274,23 @@ public class OpenApiErrorCodeConfig {
                 .distinct()
                 .toList();
         if (roles.isEmpty()) {
-            return "권한: 로그인 필요";
+            return """
+                    **권한**
+                    - 인증: 필요 (`accessToken` 쿠키)
+                    - 허용 대상: 로그인 사용자
+                    """;
         }
-        return "권한: " + String.join(", ", roles);
+        return """
+                **권한**
+                - 인증: 필요 (`accessToken` 쿠키)
+                - 허용 역할: %s
+                """.formatted(roleDisplayNames(roles));
+    }
+
+    private String roleDisplayNames(List<String> roles) {
+        return roles.stream()
+                .map(role -> ROLE_DISPLAY_NAMES.getOrDefault(role, role))
+                .collect(Collectors.joining(", "));
     }
 
     private boolean isPublicOperation(PathItem.HttpMethod method, String path) {
@@ -263,8 +305,12 @@ public class OpenApiErrorCodeConfig {
                     || path.equals("/api/v1/mail/send")
                     || path.equals("/api/v1/mail/verify");
         }
+        if (method == PathItem.HttpMethod.DELETE) {
+            return path.equals("/api/v1/applications/{applicationUuid}");
+        }
         if (method == PathItem.HttpMethod.GET) {
-            return path.equals("/api/v1/applications/questions/current");
+            return path.equals("/api/v1/applications/questions/current")
+                    || path.equals("/api/v1/applications/generation/current");
         }
         return false;
     }

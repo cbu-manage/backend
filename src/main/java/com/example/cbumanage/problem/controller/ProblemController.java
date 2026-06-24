@@ -24,14 +24,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/post")
-@Tag(name = "코딩 테스트 컨트롤러", description = "코딩 테스트 게시판 CRUD API")
+@Tag(name = "코딩 테스트", description = "코딩 테스트 문제 게시글과 분류 메타데이터를 관리합니다.")
 @RequiredArgsConstructor
 public class ProblemController {
 
     private final ProblemService problemService;
 
     @PostMapping("/problems")
-    @Operation(summary = "새 코딩 테스트 문제 Create", requestBody = @RequestBody(required = true,
+    @Operation(summary = "코딩 테스트 문제 작성", requestBody = @RequestBody(required = true,
             content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "문제 등록 예시", value = """
                     { "categoryIds": [1, 2], "platformId": 1, "languageId": 1, "title": "두 수의 합",
                       "content": "두 정수 A, B를 입력받아 합을 출력하는 문제입니다.", "grade": "SILVER",
@@ -44,7 +44,7 @@ public class ProblemController {
     }
 
     @PatchMapping("/problems/{postId}")
-    @Operation(summary = "문제 정보 수정")
+    @Operation(summary = "코딩 테스트 문제 수정", description = "문제 ID로 코딩 테스트 문제 정보를 수정합니다.")
     public ApiResponse<ProblemResponseDTO> updateProblem(@PathVariable Long postId, Authentication authentication,
             @Valid @RequestBody ProblemUpdateRequestDTO request) {
         Long userId = Long.parseLong(authentication.getName());
@@ -52,7 +52,7 @@ public class ProblemController {
     }
 
     @DeleteMapping("/problems/{postId}")
-    @Operation(summary = "문제 삭제")
+    @Operation(summary = "코딩 테스트 문제 삭제", description = "문제 ID로 코딩 테스트 문제를 삭제합니다.")
     public ApiResponse<Void> deleteProblem(@PathVariable Long postId, Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         problemService.deleteProblem(postId, userId);
@@ -60,7 +60,7 @@ public class ProblemController {
     }
 
     @GetMapping("/problems")
-    @Operation(summary = "코딩 테스트 문제 목록 조회")
+    @Operation(summary = "코딩 테스트 문제 목록 조회", description = "코딩 테스트 문제 목록을 페이지 단위로 조회합니다.")
     public ApiResponse<Page<ProblemListItemDTO>> getProblems(
             @ParameterObject @PageableDefault(size = 10, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable,
             @RequestParam(required = false) List<Integer> categoryId,
@@ -69,7 +69,7 @@ public class ProblemController {
     }
 
     @GetMapping("/problems/my")
-    @Operation(summary = "내 코딩 테스트 문제 목록 조회")
+    @Operation(summary = "내 코딩 테스트 문제 목록 조회", description = "로그인 사용자가 작성한 코딩 테스트 문제 목록을 조회합니다.")
     public ApiResponse<Page<ProblemListItemDTO>> getMyProblems(Authentication authentication,
             @ParameterObject @PageableDefault(size = 10, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Long userId = Long.parseLong(authentication.getName());
@@ -77,25 +77,25 @@ public class ProblemController {
     }
 
     @GetMapping("/problems/{postId}")
-    @Operation(summary = "문제 상세 정보 조회")
+    @Operation(summary = "코딩 테스트 문제 상세 조회", description = "문제 ID로 코딩 테스트 문제 상세 정보를 조회합니다.")
     public ApiResponse<ProblemResponseDTO> getProblem(@PathVariable Long postId) {
         return ApiResponse.success(problemService.getProblem(postId));
     }
 
     @GetMapping("/categories")
-    @Operation(summary = "모든 카테고리 목록 조회")
+    @Operation(summary = "문제 카테고리 목록 조회", description = "코딩 테스트 문제 카테고리 목록을 조회합니다.")
     public ApiResponse<List<CategoryResponseDTO>> getAllCategories() {
         return ApiResponse.success(problemService.getAllCategories());
     }
 
     @GetMapping("/platforms")
-    @Operation(summary = "모든 플랫폼 목록 조회")
+    @Operation(summary = "문제 플랫폼 목록 조회", description = "코딩 테스트 플랫폼 목록을 조회합니다.")
     public ApiResponse<List<PlatformResponseDTO>> getAllPlatforms() {
         return ApiResponse.success(problemService.getAllPlatforms());
     }
 
     @GetMapping("/languages")
-    @Operation(summary = "모든 언어 목록 조회")
+    @Operation(summary = "문제 언어 목록 조회", description = "코딩 테스트 언어 목록을 조회합니다.")
     public ApiResponse<List<LanguageResponseDTO>> getAllLanguages() {
         return ApiResponse.success(problemService.getAllLanguages());
     }

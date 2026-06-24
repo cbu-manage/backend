@@ -19,12 +19,12 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/flag/comment")
-@Tag(name = "댓글 신고 컨트롤러")
+@Tag(name = "댓글 신고", description = "신고된 댓글을 조회하고 처리합니다.")
 public class FlagCommentController {
 
     private final FlagCommentService flagCommentService;
 
-    @Operation(summary = "댓글 신고 목록 페이징 조회", description = "신고된 댓글 목록을 페이징으로 불러옵니다.")
+    @Operation(summary = "댓글 신고 목록 조회", description = "신고된 댓글 목록을 페이지 단위로 조회합니다.")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
     @GetMapping
     public ApiResponse<Page<CommentDTO.FlagCommentPreviewDTO>> getFlagCommentPreviews(
@@ -34,7 +34,7 @@ public class FlagCommentController {
         return ApiResponse.success(flagCommentService.getFlagCommentPreviews(pageable));
     }
 
-    @Operation(summary = "댓글 신고 단일 조회", description = "신고 ID로 신고 상세 정보를 조회합니다.")
+    @Operation(summary = "댓글 신고 상세 조회", description = "신고 ID로 댓글 신고 상세 정보를 조회합니다.")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
     @GetMapping("/{flagCommentId}")
     public ApiResponse<CommentDTO.FlagCommentInfoDTO> getFlagCommentInfo(@PathVariable Long flagCommentId) {
@@ -45,7 +45,7 @@ public class FlagCommentController {
         }
     }
 
-    @Operation(summary = "댓글 신고 처리", description = "해당 commentId를 가진 모든 신고를 처리(소프트 삭제)합니다.")
+    @Operation(summary = "댓글 신고 처리", description = "대상 댓글의 미처리 신고를 처리 완료 상태로 변경합니다.")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
     @PatchMapping("/{commentId}/resolve")
     public ApiResponse<Void> resolveFlagsByCommentId(@PathVariable Long commentId) {

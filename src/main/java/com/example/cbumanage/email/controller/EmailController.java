@@ -16,25 +16,25 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/mail")
-@Tag(name = "이메일 인증 컨트롤러", description = "이메일 인증을 위한 컨트롤러입니다.")
+@Tag(name = "이메일 인증", description = "이메일 인증번호 발송·검증 및 회원 이메일 등록 API입니다.")
 public class EmailController {
 
     private final EmailService emailService;
 
     @PostMapping("/send")
-    @Operation(summary = "메일 인증번호 전송", description = "전달받은 메일주소로 인증 메일을 전송합니다.")
+    @Operation(summary = "이메일 인증번호 전송", description = "요청한 이메일 주소로 인증번호를 전송합니다.")
     public ApiResponse<EmailAuthResponseDTO> sendAuthCode(@RequestParam String address) {
         return ApiResponse.success(emailService.sendEmail(address));
     }
 
     @PostMapping("/verify")
-    @Operation(summary = "메일 인증번호 검증", description = "인증번호를 검증합니다.")
+    @Operation(summary = "이메일 인증번호 검증", description = "이메일 주소와 인증번호가 일치하는지 검증합니다.")
     public ApiResponse<EmailAuthResponseDTO> checkAuthCode(@RequestParam String address, @RequestParam String authCode) {
         return ApiResponse.success(emailService.validateAuthCode(address, authCode));
     }
 
     @PostMapping("/update")
-    @Operation(summary = "사용자 메일 등록", description = "인증이 완료된 메일을 회원 정보에 업데이트합니다.")
+    @Operation(summary = "회원 이메일 등록", description = "인증이 완료된 이메일 주소를 회원 정보에 반영합니다.")
     public ApiResponse<Void> updateMail(@RequestBody MemberMailUpdateDTO memberMailUpdateDTO) {
         emailService.updateUserMail(memberMailUpdateDTO);
         return ApiResponse.success();
