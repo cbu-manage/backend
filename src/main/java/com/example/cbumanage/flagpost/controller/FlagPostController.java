@@ -19,12 +19,12 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/flag/post")
-@Tag(name = "게시글 신고 컨트롤러")
+@Tag(name = "게시글 신고", description = "신고된 게시글을 조회하고 처리합니다.")
 public class FlagPostController {
 
     private final FlagPostService flagPostService;
 
-    @Operation(summary = "게시글 신고 목록 페이징 조회", description = "신고된 게시글 목록을 페이징으로 불러옵니다.")
+    @Operation(summary = "게시글 신고 목록 조회", description = "신고된 게시글 목록을 페이지 단위로 조회합니다.")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
     @GetMapping
     public ApiResponse<Page<FlagPostDTO.FlagPostPreviewDTO>> getFlagPostPreviews(
@@ -34,7 +34,7 @@ public class FlagPostController {
         return ApiResponse.success(flagPostService.getFlagPostPreviews(pageable));
     }
 
-    @Operation(summary = "게시글 신고 단일 조회", description = "신고 ID로 신고 상세 정보를 조회합니다.")
+    @Operation(summary = "게시글 신고 상세 조회", description = "신고 ID로 게시글 신고 상세 정보를 조회합니다.")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
     @GetMapping("/{flagPostId}")
     public ApiResponse<FlagPostDTO.FlagPostInfoDTO> getFlagPostInfo(@PathVariable Long flagPostId) {
@@ -45,7 +45,7 @@ public class FlagPostController {
         }
     }
 
-    @Operation(summary = "게시글 신고 처리", description = "해당 postId를 가진 모든 신고를 처리(소프트 삭제)합니다.")
+    @Operation(summary = "게시글 신고 처리", description = "대상 게시글의 미처리 신고를 처리 완료 상태로 변경합니다.")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
     @PatchMapping("/{postId}/resolve")
     public ApiResponse<Void> resolveFlagsByPostId(@PathVariable Long postId) {

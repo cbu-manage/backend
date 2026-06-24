@@ -20,7 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/")
-@Tag(name = "동아리 회원 관리 컨트롤러", description = "회원 정보를 다루는 컨트롤러입니다.")
+@Tag(name = "회원 관리", description = "동아리 회원 정보를 조회·등록·수정·삭제하고 회비 승인 상태를 관리합니다.")
 @RequiredArgsConstructor
 public class MemberController {
     private final MemberManageService memberManageService;
@@ -28,7 +28,7 @@ public class MemberController {
     private final MemberMapper memberMapper;
 
     @GetMapping("member/{id}")
-    @Operation(summary = "원하는 id에 따른 회원정보 취득", description = "id 하나하나에 따른 회원정보를 받아옵니다.")
+    @Operation(summary = "회원 상세 조회", description = "회원 ID로 회원 상세 정보를 조회합니다.")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MEMBER_MANAGER', 'ROLE_TREASURER')")
     public ApiResponse<MemberDTO> getMember(@PathVariable Long id) {
@@ -38,7 +38,7 @@ public class MemberController {
 
     @PostMapping("member")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MEMBER_MANAGER')")
-    @Operation(summary = "회원 추가", description = "회원 정보를 데이터베이스에 추가합니다.")
+    @Operation(summary = "회원 등록", description = "관리자가 회원 정보를 등록합니다.")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<Long> postMember(@RequestBody @Valid MemberCreateDTO memberCreateDTO) {
         User member = memberManageService.createMember(memberCreateDTO);
@@ -47,7 +47,7 @@ public class MemberController {
 
     @PatchMapping("member")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MEMBER_MANAGER')")
-    @Operation(summary = "데이터베이스의 회원 정보를 변경", description = "데이터베이스의 회원 정보를 변경합니다.")
+    @Operation(summary = "회원 정보 수정", description = "관리자가 회원 정보를 수정합니다.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ApiResponse<Void> patchMember(@RequestBody MemberUpdateDTO memberDTO) {
         memberManageService.updateUser(memberDTO);
@@ -64,7 +64,7 @@ public class MemberController {
 
     @DeleteMapping("member/{studentNumber}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MEMBER_MANAGER')")
-    @Operation(summary = "회원 정보 삭제", description = "데이터베이스의 회원 정보를 삭제합니다.")
+    @Operation(summary = "회원 삭제", description = "회원 정보를 소프트 삭제합니다.")
     public ApiResponse<Void> deleteMember(@PathVariable Long studentNumber) {
         memberManageService.deleteMember(studentNumber);
         return ApiResponse.success();
@@ -72,7 +72,7 @@ public class MemberController {
 
     @GetMapping("members")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MEMBER_MANAGER', 'ROLE_TREASURER')")
-    @Operation(summary = "전체 회원 정보 취득", description = "데이터베이스의 모든 회원정보를 받아옵니다.")
+    @Operation(summary = "회원 목록 조회", description = "회원 목록을 페이지 단위로 조회합니다.")
     public ApiResponse<List<MemberDTO>> getMembers(@RequestParam(name = "page", required = false) Integer page) {
         if (page == null) page = 0;
         return ApiResponse.success(memberMapper.map(memberManageService.getMembers(page)));

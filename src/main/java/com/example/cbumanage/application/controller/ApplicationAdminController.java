@@ -26,14 +26,14 @@ import java.time.LocalDateTime;
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MANAGER', 'ROLE_TREASURER', 'ROLE_MEMBER_MANAGER', 'ROLE_EVENT_MANAGER', 'ROLE_PROMOTION_MANAGER', 'ROLE_SECRETARY')")
-@Tag(name = "신청서 심사 컨트롤러", description = "운영진이 신청서를 조회·심사합니다.")
+@Tag(name = "지원서 심사", description = "운영진이 지원서를 조회하고 투표·최종 결정을 관리합니다.")
 public class ApplicationAdminController {
 
     private final ApplicationReviewService applicationReviewService;
 
     @GetMapping("/recruitments/{recruitmentUuid}/applications")
-    @Operation(summary = "신청서 목록 조회",
-            description = "모집 회차의 신청서를 분야·탭·기간·키워드로 검색합니다. 응답에 진행도 전체 voterCount(N)와 행별 투표 진행도(n)가 포함됩니다.")
+    @Operation(summary = "지원서 목록 조회",
+            description = "모집 회차의 지원서를 분야·탭·기간·키워드로 검색합니다. 응답에 전체 투표 대상자 수(N)와 행별 투표 진행도(n)가 포함됩니다.")
     public ApiResponse<AdminApplicationListResponse> getApplications(
             @PathVariable String recruitmentUuid,
             @RequestParam(required = false) ApplicationField field,
@@ -49,8 +49,8 @@ public class ApplicationAdminController {
     }
 
     @GetMapping("/applications/{applicationUuid}")
-    @Operation(summary = "신청서 상세 조회",
-            description = "신청서 내용·자유서술 답변·포트폴리오·운영진 투표현황(미투표자 포함)과 내 투표를 조회합니다.")
+    @Operation(summary = "지원서 상세 조회",
+            description = "지원서 내용·자유서술 답변·포트폴리오·운영진 투표 현황(미투표자 포함)과 내 투표를 조회합니다.")
     public ApiResponse<ApplicationDetailResponse> getDetail(
             @PathVariable String applicationUuid,
             Authentication authentication) {
@@ -72,7 +72,7 @@ public class ApplicationAdminController {
     }
 
     @GetMapping("/recruitments/{recruitmentUuid}/summary")
-    @Operation(summary = "심사 대시보드 요약",
+    @Operation(summary = "지원서 심사 요약 조회",
             description = "모집 컨텍스트, 상태별 카운트, 투표 진행 현황(전체찬성/보류/만장일치불합격), 후보 테이블을 제공합니다.")
     public ApiResponse<RecruitmentSummaryResponse> getSummary(
             @PathVariable String recruitmentUuid,
@@ -82,8 +82,8 @@ public class ApplicationAdminController {
 
     @PostMapping("/recruitments/{recruitmentUuid}/applications/finalize")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
-    @Operation(summary = "일괄 최종처리",
-            description = "검토대상 신청서를 일괄 합격/불합격 처리합니다. 보류가 남아있거나 투표가 완료되지 않으면 거절됩니다.")
+    @Operation(summary = "지원서 일괄 최종 처리",
+            description = "검토 대상 지원서를 일괄 합격/불합격 처리합니다. 보류가 남아 있거나 투표가 완료되지 않으면 거절됩니다.")
     public ApiResponse<Void> finalizeDecisions(
             @PathVariable String recruitmentUuid,
             @RequestBody @Valid ApplicationFinalizeRequest request,
@@ -95,8 +95,8 @@ public class ApplicationAdminController {
 
     @PatchMapping("/applications/{applicationUuid}/final-decision")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
-    @Operation(summary = "개별 최종결정 수정",
-            description = "관리자/회장/부회장이 신청서의 최종 합격·불합격·보류 상태를 수정합니다. 최종 불합격 사유는 선택입니다.")
+    @Operation(summary = "지원서 개별 최종 결정 수정",
+            description = "관리자/회장/부회장이 지원서의 최종 합격·불합격·보류 상태를 수정합니다. 최종 불합격 사유는 선택입니다.")
     public ApiResponse<Void> updateFinalDecision(
             @PathVariable String applicationUuid,
             @RequestBody @Valid ApplicationFinalDecisionUpdateRequest request,

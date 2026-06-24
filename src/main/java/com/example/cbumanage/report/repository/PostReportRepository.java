@@ -36,7 +36,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     )
     )
     from Post p
-    left join PostReport r on r.post = p
+    join PostReport r on r.post = p
     left join Group g on r.groupId = g.id
     left join User m on m.userId = p.authorId
     where p.category = :category
@@ -45,6 +45,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     countQuery = """
     select count(p)
     from Post p
+    join PostReport r on r.post = p
     where p.category =:category
     and p.isDeleted = false
 """)

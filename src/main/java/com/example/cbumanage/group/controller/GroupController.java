@@ -23,7 +23,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/groups")
-@Tag(name = "그룹 컨트롤러", description = "그룹 생성, 가입 신청 및 관리 관련 API")
+@Tag(name = "그룹", description = "스터디·프로젝트 그룹 가입 신청과 멤버 관리를 처리합니다.")
 @RequiredArgsConstructor
 public class GroupController {
     private final GroupService groupService;
@@ -31,7 +31,7 @@ public class GroupController {
     /* ============================================================
      * [ 일반 유저 및 본인 관련 API ]
      * ============================================================ */
-    @Operation(summary = "그룹 가입 요청",
+    @Operation(summary = "그룹 가입 신청",
             description = "로그인한 유저가 그룹에 가입 신청을 합니다. 초기 상태는 PENDING입니다.")
     @PostMapping("/{groupId}/members")
     public ApiResponse<GroupDTO.GroupMemberInfoDTO> applyGroupMember(
@@ -43,7 +43,7 @@ public class GroupController {
         return ApiResponse.success(groupMemberInfoDTO);
     }
 
-    @Operation(summary = "그룹 가입 취소", description = "본인이 신청한 가입 대기(PENDING) 상태를 취소합니다.")
+    @Operation(summary = "그룹 가입 신청 취소", description = "본인이 신청한 PENDING 상태의 그룹 가입 신청을 취소합니다.")
     @DeleteMapping("/{groupId}/members/me")
     public ApiResponse<Void> cancelGroupApplication(
             @Parameter(description = "가입 취소할 그룹의 ID", example = "1")
@@ -55,7 +55,7 @@ public class GroupController {
     }
 
     @Operation(
-            summary = "자신이 가입한 그룹 조회",
+            summary = "내 가입 그룹 조회",
             description = "가입 완료(ACTIVE)된 그룹 목록 조회. 응답에 postId(연결 게시글 ID), activeMemberCount, maxActiveMembers 포함. " +
                     "postId로 해당 프로젝트/스터디 상세 이동, 인원은 활동수/최대인원(예: 2/4) 표시용."
     )
@@ -67,15 +67,15 @@ public class GroupController {
     }
 
     @Operation(
-            summary = "내가 신청한 그룹 목록 (승인/대기/거절/비활동)",
+            summary = "내 그룹 신청 목록 조회",
             description = "본인이 신청한 그룹을 카테고리별로 조회."+
                     "myStatus로 프론트에서 라벨 분기: PENDING=승인 대기중, ACTIVE=승인, REJECTED=거절됨, INACTIVE=비활동. " +
                     "신청 취소는 myStatus가 PENDING일 때만 노출"
     )
     @Parameters({
-            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
-            @Parameter(name = "size", description = "한 페이지당 출력 개수", example = "10"),
-            @Parameter(name = "category", description = "카테고리 번호 (스터디=1, 프로젝트=2). 미입력시(null) 전체보기", example = "2")
+            @Parameter(name = "page", description = "페이지 번호(0부터 시작)", example = "0"),
+            @Parameter(name = "size", description = "페이지당 조회 개수", example = "10"),
+            @Parameter(name = "category", description = "카테고리 번호(스터디=1, 프로젝트=2). 미입력 시 전체 조회", example = "2")
     })
     @GetMapping("/my/applications")
     public ApiResponse<Page<GroupDTO.MyGroupApplicationListDTO>> getMyAppliedGroups(
@@ -105,7 +105,7 @@ public class GroupController {
      * [ 팀장(Leader) 전용 API ]
      * ============================================================ */
     @Operation(
-            summary = "신청 인원 확인 (팀장 전용)",
+            summary = "그룹 신청 인원 조회",
             description = "가입 대기(PENDING) 유저만 조회. 수락/거절 버튼용. 전체 상태가 필요하면 GET .../applicants/overview 사용."
     )
     @GetMapping("/{groupId}/applicants")
@@ -119,7 +119,7 @@ public class GroupController {
     }
 
     @Operation(
-            summary = "신청 인원 상태 전체 보기(팀장 전용)",
+            summary = "그룹 신청 인원 전체 상태 조회",
             description = "그룹 팀원(MEMBER) 전원을 상태별로 조회. PENDING/ACTIVE/REJECTED/INACTIVE 모두 포함."
     )
     @GetMapping("/{groupId}/applicants/overview")
@@ -134,7 +134,7 @@ public class GroupController {
 
 
     @Operation(
-            summary = "그룹 모집 상태 변경 (팀장 전용)",
+            summary = "그룹 모집 상태 변경",
             description = "요청 body에 OPEN 또는 CLOSED 전달. 그룹 모집 상태 변경 시 연결된 프로젝트/스터디 게시글의 recruiting도 함께 동기화됨."+
                     "만약 모집마감 시 pending상태가 남아 있는 경우 모두 rejected 처리"
     )
@@ -149,7 +149,7 @@ public class GroupController {
     }
 
     @Operation(
-            summary = "멤버 상태 변경 (활동/비활동) (팀장 전용)",
+            summary = "그룹 멤버 상태 변경",
             description = "그룹 운영 중에 멤버 상태가 변경될 때 사용됩니다. 팀장 전용."
     )
     @PatchMapping("/members/{groupMemberId}/status")
@@ -163,7 +163,7 @@ public class GroupController {
     }
 
     @Operation(
-            summary = "가입 신청 수락/거부 (팀장 전용)",
+            summary = "그룹 가입 신청 처리",
             description = "body의 action으로 수락(ACCEPT) 또는 거부(REJECT) 처리. 수락 시 PENDING→ACTIVE, 거부 시 PENDING->REJECTED."
     )
     @PatchMapping("/members/{groupMemberId}/applicant")
@@ -182,14 +182,14 @@ public class GroupController {
      * [ 관리자(Admin) 전용 API ]
      * ============================================================ */
     @Operation(
-            summary = "전체 그룹 상태 카테고리별 조회",
+            summary = "관리자 그룹 목록 조회",
             description = "개설된 그룹들을 상태 카테고리별로 분류하여 확인할 수 있습니다."
     )
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MEMBER_MANAGER')")
     @Parameters({
-            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
-            @Parameter(name = "size", description = "한 페이지당 출력 개수", example = "10"),
-            @Parameter(name = "groupStatus", description = "그룹 승인 상태 필터 (미입력시 전체) " +
+            @Parameter(name = "page", description = "페이지 번호(0부터 시작)", example = "0"),
+            @Parameter(name = "size", description = "페이지당 조회 개수", example = "10"),
+            @Parameter(name = "groupStatus", description = "그룹 승인 상태 필터 (미입력 시 전체) " +
                     "ACTIVE=승인완료, PENDING=승인 대기중, REJECTED=승인 거절, " +
                     "RESUBMITTED=승인 재요청, INACTIVE=활동종료", example = "ACTIVE")
     })
@@ -206,7 +206,7 @@ public class GroupController {
     }
 
     @Operation(
-            summary = "그룹 승인 여부 변경",
+            summary = "관리자 그룹 승인 상태 변경",
             description = "개설된 그룹의 승인 상태(APPROVE/REJECT) 여부를 변경하며 반려시 사유를 추가합니다. 운영자가 관리합니다 "
     )
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MEMBER_MANAGER')")
