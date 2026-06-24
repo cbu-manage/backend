@@ -4,7 +4,6 @@ import com.example.cbumanage.group.dto.GroupDTO;
 import com.example.cbumanage.group.entity.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.reportmember.dto.ReportMemberDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
-import com.example.cbumanage.report.entity.enums.PostReportGroupType;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -57,17 +56,11 @@ public class PostDTO {
             @Schema(description = "s3버킷 url을 통해 이미지를 보여줍니다")
             String reportImage,
 
-            @Schema(description = "s3버킷 url을 통해 첨부파일을 제공합니다")
-            String reportFile,
-
             LocalDateTime date,
 
             //그룹의 정보를 담고 있습니다
             @Schema(description = "보고서를 작성한 그룹의 정보를 담고 있습니다")
             GroupDTO.GroupInfoDTO groupInfoDTO,
-
-            @Schema(description = "보고서에 기록할 활동의 타입입니다", example = "STUDY / PROJECT / MENTORING")
-            PostReportGroupType type,
 
             @Schema(description = "보고서의 승인 여부입니다")
             boolean isAccepted,
@@ -108,9 +101,6 @@ public class PostDTO {
     @Schema(description = "s3버킷에 사진을 업로드 하고 반환받은 url을 넣습니다")
     String reportImage,
 
-    @Schema(description = "s3버킷에 첨부파일을 업로드 하고 반환받은 url을 넣습니다")
-    String reportFile,
-
     @Schema(description = "카테고리 번호 (서버에서 7로 고정 처리되며 클라이언트 입력값은 무시됩니다)", example = "7", accessMode = Schema.AccessMode.READ_ONLY)
     int category,
 
@@ -121,10 +111,6 @@ public class PostDTO {
     @NotEmpty(message = "참여 멤버는 최소 1명 이상이어야 합니다.")
     @Schema(description = "해당 활동에 참여한 유저의 ID목록")
     List<Long> memberIds,
-
-    @NotNull(message = "활동 유형은 필수입니다.")
-    @Schema(description = "보고서에 기록할 활동의 타입입니다", example = "STUDY / PROJECT / MENTORING")
-    PostReportGroupType type,
 
     @Schema(description = "활동 후기입니다")
     String reflection,
@@ -155,15 +141,11 @@ public class PostDTO {
 
         String reportImage,
 
-        String reportFile,
-
         LocalDateTime date,
 
         LocalDateTime createdAt,
 
         int category,
-
-        PostReportGroupType type,
 
         String reflection,
 
@@ -214,13 +196,9 @@ public class PostDTO {
 
         String reportImage,
 
-        String reportFile,
-
         LocalDateTime date,
 
         long groupId,
-
-        PostReportGroupType type,
 
         String reflection,
 
@@ -247,16 +225,8 @@ public class PostDTO {
         @NotBlank(message = "활동 사진은 필수입니다.")
         String reportImage,
 
-        @Schema(description = "s3버킷에 첨부파일을 업로드 하고 반환받은 url을 넣습니다")
-        String reportFile,
-
         @NotNull(message = "활동 일시는 필수입니다.")
         LocalDateTime date,
-
-        long groupId,
-
-        @NotNull(message = "활동 유형은 필수입니다.")
-        PostReportGroupType type,
 
         @NotEmpty(message = "참여 멤버는 최소 1명 이상이어야 합니다.")
         @Schema(description = "해당 활동에 참여한 유저의 ID목록")
@@ -293,13 +263,7 @@ public class PostDTO {
 
         String reportImage,
 
-        String reportFile,
-
         LocalDateTime date,
-
-        long groupId,
-
-        PostReportGroupType type,
 
         String reflection,
 
@@ -839,7 +803,6 @@ public class PostDTO {
         Long authorId,
         String authorName,
 
-        PostReportGroupType type,
         @Schema(description = "보고서 승인 여부 입니다, 보고서 게시글이 생셩될때 기본값은 false로 생성되며, 운영진이 승인할 경우 True로 변겯됩니다")
         boolean isAccepted,
 
