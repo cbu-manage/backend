@@ -66,8 +66,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     protected ResponseEntity<ApiResponse<Void>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(ErrorCode.FILE_SIZE_EXCEEDED.getCode(), "업로드 가능한 파일 크기를 초과했습니다.", null));
+                .status(ErrorCode.UPLOAD_SIZE_EXCEEDED.getHttpStatus())
+                .body(ApiResponse.error(ErrorCode.UPLOAD_SIZE_EXCEEDED));
     }
 
     @ExceptionHandler(Exception.class)

@@ -16,6 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -37,6 +40,7 @@ public class NewsAttachmentService {
     private static final String KEY_PREFIX = "uploads/news/";
     private static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
     private static final String DEFAULT_FILE_NAME = "attachment";
+    private static final int MAX_FILE_NAME_LENGTH = 255;
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
             "jpg", "jpeg", "png", "webp", "gif", "heic", "heif",
@@ -61,17 +65,25 @@ public class NewsAttachmentService {
         String contentType = file.getContentType() == null ? DEFAULT_CONTENT_TYPE : file.getContentType();
         upload(file, key, contentType);
 
-        NewsAttachment attachment = newsAttachmentRepository.save(
-                NewsAttachment.create(news, key, fileName, contentType, file.getSize())
-        );
+        NewsAttachment attachment;
+        try {
+            attachment = newsAttachmentRepository.save(
+                    NewsAttachment.create(news, key, fileName, contentType, file.getSize())
+            );
+        } catch (RuntimeException e) {
+            // 저장 실패 시 방금 올린 S3 객체가 고아로 남지 않도록 정리한다
+            deleteQuietly(key);
+            throw e;
+        }
         return NewsDTO.NewsAttachmentDTO.from(attachment);
     }
 
     @Transactional
     public void deleteAttachment(Long newsId, Long attachmentId) {
         NewsAttachment attachment = findAttachmentOrThrow(newsId, attachmentId);
-        amazonS3.deleteObject(awsBucket, attachment.getS3Key());
         newsAttachmentRepository.delete(attachment);
+        // DB 삭제가 커밋된 뒤에만 S3 객체를 지워, 롤백 시 실제 파일이 사라지는 불일치를 막는다
+        deleteObjectAfterCommit(attachment.getS3Key());
     }
 
     public NewsDTO.AttachmentDownloadDTO getDownloadUrl(Long newsId, Long attachmentId) {
@@ -89,6 +101,23 @@ public class NewsAttachmentService {
             amazonS3.putObject(awsBucket, key, in, metadata);
         } catch (IOException e) {
             throw new BaseException(ErrorCode.FILE_PROCESS_FAILED);
+        }
+    }
+
+    private void deleteObjectAfterCommit(String s3Key) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                deleteQuietly(s3Key);
+            }
+        });
+    }
+
+    private void deleteQuietly(String s3Key) {
+        try {
+            amazonS3.deleteObject(awsBucket, s3Key);
+        } catch (RuntimeException ignored) {
+            // best-effort 정리: 실패해도 고아 객체만 남고 본 흐름에는 영향이 없다
         }
     }
 
@@ -131,10 +160,25 @@ public class NewsAttachmentService {
     }
 
     private String resolveFileName(String originalFilename) {
-        if (originalFilename == null || originalFilename.isBlank()) {
+        // 일부 브라우저는 "C:\\fakepath\\foo.png"처럼 경로를 붙여 보내므로 파일명만 추출한다
+        String fileName = StringUtils.getFilename(StringUtils.cleanPath(
+                originalFilename == null ? "" : originalFilename));
+        if (fileName == null || fileName.isBlank()) {
             return DEFAULT_FILE_NAME;
         }
-        return originalFilename;
+        return truncatePreservingExtension(fileName);
+    }
+
+    private String truncatePreservingExtension(String fileName) {
+        if (fileName.length() <= MAX_FILE_NAME_LENGTH) {
+            return fileName;
+        }
+        int dot = fileName.lastIndexOf('.');
+        String suffix = dot < 0 ? "" : fileName.substring(dot);
+        if (suffix.length() >= MAX_FILE_NAME_LENGTH) {
+            return fileName.substring(0, MAX_FILE_NAME_LENGTH);
+        }
+        return fileName.substring(0, MAX_FILE_NAME_LENGTH - suffix.length()) + suffix;
     }
 
     private String extension(String fileName) {
