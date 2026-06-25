@@ -33,7 +33,8 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     from GroupMember gm
     where gm.group.id = g.id
     and gm.groupMemberStatus=com.example.cbumanage.group.entity.enums.GroupMemberStatus.ACTIVE
-    )
+    ),
+    r.date
     )
     from Post p
     left join PostReport r on r.post = p
@@ -61,7 +62,8 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     from GroupMember gm
     where gm.group.id = g.id
     and gm.groupMemberStatus=com.example.cbumanage.group.entity.enums.GroupMemberStatus.ACTIVE
-    )
+    ),
+    r.date
     )
     from Post p
     left join PostReport r on r.post = p
@@ -88,7 +90,8 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     from GroupMember gm
     where gm.group.id = g.id
     and gm.groupMemberStatus=com.example.cbumanage.group.entity.enums.GroupMemberStatus.ACTIVE
-    )
+    ),
+    r.date
     )
     from Post p
     left join PostReport r on r.post = p
@@ -116,7 +119,8 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     from GroupMember gm
     where gm.group.id = g.id
     and gm.groupMemberStatus=com.example.cbumanage.group.entity.enums.GroupMemberStatus.ACTIVE
-    )
+    ),
+    r.date
     )
     from Post p
     left join PostReport r on r.post = p
