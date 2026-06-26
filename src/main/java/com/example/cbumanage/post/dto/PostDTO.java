@@ -811,7 +811,10 @@ public class PostDTO {
         @Schema(description = "보고서를 작성한 그룹의 이름입니다")
         String groupName,
         @Schema(description = "그룹의 활동인원 (status가 ACTIVE인 인원)의 수를 표기합니다")
-        Long groupMemberCount
+        Long groupMemberCount,
+
+        @Schema(description = "활동 일시입니다")
+        LocalDateTime date
     ) {}
 
 

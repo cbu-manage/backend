@@ -56,6 +56,10 @@ public enum Role {
         return this == ROLE_ADMIN || this == ROLE_PRESIDENT || this == ROLE_VICE_PRESIDENT;
     }
 
+    public boolean canViewAllReports() {
+        return this == ROLE_ADMIN || this == ROLE_PRESIDENT || this == ROLE_VICE_PRESIDENT || this == ROLE_SECRETARY;
+    }
+
     public boolean canReviewApplications() {
         return isDeveloperAdmin() || APPLICATION_VOTER_ROLES.contains(this);
     }

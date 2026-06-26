@@ -97,7 +97,7 @@ fetch join -> 해결
  */
     public Page<PostDTO.PostReportPreviewDTO> getPostReportPreviewDTOList(Pageable pageable, Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        boolean isAdmin = user.getRole().isPresidentOrVicePresidentOrAdmin();
+        boolean isAdmin = user.getRole().canViewAllReports();
 
         if (isAdmin) {
             return postReportRepository.findPostReportPreviews(pageable, 7);
@@ -127,7 +127,7 @@ fetch join -> 해결
                 .orElseThrow(() -> new EntityNotFoundException("Report Not Found"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        boolean isAdmin = user.getRole().isPresidentOrVicePresidentOrAdmin();
+        boolean isAdmin = user.getRole().canViewAllReports();
         boolean isActiveMember =
                 groupMemberRepository.existsActiveMember(
                         userId,
@@ -148,7 +148,9 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
     @Transactional
     public void updatePostReport(PostDTO.PostReportUpdateRequestDTO req,Long postId,Long userId) {
         Post post=postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        if(!post.getAuthorId().equals(userId)){
+        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        boolean canEditAll = user.getRole().canViewAllReports();
+        if(!canEditAll && !post.getAuthorId().equals(userId)){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,"NOT POST OWNER");
         }
         PostDTO.PostUpdateDTO postUpdateDTO = postMapper.toPostUpdateDTO(req);

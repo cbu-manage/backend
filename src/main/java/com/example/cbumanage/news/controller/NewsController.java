@@ -3,6 +3,7 @@ package com.example.cbumanage.news.controller;
 import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.news.dto.NewsDTO;
 import com.example.cbumanage.news.entity.enums.NewsCategory;
+import com.example.cbumanage.news.service.NewsAttachmentService;
 import com.example.cbumanage.news.service.NewsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/news")
@@ -32,6 +34,7 @@ public class NewsController {
     private static final String SORT_BY_CREATED_AT = "post.createdAt";
 
     private final NewsService newsService;
+    private final NewsAttachmentService newsAttachmentService;
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
@@ -113,5 +116,53 @@ public class NewsController {
             @Valid @RequestBody NewsDTO.NewsPinRequestDTO request
     ) {
         return ApiResponse.success(newsService.changePinned(id, request.pinned()));
+    }
+
+    @PostMapping(value = "/{id}/attachments", consumes = {"multipart/form-data"})
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize(ADMIN_ROLE)
+    @Operation(
+            summary = "소식 첨부파일 추가",
+            description = "소식 관리 권한이 필요합니다. 소식 하나에 여러 파일을 따로 올릴 수 있습니다. "
+                    + "이미지/PDF/문서(doc, docx, ppt, pptx, xls, xlsx, hwp, hwpx, txt, csv)/zip 형식만 허용되며 파일당 최대 20MB입니다. "
+                    + "원본 파일을 변형 없이 저장하고, 등록된 첨부 정보를 반환합니다."
+    )
+    public ApiResponse<NewsDTO.NewsAttachmentDTO> addAttachment(
+            @Parameter(description = "소식 ID", example = "1")
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file
+    ) {
+        return ApiResponse.success(newsAttachmentService.addAttachment(id, file));
+    }
+
+    @DeleteMapping("/{id}/attachments/{attachmentId}")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize(ADMIN_ROLE)
+    @Operation(summary = "소식 첨부파일 삭제", description = "소식 관리 권한이 필요합니다. S3 객체와 첨부 정보를 함께 제거합니다.")
+    public ApiResponse<Void> deleteAttachment(
+            @Parameter(description = "소식 ID", example = "1")
+            @PathVariable Long id,
+            @Parameter(description = "첨부파일 ID", example = "3")
+            @PathVariable Long attachmentId
+    ) {
+        newsAttachmentService.deleteAttachment(id, attachmentId);
+        return ApiResponse.success();
+    }
+
+    @GetMapping("/{id}/attachments/{attachmentId}/download")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize(AUTHENTICATED)
+    @Operation(
+            summary = "소식 첨부파일 다운로드 URL 발급",
+            description = "잠시 후 만료되는 다운로드용 임시 URL을 발급합니다. 응답의 url로 접근하면 원본 파일명으로 내려받아집니다. "
+                    + "url은 만료되므로 매 다운로드마다 이 API를 호출해 새로 발급받으면 됩니다."
+    )
+    public ApiResponse<NewsDTO.AttachmentDownloadDTO> downloadAttachment(
+            @Parameter(description = "소식 ID", example = "1")
+            @PathVariable Long id,
+            @Parameter(description = "첨부파일 ID", example = "3")
+            @PathVariable Long attachmentId
+    ) {
+        return ApiResponse.success(newsAttachmentService.getDownloadUrl(id, attachmentId));
     }
 }
