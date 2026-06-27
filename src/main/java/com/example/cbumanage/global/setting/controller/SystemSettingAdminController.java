@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/admin/settings")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
-@Tag(name = "시스템 설정 관리 컨트롤러", description = "관리자가 온보딩 링크 등 시스템 설정을 관리합니다.")
+@Tag(name = "시스템 설정", description = "관리자가 온보딩 링크 등 시스템 설정을 조회·수정합니다.")
 public class SystemSettingAdminController {
 
     private final SystemSettingService systemSettingService;

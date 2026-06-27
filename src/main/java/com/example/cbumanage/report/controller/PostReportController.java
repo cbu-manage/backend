@@ -35,20 +35,18 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/report")
-@Tag(name = "보고서 게시글 관리 컨트롤러")
+@Tag(name = "보고서", description = "활동 보고서 게시글을 작성·조회·수정·승인하고 파일로 내보냅니다.")
 public class PostReportController {
     private final PostReportService postReportService;
     private final PostReportHWPService postReportHWPService;
 
     @Operation(
-            summary = "보고서 게시글 생성",
-            description = "한번의 요청에 게시글 생성,게시글-보고서 생성 처리. 테스트 중에는 카테고리를 7로 합니다" +
-                    "<br> PostReportCreateRequestDTO를 통해 생성하며, 반환되는 DTO는 PostReportCreateDTO입니다"
+            summary = "보고서 작성",
+            description = "게시글과 보고서 정보를 한 번의 요청으로 생성합니다. 카테고리는 서버에서 보고서 게시판 값으로 처리됩니다."
     )
     @PostMapping()
     public ApiResponse<PostDTO.PostReportCreateResponseDTO> createPostReport(
-            @Parameter(description = "현재 게시글에서 테스트 할때는 category를 7로하고 테스트합니다, reportImage는 ImageController에서 생성한 url을 넣습니다" +
-                    "보고서를 생성하는 DTO의 이름은 PostReportCreateRequestDTO이고, 반환되는 DTO는 PostReportCreateResponseDTO입니다")
+            @Parameter(description = "보고서 작성 요청입니다. reportImage에는 파일 업로드 API가 반환한 이미지 URL을 전달합니다.")
             @RequestBody @Valid PostDTO.PostReportCreateRequestDTO req,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
@@ -57,9 +55,8 @@ public class PostReportController {
     }
 
     @Operation(
-            summary = "보고서 게시글 미리보기 페이징 조회",
-            description = "보고서 게시글 목록을 페이징으로 불러옵니다. post,report,group의 정보를 통합해 가져옵니다<br>.카테고리가 7인 게시글만 불러옵니다" +
-                    "<br>반환되는 형태는 PostReportPreviewDTO를통해 미리보기 형태로 반환됩니다.게시글의 id,이름,작성자 정보,그룹의 정보 등을 반환합니다"
+            summary = "보고서 목록 조회",
+            description = "보고서 게시글 목록을 페이지 단위로 조회합니다. 응답에는 게시글, 작성자, 그룹 요약 정보가 포함됩니다."
     )
     @GetMapping
     public ApiResponse<Page<PostDTO.PostReportPreviewDTO>> getPostReportPreviews(
@@ -77,9 +74,8 @@ public class PostReportController {
     }
 
     @Operation(
-            summary = "그룹별 보고서 게시글 미리보기 페이징 조회",
-            description = "groupId 기준으로 해당 그룹의 보고서 게시글 목록을 페이징으로 불러옵니다.<br>" +
-                    "반환되는 형태는 PostReportPreviewDTO를 통해 미리보기 형태로 반환됩니다."
+            summary = "그룹별 보고서 목록 조회",
+            description = "그룹 ID 기준으로 해당 그룹의 보고서 게시글 목록을 페이지 단위로 조회합니다."
     )
     @GetMapping("/group/{groupId}")
     public ApiResponse<Page<PostDTO.PostReportPreviewDTO>> getPostReportPreviewsByGroup(
@@ -92,10 +88,8 @@ public class PostReportController {
     }
 
     @Operation(
-            summary = "보고서 게시글 단건 조회",
-            description = "보고서 게시글 단건 조회 메소드입니다. Post와 Report(+Group)를 한번의 요청에 담아 처리합니다.<br>" +
-                    "PostReportViewDTO를 반환합니다. 해당 DTO 안에는 PostInfoDTO,PostReportInfoDTO가 담겨있습니다<br>" +
-                    "PostReportDTO 안에는 그룹의 정보를 담는 GroupInfoDTO가 포함되어 있습니다"
+            summary = "보고서 상세 조회",
+            description = "게시글 ID 기준으로 보고서 상세 정보를 조회합니다. 응답에는 게시글, 보고서, 그룹 정보가 함께 포함됩니다."
     )
     @GetMapping("/{postId}")
     public ApiResponse<PostDTO.PostReportViewDTO> getPostReportView(@PathVariable Long postId, Authentication authentication){
@@ -111,7 +105,7 @@ public class PostReportController {
         }
     }
 
-    @Operation(summary = "보고서 게시글 수정 메소드",description = "보고서 게시글 수정메소드 입니다. 작성자 여부를 확인하고 아닐시 거부합니다 ")
+    @Operation(summary = "보고서 수정", description = "작성자 본인의 보고서 게시글 내용을 수정합니다.")
     @PatchMapping("/{postId}")
     public ApiResponse<Void> updatePostReport(@PathVariable Long postId,
                                                                  @RequestBody @Valid PostDTO.PostReportUpdateRequestDTO req,
@@ -125,7 +119,7 @@ public class PostReportController {
         }
     }
 
-    @Operation(summary = "보고서 승인 메소드",description = "보고서 승인 메소드 입니다. post의 id를 통해 report를 허용상태로 바꿉니다. 매개변수 없이 보고서의 현재 상태를 변경시킵니다")
+    @Operation(summary = "보고서 승인", description = "보고서 ID를 기준으로 승인 상태를 변경합니다.")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
     @PatchMapping("/{postId}/accept")
     public ApiResponse<Void> acceptPostReport(@PathVariable Long postId, Authentication authentication){
@@ -143,7 +137,7 @@ public class PostReportController {
     }
 
     @Operation(
-            summary = "보고서 한글 파일 추출",
+            summary = "보고서 HWP 다운로드",
             description = "보고서 게시글의 내용을 바탕으로 HWP 파일을 생성하여 즉시 다운로드합니다.<br>" +
                     "클라이언트에서는 responseType: 'blob' 으로 받아 Blob 처리 후 다운로드해야 합니다."
     )
@@ -178,7 +172,7 @@ public class PostReportController {
     }
 
     @Operation(
-            summary = "그룹 보고서 전체 ZIP 추출",
+            summary = "그룹 보고서 ZIP 다운로드",
             description = "특정 그룹의 보고서를 모두 HWP 파일로 생성하여 ZIP으로 묶어 다운로드합니다.<br>" +
                     "클라이언트에서는 responseType: 'blob' 으로 받아 Blob 처리 후 다운로드해야 합니다."
     )

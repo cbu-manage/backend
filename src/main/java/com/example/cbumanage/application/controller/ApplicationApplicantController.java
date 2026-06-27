@@ -22,7 +22,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/applications")
 @RequiredArgsConstructor
-@Tag(name = "지원자 신청서 컨트롤러", description = "지원자가 학교 이메일 인증 후 신청서를 작성/열람합니다.")
+@Tag(name = "지원서", description = "지원자가 학교 이메일 인증 후 지원서를 작성·조회·취소합니다.")
 public class ApplicationApplicantController {
 
     private final ApplicationApplicantService applicationApplicantService;
@@ -30,14 +30,14 @@ public class ApplicationApplicantController {
     private final RecruitmentService recruitmentService;
 
     @GetMapping("/generation/current")
-    @Operation(summary = "현재 신청 기수 조회",
+    @Operation(summary = "현재 지원 기수 조회",
             description = "현재 진행 중인 모집 회차의 신청 기수를 조회합니다.")
     public ApiResponse<CurrentApplicationGenerationResponse> getCurrentGeneration() {
         return ApiResponse.success(recruitmentService.getCurrentApplicationGeneration());
     }
 
     @GetMapping("/questions/current")
-    @Operation(summary = "현재 모집 신청서 질문 조회",
+    @Operation(summary = "현재 모집 지원서 질문 조회",
             description = "현재 진행 중인 모집 회차의 필수 질문 목록을 조회합니다.")
     public ApiResponse<List<ApplicationQuestionResponse>> getCurrentQuestions() {
         return ApiResponse.success(applicationQuestionService.getCurrentQuestions());
@@ -45,21 +45,21 @@ public class ApplicationApplicantController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "신청서 작성", description = "@tukorea.ac.kr 이메일 인증코드 검증 후 현재 진행 중인 모집에 신청서를 제출합니다.")
+    @Operation(summary = "지원서 작성", description = "학교 이메일 인증코드 검증 후 현재 진행 중인 모집에 지원서를 제출합니다.")
     public ApiResponse<ApplicantApplicationResponse> submit(
             @RequestBody @Valid ApplicationSubmitRequest request) {
         return ApiResponse.success(applicationApplicantService.submit(request));
     }
 
     @PostMapping("/my")
-    @Operation(summary = "내 신청서 열람", description = "학번과 @tukorea.ac.kr 이메일 인증코드 검증 후 본인이 작성한 신청서를 조회합니다.")
+    @Operation(summary = "내 지원서 조회", description = "학번과 학교 이메일 인증코드 검증 후 본인이 작성한 지원서를 조회합니다.")
     public ApiResponse<ApplicantApplicationResponse> getMyApplication(
             @RequestBody @Valid ApplicationMyRequest request) {
         return ApiResponse.success(applicationApplicantService.getMyApplication(request));
     }
 
     @DeleteMapping("/{applicationUuid}")
-    @Operation(summary = "신청서 취소", description = "학번과 @tukorea.ac.kr 이메일 인증코드 검증 후 본인이 제출한 신청서를 취소합니다.")
+    @Operation(summary = "지원서 취소", description = "학번과 학교 이메일 인증코드 검증 후 본인이 제출한 지원서를 취소합니다.")
     public ApiResponse<Void> cancel(
             @PathVariable String applicationUuid,
             @RequestBody @Valid ApplicationCancelRequest request) {

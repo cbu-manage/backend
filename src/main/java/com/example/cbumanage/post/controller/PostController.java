@@ -30,7 +30,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/v1/")
-@Tag(name = "포스트 관리 컨트롤러")
+@Tag(name = "공통 게시글", description = "게시판 공통 게시글 조회·삭제·신고 API입니다.")
 @RequiredArgsConstructor
 public class PostController {
     private final PostService postService;
@@ -43,22 +43,22 @@ public class PostController {
     private final NewsService newsService;
     private final FlagPostService flagPostService;
 
-    @Operation(summary = "카테고리 별 포스트 목록 페이징 조회", description = "포스트 목록을 페이징으로 불러옵니다.")
+    @Operation(summary = "게시글 목록 조회", description = "카테고리별 게시글 목록을 페이지 단위로 조회합니다.")
     @GetMapping("post")
-    public ApiResponse<Page<PostDTO.PostInfoDTO>> getPosts(@Parameter(description = "페이지번호") @RequestParam int page,
-                                                            @Parameter(description = "페이지당 post갯수") @RequestParam int size,
-                                                            @Parameter(description = "카테고리") @RequestParam int category) {
+    public ApiResponse<Page<PostDTO.PostInfoDTO>> getPosts(@Parameter(description = "페이지 번호(0부터 시작)") @RequestParam int page,
+                                                            @Parameter(description = "페이지당 조회 개수") @RequestParam int size,
+                                                            @Parameter(description = "게시글 카테고리 번호") @RequestParam int category) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
         return ApiResponse.success(postService.getPostsByCategory(pageable, category));
     }
 
-    @Operation(summary = "포스트 메인테이블 단건조회")
+    @Operation(summary = "게시글 상세 조회", description = "게시글 ID로 공통 게시글 정보를 조회합니다.")
     @GetMapping("post/{postId}/post")
     public ApiResponse<PostDTO.PostInfoDTO> getPost(@PathVariable Long postId) {
         return ApiResponse.success(postService.getPostById(postId));
     }
 
-    @Operation(summary = "포스트 단건 삭제")
+    @Operation(summary = "게시글 삭제", description = "작성자 또는 관리자가 게시글을 소프트 삭제합니다.")
     @DeleteMapping("post/{postId}")
     public ApiResponse<Void> deletePost(@PathVariable Long postId, Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
@@ -72,6 +72,7 @@ public class PostController {
         }
     }
 
+    @Operation(summary = "내 게시글 목록 조회", description = "로그인 사용자가 작성한 게시글을 카테고리별로 조회합니다.")
     @GetMapping("post/my")
     public ApiResponse<Object> getMyPosts(@RequestParam int page, @RequestParam int size,
                                            @RequestParam(required = false) Integer category,

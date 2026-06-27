@@ -18,14 +18,14 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1")
-@Tag(name = "스터디 모집 컨트롤러", description = "스터디 모집 게시글 CRUD 및 목록 조회 API")
+@Tag(name = "스터디", description = "스터디 모집 게시글을 작성·조회·수정·삭제하고 모집을 마감합니다.")
 @RequiredArgsConstructor
 public class StudyController {
 
     private final StudyService studyService;
 
     @Operation(
-            summary = "스터디 게시글 생성",
+            summary = "스터디 모집글 작성",
             description = "스터디 모집 게시글을 생성합니다. 작성자가 팀장이 되며 게시글과 함께 그룹이 자동으로 생성됩니다."
     )
     @PostMapping("/post/study")
@@ -38,12 +38,12 @@ public class StudyController {
     }
 
     @Operation(
-            summary = "스터디 게시글 전체 목록 페이징 조회",
-            description = "카테고리별 스터디 전체 목록을 페이징 조회합니다. 최신순 정렬."
+            summary = "스터디 모집글 목록 조회",
+            description = "카테고리별 스터디 모집글 목록을 최신순으로 조회합니다."
     )
     @Parameters({
-            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
-            @Parameter(name = "size", description = "한 페이지당 출력 개수", example = "10"),
+            @Parameter(name = "page", description = "페이지 번호(0부터 시작)", example = "0"),
+            @Parameter(name = "size", description = "페이지당 조회 개수", example = "10"),
             @Parameter(name = "category", description = "카테고리 번호 (스터디: 1)", example = "1")
     })
     @GetMapping("/post/study")
@@ -57,12 +57,12 @@ public class StudyController {
     }
 
     @Operation(
-            summary = "내가 작성한 스터디 게시글 목록 조회",
+            summary = "내 스터디 모집글 목록 조회",
             description = "로그인한 사용자가 작성한 스터디 게시글만 조회합니다."
     )
     @Parameters({
-            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
-            @Parameter(name = "size", description = "한 페이지당 출력 개수", example = "10"),
+            @Parameter(name = "page", description = "페이지 번호(0부터 시작)", example = "0"),
+            @Parameter(name = "size", description = "페이지당 조회 개수", example = "10"),
             @Parameter(name = "category", description = "카테고리 번호 (스터디: 1)", example = "1")
     })
     @GetMapping("/post/study/me")
@@ -78,10 +78,10 @@ public class StudyController {
     }
 
     @Operation(
-            summary = "스터디 게시글 상세 조회",
+            summary = "스터디 모집글 상세 조회",
             description = "스터디 게시글의 상세 정보를 조회합니다. 응답 데이터의 **isLeader**와 **hasApplied** 값에 따라 " +
                     "프론트엔드에서 '신청 인원 확인', '신청하기', '취소하기', '가입완료' 버튼을 분기 처리합니다. " +
-                    "비로그인 사용자도 조회 가능합니다."
+                    "로그인 사용자의 참여 상태를 함께 반환합니다."
     )
     @GetMapping("/post/study/{postId}")
     public ApiResponse<PostDTO.StudyInfoDetailDTO> getPostStudy(
@@ -93,7 +93,7 @@ public class StudyController {
     }
 
     @Operation(
-            summary = "스터디 게시글 수정",
+            summary = "스터디 모집글 수정",
             description = "제목, 내용, 태그, 스터디명, 최대 인원을 수정합니다. 작성자 본인만 가능합니다. " +
                     "보내지 않은 필드는 기존 값을 유지합니다. 모집 상태는 마감 API를 이용하세요."
     )
@@ -108,8 +108,8 @@ public class StudyController {
     }
 
     @Operation(
-            summary = "스터디 게시글 삭제",
-            description = "Soft Delete 처리합니다. 게시글과 함께 생성된 그룹도 함께 삭제됩니다. 작성자 본인만 가능합니다."
+            summary = "스터디 모집글 삭제",
+            description = "스터디 모집글과 함께 생성된 그룹을 소프트 삭제 처리합니다. 작성자 본인만 삭제할 수 있습니다."
     )
     @DeleteMapping("/post/study/{postId}")
     public ApiResponse<Void> deletePost(
@@ -121,12 +121,12 @@ public class StudyController {
     }
 
     @Operation(
-            summary = "스터디 태그별 목록 페이징 조회",
+            summary = "스터디 태그별 목록 조회",
             description = "태그명이 정확히 일치하는 스터디 목록을 조회합니다."
     )
     @Parameters({
-            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
-            @Parameter(name = "size", description = "한 페이지당 출력 개수", example = "10"),
+            @Parameter(name = "page", description = "페이지 번호(0부터 시작)", example = "0"),
+            @Parameter(name = "size", description = "페이지당 조회 개수", example = "10"),
             @Parameter(name = "tag", description = "검색할 태그 문자열 (정확히 일치하는 태그명)", example = "Spring")
     })
     @GetMapping("/post/study/filter")

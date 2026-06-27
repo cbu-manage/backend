@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1")
-@Tag(name = "프로젝트 관리 컨트롤러")
+@Tag(name = "프로젝트", description = "프로젝트 모집 게시글을 작성·조회·수정·삭제합니다.")
 @RequiredArgsConstructor
 public class ProjectController {
     private final ProjectService projectService;
@@ -41,12 +41,12 @@ public class ProjectController {
     }
 
     @Operation(
-            summary = "프로젝트 게시글 전체 목록 페이징 조회",
-            description = "프로젝트 전체 목록을 페이징으로 불러옵니다, 최신순으로 정렬됩니다."
+            summary = "프로젝트 목록 조회",
+            description = "프로젝트 모집 게시글 목록을 최신순으로 조회합니다."
     )
     @Parameters({
-            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
-            @Parameter(name = "size", description = "한 페이지당 출력 개수", example = "10"),
+            @Parameter(name = "page", description = "페이지 번호(0부터 시작)", example = "0"),
+            @Parameter(name = "size", description = "페이지당 조회 개수", example = "10"),
             @Parameter(name = "category", description = "카테고리 번호", example = "2"),
             @Parameter(name = "recruiting", description = "모집 중 여부 (true: 모집 중, false: 전체/마감 포함)")
     })
@@ -65,12 +65,12 @@ public class ProjectController {
     }
 
     @Operation(
-            summary = "내가 작성한 프로젝트 게시글 목록 조회",
-            description = "자신이 작성한 프로젝트 게시글만 조회 합니다."
+            summary = "내 프로젝트 목록 조회",
+            description = "로그인 사용자가 작성한 프로젝트 모집 게시글만 조회합니다."
     )
     @Parameters({
-            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
-            @Parameter(name = "size", description = "한 페이지당 출력 개수", example = "10"),
+            @Parameter(name = "page", description = "페이지 번호(0부터 시작)", example = "0"),
+            @Parameter(name = "size", description = "페이지당 조회 개수", example = "10"),
             @Parameter(name = "category", description = "카테고리 번호", example = "2")
     })
     @GetMapping("/post/project/me")
@@ -104,7 +104,7 @@ public class ProjectController {
 
     @Operation(
             summary = "프로젝트 게시글 수정",
-            description = "프로젝트 게시글 ID를 기준으로 메인 테이블인 post와 서브테이블인 프로젝트 정보를 수정합니다."
+            description = "프로젝트 게시글 ID를 기준으로 게시글 기본 정보와 프로젝트 모집 정보를 수정합니다."
     )
     @PatchMapping("/post/project/{postId}")
     public ApiResponse<Void> updateProject(
@@ -118,8 +118,8 @@ public class ProjectController {
 
     @Operation(
             summary = "프로젝트 게시글 삭제",
-            description = "프로젝트 게시글과 함께 생성된 그룹을 동시에 soft delete 처리 합니다." +
-                    "목록 및 상세조회에서 제외 됩니다."
+            description = "프로젝트 게시글과 함께 생성된 그룹을 동시에 소프트 삭제 처리합니다. " +
+                    "목록 및 상세 조회에서 제외됩니다."
     )
     @DeleteMapping("/post/project/{postId}")
     public ApiResponse<Void> deletePost(
@@ -131,14 +131,14 @@ public class ProjectController {
     }
 
     @Operation(
-            summary = "프로젝트 모집분야 카테고리별로 목록 페이징 조회",
+            summary = "프로젝트 모집 분야별 목록 조회",
             description = "프로젝트 모집분야 카테고리별로 조회가 가능하며 모집분야가 여러개일 경우 그중에 하나라도" +
                     "포함이 된다면 조회가 가능합니다."
     )
     @GetMapping("/post/project/filter")
     public ApiResponse<Page<PostDTO.ProjectListDTO>> filterProjectsByFields(
-            @Parameter(description = "페이지번호") @RequestParam int page,
-            @Parameter(description = "페이지당 project 게시글 갯수") @RequestParam int size,
+            @Parameter(description = "페이지 번호(0부터 시작)") @RequestParam int page,
+            @Parameter(description = "페이지당 조회 개수") @RequestParam int size,
             @Parameter(description = "필터링할 모집 분야", schema = @Schema(implementation = ProjectFieldType.class))
             @RequestParam(name = "fields") ProjectFieldType fields,
             @RequestParam(required = false) Boolean recruiting) {
