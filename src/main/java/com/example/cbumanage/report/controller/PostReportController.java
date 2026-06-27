@@ -26,6 +26,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
@@ -62,10 +65,14 @@ public class PostReportController {
     public ApiResponse<Page<PostDTO.PostReportPreviewDTO>> getPostReportPreviews(
             @RequestParam int page,
             @RequestParam int size,
+            @Parameter(description = "활동 시작일 (포함, yyyy-MM-dd)", example = "2025-01-01") @RequestParam(required = false) LocalDate startDate,
+            @Parameter(description = "활동 종료일 (포함, yyyy-MM-dd)", example = "2025-12-31") @RequestParam(required = false) LocalDate endDate,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
-        Page<PostDTO.PostReportPreviewDTO> postReportPreviewDTOs = postReportService.getPostReportPreviewDTOList(pageable, userId);
+        LocalDateTime start = startDate != null ? startDate.atStartOfDay() : null;
+        LocalDateTime end   = endDate   != null ? endDate.atTime(LocalTime.MAX) : null;
+        Page<PostDTO.PostReportPreviewDTO> postReportPreviewDTOs = postReportService.getPostReportPreviewDTOList(pageable, userId, start, end);
         return ApiResponse.success(postReportPreviewDTOs);
     }
 

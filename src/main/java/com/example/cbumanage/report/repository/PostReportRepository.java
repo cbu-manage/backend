@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -25,7 +26,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
      */
     @Query(value = """
     select new com.example.cbumanage.post.dto.PostDTO$PostReportPreviewDTO(
-    p.id,p.title,p.createdAt,p.authorId,m.name,
+    p.id,p.title,p.createdAt,p.authorId,m.name,m.generation,
     r.isAccepted,
 
     g.id,g.groupName, (
@@ -42,19 +43,26 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     left join User m on m.userId = p.authorId
     where p.category = :category
     and p.isDeleted = false
+    and (:startDate is null or r.date >= :startDate)
+    and (:endDate is null or r.date <= :endDate)
 """,
     countQuery = """
     select count(p)
     from Post p
+    left join PostReport r on r.post = p
     where p.category =:category
     and p.isDeleted = false
+    and (:startDate is null or r.date >= :startDate)
+    and (:endDate is null or r.date <= :endDate)
 """)
-    Page<PostDTO.PostReportPreviewDTO> findPostReportPreviews(Pageable pageable, @Param("category")int category);
+    Page<PostDTO.PostReportPreviewDTO> findPostReportPreviews(Pageable pageable, @Param("category") int category,
+                                                              @Param("startDate") LocalDateTime startDate,
+                                                              @Param("endDate") LocalDateTime endDate);
 
 
     @Query(value = """
     select new com.example.cbumanage.post.dto.PostDTO$PostReportPreviewDTO(
-    p.id,p.title,p.createdAt,p.authorId,m.name,
+    p.id,p.title,p.createdAt,p.authorId,m.name,m.generation,
     r.isAccepted,
 
     g.id,g.groupName, (
@@ -82,7 +90,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
 
     @Query(value = """
     select new com.example.cbumanage.post.dto.PostDTO$PostReportPreviewDTO(
-    p.id,p.title,p.createdAt,p.authorId,m.name,
+    p.id,p.title,p.createdAt,p.authorId,m.name,m.generation,
     r.isAccepted,
 
     g.id,g.groupName, (
@@ -111,7 +119,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
 
     @Query(value = """
     select new com.example.cbumanage.post.dto.PostDTO$PostReportPreviewDTO(
-    p.id,p.title,p.createdAt,p.authorId,m.name,
+    p.id,p.title,p.createdAt,p.authorId,m.name,m.generation,
     r.isAccepted,
 
     g.id,g.groupName, (
@@ -129,6 +137,8 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     where p.category = :category
     and r.groupId in :groupIds
     and p.isDeleted = false
+    and (:startDate is null or r.date >= :startDate)
+    and (:endDate is null or r.date <= :endDate)
 """,
     countQuery = """
     select count(p)
@@ -137,6 +147,11 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     where p.category = :category
     and r.groupId in :groupIds
     and p.isDeleted = false
+    and (:startDate is null or r.date >= :startDate)
+    and (:endDate is null or r.date <= :endDate)
 """)
-    Page<PostDTO.PostReportPreviewDTO> findPostReportPreviewsByGroupIds(Pageable pageable, @Param("category") int category, @Param("groupIds") Collection<Long> groupIds);
+    Page<PostDTO.PostReportPreviewDTO> findPostReportPreviewsByGroupIds(Pageable pageable, @Param("category") int category,
+                                                                        @Param("groupIds") Collection<Long> groupIds,
+                                                                        @Param("startDate") LocalDateTime startDate,
+                                                                        @Param("endDate") LocalDateTime endDate);
 }

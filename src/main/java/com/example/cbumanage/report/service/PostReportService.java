@@ -25,6 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -95,19 +96,20 @@ public class PostReportService {
 
 fetch join -> 해결
  */
-    public Page<PostDTO.PostReportPreviewDTO> getPostReportPreviewDTOList(Pageable pageable, Long userId) {
+    public Page<PostDTO.PostReportPreviewDTO> getPostReportPreviewDTOList(Pageable pageable, Long userId,
+                                                                          LocalDateTime startDate, LocalDateTime endDate) {
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
         boolean isAdmin = user.getRole().canViewAllReports();
 
         if (isAdmin) {
-            return postReportRepository.findPostReportPreviews(pageable, 7);
+            return postReportRepository.findPostReportPreviews(pageable, 7, startDate, endDate);
         }
 
         List<Long> groupIds = groupMemberRepository.findGroupIdsByUserIdAndStatus(userId, GroupMemberStatus.ACTIVE);
         if (groupIds.isEmpty()) {
             return Page.empty(pageable);
         }
-        return postReportRepository.findPostReportPreviewsByGroupIds(pageable, 7, groupIds);
+        return postReportRepository.findPostReportPreviewsByGroupIds(pageable, 7, groupIds, startDate, endDate);
     }
 
     public Page<PostDTO.PostReportPreviewDTO> getGroupPostReportPreviewDTOList(Pageable pageable, Long groupId) {
