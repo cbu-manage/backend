@@ -246,6 +246,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
         where gm.group.id = g.id
         and gm.groupMemberStatus=com.example.cbumanage.group.entity.enums.GroupMemberStatus.ACTIVE
         ),
+        g.category,
         r.date
         )
         from Post p
