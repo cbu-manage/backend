@@ -802,6 +802,8 @@ public class PostDTO {
         LocalDateTime createdAt,
         Long authorId,
         String authorName,
+        @Schema(description = "작성자 기수입니다")
+        Long generation,
 
         @Schema(description = "보고서 승인 여부 입니다, 보고서 게시글이 생셩될때 기본값은 false로 생성되며, 운영진이 승인할 경우 True로 변겯됩니다")
         boolean isAccepted,
