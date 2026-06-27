@@ -50,7 +50,6 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     select count(p)
     from Post p
     join PostReport r on r.post = p
-    left join PostReport r on r.post = p
     where p.category =:category
     and p.isDeleted = false
     and (:startDate is null or r.date >= :startDate)
