@@ -35,6 +35,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     where gm.group.id = g.id
     and gm.groupMemberStatus=com.example.cbumanage.group.entity.enums.GroupMemberStatus.ACTIVE
     ),
+    g.category,
     r.date
     )
     from Post p
@@ -71,6 +72,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     where gm.group.id = g.id
     and gm.groupMemberStatus=com.example.cbumanage.group.entity.enums.GroupMemberStatus.ACTIVE
     ),
+    g.category,
     r.date
     )
     from Post p
@@ -99,6 +101,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     where gm.group.id = g.id
     and gm.groupMemberStatus=com.example.cbumanage.group.entity.enums.GroupMemberStatus.ACTIVE
     ),
+    g.category,
     r.date
     )
     from Post p
@@ -107,6 +110,8 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     left join User m on m.userId = p.authorId
     where p.category = :category and r.groupId = :groupId
     and p.isDeleted = false
+    and (:startDate is null or r.date >= :startDate)
+    and (:endDate is null or r.date <= :endDate)
 """,
             countQuery = """
     select count(p)
@@ -114,8 +119,12 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     left join PostReport r on r.post = p
     where p.category =:category
     and p.isDeleted = false and r.groupId = :groupId
+    and (:startDate is null or r.date >= :startDate)
+    and (:endDate is null or r.date <= :endDate)
 """)
-    Page<PostDTO.PostReportPreviewDTO> findPostReportPreviewsByGroupId(Pageable pageable, @Param("category") int category, @Param("groupId") Long groupId);
+    Page<PostDTO.PostReportPreviewDTO> findPostReportPreviewsByGroupId(Pageable pageable, @Param("category") int category, @Param("groupId") Long groupId,
+                                                                       @Param("startDate") LocalDateTime startDate,
+                                                                       @Param("endDate") LocalDateTime endDate);
 
     @Query(value = """
     select new com.example.cbumanage.post.dto.PostDTO$PostReportPreviewDTO(
@@ -128,6 +137,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     where gm.group.id = g.id
     and gm.groupMemberStatus=com.example.cbumanage.group.entity.enums.GroupMemberStatus.ACTIVE
     ),
+    g.category,
     r.date
     )
     from Post p
@@ -154,4 +164,96 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
                                                                         @Param("groupIds") Collection<Long> groupIds,
                                                                         @Param("startDate") LocalDateTime startDate,
                                                                         @Param("endDate") LocalDateTime endDate);
+
+    @Query(
+        value = """
+            SELECT p.post_id
+            FROM post p
+            JOIN post_report r ON r.post_id = p.post_id
+            JOIN user m ON m.user_id = p.author_id
+            WHERE p.category = :category
+              AND p.is_deleted = false
+              AND (:startDate IS NULL OR r.`date` >= :startDate)
+              AND (:endDate IS NULL OR r.`date` <= :endDate)
+              AND CONCAT(p.title, ' ', m.name) REGEXP :pattern
+            ORDER BY p.created_at DESC, p.post_id DESC
+            """,
+        countQuery = """
+            SELECT COUNT(*)
+            FROM post p
+            JOIN post_report r ON r.post_id = p.post_id
+            JOIN user m ON m.user_id = p.author_id
+            WHERE p.category = :category
+              AND p.is_deleted = false
+              AND (:startDate IS NULL OR r.`date` >= :startDate)
+              AND (:endDate IS NULL OR r.`date` <= :endDate)
+              AND CONCAT(p.title, ' ', m.name) REGEXP :pattern
+            """,
+        nativeQuery = true
+    )
+    Page<Long> searchPostIdsByKeyword(
+            @Param("category") int category,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("pattern") String pattern,
+            Pageable pageable
+    );
+
+    @Query(
+        value = """
+            SELECT p.post_id
+            FROM post p
+            JOIN post_report r ON r.post_id = p.post_id
+            JOIN user m ON m.user_id = p.author_id
+            WHERE p.category = :category
+              AND r.group_id IN :groupIds
+              AND p.is_deleted = false
+              AND (:startDate IS NULL OR r.`date` >= :startDate)
+              AND (:endDate IS NULL OR r.`date` <= :endDate)
+              AND CONCAT(p.title, ' ', m.name) REGEXP :pattern
+            ORDER BY p.created_at DESC, p.post_id DESC
+            """,
+        countQuery = """
+            SELECT COUNT(*)
+            FROM post p
+            JOIN post_report r ON r.post_id = p.post_id
+            JOIN user m ON m.user_id = p.author_id
+            WHERE p.category = :category
+              AND r.group_id IN :groupIds
+              AND p.is_deleted = false
+              AND (:startDate IS NULL OR r.`date` >= :startDate)
+              AND (:endDate IS NULL OR r.`date` <= :endDate)
+              AND CONCAT(p.title, ' ', m.name) REGEXP :pattern
+            """,
+        nativeQuery = true
+    )
+    Page<Long> searchPostIdsByKeywordAndGroupIds(
+            @Param("category") int category,
+            @Param("groupIds") Collection<Long> groupIds,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("pattern") String pattern,
+            Pageable pageable
+    );
+
+    @Query("""
+        select new com.example.cbumanage.post.dto.PostDTO$PostReportPreviewDTO(
+        p.id,p.title,p.createdAt,p.authorId,m.name,m.generation,
+        r.isAccepted,
+        g.id,g.groupName, (
+        select count(gm)
+        from GroupMember gm
+        where gm.group.id = g.id
+        and gm.groupMemberStatus=com.example.cbumanage.group.entity.enums.GroupMemberStatus.ACTIVE
+        ),
+        g.category,
+        r.date
+        )
+        from Post p
+        join PostReport r on r.post = p
+        left join Group g on r.groupId = g.id
+        left join User m on m.userId = p.authorId
+        where p.id in :postIds
+        """)
+    List<PostDTO.PostReportPreviewDTO> findPreviewsByPostIds(@Param("postIds") List<Long> postIds);
 }

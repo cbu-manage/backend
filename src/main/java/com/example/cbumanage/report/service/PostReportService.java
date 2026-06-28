@@ -26,9 +26,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -96,24 +101,95 @@ public class PostReportService {
 
 fetch join -> 해결
  */
-    public Page<PostDTO.PostReportPreviewDTO> getPostReportPreviewDTOList(Pageable pageable, Long userId,
-                                                                          LocalDateTime startDate, LocalDateTime endDate) {
+    public PostDTO.PostReportPreviewSearchDTO getPostReportPreviewDTOList(Pageable pageable, Long userId,
+                                                                          LocalDateTime startDate, LocalDateTime endDate,
+                                                                          String keyword) {
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
         boolean isAdmin = user.getRole().canViewAllReports();
 
+        if (keyword != null && !keyword.isBlank()) {
+            Page<PostDTO.PostReportPreviewDTO> result = searchPostReportPreviews(pageable, userId, isAdmin, startDate, endDate, keyword);
+            return new PostDTO.PostReportPreviewSearchDTO(result, PostDTO.ReportSearchInfoDTO.of(keyword));
+        }
+
         if (isAdmin) {
-            return postReportRepository.findPostReportPreviews(pageable, 7, startDate, endDate);
+            Page<PostDTO.PostReportPreviewDTO> result = postReportRepository.findPostReportPreviews(pageable, 7, startDate, endDate);
+            return new PostDTO.PostReportPreviewSearchDTO(result, PostDTO.ReportSearchInfoDTO.none());
         }
 
         List<Long> groupIds = groupMemberRepository.findGroupIdsByUserIdAndStatus(userId, GroupMemberStatus.ACTIVE);
         if (groupIds.isEmpty()) {
-            return Page.empty(pageable);
+            return new PostDTO.PostReportPreviewSearchDTO(Page.empty(pageable), PostDTO.ReportSearchInfoDTO.none());
         }
-        return postReportRepository.findPostReportPreviewsByGroupIds(pageable, 7, groupIds, startDate, endDate);
+        Page<PostDTO.PostReportPreviewDTO> result = postReportRepository.findPostReportPreviewsByGroupIds(pageable, 7, groupIds, startDate, endDate);
+        return new PostDTO.PostReportPreviewSearchDTO(result, PostDTO.ReportSearchInfoDTO.none());
     }
 
-    public Page<PostDTO.PostReportPreviewDTO> getGroupPostReportPreviewDTOList(Pageable pageable, Long groupId) {
-        return postReportRepository.findPostReportPreviewsByGroupId(pageable, 7, groupId);
+    private Page<PostDTO.PostReportPreviewDTO> searchPostReportPreviews(
+            Pageable pageable, Long userId, boolean isAdmin,
+            LocalDateTime startDate, LocalDateTime endDate, String keyword) {
+
+        String pattern = Arrays.stream(keyword.trim().split("\\s+"))
+                .filter(t -> !t.isBlank())
+                .distinct()
+                .map(t -> "(?=.*" + t + ")")
+                .collect(Collectors.joining());
+
+        Pageable searchPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        Page<Long> postIds;
+
+        if (isAdmin) {
+            postIds = postReportRepository.searchPostIdsByKeyword(7, startDate, endDate, pattern, searchPageable);
+        } else {
+            List<Long> groupIds = groupMemberRepository.findGroupIdsByUserIdAndStatus(userId, GroupMemberStatus.ACTIVE);
+            if (groupIds.isEmpty()) return Page.empty(pageable);
+            postIds = postReportRepository.searchPostIdsByKeywordAndGroupIds(7, groupIds, startDate, endDate, pattern, searchPageable);
+        }
+
+        List<Long> ids = postIds.getContent();
+        if (ids.isEmpty()) return new PageImpl<>(List.of(), pageable, 0);
+
+        Map<Long, PostDTO.PostReportPreviewDTO> dtoById = postReportRepository.findPreviewsByPostIds(ids).stream()
+                .collect(Collectors.toMap(PostDTO.PostReportPreviewDTO::postId, dto -> dto));
+
+        List<PostDTO.PostReportPreviewDTO> ordered = ids.stream()
+                .map(dtoById::get)
+                .filter(dto -> dto != null)
+                .toList();
+
+        return new PageImpl<>(ordered, pageable, postIds.getTotalElements());
+    }
+
+    public PostDTO.PostReportPreviewSearchDTO getGroupPostReportPreviewDTOList(Pageable pageable, Long groupId,
+                                                                               LocalDateTime startDate, LocalDateTime endDate,
+                                                                               String keyword, Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        if (!user.getRole().canViewAllReports()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        if (keyword != null && !keyword.isBlank()) {
+            String pattern = Arrays.stream(keyword.trim().split("\\s+"))
+                    .filter(t -> !t.isBlank())
+                    .distinct()
+                    .collect(Collectors.joining("|"));
+
+            Pageable searchPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+            Page<Long> postIds = postReportRepository.searchPostIdsByKeywordAndGroupIds(7, List.of(groupId), startDate, endDate, pattern, searchPageable);
+
+            List<Long> ids = postIds.getContent();
+            if (ids.isEmpty()) return new PostDTO.PostReportPreviewSearchDTO(new PageImpl<>(List.of(), pageable, 0), PostDTO.ReportSearchInfoDTO.of(keyword));
+
+            Map<Long, PostDTO.PostReportPreviewDTO> dtoById = postReportRepository.findPreviewsByPostIds(ids).stream()
+                    .collect(Collectors.toMap(PostDTO.PostReportPreviewDTO::postId, dto -> dto));
+
+            List<PostDTO.PostReportPreviewDTO> ordered = ids.stream()
+                    .map(dtoById::get)
+                    .filter(dto -> dto != null)
+                    .toList();
+
+            return new PostDTO.PostReportPreviewSearchDTO(new PageImpl<>(ordered, pageable, postIds.getTotalElements()), PostDTO.ReportSearchInfoDTO.of(keyword));
+        }
+
+        Page<PostDTO.PostReportPreviewDTO> result = postReportRepository.findPostReportPreviewsByGroupId(pageable, 7, groupId, startDate, endDate);
+        return new PostDTO.PostReportPreviewSearchDTO(result, PostDTO.ReportSearchInfoDTO.none());
     }
 
     public Page<PostDTO.PostReportPreviewDTO> getMyPostReportPreviewDTOList(Pageable pageable,Long userId) {

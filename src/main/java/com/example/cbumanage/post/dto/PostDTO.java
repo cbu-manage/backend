@@ -8,6 +8,7 @@ import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Page;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -814,12 +815,44 @@ public class PostDTO {
         String groupName,
         @Schema(description = "그룹의 활동인원 (status가 ACTIVE인 인원)의 수를 표기합니다")
         Long groupMemberCount,
+        @Schema(description = "그룹의 카테고리입니다 (1=스터디, 2=프로젝트, 7=보고서)")
+        Integer groupCategory,
 
         @Schema(description = "활동 일시입니다")
         LocalDateTime date
     ) {}
 
 
+
+    @Schema(description = "보고서 목록 검색 모드입니다. NONE은 검색 없음, AND는 키워드 전부 포함된 결과입니다.")
+    public enum ReportSearchMode {
+        NONE,
+        AND
+    }
+
+    @Schema(description = "보고서 목록 검색 처리 정보입니다. keyword가 없으면 mode는 NONE, keyword가 있으면 AND입니다.")
+    public record ReportSearchInfoDTO(
+            @Schema(description = "요청한 검색어입니다. 검색하지 않은 경우 null입니다.", example = "스터디 김건우")
+            String keyword,
+            @Schema(description = "검색 모드입니다. NONE은 검색 없음, AND는 공백으로 구분된 키워드가 모두 제목 또는 작성자 이름에 포함된 결과입니다.", allowableValues = {"NONE", "AND"}, example = "AND")
+            ReportSearchMode mode
+    ) {
+        public static ReportSearchInfoDTO none() {
+            return new ReportSearchInfoDTO(null, ReportSearchMode.NONE);
+        }
+
+        public static ReportSearchInfoDTO of(String keyword) {
+            return new ReportSearchInfoDTO(keyword, ReportSearchMode.AND);
+        }
+    }
+
+    @Schema(description = "보고서 목록 조회 응답입니다. 보고서 미리보기 페이지와 검색 처리 정보를 함께 반환합니다.")
+    public record PostReportPreviewSearchDTO(
+            @Schema(description = "보고서 미리보기 목록 페이지입니다. content 배열에 보고서 항목이 담기고 Spring Page 페이지네이션 정보가 함께 포함됩니다.")
+            Page<PostReportPreviewDTO> reports,
+            @Schema(description = "검색 처리 결과입니다. keyword가 없으면 mode는 NONE입니다.")
+            ReportSearchInfoDTO search
+    ) {}
 
     @Schema(description = "보고서 게시글을 단건조회 할때 포스트+보고서의 정보를 종합적으로 담은 게시글 입니다")
     public record PostReportViewDTO(
