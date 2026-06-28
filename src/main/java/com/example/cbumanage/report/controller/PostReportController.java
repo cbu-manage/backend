@@ -56,35 +56,65 @@ public class PostReportController {
 
     @Operation(
             summary = "보고서 목록 조회",
-            description = "보고서 게시글 목록을 페이지 단위로 조회합니다. 응답에는 게시글, 작성자, 그룹 요약 정보가 포함됩니다."
+            description = """
+                    보고서 게시글 목록을 페이지 단위로 조회합니다.
+                    응답의 reports 필드에 보고서 미리보기 목록과 페이지네이션 정보가 담기고, search 필드에 검색 처리 정보가 담깁니다.
+
+                    **권한별 조회 범위**
+                    - ADMIN / MANAGER: 전체 보고서 조회
+                    - MEMBER: 본인이 ACTIVE 상태인 그룹의 보고서만 조회 (소속 그룹 없으면 빈 페이지)
+
+                    **keyword 검색**
+                    - 공백으로 구분된 각 단어를 제목 또는 작성자 이름에서 OR 검색합니다.
+                    - keyword가 없으면 search.mode는 NONE, 있으면 OR입니다.
+                    """
     )
     @GetMapping
-    public ApiResponse<Page<PostDTO.PostReportPreviewDTO>> getPostReportPreviews(
+    public ApiResponse<PostDTO.PostReportPreviewSearchDTO> getPostReportPreviews(
             @RequestParam int page,
             @RequestParam int size,
             @Parameter(description = "활동 시작일 (포함, yyyy-MM-dd)", example = "2025-01-01") @RequestParam(required = false) LocalDate startDate,
             @Parameter(description = "활동 종료일 (포함, yyyy-MM-dd)", example = "2025-12-31") @RequestParam(required = false) LocalDate endDate,
+            @Parameter(description = "제목 또는 작성자 이름 키워드 (공백으로 구분 시 각 단어를 개별 검색)") @RequestParam(required = false) String keyword,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
         LocalDateTime start = startDate != null ? startDate.atStartOfDay() : null;
         LocalDateTime end   = endDate   != null ? endDate.atTime(LocalTime.MAX) : null;
-        Page<PostDTO.PostReportPreviewDTO> postReportPreviewDTOs = postReportService.getPostReportPreviewDTOList(pageable, userId, start, end);
-        return ApiResponse.success(postReportPreviewDTOs);
+        PostDTO.PostReportPreviewSearchDTO result = postReportService.getPostReportPreviewDTOList(pageable, userId, start, end, keyword);
+        return ApiResponse.success(result);
     }
 
     @Operation(
             summary = "그룹별 보고서 목록 조회",
-            description = "그룹 ID 기준으로 해당 그룹의 보고서 게시글 목록을 페이지 단위로 조회합니다."
+            description = """
+                    그룹 ID 기준으로 해당 그룹의 보고서 게시글 목록을 페이지 단위로 조회합니다.
+                    응답의 reports 필드에 보고서 미리보기 목록과 페이지네이션 정보가 담기고, search 필드에 검색 처리 정보가 담깁니다.
+
+                    **keyword 검색**
+                    - 공백으로 구분된 각 단어를 제목 또는 작성자 이름에서 OR 검색합니다.
+                    - keyword가 없으면 search.mode는 NONE, 있으면 OR입니다.
+                    """
     )
     @GetMapping("/group/{groupId}")
-    public ApiResponse<Page<PostDTO.PostReportPreviewDTO>> getPostReportPreviewsByGroup(
+    public ApiResponse<PostDTO.PostReportPreviewSearchDTO> getPostReportPreviewsByGroup(
             @PathVariable Long groupId,
             @RequestParam int page,
-            @RequestParam int size) {
+            @RequestParam int size,
+            @Parameter(description = "활동 시작일 (포함, yyyy-MM-dd)", example = "2025-01-01") @RequestParam(required = false) LocalDate startDate,
+            @Parameter(description = "활동 종료일 (포함, yyyy-MM-dd)", example = "2025-12-31") @RequestParam(required = false) LocalDate endDate,
+            @Parameter(description = "제목 또는 작성자 이름 키워드 (공백으로 구분 시 각 단어를 개별 검색)") @RequestParam(required = false) String keyword,
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
-        Page<PostDTO.PostReportPreviewDTO> postReportPreviewDTOs = postReportService.getGroupPostReportPreviewDTOList(pageable, groupId);
-        return ApiResponse.success(postReportPreviewDTOs);
+        LocalDateTime start = startDate != null ? startDate.atStartOfDay() : null;
+        LocalDateTime end   = endDate   != null ? endDate.atTime(LocalTime.MAX) : null;
+        try {
+            PostDTO.PostReportPreviewSearchDTO result = postReportService.getGroupPostReportPreviewDTOList(pageable, groupId, start, end, keyword, userId);
+            return ApiResponse.success(result);
+        } catch (ResponseStatusException e) {
+            throw new BaseException(ErrorCode.FORBIDDEN);
+        }
     }
 
     @Operation(
