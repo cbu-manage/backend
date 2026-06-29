@@ -7,6 +7,7 @@ import com.example.cbumanage.news.service.NewsAttachmentService;
 import com.example.cbumanage.news.service.NewsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -20,6 +21,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/news")
@@ -41,17 +44,19 @@ public class NewsController {
     @PreAuthorize(AUTHENTICATED)
     @Operation(
             summary = "소식 목록 조회",
-            description = "소식 목록 화면에서 사용합니다. category를 생략하면 전체 카테고리를 조회하고, keyword를 전달하면 제목과 본문을 함께 검색합니다. "
+            description = "소식 목록 화면에서 사용합니다. category는 여러 개를 동시에 지정할 수 있어(예: category=NOTICE&category=EVENT) 지정한 카테고리들만 함께 조회하고, "
+                    + "생략하면 전체 카테고리를 조회합니다. \"전체\" 탭에서 뉴스레터를 빼고 싶으면 NEWSLETTER를 제외한 카테고리들을 나열하면 됩니다. "
+                    + "keyword를 전달하면 제목과 본문을 함께 검색합니다. "
                     + "고정 소식은 현재 페이지와 관계없이 content 배열의 앞쪽에 함께 내려갑니다. 다만 page.totalElements와 page.totalPages에는 일반 소식만 계산되므로, "
                     + "프론트에서는 content를 그대로 렌더링하고 페이지네이션은 page 값을 기준으로 처리하면 됩니다. "
                     + "본문은 Markdown 원문으로 저장될 수 있지만, 검색은 태그와 마크업을 제거한 plain text 기준으로 동작합니다."
     )
     public ApiResponse<NewsDTO.NewsListResponseDTO> getList(
             @Parameter(
-                    description = "목록에 보여줄 소식 카테고리입니다. 생략하면 모든 카테고리를 조회합니다.",
-                    schema = @Schema(allowableValues = {"NOTICE", "EVENT", "NEWSLETTER", "IT_NEWS"}, example = "NOTICE")
+                    description = "조회할 소식 카테고리입니다. 여러 번 전달해 복수 지정할 수 있고(예: category=NOTICE&category=EVENT), 생략하면 모든 카테고리를 조회합니다. 지정한 카테고리에 속한 소식만 내려갑니다.",
+                    array = @ArraySchema(schema = @Schema(allowableValues = {"NOTICE", "EVENT", "NEWSLETTER", "IT_NEWS"}))
             )
-            @RequestParam(required = false) NewsCategory category,
+            @RequestParam(required = false) List<NewsCategory> category,
             @Parameter(
                     description = "검색어입니다. 제목과 본문 plain text에서 모든 단어가 포함된 결과를 먼저 찾고, 결과가 없고 검색어가 두 단어 이상이면 일부 단어가 포함된 관련 결과를 내려줍니다. 실제 fallback 여부는 응답의 search.fallbackApplied로 확인합니다.",
                     example = "정기 세미나"

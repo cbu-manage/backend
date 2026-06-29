@@ -4,6 +4,7 @@ import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.post.entity.Post;
 import com.example.cbumanage.news.entity.enums.NewsCategory;
+import com.example.cbumanage.news.entity.enums.NewsletterType;
 import com.example.cbumanage.post.entity.enums.PostCategory;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -21,7 +22,8 @@ import java.time.LocalDateTime;
         indexes = {
                 @Index(name = "idx_news_category", columnList = "news_category"),
                 @Index(name = "idx_news_pinned_pinned_at", columnList = "is_pinned, pinned_at"),
-                @Index(name = "idx_news_deleted_at", columnList = "deleted_at")
+                @Index(name = "idx_news_deleted_at", columnList = "deleted_at"),
+                @Index(name = "idx_news_newsletter_type", columnList = "newsletter_type")
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -43,6 +45,10 @@ public class News {
     @Column(name = "news_category", length = 30)
     private NewsCategory category = NewsCategory.NOTICE;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "newsletter_type", length = 20)
+    private NewsletterType newsletterType;
+
     @Column(name = "is_pinned", nullable = false)
     private boolean isPinned = false;
 
@@ -57,16 +63,17 @@ public class News {
     @Getter(AccessLevel.NONE)
     private String searchText = "";
 
-    private News(Post post, NewsCategory category) {
+    private News(Post post, NewsCategory category, NewsletterType newsletterType) {
         this.post = post;
         this.category = category == null ? NewsCategory.NOTICE : category;
+        this.newsletterType = resolveNewsletterType(this.category, newsletterType);
     }
 
-    public static News create(Post post, NewsCategory category) {
+    public static News create(Post post, NewsCategory category, NewsletterType newsletterType) {
         if (post.getCategory() != PostCategory.NEWS.getValue()) {
             throw new BaseException(ErrorCode.NEWS_INVALID_POST_CATEGORY);
         }
-        return new News(post, category);
+        return new News(post, category, newsletterType);
     }
 
     public void pin() {
@@ -89,7 +96,7 @@ public class News {
         }
     }
 
-    public void change(String title, String content, NewsCategory category) {
+    public void change(String title, String content, NewsCategory category, NewsletterType newsletterType) {
         if (title != null) {
             post.changeTitle(title);
         }
@@ -99,6 +106,15 @@ public class News {
         if (category != null) {
             this.category = category;
         }
+        if (newsletterType != null) {
+            this.newsletterType = newsletterType;
+        }
+        // 뉴스레터가 아니면 세부 분류는 의미가 없으므로 항상 비워 불변식을 유지한다
+        this.newsletterType = resolveNewsletterType(this.category, this.newsletterType);
+    }
+
+    private static NewsletterType resolveNewsletterType(NewsCategory category, NewsletterType newsletterType) {
+        return category == NewsCategory.NEWSLETTER ? newsletterType : null;
     }
 
     public void changeSearchText(String searchText) {
