@@ -103,30 +103,52 @@ fetch join -> 해결
  */
     public PostDTO.PostReportPreviewSearchDTO getPostReportPreviewDTOList(Pageable pageable, Long userId,
                                                                           LocalDateTime startDate, LocalDateTime endDate,
-                                                                          String keyword) {
+                                                                          String keyword, List<Long> filterGroupIds) {
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
         boolean isAdmin = user.getRole().canViewAllReports();
 
+        List<Long> effectiveGroupIds = resolveGroupIds(isAdmin, userId, filterGroupIds);
+
+        if (effectiveGroupIds != null && effectiveGroupIds.isEmpty()) {
+            PostDTO.ReportSearchInfoDTO searchInfo = (keyword != null && !keyword.isBlank())
+                    ? PostDTO.ReportSearchInfoDTO.of(keyword) : PostDTO.ReportSearchInfoDTO.none();
+            return new PostDTO.PostReportPreviewSearchDTO(Page.empty(pageable), searchInfo);
+        }
+
         if (keyword != null && !keyword.isBlank()) {
-            Page<PostDTO.PostReportPreviewDTO> result = searchPostReportPreviews(pageable, userId, isAdmin, startDate, endDate, keyword);
+            Page<PostDTO.PostReportPreviewDTO> result = searchPostReportPreviews(pageable, effectiveGroupIds, startDate, endDate, keyword);
             return new PostDTO.PostReportPreviewSearchDTO(result, PostDTO.ReportSearchInfoDTO.of(keyword));
         }
 
-        if (isAdmin) {
+        if (effectiveGroupIds == null) {
             Page<PostDTO.PostReportPreviewDTO> result = postReportRepository.findPostReportPreviews(pageable, 7, startDate, endDate);
             return new PostDTO.PostReportPreviewSearchDTO(result, PostDTO.ReportSearchInfoDTO.none());
         }
 
-        List<Long> groupIds = groupMemberRepository.findGroupIdsByUserIdAndStatus(userId, GroupMemberStatus.ACTIVE);
-        if (groupIds.isEmpty()) {
-            return new PostDTO.PostReportPreviewSearchDTO(Page.empty(pageable), PostDTO.ReportSearchInfoDTO.none());
-        }
-        Page<PostDTO.PostReportPreviewDTO> result = postReportRepository.findPostReportPreviewsByGroupIds(pageable, 7, groupIds, startDate, endDate);
+        Page<PostDTO.PostReportPreviewDTO> result = postReportRepository.findPostReportPreviewsByGroupIds(pageable, 7, effectiveGroupIds, startDate, endDate);
         return new PostDTO.PostReportPreviewSearchDTO(result, PostDTO.ReportSearchInfoDTO.none());
     }
 
+    private List<Long> resolveGroupIds(boolean isAdmin, Long userId, List<Long> filterGroupIds) {
+        boolean hasFilter = filterGroupIds != null && !filterGroupIds.isEmpty();
+
+        if (isAdmin) {
+            return hasFilter ? filterGroupIds : null;
+        }
+
+        List<Long> memberGroupIds = groupMemberRepository.findGroupIdsByUserIdAndStatus(userId, GroupMemberStatus.ACTIVE);
+        if (!hasFilter) {
+            return memberGroupIds;
+        }
+
+        Set<Long> filterSet = new LinkedHashSet<>(filterGroupIds);
+        return memberGroupIds.stream()
+                .filter(filterSet::contains)
+                .toList();
+    }
+
     private Page<PostDTO.PostReportPreviewDTO> searchPostReportPreviews(
-            Pageable pageable, Long userId, boolean isAdmin,
+            Pageable pageable, List<Long> effectiveGroupIds,
             LocalDateTime startDate, LocalDateTime endDate, String keyword) {
 
         String pattern = Arrays.stream(keyword.trim().split("\\s+"))
@@ -138,12 +160,10 @@ fetch join -> 해결
         Pageable searchPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         Page<Long> postIds;
 
-        if (isAdmin) {
+        if (effectiveGroupIds == null) {
             postIds = postReportRepository.searchPostIdsByKeyword(7, startDate, endDate, pattern, searchPageable);
         } else {
-            List<Long> groupIds = groupMemberRepository.findGroupIdsByUserIdAndStatus(userId, GroupMemberStatus.ACTIVE);
-            if (groupIds.isEmpty()) return Page.empty(pageable);
-            postIds = postReportRepository.searchPostIdsByKeywordAndGroupIds(7, groupIds, startDate, endDate, pattern, searchPageable);
+            postIds = postReportRepository.searchPostIdsByKeywordAndGroupIds(7, effectiveGroupIds, startDate, endDate, pattern, searchPageable);
         }
 
         List<Long> ids = postIds.getContent();
@@ -169,7 +189,8 @@ fetch join -> 해결
             String pattern = Arrays.stream(keyword.trim().split("\\s+"))
                     .filter(t -> !t.isBlank())
                     .distinct()
-                    .collect(Collectors.joining("|"));
+                    .map(t -> "(?=.*" + t + ")")
+                    .collect(Collectors.joining());
 
             Pageable searchPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
             Page<Long> postIds = postReportRepository.searchPostIdsByKeywordAndGroupIds(7, List.of(groupId), startDate, endDate, pattern, searchPageable);
@@ -239,17 +260,6 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
         updateReport(reportUpdateDTO,report);
         reportMemberRepository.deleteByReportId(report.getId());
         saveReportMembers(report.getId(), report.getGroupId(), req.memberIds());
-    }
-
-    @Transactional
-    public void acceptReport(Long postId,Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        if (!user.getRole().isPresidentOrVicePresidentOrAdmin()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        }
-        PostReport report = postReportRepository.findByPostId(postId)
-                .orElseThrow(() -> new EntityNotFoundException("Report Not Found"));
-        report.Accept();
     }
 
     public void updateReport(PostDTO.ReportUpdateDTO postUpdateDTO,PostReport postReport) {

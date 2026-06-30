@@ -169,7 +169,7 @@ public class PostReportHWPService {
     private void checkAdminOrManager(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        if (!user.getRole().isPresidentOrVicePresidentOrAdmin()) {
+        if (!user.getRole().canViewAllReports()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
     }

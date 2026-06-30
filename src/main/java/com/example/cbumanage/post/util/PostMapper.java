@@ -65,7 +65,6 @@ public class PostMapper {
                 report.getReportImage(),
                 report.getDate(),
                 groupUtil.toGroupInfoDTO(group),
-                report.isAccepted(),
                 report.getReflection(),
                 report.getNextPlan(),
                 reportMembers
