@@ -21,14 +21,12 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     List<PostReport> findAllByGroupId(Long groupId);
 
     /*
-    카테고리에 맞는 게시글, 연결된 그룹과 보고서를 left join하여 dto로 반환하는 코드 입니다
+    카테고리에 맞는 게시글, 연결된 그룹과 보고서를 join하여 dto로 반환하는 코드 입니다
     PostDTO$PostReportPreviewDTO 는 인텔리제이에선 빨간줄이 뜨지만 실제로는 문제없이 작동 합니다
      */
     @Query(value = """
     select new com.example.cbumanage.post.dto.PostDTO$PostReportPreviewDTO(
     p.id,p.title,p.createdAt,p.authorId,m.name,m.generation,
-    r.isAccepted,
-
     g.id,g.groupName, (
     select count(gm)
     from GroupMember gm
@@ -46,6 +44,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     and p.isDeleted = false
     and (:startDate is null or r.date >= :startDate)
     and (:endDate is null or r.date <= :endDate)
+    order by p.createdAt desc, p.id desc
 """,
     countQuery = """
     select count(p)
@@ -64,8 +63,6 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     @Query(value = """
     select new com.example.cbumanage.post.dto.PostDTO$PostReportPreviewDTO(
     p.id,p.title,p.createdAt,p.authorId,m.name,m.generation,
-    r.isAccepted,
-
     g.id,g.groupName, (
     select count(gm)
     from GroupMember gm
@@ -76,11 +73,12 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     r.date
     )
     from Post p
-    left join PostReport r on r.post = p
+    join PostReport r on r.post = p
     left join Group g on r.groupId = g.id
     left join User m on m.userId = p.authorId
     where p.category = :category and p.authorId = :userId
     and p.isDeleted = false
+    order by p.createdAt desc, p.id desc
 """,
             countQuery = """
     select count(p)
@@ -93,8 +91,6 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     @Query(value = """
     select new com.example.cbumanage.post.dto.PostDTO$PostReportPreviewDTO(
     p.id,p.title,p.createdAt,p.authorId,m.name,m.generation,
-    r.isAccepted,
-
     g.id,g.groupName, (
     select count(gm)
     from GroupMember gm
@@ -105,18 +101,19 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     r.date
     )
     from Post p
-    left join PostReport r on r.post = p
+    join PostReport r on r.post = p
     left join Group g on r.groupId = g.id
     left join User m on m.userId = p.authorId
     where p.category = :category and r.groupId = :groupId
     and p.isDeleted = false
     and (:startDate is null or r.date >= :startDate)
     and (:endDate is null or r.date <= :endDate)
+    order by p.createdAt desc, p.id desc
 """,
             countQuery = """
     select count(p)
     from Post p
-    left join PostReport r on r.post = p
+    join PostReport r on r.post = p
     where p.category =:category
     and p.isDeleted = false and r.groupId = :groupId
     and (:startDate is null or r.date >= :startDate)
@@ -129,8 +126,6 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     @Query(value = """
     select new com.example.cbumanage.post.dto.PostDTO$PostReportPreviewDTO(
     p.id,p.title,p.createdAt,p.authorId,m.name,m.generation,
-    r.isAccepted,
-
     g.id,g.groupName, (
     select count(gm)
     from GroupMember gm
@@ -141,7 +136,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     r.date
     )
     from Post p
-    left join PostReport r on r.post = p
+    join PostReport r on r.post = p
     left join Group g on r.groupId = g.id
     left join User m on m.userId = p.authorId
     where p.category = :category
@@ -149,11 +144,12 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     and p.isDeleted = false
     and (:startDate is null or r.date >= :startDate)
     and (:endDate is null or r.date <= :endDate)
+    order by p.createdAt desc, p.id desc
 """,
     countQuery = """
     select count(p)
     from Post p
-    left join PostReport r on r.post = p
+    join PostReport r on r.post = p
     where p.category = :category
     and r.groupId in :groupIds
     and p.isDeleted = false
@@ -239,7 +235,6 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     @Query("""
         select new com.example.cbumanage.post.dto.PostDTO$PostReportPreviewDTO(
         p.id,p.title,p.createdAt,p.authorId,m.name,m.generation,
-        r.isAccepted,
         g.id,g.groupName, (
         select count(gm)
         from GroupMember gm

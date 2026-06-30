@@ -63,9 +63,6 @@ public class PostDTO {
             @Schema(description = "보고서를 작성한 그룹의 정보를 담고 있습니다")
             GroupDTO.GroupInfoDTO groupInfoDTO,
 
-            @Schema(description = "보고서의 승인 여부입니다")
-            boolean isAccepted,
-
             @Schema(description = "활동 후기입니다")
             String reflection,
 
@@ -805,9 +802,6 @@ public class PostDTO {
         String authorName,
         @Schema(description = "작성자 기수입니다")
         Long generation,
-
-        @Schema(description = "보고서 승인 여부 입니다, 보고서 게시글이 생셩될때 기본값은 false로 생성되며, 운영진이 승인할 경우 True로 변겯됩니다")
-        boolean isAccepted,
 
         @Schema(description = "보고서를 작성한 그룹의 ID입니다")
         Long groupId,
