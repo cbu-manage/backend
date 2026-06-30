@@ -262,17 +262,6 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
         saveReportMembers(report.getId(), report.getGroupId(), req.memberIds());
     }
 
-    @Transactional
-    public void acceptReport(Long postId,Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        if (!user.getRole().isPresidentOrVicePresidentOrAdmin()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        }
-        PostReport report = postReportRepository.findByPostId(postId)
-                .orElseThrow(() -> new EntityNotFoundException("Report Not Found"));
-        report.Accept();
-    }
-
     public void updateReport(PostDTO.ReportUpdateDTO postUpdateDTO,PostReport postReport) {
         postReport.changeDate(postUpdateDTO.date());
         postReport.changeLocation(postUpdateDTO.location());

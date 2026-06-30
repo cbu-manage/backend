@@ -39,9 +39,6 @@ public class PostReport {
     @Column(columnDefinition = "TEXT")
     private String nextPlan;
 
-    //운영진의 승인 여부
-    private boolean isAccepted = false;
-
     //생성자
     public PostReport(Post post, Long groupId, LocalDateTime date, String location, String reportImage, String reflection, String nextPlan) {
         this.post = post;
@@ -80,11 +77,6 @@ public class PostReport {
     public void changeNextPlan(String nextPlan) {
         this.nextPlan = nextPlan;
     }
-
-    public void Accept() {
-        this.isAccepted = true;
-    }
-
 
 
 

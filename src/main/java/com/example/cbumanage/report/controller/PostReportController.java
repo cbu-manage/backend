@@ -159,23 +159,6 @@ public class PostReportController {
         }
     }
 
-    @Operation(summary = "보고서 승인", description = "보고서 ID를 기준으로 승인 상태를 변경합니다.")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
-    @PatchMapping("/{postId}/accept")
-    public ApiResponse<Void> acceptPostReport(@PathVariable Long postId, Authentication authentication){
-        Long userId = Long.parseLong(authentication.getName());
-        try {
-            postReportService.acceptReport(postId,userId);
-            return ApiResponse.success();
-        }
-        catch (ResponseStatusException e){
-            throw new BaseException(ErrorCode.FORBIDDEN);
-        }
-        catch (EntityNotFoundException e){
-            throw new BaseException(ErrorCode.NOT_FOUND);
-        }
-    }
-
     @Operation(
             summary = "보고서 HWP 다운로드",
             description = "보고서 게시글의 내용을 바탕으로 HWP 파일을 생성하여 즉시 다운로드합니다.<br>" +
