@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,13 +28,12 @@ public interface NewsRepository extends JpaRepository<News, Long> {
             FROM News n
             WHERE n.isPinned = false
               AND n.post.isDeleted = false
-              AND (:category IS NULL
-                   OR n.category = :category
-                   OR (:includeDefaultCategory = true AND n.category IS NULL))
+              AND (n.category IN :categories
+                   OR (:includeNullCategory = true AND n.category IS NULL))
             """)
     Page<News> findRegularNews(
-            @Param("category") NewsCategory category,
-            @Param("includeDefaultCategory") boolean includeDefaultCategory,
+            @Param("categories") Collection<NewsCategory> categories,
+            @Param("includeNullCategory") boolean includeNullCategory,
             Pageable pageable
     );
 
@@ -43,14 +43,13 @@ public interface NewsRepository extends JpaRepository<News, Long> {
             FROM News n
             WHERE n.isPinned = true
               AND n.post.isDeleted = false
-              AND (:category IS NULL
-                   OR n.category = :category
-                   OR (:includeDefaultCategory = true AND n.category IS NULL))
+              AND (n.category IN :categories
+                   OR (:includeNullCategory = true AND n.category IS NULL))
             ORDER BY n.pinnedAt DESC, n.newsId DESC
             """)
     List<News> findPinnedNews(
-            @Param("category") NewsCategory category,
-            @Param("includeDefaultCategory") boolean includeDefaultCategory
+            @Param("categories") Collection<NewsCategory> categories,
+            @Param("includeNullCategory") boolean includeNullCategory
     );
 
     @Query(
@@ -61,9 +60,8 @@ public interface NewsRepository extends JpaRepository<News, Long> {
                     WHERE n.deleted_at IS NULL
                       AND p.is_deleted = false
                       AND n.is_pinned = false
-                      AND (:categoryName IS NULL
-                           OR n.news_category = :categoryName
-                           OR (:includeDefaultCategory = true AND n.news_category IS NULL))
+                      AND (n.news_category IN (:categoryNames)
+                           OR (:includeNullCategory = true AND n.news_category IS NULL))
                       AND MATCH(n.search_text) AGAINST (:searchQuery IN BOOLEAN MODE)
                     ORDER BY p.created_at DESC, n.news_id DESC
                     """,
@@ -74,16 +72,15 @@ public interface NewsRepository extends JpaRepository<News, Long> {
                     WHERE n.deleted_at IS NULL
                       AND p.is_deleted = false
                       AND n.is_pinned = false
-                      AND (:categoryName IS NULL
-                           OR n.news_category = :categoryName
-                           OR (:includeDefaultCategory = true AND n.news_category IS NULL))
+                      AND (n.news_category IN (:categoryNames)
+                           OR (:includeNullCategory = true AND n.news_category IS NULL))
                       AND MATCH(n.search_text) AGAINST (:searchQuery IN BOOLEAN MODE)
             """,
             nativeQuery = true
     )
     Page<Long> searchRegularNewsIds(
-            @Param("categoryName") String categoryName,
-            @Param("includeDefaultCategory") boolean includeDefaultCategory,
+            @Param("categoryNames") Collection<String> categoryNames,
+            @Param("includeNullCategory") boolean includeNullCategory,
             @Param("searchQuery") String searchQuery,
             Pageable pageable
     );
@@ -96,17 +93,16 @@ public interface NewsRepository extends JpaRepository<News, Long> {
                     WHERE n.deleted_at IS NULL
                       AND p.is_deleted = false
                       AND n.is_pinned = true
-                      AND (:categoryName IS NULL
-                           OR n.news_category = :categoryName
-                           OR (:includeDefaultCategory = true AND n.news_category IS NULL))
+                      AND (n.news_category IN (:categoryNames)
+                           OR (:includeNullCategory = true AND n.news_category IS NULL))
                       AND MATCH(n.search_text) AGAINST (:searchQuery IN BOOLEAN MODE)
                     ORDER BY n.pinned_at DESC, n.news_id DESC
             """,
             nativeQuery = true
     )
     List<Long> searchPinnedNewsIds(
-            @Param("categoryName") String categoryName,
-            @Param("includeDefaultCategory") boolean includeDefaultCategory,
+            @Param("categoryNames") Collection<String> categoryNames,
+            @Param("includeNullCategory") boolean includeNullCategory,
             @Param("searchQuery") String searchQuery
     );
 

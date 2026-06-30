@@ -31,20 +31,24 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class NewsService {
 
+    private static final List<NewsCategory> ALL_CATEGORIES = List.of(NewsCategory.values());
+
     private final NewsRepository newsRepository;
     private final NewsAttachmentRepository newsAttachmentRepository;
     private final PostRepository postRepository;
     private final EntityManager entityManager;
 
-    public NewsDTO.NewsListResponseDTO getNewsList(Pageable pageable, NewsCategory category, String keyword) {
+    public NewsDTO.NewsListResponseDTO getNewsList(Pageable pageable, List<NewsCategory> categories, String keyword) {
+        List<NewsCategory> categoryFilter = resolveCategoryFilter(categories);
+        boolean includeNullCategory = categoryFilter.contains(NewsCategory.NOTICE);
+
         List<String> searchTokens = NewsSearchTextNormalizer.toSearchTokens(keyword);
         if (!searchTokens.isEmpty()) {
-            return searchNewsList(pageable, category, keyword, searchTokens);
+            return searchNewsList(pageable, categoryFilter, includeNullCategory, keyword, searchTokens);
         }
 
-        boolean includeDefaultCategory = category == NewsCategory.NOTICE;
-        List<News> pinned = newsRepository.findPinnedNews(category, includeDefaultCategory);
-        Page<News> regular = newsRepository.findRegularNews(category, includeDefaultCategory, pageable);
+        List<News> pinned = newsRepository.findPinnedNews(categoryFilter, includeNullCategory);
+        Page<News> regular = newsRepository.findRegularNews(categoryFilter, includeNullCategory, pageable);
 
         List<NewsDTO.NewsListItemDTO> items = new ArrayList<>(pinned.size() + regular.getNumberOfElements());
         pinned.forEach(news -> items.add(NewsDTO.NewsListItemDTO.from(news)));
@@ -71,7 +75,7 @@ public class NewsService {
         Post post = Post.create(userId, request.title(), request.content(), PostCategory.NEWS.getValue());
         postRepository.save(post);
 
-        News news = News.create(post, request.category());
+        News news = News.create(post, request.category(), request.newsletterType());
         news.changeSearchText(NewsSearchTextNormalizer.toSearchText(request.title(), request.content()));
         newsRepository.save(news);
 
@@ -81,7 +85,7 @@ public class NewsService {
     @Transactional
     public NewsDTO.NewsDetailDTO updateNews(Long newsId, NewsDTO.NewsUpdateRequestDTO request) {
         News news = findNewsOrThrow(newsId);
-        news.change(request.title(), request.content(), request.category());
+        news.change(request.title(), request.content(), request.category(), request.newsletterType());
         news.changeSearchText(NewsSearchTextNormalizer.toSearchText(news.getTitle(), news.getContent()));
         newsRepository.flush();
         return NewsDTO.NewsDetailDTO.from(news, attachmentsOf(newsId));
@@ -106,6 +110,10 @@ public class NewsService {
                 .map(NewsDTO.NewsListItemDTO::from);
     }
 
+    private List<NewsCategory> resolveCategoryFilter(List<NewsCategory> categories) {
+        return (categories == null || categories.isEmpty()) ? ALL_CATEGORIES : categories;
+    }
+
     private News findNewsOrThrow(Long newsId) {
         return newsRepository.findById(newsId)
                 .orElseThrow(() -> new BaseException(ErrorCode.NEWS_NOT_FOUND));
@@ -117,21 +125,20 @@ public class NewsService {
                 .toList();
     }
 
-    private NewsDTO.NewsListResponseDTO searchNewsList(Pageable pageable, NewsCategory category, String keyword, List<String> searchTokens) {
-        boolean includeDefaultCategory = category == NewsCategory.NOTICE;
-        String categoryName = category == null ? null : category.name();
+    private NewsDTO.NewsListResponseDTO searchNewsList(Pageable pageable, List<NewsCategory> categoryFilter, boolean includeNullCategory, String keyword, List<String> searchTokens) {
+        List<String> categoryNames = categoryFilter.stream().map(NewsCategory::name).toList();
         Pageable searchPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
 
         String andQuery = NewsSearchTextNormalizer.toRequiredBooleanQuery(searchTokens);
-        List<Long> pinnedIds = newsRepository.searchPinnedNewsIds(categoryName, includeDefaultCategory, andQuery);
-        Page<Long> regularIds = newsRepository.searchRegularNewsIds(categoryName, includeDefaultCategory, andQuery, searchPageable);
+        List<Long> pinnedIds = newsRepository.searchPinnedNewsIds(categoryNames, includeNullCategory, andQuery);
+        Page<Long> regularIds = newsRepository.searchRegularNewsIds(categoryNames, includeNullCategory, andQuery, searchPageable);
         NewsDTO.NewsSearchMode mode = NewsDTO.NewsSearchMode.AND;
         boolean fallbackApplied = false;
 
         if (pinnedIds.isEmpty() && regularIds.getTotalElements() == 0 && searchTokens.size() >= 2) {
             String orQuery = NewsSearchTextNormalizer.toOptionalBooleanQuery(searchTokens);
-            pinnedIds = newsRepository.searchPinnedNewsIds(categoryName, includeDefaultCategory, orQuery);
-            regularIds = newsRepository.searchRegularNewsIds(categoryName, includeDefaultCategory, orQuery, searchPageable);
+            pinnedIds = newsRepository.searchPinnedNewsIds(categoryNames, includeNullCategory, orQuery);
+            regularIds = newsRepository.searchRegularNewsIds(categoryNames, includeNullCategory, orQuery, searchPageable);
             mode = NewsDTO.NewsSearchMode.OR_FALLBACK;
             fallbackApplied = true;
         }
