@@ -61,12 +61,17 @@ public class PostReportController {
                     응답의 reports 필드에 보고서 미리보기 목록과 페이지네이션 정보가 담기고, search 필드에 검색 처리 정보가 담깁니다.
 
                     **권한별 조회 범위**
-                    - ADMIN / MANAGER: 전체 보고서 조회
-                    - MEMBER: 본인이 ACTIVE 상태인 그룹의 보고서만 조회 (소속 그룹 없으면 빈 페이지)
+                    - ADMIN / 회장 / 부회장 / 서기: 전체 보고서 조회
+                    - 그 외: 본인이 ACTIVE 상태인 그룹의 보고서만 조회 (소속 그룹 없으면 빈 페이지)
+
+                    **groupIds 필터**
+                    - 여러 그룹 ID를 동시에 전달하면 해당 그룹들 중 하나에 속하는 보고서를 조회합니다 (OR).
+                    - ADMIN / 회장 / 부회장 / 서기: 전달한 groupIds로 필터링.
+                    - 그 외: 본인의 ACTIVE 그룹과 전달한 groupIds의 교집합으로 필터링. 교집합이 없으면 빈 페이지.
 
                     **keyword 검색**
-                    - 공백으로 구분된 각 단어를 제목 또는 작성자 이름에서 OR 검색합니다.
-                    - keyword가 없으면 search.mode는 NONE, 있으면 OR입니다.
+                    - 공백으로 구분된 각 단어를 제목 또는 작성자 이름에서 AND 검색합니다 (모든 단어가 포함된 결과).
+                    - keyword가 없으면 search.mode는 NONE, 있으면 AND입니다.
                     """
     )
     @GetMapping
@@ -76,12 +81,13 @@ public class PostReportController {
             @Parameter(description = "활동 시작일 (포함, yyyy-MM-dd)", example = "2025-01-01") @RequestParam(required = false) LocalDate startDate,
             @Parameter(description = "활동 종료일 (포함, yyyy-MM-dd)", example = "2025-12-31") @RequestParam(required = false) LocalDate endDate,
             @Parameter(description = "제목 또는 작성자 이름 키워드 (공백으로 구분 시 각 단어를 개별 검색)") @RequestParam(required = false) String keyword,
+            @Parameter(description = "그룹 ID 필터 (여러 개 전달 가능, OR 조건). MEMBER는 본인 소속 그룹과 교집합으로 적용됩니다.") @RequestParam(required = false) List<Long> groupIds,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
         LocalDateTime start = startDate != null ? startDate.atStartOfDay() : null;
         LocalDateTime end   = endDate   != null ? endDate.atTime(LocalTime.MAX) : null;
-        PostDTO.PostReportPreviewSearchDTO result = postReportService.getPostReportPreviewDTOList(pageable, userId, start, end, keyword);
+        PostDTO.PostReportPreviewSearchDTO result = postReportService.getPostReportPreviewDTOList(pageable, userId, start, end, keyword, groupIds);
         return ApiResponse.success(result);
     }
 
@@ -91,9 +97,12 @@ public class PostReportController {
                     그룹 ID 기준으로 해당 그룹의 보고서 게시글 목록을 페이지 단위로 조회합니다.
                     응답의 reports 필드에 보고서 미리보기 목록과 페이지네이션 정보가 담기고, search 필드에 검색 처리 정보가 담깁니다.
 
+                    **권한**
+                    - ADMIN / 회장 / 부회장 / 서기만 조회할 수 있습니다.
+
                     **keyword 검색**
-                    - 공백으로 구분된 각 단어를 제목 또는 작성자 이름에서 OR 검색합니다.
-                    - keyword가 없으면 search.mode는 NONE, 있으면 OR입니다.
+                    - 공백으로 구분된 각 단어를 제목 또는 작성자 이름에서 AND 검색합니다 (모든 단어가 포함된 결과).
+                    - keyword가 없으면 search.mode는 NONE, 있으면 AND입니다.
                     """
     )
     @GetMapping("/group/{groupId}")
@@ -119,7 +128,8 @@ public class PostReportController {
 
     @Operation(
             summary = "보고서 상세 조회",
-            description = "게시글 ID 기준으로 보고서 상세 정보를 조회합니다. 응답에는 게시글, 보고서, 그룹 정보가 함께 포함됩니다."
+            description = "게시글 ID 기준으로 보고서 상세 정보를 조회합니다. 응답에는 게시글, 보고서, 그룹 정보가 함께 포함됩니다.\n\n" +
+                    "**접근 권한**: ADMIN / 회장 / 부회장 / 서기, 또는 해당 그룹의 ACTIVE 멤버."
     )
     @GetMapping("/{postId}")
     public ApiResponse<PostDTO.PostReportViewDTO> getPostReportView(@PathVariable Long postId, Authentication authentication){
@@ -135,7 +145,7 @@ public class PostReportController {
         }
     }
 
-    @Operation(summary = "보고서 수정", description = "작성자 본인의 보고서 게시글 내용을 수정합니다.")
+    @Operation(summary = "보고서 수정", description = "보고서 게시글 내용을 수정합니다. 작성자 본인 또는 ADMIN / 회장 / 부회장 / 서기만 수정할 수 있습니다.")
     @PatchMapping("/{postId}")
     public ApiResponse<Void> updatePostReport(@PathVariable Long postId,
                                                                  @RequestBody @Valid PostDTO.PostReportUpdateRequestDTO req,
@@ -169,9 +179,10 @@ public class PostReportController {
     @Operation(
             summary = "보고서 HWP 다운로드",
             description = "보고서 게시글의 내용을 바탕으로 HWP 파일을 생성하여 즉시 다운로드합니다.<br>" +
-                    "클라이언트에서는 responseType: 'blob' 으로 받아 Blob 처리 후 다운로드해야 합니다."
+                    "클라이언트에서는 responseType: 'blob' 으로 받아 Blob 처리 후 다운로드해야 합니다.<br>" +
+                    "**권한**: ADMIN / 회장 / 부회장 / 서기"
     )
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_SECRETARY')")
     @GetMapping("/{postId}/export")
     public ResponseEntity<byte[]> exportPostReportToHWP(
             @PathVariable Long postId,
@@ -204,9 +215,10 @@ public class PostReportController {
     @Operation(
             summary = "그룹 보고서 ZIP 다운로드",
             description = "특정 그룹의 보고서를 모두 HWP 파일로 생성하여 ZIP으로 묶어 다운로드합니다.<br>" +
-                    "클라이언트에서는 responseType: 'blob' 으로 받아 Blob 처리 후 다운로드해야 합니다."
+                    "클라이언트에서는 responseType: 'blob' 으로 받아 Blob 처리 후 다운로드해야 합니다.<br>" +
+                    "**권한**: ADMIN / 회장 / 부회장 / 서기"
     )
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_SECRETARY')")
     @GetMapping("/export/group/{groupId}")
     public ResponseEntity<?> exportGroupReportsToZip(
             @PathVariable Long groupId,
