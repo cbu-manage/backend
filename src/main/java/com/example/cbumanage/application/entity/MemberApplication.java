@@ -70,7 +70,7 @@ public class MemberApplication {
     @Column(nullable = false)
     private Long generation;
 
-    @Schema(description = "희망하는 분야", example = "PROJECT, DESIGN, STUDY, ETC")
+    @Schema(description = "희망하는 분야", example = "STUDY, DEV, DESIGN, PLAN")
     @Enumerated(EnumType.STRING)
     @Column(name = "application_field", nullable = false, length = 40)
     private ApplicationField applicationField;
