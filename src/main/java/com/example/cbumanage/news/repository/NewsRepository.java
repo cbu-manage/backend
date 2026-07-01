@@ -2,6 +2,7 @@ package com.example.cbumanage.news.repository;
 
 import com.example.cbumanage.news.entity.News;
 import com.example.cbumanage.news.entity.enums.NewsCategory;
+import com.example.cbumanage.news.entity.enums.NewsletterType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -30,10 +31,14 @@ public interface NewsRepository extends JpaRepository<News, Long> {
               AND n.post.isDeleted = false
               AND (n.category IN :categories
                    OR (:includeNullCategory = true AND n.category IS NULL))
+              AND (:filterByNewsletterType = false
+                   OR n.newsletterType IN :newsletterTypes)
             """)
     Page<News> findRegularNews(
             @Param("categories") Collection<NewsCategory> categories,
             @Param("includeNullCategory") boolean includeNullCategory,
+            @Param("filterByNewsletterType") boolean filterByNewsletterType,
+            @Param("newsletterTypes") Collection<NewsletterType> newsletterTypes,
             Pageable pageable
     );
 
@@ -45,11 +50,15 @@ public interface NewsRepository extends JpaRepository<News, Long> {
               AND n.post.isDeleted = false
               AND (n.category IN :categories
                    OR (:includeNullCategory = true AND n.category IS NULL))
+              AND (:filterByNewsletterType = false
+                   OR n.newsletterType IN :newsletterTypes)
             ORDER BY n.pinnedAt DESC, n.newsId DESC
             """)
     List<News> findPinnedNews(
             @Param("categories") Collection<NewsCategory> categories,
-            @Param("includeNullCategory") boolean includeNullCategory
+            @Param("includeNullCategory") boolean includeNullCategory,
+            @Param("filterByNewsletterType") boolean filterByNewsletterType,
+            @Param("newsletterTypes") Collection<NewsletterType> newsletterTypes
     );
 
     @Query(
@@ -62,6 +71,8 @@ public interface NewsRepository extends JpaRepository<News, Long> {
                       AND n.is_pinned = false
                       AND (n.news_category IN (:categoryNames)
                            OR (:includeNullCategory = true AND n.news_category IS NULL))
+                      AND (:filterByNewsletterType = false
+                           OR n.newsletter_type IN (:newsletterTypeNames))
                       AND MATCH(n.search_text) AGAINST (:searchQuery IN BOOLEAN MODE)
                     ORDER BY p.created_at DESC, n.news_id DESC
                     """,
@@ -74,6 +85,8 @@ public interface NewsRepository extends JpaRepository<News, Long> {
                       AND n.is_pinned = false
                       AND (n.news_category IN (:categoryNames)
                            OR (:includeNullCategory = true AND n.news_category IS NULL))
+                      AND (:filterByNewsletterType = false
+                           OR n.newsletter_type IN (:newsletterTypeNames))
                       AND MATCH(n.search_text) AGAINST (:searchQuery IN BOOLEAN MODE)
             """,
             nativeQuery = true
@@ -81,6 +94,8 @@ public interface NewsRepository extends JpaRepository<News, Long> {
     Page<Long> searchRegularNewsIds(
             @Param("categoryNames") Collection<String> categoryNames,
             @Param("includeNullCategory") boolean includeNullCategory,
+            @Param("filterByNewsletterType") boolean filterByNewsletterType,
+            @Param("newsletterTypeNames") Collection<String> newsletterTypeNames,
             @Param("searchQuery") String searchQuery,
             Pageable pageable
     );
@@ -95,6 +110,8 @@ public interface NewsRepository extends JpaRepository<News, Long> {
                       AND n.is_pinned = true
                       AND (n.news_category IN (:categoryNames)
                            OR (:includeNullCategory = true AND n.news_category IS NULL))
+                      AND (:filterByNewsletterType = false
+                           OR n.newsletter_type IN (:newsletterTypeNames))
                       AND MATCH(n.search_text) AGAINST (:searchQuery IN BOOLEAN MODE)
                     ORDER BY n.pinned_at DESC, n.news_id DESC
             """,
@@ -103,6 +120,8 @@ public interface NewsRepository extends JpaRepository<News, Long> {
     List<Long> searchPinnedNewsIds(
             @Param("categoryNames") Collection<String> categoryNames,
             @Param("includeNullCategory") boolean includeNullCategory,
+            @Param("filterByNewsletterType") boolean filterByNewsletterType,
+            @Param("newsletterTypeNames") Collection<String> newsletterTypeNames,
             @Param("searchQuery") String searchQuery
     );
 
