@@ -3,6 +3,7 @@ package com.example.cbumanage.news.controller;
 import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.news.dto.NewsDTO;
 import com.example.cbumanage.news.entity.enums.NewsCategory;
+import com.example.cbumanage.news.entity.enums.NewsletterType;
 import com.example.cbumanage.news.service.NewsAttachmentService;
 import com.example.cbumanage.news.service.NewsService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,6 +47,7 @@ public class NewsController {
             summary = "소식 목록 조회",
             description = "소식 목록 화면에서 사용합니다. category는 여러 개를 동시에 지정할 수 있어(예: category=NOTICE&category=EVENT) 지정한 카테고리들만 함께 조회하고, "
                     + "생략하면 전체 카테고리를 조회합니다. \"전체\" 탭에서 뉴스레터를 빼고 싶으면 NEWSLETTER를 제외한 카테고리들을 나열하면 됩니다. "
+                    + "뉴스레터 탭에서 주간/특집/공지로 나눠 보려면 category=NEWSLETTER와 함께 newsletterType을 지정하면 되고, 이때 페이지네이션도 필터링된 결과 기준으로 계산됩니다. "
                     + "keyword를 전달하면 제목과 본문을 함께 검색합니다. "
                     + "고정 소식은 현재 페이지와 관계없이 content 배열의 앞쪽에 함께 내려갑니다. 다만 page.totalElements와 page.totalPages에는 일반 소식만 계산되므로, "
                     + "프론트에서는 content를 그대로 렌더링하고 페이지네이션은 page 값을 기준으로 처리하면 됩니다. "
@@ -58,13 +60,18 @@ public class NewsController {
             )
             @RequestParam(required = false) List<NewsCategory> category,
             @Parameter(
+                    description = "뉴스레터 세부 분류 필터입니다. category=NEWSLETTER 탭 안에서 주간/특집/공지를 거를 때 사용합니다. 여러 번 전달해 복수 지정할 수 있고(예: newsletterType=WEEKLY&newsletterType=SPECIAL), 생략하면 세부 분류로 거르지 않습니다. 지정 시 페이지네이션(totalElements/totalPages)도 필터링된 결과 기준으로 계산됩니다.",
+                    array = @ArraySchema(schema = @Schema(allowableValues = {"WEEKLY", "SPECIAL", "NOTICE"}))
+            )
+            @RequestParam(required = false) List<NewsletterType> newsletterType,
+            @Parameter(
                     description = "검색어입니다. 제목과 본문 plain text에서 모든 단어가 포함된 결과를 먼저 찾고, 결과가 없고 검색어가 두 단어 이상이면 일부 단어가 포함된 관련 결과를 내려줍니다. 실제 fallback 여부는 응답의 search.fallbackApplied로 확인합니다.",
                     example = "정기 세미나"
             )
             @RequestParam(required = false) String keyword,
             @ParameterObject @PageableDefault(size = DEFAULT_PAGE_SIZE, sort = SORT_BY_CREATED_AT, direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return ApiResponse.success(newsService.getNewsList(pageable, category, keyword));
+        return ApiResponse.success(newsService.getNewsList(pageable, category, newsletterType, keyword));
     }
 
     @GetMapping("/{id}")
