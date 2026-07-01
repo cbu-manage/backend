@@ -173,7 +173,7 @@ class ApplicationApplicantServiceTest {
                 AcademicStatus.JUNIOR,
                 "컴퓨터공학과",
                 "010-1234-5678",
-                ApplicationField.PROJECT,
+                ApplicationField.DEV,
                 null,
                 RefSource.FRIEND,
                 null,
@@ -204,7 +204,7 @@ class ApplicationApplicantServiceTest {
                 .major("컴퓨터공학과")
                 .phoneNumber("010-1234-5678")
                 .generation(40L)
-                .applicationField(ApplicationField.PROJECT)
+                .applicationField(ApplicationField.DEV)
                 .refSource(RefSource.FRIEND)
                 .canOt(true)
                 .canWelcome(true)
