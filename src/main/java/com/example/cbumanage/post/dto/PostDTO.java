@@ -4,11 +4,11 @@ import com.example.cbumanage.group.dto.GroupDTO;
 import com.example.cbumanage.group.entity.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.reportmember.dto.ReportMemberDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
-import com.example.cbumanage.report.entity.enums.PostReportGroupType;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Page;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -57,20 +57,11 @@ public class PostDTO {
             @Schema(description = "s3버킷 url을 통해 이미지를 보여줍니다")
             String reportImage,
 
-            @Schema(description = "s3버킷 url을 통해 첨부파일을 제공합니다")
-            String reportFile,
-
             LocalDateTime date,
 
             //그룹의 정보를 담고 있습니다
             @Schema(description = "보고서를 작성한 그룹의 정보를 담고 있습니다")
             GroupDTO.GroupInfoDTO groupInfoDTO,
-
-            @Schema(description = "보고서에 기록할 활동의 타입입니다", example = "STUDY / PROJECT / MENTORING")
-            PostReportGroupType type,
-
-            @Schema(description = "보고서의 승인 여부입니다")
-            boolean isAccepted,
 
             @Schema(description = "활동 후기입니다")
             String reflection,
@@ -108,9 +99,6 @@ public class PostDTO {
     @Schema(description = "s3버킷에 사진을 업로드 하고 반환받은 url을 넣습니다")
     String reportImage,
 
-    @Schema(description = "s3버킷에 첨부파일을 업로드 하고 반환받은 url을 넣습니다")
-    String reportFile,
-
     @Schema(description = "카테고리 번호 (서버에서 7로 고정 처리되며 클라이언트 입력값은 무시됩니다)", example = "7", accessMode = Schema.AccessMode.READ_ONLY)
     int category,
 
@@ -121,10 +109,6 @@ public class PostDTO {
     @NotEmpty(message = "참여 멤버는 최소 1명 이상이어야 합니다.")
     @Schema(description = "해당 활동에 참여한 유저의 ID목록")
     List<Long> memberIds,
-
-    @NotNull(message = "활동 유형은 필수입니다.")
-    @Schema(description = "보고서에 기록할 활동의 타입입니다", example = "STUDY / PROJECT / MENTORING")
-    PostReportGroupType type,
 
     @Schema(description = "활동 후기입니다")
     String reflection,
@@ -155,15 +139,11 @@ public class PostDTO {
 
         String reportImage,
 
-        String reportFile,
-
         LocalDateTime date,
 
         LocalDateTime createdAt,
 
         int category,
-
-        PostReportGroupType type,
 
         String reflection,
 
@@ -214,13 +194,9 @@ public class PostDTO {
 
         String reportImage,
 
-        String reportFile,
-
         LocalDateTime date,
 
         long groupId,
-
-        PostReportGroupType type,
 
         String reflection,
 
@@ -247,16 +223,8 @@ public class PostDTO {
         @NotBlank(message = "활동 사진은 필수입니다.")
         String reportImage,
 
-        @Schema(description = "s3버킷에 첨부파일을 업로드 하고 반환받은 url을 넣습니다")
-        String reportFile,
-
         @NotNull(message = "활동 일시는 필수입니다.")
         LocalDateTime date,
-
-        long groupId,
-
-        @NotNull(message = "활동 유형은 필수입니다.")
-        PostReportGroupType type,
 
         @NotEmpty(message = "참여 멤버는 최소 1명 이상이어야 합니다.")
         @Schema(description = "해당 활동에 참여한 유저의 ID목록")
@@ -293,13 +261,7 @@ public class PostDTO {
 
         String reportImage,
 
-        String reportFile,
-
         LocalDateTime date,
-
-        long groupId,
-
-        PostReportGroupType type,
 
         String reflection,
 
@@ -838,20 +800,53 @@ public class PostDTO {
         LocalDateTime createdAt,
         Long authorId,
         String authorName,
-
-        PostReportGroupType type,
-        @Schema(description = "보고서 승인 여부 입니다, 보고서 게시글이 생셩될때 기본값은 false로 생성되며, 운영진이 승인할 경우 True로 변겯됩니다")
-        boolean isAccepted,
+        @Schema(description = "작성자 기수입니다")
+        Long generation,
 
         @Schema(description = "보고서를 작성한 그룹의 ID입니다")
         Long groupId,
         @Schema(description = "보고서를 작성한 그룹의 이름입니다")
         String groupName,
         @Schema(description = "그룹의 활동인원 (status가 ACTIVE인 인원)의 수를 표기합니다")
-        Long groupMemberCount
+        Long groupMemberCount,
+        @Schema(description = "그룹의 카테고리입니다 (1=스터디, 2=프로젝트, 7=보고서)")
+        Integer groupCategory,
+
+        @Schema(description = "활동 일시입니다")
+        LocalDateTime date
     ) {}
 
 
+
+    @Schema(description = "보고서 목록 검색 모드입니다. NONE은 검색 없음, AND는 키워드 전부 포함된 결과입니다.")
+    public enum ReportSearchMode {
+        NONE,
+        AND
+    }
+
+    @Schema(description = "보고서 목록 검색 처리 정보입니다. keyword가 없으면 mode는 NONE, keyword가 있으면 AND입니다.")
+    public record ReportSearchInfoDTO(
+            @Schema(description = "요청한 검색어입니다. 검색하지 않은 경우 null입니다.", example = "스터디 김건우")
+            String keyword,
+            @Schema(description = "검색 모드입니다. NONE은 검색 없음, AND는 공백으로 구분된 키워드가 모두 제목 또는 작성자 이름에 포함된 결과입니다.", allowableValues = {"NONE", "AND"}, example = "AND")
+            ReportSearchMode mode
+    ) {
+        public static ReportSearchInfoDTO none() {
+            return new ReportSearchInfoDTO(null, ReportSearchMode.NONE);
+        }
+
+        public static ReportSearchInfoDTO of(String keyword) {
+            return new ReportSearchInfoDTO(keyword, ReportSearchMode.AND);
+        }
+    }
+
+    @Schema(description = "보고서 목록 조회 응답입니다. 보고서 미리보기 페이지와 검색 처리 정보를 함께 반환합니다.")
+    public record PostReportPreviewSearchDTO(
+            @Schema(description = "보고서 미리보기 목록 페이지입니다. content 배열에 보고서 항목이 담기고 Spring Page 페이지네이션 정보가 함께 포함됩니다.")
+            Page<PostReportPreviewDTO> reports,
+            @Schema(description = "검색 처리 결과입니다. keyword가 없으면 mode는 NONE입니다.")
+            ReportSearchInfoDTO search
+    ) {}
 
     @Schema(description = "보고서 게시글을 단건조회 할때 포스트+보고서의 정보를 종합적으로 담은 게시글 입니다")
     public record PostReportViewDTO(

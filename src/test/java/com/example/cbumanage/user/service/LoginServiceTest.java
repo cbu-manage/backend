@@ -210,7 +210,7 @@ class LoginServiceTest {
                 .major("컴퓨터공학과")
                 .phoneNumber("010-1234-5678")
                 .generation(39L)
-                .applicationField(ApplicationField.PROJECT)
+                .applicationField(ApplicationField.DEV)
                 .portfolioUrl("https://github.com/cbu")
                 .refSource(RefSource.FRIEND)
                 .refLinkEtc(null)

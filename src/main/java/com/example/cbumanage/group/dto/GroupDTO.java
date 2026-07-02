@@ -131,6 +131,8 @@ public class GroupDTO {
         Long groupId,
         @Schema(description = "그룹명", example = "AI 에이전트를 활용한 프로젝트 팀원 모집")
         String groupName,
+        @Schema(description = "그룹 카테고리입니다 (1=스터디, 2=프로젝트, 7=보고서)", example = "1")
+        Integer category,
         @Schema(description = "그룹 생성일")
         LocalDateTime createdAt,
         @Schema(description = "최근 수정일")

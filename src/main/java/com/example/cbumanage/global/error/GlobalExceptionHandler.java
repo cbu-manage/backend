@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -18,7 +19,7 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = e.getErrorCode();
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
-                .body(ApiResponse.error(errorCode));
+                .body(new ApiResponse<>(errorCode.getCode(), e.getMessage(), null));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -60,6 +61,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new ApiResponse<>(ErrorCode.INVALID_REQUEST.getCode(), message, null));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+        return ResponseEntity
+                .status(ErrorCode.UPLOAD_SIZE_EXCEEDED.getHttpStatus())
+                .body(ApiResponse.error(ErrorCode.UPLOAD_SIZE_EXCEEDED));
     }
 
     @ExceptionHandler(Exception.class)

@@ -13,8 +13,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/api/file")
-@Tag(name = "파일 업로드 컨트롤러")
+@RequestMapping("/api/v1/file")
+@Tag(name = "파일 업로드", description = "이미지와 PDF 파일을 업로드하고 S3 URL을 반환합니다.")
 @RequiredArgsConstructor
 public class FileController {
 
@@ -35,7 +35,7 @@ public class FileController {
         }
     }
 
-    @Operation(summary = "PDF 파일 업로드", description = "PDF 형식만 허용됩니다. 최대 10MB. S3 URL을 반환합니다.")
+    @Operation(summary = "PDF 업로드", description = "PDF 형식만 허용하며 최대 10MB까지 업로드할 수 있습니다. S3 URL을 반환합니다.")
     @PostMapping(value = "/pdf", consumes = {"multipart/form-data"})
     public ApiResponse<String> uploadPdf(@RequestParam("file") MultipartFile file) {
         try {

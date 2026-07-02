@@ -1,7 +1,9 @@
 package com.example.cbumanage.news.dto;
 
 import com.example.cbumanage.news.entity.News;
+import com.example.cbumanage.news.entity.NewsAttachment;
 import com.example.cbumanage.news.entity.enums.NewsCategory;
+import com.example.cbumanage.news.entity.enums.NewsletterType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -18,6 +20,8 @@ public class NewsDTO {
     private static final int CONTENT_MAX = 20_000;
     private static final String CATEGORY_DESCRIPTION =
             "소식 내부 카테고리. NOTICE=공지, EVENT=이벤트, NEWSLETTER=뉴스레터, IT_NEWS=IT 소식";
+    private static final String NEWSLETTER_TYPE_DESCRIPTION =
+            "뉴스레터 세부 분류. WEEKLY=주간, SPECIAL=특집, NOTICE=공지. category가 NEWSLETTER일 때만 설정되며, 그 외 카테고리에서는 무시되고 항상 null로 내려갑니다.";
 
     public enum NewsSearchMode {
         NONE,
@@ -110,6 +114,9 @@ public class NewsDTO {
             @Schema(description = CATEGORY_DESCRIPTION, allowableValues = {"NOTICE", "EVENT", "NEWSLETTER", "IT_NEWS"}, example = "NOTICE")
             NewsCategory category,
 
+            @Schema(description = NEWSLETTER_TYPE_DESCRIPTION, allowableValues = {"WEEKLY", "SPECIAL", "NOTICE"}, example = "WEEKLY")
+            NewsletterType newsletterType,
+
             @Schema(description = "작성 일시")
             LocalDateTime createdAt,
 
@@ -126,6 +133,7 @@ public class NewsDTO {
                     news.getAuthorId(),
                     news.getTitle(),
                     news.getCategory(),
+                    news.getNewsletterType(),
                     news.getCreatedAt(),
                     news.getViewCount(),
                     news.isPinned()
@@ -150,6 +158,9 @@ public class NewsDTO {
             @Schema(description = CATEGORY_DESCRIPTION, allowableValues = {"NOTICE", "EVENT", "NEWSLETTER", "IT_NEWS"}, example = "NOTICE")
             NewsCategory category,
 
+            @Schema(description = NEWSLETTER_TYPE_DESCRIPTION, allowableValues = {"WEEKLY", "SPECIAL", "NOTICE"}, example = "WEEKLY")
+            NewsletterType newsletterType,
+
             @Schema(description = "소식 본문입니다. Markdown 원문이 그대로 내려갈 수 있으므로 프론트에서 Markdown 렌더러로 표시하면 됩니다.", example = "5월 정기 세미나는 **동아리방**에서 진행합니다.")
             String content,
 
@@ -163,27 +174,61 @@ public class NewsDTO {
             Long viewCount,
 
             @Schema(description = "상단 고정 여부", example = "false")
-            boolean pinned
-    ) {
-        public static NewsDetailDTO from(News news) {
-            return from(news, news.getViewCount());
-        }
+            boolean pinned,
 
-        /** 조회수를 별도로 지정해 응답 DTO를 생성합니다. */
-        public static NewsDetailDTO from(News news, long viewCount) {
+            @Schema(description = "첨부파일 목록입니다. 첨부가 없으면 빈 배열입니다. 각 항목의 attachmentId로 다운로드 API를 호출합니다.")
+            List<NewsAttachmentDTO> attachments
+    ) {
+        public static NewsDetailDTO from(News news, List<NewsAttachmentDTO> attachments) {
             return new NewsDetailDTO(
                     news.getNewsId(),
                     news.getPostId(),
                     news.getAuthorId(),
                     news.getTitle(),
                     news.getCategory(),
+                    news.getNewsletterType(),
                     news.getContent(),
                     news.getCreatedAt(),
                     news.getUpdatedAt(),
-                    viewCount,
-                    news.isPinned()
+                    news.getViewCount(),
+                    news.isPinned(),
+                    attachments
             );
         }
+    }
+
+    @Schema(description = "소식 첨부파일 메타데이터입니다. 실제 파일은 다운로드 API로 받습니다.")
+    public record NewsAttachmentDTO(
+            @Schema(description = "첨부파일 ID입니다. 다운로드/삭제 API의 path variable로 사용합니다.", example = "3")
+            Long attachmentId,
+
+            @Schema(description = "업로드 당시의 원본 파일명입니다. 다운로드 시 이 이름으로 저장됩니다.", example = "5월_세미나_자료.pdf")
+            String fileName,
+
+            @Schema(description = "MIME 타입입니다. 미상이면 application/octet-stream으로 내려갈 수 있습니다.", example = "application/pdf")
+            String contentType,
+
+            @Schema(description = "파일 크기(byte)입니다.", example = "1048576")
+            long fileSize
+    ) {
+        public static NewsAttachmentDTO from(NewsAttachment attachment) {
+            return new NewsAttachmentDTO(
+                    attachment.getAttachmentId(),
+                    attachment.getOriginalFileName(),
+                    attachment.getContentType(),
+                    attachment.getFileSize()
+            );
+        }
+    }
+
+    @Schema(description = "첨부파일 다운로드 응답입니다. url은 만료되는 임시 링크이므로 응답 직후 바로 사용해야 합니다.")
+    public record AttachmentDownloadDTO(
+            @Schema(description = "파일을 내려받을 수 있는 presigned URL입니다. 잠시 후 만료되며, 접근 시 원본 파일명으로 다운로드됩니다.")
+            String url,
+
+            @Schema(description = "이 url로 내려받을 때 저장되는 파일명입니다.", example = "5월_세미나_자료.pdf")
+            String fileName
+    ) {
     }
 
     @Schema(description = "소식 작성 요청입니다. 관리자만 사용할 수 있습니다.")
@@ -199,7 +244,10 @@ public class NewsDTO {
             String content,
 
             @Schema(description = CATEGORY_DESCRIPTION + ". 생략하면 NOTICE로 저장됩니다.", allowableValues = {"NOTICE", "EVENT", "NEWSLETTER", "IT_NEWS"}, example = "NOTICE")
-            NewsCategory category
+            NewsCategory category,
+
+            @Schema(description = NEWSLETTER_TYPE_DESCRIPTION + " category가 NEWSLETTER일 때만 저장됩니다.", allowableValues = {"WEEKLY", "SPECIAL", "NOTICE"}, example = "WEEKLY")
+            NewsletterType newsletterType
     ) {
     }
 
@@ -216,7 +264,10 @@ public class NewsDTO {
             String content,
 
             @Schema(description = CATEGORY_DESCRIPTION + ". null이면 기존 카테고리를 유지합니다.", allowableValues = {"NOTICE", "EVENT", "NEWSLETTER", "IT_NEWS"}, example = "NOTICE")
-            NewsCategory category
+            NewsCategory category,
+
+            @Schema(description = NEWSLETTER_TYPE_DESCRIPTION + " null이면 기존 값을 유지하고, category가 NEWSLETTER가 아니면 null로 정리됩니다.", allowableValues = {"WEEKLY", "SPECIAL", "NOTICE"}, example = "WEEKLY")
+            NewsletterType newsletterType
     ) {
     }
 

@@ -24,14 +24,14 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/resources")
-@Tag(name = "자료방 컨트롤러", description = "자료방 게시글 등록/조회/삭제 API")
+@Tag(name = "자료실", description = "자료 링크를 등록·조회·삭제하고 OG 메타데이터를 관리합니다.")
 @RequiredArgsConstructor
 public class ResourceController {
 
     private final ResourceService resourceService;
 
     @PostMapping
-    @Operation(summary = "자료 등록", requestBody = @RequestBody(required = true, content = @Content(mediaType = "application/json",
+    @Operation(summary = "자료 등록", description = "자료 링크를 등록하고 Open Graph 메타데이터를 함께 저장합니다.", requestBody = @RequestBody(required = true, content = @Content(mediaType = "application/json",
             examples = {@ExampleObject(name = "링크만 전송", value = """
                     { "link": "https://programmers.co.kr/learn/challenges" }
                     """), @ExampleObject(name = "제목 직접 입력", value = """
@@ -44,14 +44,14 @@ public class ResourceController {
     }
 
     @GetMapping
-    @Operation(summary = "자료 목록 조회")
+    @Operation(summary = "자료 목록 조회", description = "자료 목록을 페이지 단위로 조회합니다.")
     public ApiResponse<Page<ResourceListItemDTO>> getResources(
             @ParameterObject @PageableDefault(size = 20, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ApiResponse.success(resourceService.getResources(pageable));
     }
 
     @GetMapping("/my")
-    @Operation(summary = "내 자료 목록 조회")
+    @Operation(summary = "내 자료 목록 조회", description = "로그인 사용자가 등록한 자료 목록을 조회합니다.")
     public ApiResponse<Page<ResourceListItemDTO>> getMyResources(Authentication authentication,
             @ParameterObject @PageableDefault(size = 20, sort = "post.createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Long userId = Long.parseLong(authentication.getName());
@@ -59,13 +59,13 @@ public class ResourceController {
     }
 
     @GetMapping("/og-preview")
-    @Operation(summary = "OG 데이터 미리보기")
+    @Operation(summary = "OG 메타데이터 미리보기", description = "URL의 Open Graph 메타데이터를 저장하지 않고 미리 조회합니다.")
     public ApiResponse<OgMetaPreviewDTO> previewOg(@RequestParam String url) {
         return ApiResponse.success(resourceService.previewOg(url));
     }
 
     @PatchMapping("/{id}/refresh-og")
-    @Operation(summary = "OG 메타 수동 갱신")
+    @Operation(summary = "OG 메타데이터 갱신", description = "등록된 자료의 Open Graph 메타데이터를 다시 조회해 갱신합니다.")
     public ApiResponse<Void> refreshOg(@PathVariable Long id, Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         resourceService.refreshOg(id, userId);
@@ -73,7 +73,7 @@ public class ResourceController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "자료 삭제")
+    @Operation(summary = "자료 삭제", description = "작성자 본인의 자료를 삭제합니다.")
     public ApiResponse<Void> deleteResource(@PathVariable Long id, Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         resourceService.deleteResource(id, userId);

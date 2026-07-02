@@ -2,6 +2,8 @@ package com.example.cbumanage.report.service;
 
 import com.example.cbumanage.post.dto.PostDTO;
 import com.example.cbumanage.post.entity.Post;
+import com.example.cbumanage.global.error.BaseException;
+import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.report.entity.PostReport;
 import com.example.cbumanage.group.entity.enums.GroupMemberStatus;
 import com.example.cbumanage.user.entity.Role;
@@ -23,7 +25,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +49,7 @@ public class PostReportService {
 
     public PostReport createReport(PostDTO.ReportCreateDTO req) {
         Post post = postRepository.findById(req.postId()).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        PostReport report = PostReport.create(post, req.groupId(), req.type(), req.date(), req.location(), req.reportImage(), req.reportFile(), req.reflection(), req.nextPlan());
+        PostReport report = PostReport.create(post, req.groupId(), req.date(), req.location(), req.reportImage(), req.reflection(), req.nextPlan());
         PostReport saved = postReportRepository.save(report);
         return saved;
     }
@@ -50,15 +60,40 @@ public class PostReportService {
         Post post = postService.createPost(postCreateDTO);
         PostDTO.ReportCreateDTO reportCreateDTO = postMapper.toReportCreateDTO(req, post.getId());
         PostReport report = createReport(reportCreateDTO);
-        saveReportMembers(report.getId(), req.memberIds());
+        saveReportMembers(report.getId(), req.groupId(), req.memberIds());
         return postMapper.toPostReportCreateResponseDTO(post, report);
     }
 
-    private void saveReportMembers(Long reportId, List<Long> memberIds) {
+    private void saveReportMembers(Long reportId, Long groupId, List<Long> memberIds) {
         if (memberIds == null || memberIds.isEmpty()) return;
+        validateReportMembers(groupId, memberIds);
+
         memberIds.stream()
+                .distinct()
                 .map(memberId -> ReportMember.create(reportId, memberId))
                 .forEach(reportMemberRepository::save);
+    }
+
+    private void validateReportMembers(Long groupId, List<Long> memberIds) {
+        Set<Long> invalidMemberIds = new LinkedHashSet<>();
+
+        for (Long memberId : memberIds) {
+            boolean isActiveGroupMember = groupMemberRepository.existsByGroupIdAndUserUserIdAndGroupMemberStatus(
+                    groupId,
+                    memberId,
+                    GroupMemberStatus.ACTIVE
+            );
+            if (!isActiveGroupMember) {
+                invalidMemberIds.add(memberId);
+            }
+        }
+
+        if (!invalidMemberIds.isEmpty()) {
+            throw new BaseException(
+                    ErrorCode.REPORT_MEMBER_NOT_IN_GROUP,
+                    "그룹에 속하지 않은 참여 멤버가 포함되어 있습니다. groupId=" + groupId + ", memberIds=" + invalidMemberIds
+            );
+        }
     }
 
     /*
@@ -66,23 +101,116 @@ public class PostReportService {
 
 fetch join -> 해결
  */
-    public Page<PostDTO.PostReportPreviewDTO> getPostReportPreviewDTOList(Pageable pageable, Long userId) {
+    public PostDTO.PostReportPreviewSearchDTO getPostReportPreviewDTOList(Pageable pageable, Long userId,
+                                                                          LocalDateTime startDate, LocalDateTime endDate,
+                                                                          String keyword, List<Long> filterGroupIds) {
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        boolean isAdmin = user.getRole().isPresidentOrVicePresidentOrAdmin();
+        boolean isAdmin = user.getRole().canViewAllReports();
 
-        if (isAdmin) {
-            return postReportRepository.findPostReportPreviews(pageable, 7);
+        List<Long> effectiveGroupIds = resolveGroupIds(isAdmin, userId, filterGroupIds);
+
+        if (effectiveGroupIds != null && effectiveGroupIds.isEmpty()) {
+            PostDTO.ReportSearchInfoDTO searchInfo = (keyword != null && !keyword.isBlank())
+                    ? PostDTO.ReportSearchInfoDTO.of(keyword) : PostDTO.ReportSearchInfoDTO.none();
+            return new PostDTO.PostReportPreviewSearchDTO(Page.empty(pageable), searchInfo);
         }
 
-        List<Long> groupIds = groupMemberRepository.findGroupIdsByUserIdAndStatus(userId, GroupMemberStatus.ACTIVE);
-        if (groupIds.isEmpty()) {
-            return Page.empty(pageable);
+        if (keyword != null && !keyword.isBlank()) {
+            Page<PostDTO.PostReportPreviewDTO> result = searchPostReportPreviews(pageable, effectiveGroupIds, startDate, endDate, keyword);
+            return new PostDTO.PostReportPreviewSearchDTO(result, PostDTO.ReportSearchInfoDTO.of(keyword));
         }
-        return postReportRepository.findPostReportPreviewsByGroupIds(pageable, 7, groupIds);
+
+        if (effectiveGroupIds == null) {
+            Page<PostDTO.PostReportPreviewDTO> result = postReportRepository.findPostReportPreviews(pageable, 7, startDate, endDate);
+            return new PostDTO.PostReportPreviewSearchDTO(result, PostDTO.ReportSearchInfoDTO.none());
+        }
+
+        Page<PostDTO.PostReportPreviewDTO> result = postReportRepository.findPostReportPreviewsByGroupIds(pageable, 7, effectiveGroupIds, startDate, endDate);
+        return new PostDTO.PostReportPreviewSearchDTO(result, PostDTO.ReportSearchInfoDTO.none());
     }
 
-    public Page<PostDTO.PostReportPreviewDTO> getGroupPostReportPreviewDTOList(Pageable pageable, Long groupId) {
-        return postReportRepository.findPostReportPreviewsByGroupId(pageable, 7, groupId);
+    private List<Long> resolveGroupIds(boolean isAdmin, Long userId, List<Long> filterGroupIds) {
+        boolean hasFilter = filterGroupIds != null && !filterGroupIds.isEmpty();
+
+        if (isAdmin) {
+            return hasFilter ? filterGroupIds : null;
+        }
+
+        List<Long> memberGroupIds = groupMemberRepository.findGroupIdsByUserIdAndStatus(userId, GroupMemberStatus.ACTIVE);
+        if (!hasFilter) {
+            return memberGroupIds;
+        }
+
+        Set<Long> filterSet = new LinkedHashSet<>(filterGroupIds);
+        return memberGroupIds.stream()
+                .filter(filterSet::contains)
+                .toList();
+    }
+
+    private Page<PostDTO.PostReportPreviewDTO> searchPostReportPreviews(
+            Pageable pageable, List<Long> effectiveGroupIds,
+            LocalDateTime startDate, LocalDateTime endDate, String keyword) {
+
+        String pattern = Arrays.stream(keyword.trim().split("\\s+"))
+                .filter(t -> !t.isBlank())
+                .distinct()
+                .map(t -> "(?=.*" + t + ")")
+                .collect(Collectors.joining());
+
+        Pageable searchPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        Page<Long> postIds;
+
+        if (effectiveGroupIds == null) {
+            postIds = postReportRepository.searchPostIdsByKeyword(7, startDate, endDate, pattern, searchPageable);
+        } else {
+            postIds = postReportRepository.searchPostIdsByKeywordAndGroupIds(7, effectiveGroupIds, startDate, endDate, pattern, searchPageable);
+        }
+
+        List<Long> ids = postIds.getContent();
+        if (ids.isEmpty()) return new PageImpl<>(List.of(), pageable, 0);
+
+        Map<Long, PostDTO.PostReportPreviewDTO> dtoById = postReportRepository.findPreviewsByPostIds(ids).stream()
+                .collect(Collectors.toMap(PostDTO.PostReportPreviewDTO::postId, dto -> dto));
+
+        List<PostDTO.PostReportPreviewDTO> ordered = ids.stream()
+                .map(dtoById::get)
+                .filter(dto -> dto != null)
+                .toList();
+
+        return new PageImpl<>(ordered, pageable, postIds.getTotalElements());
+    }
+
+    public PostDTO.PostReportPreviewSearchDTO getGroupPostReportPreviewDTOList(Pageable pageable, Long groupId,
+                                                                               LocalDateTime startDate, LocalDateTime endDate,
+                                                                               String keyword, Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        if (!user.getRole().canViewAllReports()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        if (keyword != null && !keyword.isBlank()) {
+            String pattern = Arrays.stream(keyword.trim().split("\\s+"))
+                    .filter(t -> !t.isBlank())
+                    .distinct()
+                    .map(t -> "(?=.*" + t + ")")
+                    .collect(Collectors.joining());
+
+            Pageable searchPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+            Page<Long> postIds = postReportRepository.searchPostIdsByKeywordAndGroupIds(7, List.of(groupId), startDate, endDate, pattern, searchPageable);
+
+            List<Long> ids = postIds.getContent();
+            if (ids.isEmpty()) return new PostDTO.PostReportPreviewSearchDTO(new PageImpl<>(List.of(), pageable, 0), PostDTO.ReportSearchInfoDTO.of(keyword));
+
+            Map<Long, PostDTO.PostReportPreviewDTO> dtoById = postReportRepository.findPreviewsByPostIds(ids).stream()
+                    .collect(Collectors.toMap(PostDTO.PostReportPreviewDTO::postId, dto -> dto));
+
+            List<PostDTO.PostReportPreviewDTO> ordered = ids.stream()
+                    .map(dtoById::get)
+                    .filter(dto -> dto != null)
+                    .toList();
+
+            return new PostDTO.PostReportPreviewSearchDTO(new PageImpl<>(ordered, pageable, postIds.getTotalElements()), PostDTO.ReportSearchInfoDTO.of(keyword));
+        }
+
+        Page<PostDTO.PostReportPreviewDTO> result = postReportRepository.findPostReportPreviewsByGroupId(pageable, 7, groupId, startDate, endDate);
+        return new PostDTO.PostReportPreviewSearchDTO(result, PostDTO.ReportSearchInfoDTO.none());
     }
 
     public Page<PostDTO.PostReportPreviewDTO> getMyPostReportPreviewDTOList(Pageable pageable,Long userId) {
@@ -98,7 +226,7 @@ fetch join -> 해결
                 .orElseThrow(() -> new EntityNotFoundException("Report Not Found"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        boolean isAdmin = user.getRole().isPresidentOrVicePresidentOrAdmin();
+        boolean isAdmin = user.getRole().canViewAllReports();
         boolean isActiveMember =
                 groupMemberRepository.existsActiveMember(
                         userId,
@@ -119,7 +247,9 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
     @Transactional
     public void updatePostReport(PostDTO.PostReportUpdateRequestDTO req,Long postId,Long userId) {
         Post post=postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        if(!post.getAuthorId().equals(userId)){
+        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        boolean canEditAll = user.getRole().canViewAllReports();
+        if(!canEditAll && !post.getAuthorId().equals(userId)){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,"NOT POST OWNER");
         }
         PostDTO.PostUpdateDTO postUpdateDTO = postMapper.toPostUpdateDTO(req);
@@ -129,26 +259,13 @@ Create 와  마찬가지로 컨트롤러에서 부르는 메소드는 이 메소
         PostDTO.ReportUpdateDTO reportUpdateDTO=postMapper.topostReportUpdateDTO(req);
         updateReport(reportUpdateDTO,report);
         reportMemberRepository.deleteByReportId(report.getId());
-        saveReportMembers(report.getId(), req.memberIds());
-    }
-
-    @Transactional
-    public void acceptReport(Long postId,Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        if (!user.getRole().isPresidentOrVicePresidentOrAdmin()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        }
-        PostReport report = postReportRepository.findByPostId(postId)
-                .orElseThrow(() -> new EntityNotFoundException("Report Not Found"));
-        report.Accept();
+        saveReportMembers(report.getId(), report.getGroupId(), req.memberIds());
     }
 
     public void updateReport(PostDTO.ReportUpdateDTO postUpdateDTO,PostReport postReport) {
         postReport.changeDate(postUpdateDTO.date());
         postReport.changeLocation(postUpdateDTO.location());
         postReport.changeReportImage(postUpdateDTO.reportImage());
-        postReport.changeReportFile(postUpdateDTO.reportFile());
-        postReport.changeType(postUpdateDTO.type());
         postReport.changeReflection(postUpdateDTO.reflection());
         postReport.changeNextPlan(postUpdateDTO.nextPlan());
     }

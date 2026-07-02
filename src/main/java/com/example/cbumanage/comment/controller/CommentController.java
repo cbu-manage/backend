@@ -19,13 +19,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/")
-@Tag(name = "댓글 관리 컨트롤러")
+@Tag(name = "댓글", description = "게시글 댓글과 답글을 작성·조회·수정·삭제합니다.")
 @RequiredArgsConstructor
 public class CommentController {
     private final CommentService commentService;
     private final FlagCommentService flagCommentService;
 
-    @Operation(summary = "코멘트 작성 요청")
+    @Operation(summary = "댓글 작성", description = "게시글에 댓글을 작성합니다.")
     @PostMapping("post/{postId}/comment")
     public ApiResponse<CommentDTO.CommentCreateResponseDTO> createComment(@RequestBody CommentDTO.CommentCreateRequestDTO req,
                                                                           @PathVariable Long postId,
@@ -34,14 +34,14 @@ public class CommentController {
         return ApiResponse.success(commentService.createComment(req, userId, postId));
     }
 
-    @Operation(summary = "댓글 목록 반환")
+    @Operation(summary = "댓글 목록 조회", description = "게시글의 댓글 목록을 조회합니다.")
     @GetMapping("post/{postId}/comment")
     public ApiResponse<List<CommentDTO.CommentInfoDTO>> getComments(@PathVariable Long postId) {
         return ApiResponse.success(commentService.getComments(postId));
     }
 
     @Operation(
-            summary = "익명 댓글 목록 반환",
+            summary = "익명 게시글 댓글 목록 조회",
             description = "익명 게시글(isAnonymous=true)의 댓글 목록을 작성자 정보 없이 반환합니다.<br>" +
                     "익명 게시글이 아닌 postId로 요청 시 400을 반환합니다."
     )
@@ -56,7 +56,7 @@ public class CommentController {
         }
     }
 
-    @Operation(summary = "답글 추가")
+    @Operation(summary = "답글 작성", description = "댓글에 답글을 작성합니다.")
     @PostMapping("comment/{commentId}/reply")
     public ApiResponse<CommentDTO.ReplyCreateResponseDTO> createReply(@RequestBody CommentDTO.ReplyCreateRequestDTO req,
                                                                       @Parameter(description = "답글을 추가할 댓글의 ID") @PathVariable Long commentId,
@@ -65,7 +65,7 @@ public class CommentController {
         return ApiResponse.success(commentService.createReply(req, userId, commentId));
     }
 
-    @Operation(summary = "댓글 변경")
+    @Operation(summary = "댓글 수정", description = "작성자 본인의 댓글 내용을 수정합니다.")
     @PatchMapping("comment/{commentId}")
     public ApiResponse<Void> updateComment(@RequestBody CommentDTO.CommentUpdateRequestDTO req,
                                            @PathVariable Long commentId, Authentication authentication) {
@@ -78,7 +78,7 @@ public class CommentController {
         }
     }
 
-    @Operation(summary = "댓글 삭제(softDelete)")
+    @Operation(summary = "댓글 삭제", description = "작성자 또는 관리자가 댓글을 소프트 삭제합니다.")
     @DeleteMapping("comment/{commentId}")
     public ApiResponse<Void> deleteComment(@PathVariable Long commentId, Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());

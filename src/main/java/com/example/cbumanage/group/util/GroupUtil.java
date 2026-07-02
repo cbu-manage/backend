@@ -14,6 +14,7 @@ public class GroupUtil {
         return GroupDTO.GroupInfoDTO.builder()
                 .groupId(group.getId())
                 .groupName(group.getGroupName())
+                .category(group.getCategory())
                 .createdAt(group.getCreatedAt())
                 .updatedAt(group.getUpdatedAt())
                 .activeMemberCount((int) group.getMembers().stream()

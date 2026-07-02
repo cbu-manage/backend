@@ -27,7 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/freeboard")
-@Tag(name = "자유게시판 컨트롤러")
+@Tag(name = "자유게시판", description = "자유게시판 게시글을 작성·조회·수정합니다.")
 public class PostFreeboardController {
 
     private final PostFreeboardService postFreeboardService;
@@ -44,6 +44,10 @@ public class PostFreeboardController {
                     익명 게시글은 목록/단건 조회 시 작성자 정보(authorId, authorName, authorGeneration)가 반환되지 않습니다.
                     isAnonymous는 생성 이후 수정할 수 없습니다.
                     """
+            summary = "자유게시판 글 작성",
+            description = "자유게시판 게시글을 생성합니다. 로그인 상태에서만 작성 가능합니다.<br>" +
+                    "카테고리는 서버에서 8로 자동 주입되며 클라이언트 입력값은 무시됩니다.<br>" +
+                    "isAnonymous가 true이면 익명으로 등록됩니다."
     )
     @PostMapping
     public ApiResponse<PostDTO.PostFreeboardCreateResponseDTO> createFreeBoard(
@@ -54,6 +58,10 @@ public class PostFreeboardController {
     }
 
     @Operation(
+            summary = "자유게시판 글 목록 조회",
+            description = "자유게시판 글 목록을 페이지 단위로 조회합니다.<br>" +
+                    "익명 게시글은 PostFreeboardAnonymousInfoDTO(작성자 정보 없음), " +
+                    "실명 게시글은 PostFreeboardInfoDTO로 반환됩니다."
             summary = "자유게시판 목록 조회",
             description = """
                     자유게시판 게시글 목록을 최신순으로 페이징 조회합니다. 인증 없이 누구나 조회 가능합니다.
@@ -102,6 +110,9 @@ public class PostFreeboardController {
     }
 
     @Operation(
+            summary = "자유게시판 글 상세 조회",
+            description = "게시글 ID로 자유게시판 글 상세 정보를 조회합니다.<br>" +
+                    "익명 여부에 따라 PostFreeboardAnonymousInfoDTO 또는 PostFreeboardInfoDTO로 반환됩니다."
             summary = "자유게시판 단건 조회",
             description = """
                     postId로 자유게시판 게시글을 단건 조회합니다. 인증 없이 누구나 조회 가능합니다.
@@ -197,6 +208,9 @@ public class PostFreeboardController {
     }
 
     @Operation(
+            summary = "자유게시판 글 수정",
+            description = "자유게시판 게시글의 제목과 내용을 수정합니다.<br>" +
+                    "작성자 본인만 수정 가능합니다. 익명 여부는 수정할 수 없습니다."
             summary = "자유게시판 게시글 수정",
             description = """
                     자유게시판 게시글의 제목과 내용을 수정합니다.

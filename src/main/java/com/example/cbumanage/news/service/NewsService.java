@@ -5,6 +5,8 @@ import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.news.dto.NewsDTO;
 import com.example.cbumanage.news.entity.News;
 import com.example.cbumanage.news.entity.enums.NewsCategory;
+import com.example.cbumanage.news.entity.enums.NewsletterType;
+import com.example.cbumanage.news.repository.NewsAttachmentRepository;
 import com.example.cbumanage.news.repository.NewsRepository;
 import com.example.cbumanage.news.util.NewsSearchTextNormalizer;
 import com.example.cbumanage.post.entity.Post;
@@ -30,19 +32,27 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class NewsService {
 
+    private static final List<NewsCategory> ALL_CATEGORIES = List.of(NewsCategory.values());
+    private static final List<NewsletterType> ALL_NEWSLETTER_TYPES = List.of(NewsletterType.values());
+
     private final NewsRepository newsRepository;
+    private final NewsAttachmentRepository newsAttachmentRepository;
     private final PostRepository postRepository;
     private final EntityManager entityManager;
 
-    public NewsDTO.NewsListResponseDTO getNewsList(Pageable pageable, NewsCategory category, String keyword) {
+    public NewsDTO.NewsListResponseDTO getNewsList(Pageable pageable, List<NewsCategory> categories, List<NewsletterType> newsletterTypes, String keyword) {
+        List<NewsCategory> categoryFilter = resolveCategoryFilter(categories);
+        boolean includeNullCategory = categoryFilter.contains(NewsCategory.NOTICE);
+        boolean filterByNewsletterType = newsletterTypes != null && !newsletterTypes.isEmpty();
+        List<NewsletterType> newsletterTypeFilter = filterByNewsletterType ? newsletterTypes : ALL_NEWSLETTER_TYPES;
+
         List<String> searchTokens = NewsSearchTextNormalizer.toSearchTokens(keyword);
         if (!searchTokens.isEmpty()) {
-            return searchNewsList(pageable, category, keyword, searchTokens);
+            return searchNewsList(pageable, categoryFilter, includeNullCategory, filterByNewsletterType, newsletterTypeFilter, keyword, searchTokens);
         }
 
-        boolean includeDefaultCategory = category == NewsCategory.NOTICE;
-        List<News> pinned = newsRepository.findPinnedNews(category, includeDefaultCategory);
-        Page<News> regular = newsRepository.findRegularNews(category, includeDefaultCategory, pageable);
+        List<News> pinned = newsRepository.findPinnedNews(categoryFilter, includeNullCategory, filterByNewsletterType, newsletterTypeFilter);
+        Page<News> regular = newsRepository.findRegularNews(categoryFilter, includeNullCategory, filterByNewsletterType, newsletterTypeFilter, pageable);
 
         List<NewsDTO.NewsListItemDTO> items = new ArrayList<>(pinned.size() + regular.getNumberOfElements());
         pinned.forEach(news -> items.add(NewsDTO.NewsListItemDTO.from(news)));
@@ -61,7 +71,7 @@ public class NewsService {
         entityManager.clear();
 
         News refreshedNews = findNewsOrThrow(newsId);
-        return NewsDTO.NewsDetailDTO.from(refreshedNews);
+        return NewsDTO.NewsDetailDTO.from(refreshedNews, attachmentsOf(newsId));
     }
 
     @Transactional
@@ -69,20 +79,20 @@ public class NewsService {
         Post post = Post.create(userId, request.title(), request.content(), PostCategory.NEWS.getValue());
         postRepository.save(post);
 
-        News news = News.create(post, request.category());
+        News news = News.create(post, request.category(), request.newsletterType());
         news.changeSearchText(NewsSearchTextNormalizer.toSearchText(request.title(), request.content()));
         newsRepository.save(news);
 
-        return NewsDTO.NewsDetailDTO.from(news);
+        return NewsDTO.NewsDetailDTO.from(news, List.of());
     }
 
     @Transactional
     public NewsDTO.NewsDetailDTO updateNews(Long newsId, NewsDTO.NewsUpdateRequestDTO request) {
         News news = findNewsOrThrow(newsId);
-        news.change(request.title(), request.content(), request.category());
+        news.change(request.title(), request.content(), request.category(), request.newsletterType());
         news.changeSearchText(NewsSearchTextNormalizer.toSearchText(news.getTitle(), news.getContent()));
         newsRepository.flush();
-        return NewsDTO.NewsDetailDTO.from(news);
+        return NewsDTO.NewsDetailDTO.from(news, attachmentsOf(newsId));
     }
 
     @Transactional
@@ -96,7 +106,7 @@ public class NewsService {
     public NewsDTO.NewsDetailDTO changePinned(Long newsId, boolean pinned) {
         News news = findNewsOrThrow(newsId);
         news.changePinned(pinned);
-        return NewsDTO.NewsDetailDTO.from(news);
+        return NewsDTO.NewsDetailDTO.from(news, attachmentsOf(newsId));
     }
 
     public Page<NewsDTO.NewsListItemDTO> getMyNews(Pageable pageable, Long userId) {
@@ -104,26 +114,36 @@ public class NewsService {
                 .map(NewsDTO.NewsListItemDTO::from);
     }
 
+    private List<NewsCategory> resolveCategoryFilter(List<NewsCategory> categories) {
+        return (categories == null || categories.isEmpty()) ? ALL_CATEGORIES : categories;
+    }
+
     private News findNewsOrThrow(Long newsId) {
         return newsRepository.findById(newsId)
                 .orElseThrow(() -> new BaseException(ErrorCode.NEWS_NOT_FOUND));
     }
 
-    private NewsDTO.NewsListResponseDTO searchNewsList(Pageable pageable, NewsCategory category, String keyword, List<String> searchTokens) {
-        boolean includeDefaultCategory = category == NewsCategory.NOTICE;
-        String categoryName = category == null ? null : category.name();
+    private List<NewsDTO.NewsAttachmentDTO> attachmentsOf(Long newsId) {
+        return newsAttachmentRepository.findByNews_NewsIdOrderByAttachmentIdAsc(newsId).stream()
+                .map(NewsDTO.NewsAttachmentDTO::from)
+                .toList();
+    }
+
+    private NewsDTO.NewsListResponseDTO searchNewsList(Pageable pageable, List<NewsCategory> categoryFilter, boolean includeNullCategory, boolean filterByNewsletterType, List<NewsletterType> newsletterTypeFilter, String keyword, List<String> searchTokens) {
+        List<String> categoryNames = categoryFilter.stream().map(NewsCategory::name).toList();
+        List<String> newsletterTypeNames = newsletterTypeFilter.stream().map(NewsletterType::name).toList();
         Pageable searchPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
 
         String andQuery = NewsSearchTextNormalizer.toRequiredBooleanQuery(searchTokens);
-        List<Long> pinnedIds = newsRepository.searchPinnedNewsIds(categoryName, includeDefaultCategory, andQuery);
-        Page<Long> regularIds = newsRepository.searchRegularNewsIds(categoryName, includeDefaultCategory, andQuery, searchPageable);
+        List<Long> pinnedIds = newsRepository.searchPinnedNewsIds(categoryNames, includeNullCategory, filterByNewsletterType, newsletterTypeNames, andQuery);
+        Page<Long> regularIds = newsRepository.searchRegularNewsIds(categoryNames, includeNullCategory, filterByNewsletterType, newsletterTypeNames, andQuery, searchPageable);
         NewsDTO.NewsSearchMode mode = NewsDTO.NewsSearchMode.AND;
         boolean fallbackApplied = false;
 
         if (pinnedIds.isEmpty() && regularIds.getTotalElements() == 0 && searchTokens.size() >= 2) {
             String orQuery = NewsSearchTextNormalizer.toOptionalBooleanQuery(searchTokens);
-            pinnedIds = newsRepository.searchPinnedNewsIds(categoryName, includeDefaultCategory, orQuery);
-            regularIds = newsRepository.searchRegularNewsIds(categoryName, includeDefaultCategory, orQuery, searchPageable);
+            pinnedIds = newsRepository.searchPinnedNewsIds(categoryNames, includeNullCategory, filterByNewsletterType, newsletterTypeNames, orQuery);
+            regularIds = newsRepository.searchRegularNewsIds(categoryNames, includeNullCategory, filterByNewsletterType, newsletterTypeNames, orQuery, searchPageable);
             mode = NewsDTO.NewsSearchMode.OR_FALLBACK;
             fallbackApplied = true;
         }

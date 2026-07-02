@@ -16,6 +16,7 @@ public enum ErrorCode {
     NOT_ALLOWED_FILETYPE("E-COMMON-0004","잘못된 파일 타입", HttpStatus.CONFLICT),
     FILE_SIZE_EXCEEDED("E-COMMON-0006","파일 크기가 제한을 초과했습니다 (최대 10MB)", HttpStatus.BAD_REQUEST),
     FILE_PROCESS_FAILED("E-COMMON-0007","파일 처리에 실패했습니다. 파일이 손상되었거나 올바르지 않습니다.", HttpStatus.BAD_REQUEST),
+    UPLOAD_SIZE_EXCEEDED("E-COMMON-0008","업로드 가능한 파일 크기를 초과했습니다.", HttpStatus.BAD_REQUEST),
     ALREADY_JOINED_MEMBER("E-COMMON-0005","이미 가입된 멤버",HttpStatus.CONFLICT),
 
     UNAUTHORIZED("E-AUTH-0001", "인증이 필요합니다. ", HttpStatus.UNAUTHORIZED),
@@ -31,6 +32,7 @@ public enum ErrorCode {
     GROUP_MEMBER_NOT_FOUND("E-GROUP-0002", "그룹 멤버를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     NOT_GROUP_LEADER("E-GROUP-0003", "그룹 리더가 아닙니다.", HttpStatus.FORBIDDEN),
     GROUP_NOT_RECRUITING("E-GROUP-0004", "모집 중인 그룹이 아닙니다.", HttpStatus.BAD_REQUEST),
+    REPORT_MEMBER_NOT_IN_GROUP("E-GROUP-0005", "보고서 참여 멤버는 해당 그룹의 활성 멤버여야 합니다.", HttpStatus.BAD_REQUEST),
 
     //POST 공용
     POST_NOT_FOUND("E-POST-0001", "게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
@@ -38,6 +40,9 @@ public enum ErrorCode {
     //소식 게시판
     NEWS_NOT_FOUND("E-NEWS-0001", "소식 게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     NEWS_INVALID_POST_CATEGORY("E-NEWS-0002", "뉴스 카테고리 게시글만 소식으로 생성할 수 있습니다.", HttpStatus.BAD_REQUEST),
+    NEWS_ATTACHMENT_NOT_FOUND("E-NEWS-0003", "소식 첨부파일을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    NEWS_ATTACHMENT_TYPE_NOT_ALLOWED("E-NEWS-0004", "허용되지 않는 첨부파일 형식입니다.", HttpStatus.BAD_REQUEST),
+    NEWS_ATTACHMENT_SIZE_EXCEEDED("E-NEWS-0005", "첨부파일 크기가 제한을 초과했습니다 (최대 20MB).", HttpStatus.BAD_REQUEST),
     //모임
     GATHERING_NOT_FOUND("E-GATHERING-0001", "모임을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     VOTE_CLOSED("E-GATHERING-0002", "투표가 마감되었습니다.", HttpStatus.BAD_REQUEST),
@@ -69,4 +74,3 @@ public enum ErrorCode {
     private final HttpStatus httpStatus;
 
 }
-
