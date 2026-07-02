@@ -60,4 +60,28 @@ public class CommentMapper {
                 comment.getContent()
         );
     }
+
+    public CommentDTO.FreeBoardCommentResponse toFreeBoardCommentDTO(Comment comment) {
+        if (comment.isAnonymous()) {
+            return new CommentDTO.FreeBoardCommentAnonymousInfoDTO(
+                    comment.getId(),
+                    comment.isDeleted() ? "삭제된 댓글입니다" : comment.getContent(),
+                    comment.getParentComment() != null ? comment.getParentComment().getId() : null,
+                    comment.getCreatedAt(),
+                    true
+            );
+        }
+        User user = userRepository.findById(comment.getUserId())
+                .orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        return new CommentDTO.FreeBoardCommentInfoDTO(
+                comment.getId(),
+                comment.getUserId(),
+                user.getGeneration(),
+                user.getName(),
+                comment.isDeleted() ? "삭제된 댓글입니다" : comment.getContent(),
+                comment.getParentComment() != null ? comment.getParentComment().getId() : null,
+                comment.getCreatedAt(),
+                false
+        );
+    }
 }

@@ -13,6 +13,7 @@ import com.example.cbumanage.post.service.PostService;
 import com.example.cbumanage.post.repository.PostRepository;
 import com.example.cbumanage.report.repository.PostReportRepository;
 import com.example.cbumanage.group.repository.GroupMemberRepository;
+import com.example.cbumanage.group.repository.GroupRepository;
 import com.example.cbumanage.post.util.PostMapper;
 import com.example.cbumanage.reportmember.entity.ReportMember;
 import com.example.cbumanage.reportmember.repository.ReportMemberRepository;
@@ -45,6 +46,7 @@ public class PostReportService {
     private final PostMapper postMapper;
     private final UserRepository userRepository;
     private final GroupMemberRepository groupMemberRepository;
+    private final GroupRepository groupRepository;
     private final ReportMemberRepository reportMemberRepository;
 
     public PostReport createReport(PostDTO.ReportCreateDTO req) {
@@ -103,11 +105,28 @@ fetch join -> 해결
  */
     public PostDTO.PostReportPreviewSearchDTO getPostReportPreviewDTOList(Pageable pageable, Long userId,
                                                                           LocalDateTime startDate, LocalDateTime endDate,
-                                                                          String keyword, List<Long> filterGroupIds) {
+                                                                          String keyword, List<Long> filterGroupIds,
+                                                                          Integer groupCategory) {
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
         boolean isAdmin = user.getRole().canViewAllReports();
 
+        List<Long> categoryGroupIds = groupCategory != null
+                ? groupRepository.findIdsByCategory(groupCategory)
+                : null;
+
         List<Long> effectiveGroupIds = resolveGroupIds(isAdmin, userId, filterGroupIds);
+
+        if (categoryGroupIds != null) {
+            if (categoryGroupIds.isEmpty()) {
+                PostDTO.ReportSearchInfoDTO searchInfo = (keyword != null && !keyword.isBlank())
+                        ? PostDTO.ReportSearchInfoDTO.of(keyword) : PostDTO.ReportSearchInfoDTO.none();
+                return new PostDTO.PostReportPreviewSearchDTO(Page.empty(pageable), searchInfo);
+            }
+            Set<Long> categorySet = new LinkedHashSet<>(categoryGroupIds);
+            effectiveGroupIds = effectiveGroupIds == null
+                    ? categoryGroupIds
+                    : effectiveGroupIds.stream().filter(categorySet::contains).toList();
+        }
 
         if (effectiveGroupIds != null && effectiveGroupIds.isEmpty()) {
             PostDTO.ReportSearchInfoDTO searchInfo = (keyword != null && !keyword.isBlank())

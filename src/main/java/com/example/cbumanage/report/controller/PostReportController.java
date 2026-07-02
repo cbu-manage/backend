@@ -82,12 +82,13 @@ public class PostReportController {
             @Parameter(description = "활동 종료일 (포함, yyyy-MM-dd)", example = "2025-12-31") @RequestParam(required = false) LocalDate endDate,
             @Parameter(description = "제목 또는 작성자 이름 키워드 (공백으로 구분 시 각 단어를 개별 검색)") @RequestParam(required = false) String keyword,
             @Parameter(description = "그룹 ID 필터 (여러 개 전달 가능, OR 조건). MEMBER는 본인 소속 그룹과 교집합으로 적용됩니다.") @RequestParam(required = false) List<Long> groupIds,
+            @Parameter(description = "그룹 카테고리 필터 (1=스터디, 2=프로젝트). 미입력 시 전체 조회. 다른 필터와 AND로 적용됩니다.") @RequestParam(required = false) Integer groupCategory,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
         LocalDateTime start = startDate != null ? startDate.atStartOfDay() : null;
         LocalDateTime end   = endDate   != null ? endDate.atTime(LocalTime.MAX) : null;
-        PostDTO.PostReportPreviewSearchDTO result = postReportService.getPostReportPreviewDTOList(pageable, userId, start, end, keyword, groupIds);
+        PostDTO.PostReportPreviewSearchDTO result = postReportService.getPostReportPreviewDTOList(pageable, userId, start, end, keyword, groupIds, groupCategory);
         return ApiResponse.success(result);
     }
 

@@ -62,5 +62,7 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 """)
     List<Group> findByUserId(Long userId, GroupMemberStatus memberStatus);
 
+    @Query("select g.id from Group g where g.category = :category and g.isDeleted = false")
+    List<Long> findIdsByCategory(@Param("category") int category);
 
 }

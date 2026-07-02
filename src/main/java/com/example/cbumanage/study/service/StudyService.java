@@ -158,8 +158,7 @@ public class StudyService {
     public PostDTO.PostStudyCreateResponseDTO createPostStudy(PostDTO.PostStudyCreateRequestDTO req, Long userId) {
         PostDTO.PostCreateDTO postCreateDTO = postMapper.toPostCreateDTO(req, userId);
         Post post = postService.createPost(postCreateDTO);
-        String groupName = req.getStudyName() + " #" + post.getId();
-        Group group = groupService.createGroup(groupName, userId, req.getMaxMembers(), post.getId(), post.getCategory());
+        Group group = groupService.createGroup(req.getStudyName(), userId, req.getMaxMembers(), post.getId(), post.getCategory());
         PostDTO.StudyCreateDTO studyCreateDTO = postMapper.toStudyCreateDTO(req, post.getId());
         Study study = createStudy(studyCreateDTO, group);
         User author = userRepository.findById(post.getAuthorId()).orElse(null);
