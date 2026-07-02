@@ -56,10 +56,19 @@ public class MemberController {
 
     @PatchMapping("member/{id}/approve-payment")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_TREASURER')")
-    @Operation(summary = "회비 확인 후 회원 승인", description = "회비 납부 확인 후 회원 상태를 ACTIVE로 변경하고 오픈채팅/디스코드 링크 안내 메일을 발송합니다.")
-    public ApiResponse<Void> approvePayment(@PathVariable Long id) {
-        memberManageService.approvePayment(id);
+    @Operation(summary = "회비 확인 후 회원 승인", description = "회비 납부 확인 후 회원 상태를 ACTIVE로 변경하고 오픈채팅/디스코드 링크 안내 메일을 발송합니다. newMember=true인 신규부원에게만 메일을 발송합니다.")
+    public ApiResponse<Void> approvePayment(@PathVariable Long id, @RequestParam(name = "newMember", defaultValue = "true") boolean newMember) {
+        memberManageService.approvePayment(id, newMember);
         return ApiResponse.success();
+    }
+
+    @PatchMapping("members/deactivate")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_TREASURER')")
+    @Operation(summary = "회비 시즌 전체 비활성화",
+            description = "현재 ACTIVE인 모든 부원을 INACTIVE로 전환하여 재납부·재승인 대상으로 만듭니다.")
+    public ApiResponse<Integer> deactivateAllMembers() {
+        int count = memberManageService.deactivateAllActiveMembers();
+        return ApiResponse.success(count);
     }
 
     @DeleteMapping("member/{studentNumber}")
