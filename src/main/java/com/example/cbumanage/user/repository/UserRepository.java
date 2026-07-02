@@ -6,6 +6,7 @@ import com.example.cbumanage.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -40,4 +41,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
               AND u.userId NOT IN (SELECT d.userId FROM Dues d WHERE d.term = :term)
             """)
     List<User> findAllWithoutDues(@Param("term") String term);
+
+    //
+    @Modifying
+    @Query("UPDATE User u SET u.memberStatus = :to WHERE u.deletedAt IS NULL AND u.memberStatus = :from")
+    int bulkUpdateMemberStatus(@Param("from") MemberStatus from, @Param("to") MemberStatus to);
 }
