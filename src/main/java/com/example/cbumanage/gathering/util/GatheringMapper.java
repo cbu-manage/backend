@@ -49,6 +49,8 @@ public class GatheringMapper {
                 .summary(summary)
                 .myStatus(myStatus)
                 .createdAt(gathering.getCreatedAt())
+                .updatedAuthorId(gathering.getUpdatedAuthorId())
+                .updatedAt(gathering.getUpdatedAt())
                 .viewCount(gathering.getViewCount())
                 .build();
     }
@@ -72,7 +74,6 @@ public class GatheringMapper {
                 .summary(summary)
                 .attendingMembers(grouped.getOrDefault(AttendanceStatus.ATTENDING, List.of()))
                 .notAttendingMembers(grouped.getOrDefault(AttendanceStatus.NOT_ATTENDING, List.of()))
-                .undecidedMembers(grouped.getOrDefault(AttendanceStatus.UNDECIDED, List.of()))
                 .build();
     }
 
@@ -97,7 +98,6 @@ public class GatheringMapper {
                 .summary(summary)
                 .attendingMembers(grouped.getOrDefault(AttendanceStatus.ATTENDING, List.of()))
                 .notAttendingMembers(grouped.getOrDefault(AttendanceStatus.NOT_ATTENDING, List.of()))
-                .undecidedMembers(grouped.getOrDefault(AttendanceStatus.UNDECIDED, List.of()))
                 .unansweredMembers(grouped.getOrDefault(AttendanceStatus.NOT_RESPONDED, List.of()))
                 .build();
     }

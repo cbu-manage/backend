@@ -40,6 +40,9 @@ public class Gathering {
     @Column(name = "author_id", nullable = false)
     private Long authorId;
 
+    @Column(name = "updated_author_id")
+    private Long updatedAuthorId;
+
     private LocalDateTime voteDeadline;
 
     @Column(nullable = false)
@@ -78,24 +81,29 @@ public class Gathering {
         gathering.voteDeadline = voteDeadline;
         gathering.allMembersTarget = allMembersTarget;
         gathering.authorId = authorId;
+        gathering.updatedAuthorId = authorId;
         gathering.isDeleted = false;
         return gathering;
     }
 
     public void update(String title, String description,
-                       LocalDateTime gatheringDate, String location, LocalDateTime voteDeadline) {
+                       LocalDateTime gatheringDate, String location, LocalDateTime voteDeadline,
+                       Long updatedAuthorId) {
         if (title != null) this.title = title;
         if (description != null) this.description = description;
         if (gatheringDate != null) this.gatheringDate = gatheringDate;
         if (location != null) this.location = location;
         if (voteDeadline != null) this.voteDeadline = voteDeadline;
+        this.updatedAuthorId = updatedAuthorId;
     }
 
-    public void delete() {
+    public void delete(Long updatedAuthorId) {
         this.isDeleted = true;
+        this.updatedAuthorId = updatedAuthorId;
     }
 
-    public void close() {
+    public void close(Long updatedAuthorId) {
         this.voteDeadline = LocalDateTime.now();
+        this.updatedAuthorId = updatedAuthorId;
     }
 }

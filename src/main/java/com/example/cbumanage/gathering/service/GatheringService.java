@@ -129,47 +129,44 @@ public class GatheringService {
     }
 
     /**
-     * 모임 정보를 수정합니다. 작성자만 수정할 수 있습니다.
+     * 모임 정보를 수정합니다.
      * 유형(type)은 변경 불가 — 변경이 필요하면 삭제 후 재생성해야 합니다.
      */
     @Transactional
     public GatheringDTO.GatheringResponse updateGathering(Long gatheringId, GatheringDTO.UpdateRequest request, Long memberId) {
         Gathering gathering = findGathering(gatheringId);
-        validateCreator(gathering, memberId);
 
         if (request.type() != null && request.type() != gathering.getType()) {
             throw new BaseException(ErrorCode.GATHERING_TYPE_IMMUTABLE);
         }
 
         gathering.update(request.title(), request.description(),
-                request.gatheringDate(), request.location(), request.voteDeadline());
+                request.gatheringDate(), request.location(), request.voteDeadline(), memberId);
 
         User author = userRepository.findById(gathering.getAuthorId()).orElse(null);
         return gatheringMapper.toGatheringResponse(gathering, author, null, buildSummaryByCount(gatheringId));
     }
 
     /**
-     * 모임을 수동 마감합니다. 작성자만 마감할 수 있습니다.
+     * 모임을 수동 마감합니다.
      */
     @Transactional
     public void closeGathering(Long gatheringId, Long memberId) {
         Gathering gathering = findGathering(gatheringId);
-        validateCreator(gathering, memberId);
-        gathering.close();
+        gathering.close(memberId);
     }
 
     /**
-     * 모임을 삭제합니다. 작성자만 삭제할 수 있습니다. (소프트 딜리트)
+     * 모임을 삭제합니다. (소프트 딜리트)
      */
     @Transactional
     public void deleteGathering(Long gatheringId, Long memberId) {
         Gathering gathering = findGathering(gatheringId);
-        validateCreator(gathering, memberId);
-        gathering.delete();
+        gathering.delete(memberId);
     }
 
     /**
-     * 모임 참석 여부를 투표합니다. (ATTENDING / NOT_ATTENDING / UNDECIDED)
+     * 모임 참석 여부를 투표합니다. (ATTENDING / NOT_ATTENDING)
      * 이미 투표한 경우 재투표하면 이전 값이 덮어씌워집니다.
      * 투표 마감 상태에서는 투표할 수 없습니다.
      */
@@ -216,8 +213,8 @@ public class GatheringService {
     }
 
     /**
-     * 참석 명단을 엑셀 파일로 내보냅니다. (관리자용)
-     * 참석 → 불참 → 미정 → 미응답 순으로 정렬됩니다.
+     * 참석 명단을 엑셀 파일로 내보냅니다.
+     * 참석 → 불참 → 미응답 순으로 정렬됩니다.
      */
     @Transactional(readOnly = true)
     public byte[] exportAttendanceToExcel(Long gatheringId) {
@@ -240,7 +237,7 @@ public class GatheringService {
                 cell.setCellStyle(headerStyle);
             }
 
-            // 참석 → 불참 → 미정 → 미응답 순 정렬
+            // 참석 → 불참 → 미응답 순 정렬
             List<GatheringAttendance> sorted = attendances.stream()
                     .sorted(Comparator.comparingInt(a -> statusOrder(a.getStatus())))
                     .toList();
@@ -280,7 +277,6 @@ public class GatheringService {
         return switch (status) {
             case ATTENDING -> "참석";
             case NOT_ATTENDING -> "불참";
-            case UNDECIDED -> "미정";
             case NOT_RESPONDED -> "미응답";
         };
     }
@@ -289,8 +285,7 @@ public class GatheringService {
         return switch (status) {
             case ATTENDING -> 0;
             case NOT_ATTENDING -> 1;
-            case UNDECIDED -> 2;
-            case NOT_RESPONDED -> 3;
+            case NOT_RESPONDED -> 2;
         };
     }
 
@@ -303,11 +298,6 @@ public class GatheringService {
                 .orElseThrow(() -> new BaseException(ErrorCode.GATHERING_NOT_FOUND));
     }
 
-    private void validateCreator(Gathering gathering, Long memberId) {
-        if (!gathering.getAuthorId().equals(memberId)) {
-            throw new BaseException(ErrorCode.FORBIDDEN);
-        }
-    }
 
     // 로딩된 참석 리스트로 요약을 계산합니다. NOT_RESPONDED가 unanswered에 해당합니다.
     private GatheringDTO.AttendanceSummary buildSummaryFromList(List<GatheringAttendance> attendances) {
@@ -315,14 +305,12 @@ public class GatheringService {
                 .collect(Collectors.groupingBy(GatheringAttendance::getStatus, Collectors.counting()));
         long attending = counts.getOrDefault(AttendanceStatus.ATTENDING, 0L);
         long notAttending = counts.getOrDefault(AttendanceStatus.NOT_ATTENDING, 0L);
-        long undecided = counts.getOrDefault(AttendanceStatus.UNDECIDED, 0L);
         long unanswered = counts.getOrDefault(AttendanceStatus.NOT_RESPONDED, 0L);
         return GatheringDTO.AttendanceSummary.builder()
                 .attending(attending)
                 .notAttending(notAttending)
-                .undecided(undecided)
                 .unanswered(unanswered)
-                .total(attending + notAttending + undecided + unanswered)
+                .total(attending + notAttending + unanswered)
                 .build();
     }
 
@@ -330,14 +318,12 @@ public class GatheringService {
     private GatheringDTO.AttendanceSummary buildSummaryByCount(Long gatheringId) {
         long attending = attendanceRepository.countByGatheringIdAndStatus(gatheringId, AttendanceStatus.ATTENDING);
         long notAttending = attendanceRepository.countByGatheringIdAndStatus(gatheringId, AttendanceStatus.NOT_ATTENDING);
-        long undecided = attendanceRepository.countByGatheringIdAndStatus(gatheringId, AttendanceStatus.UNDECIDED);
         long unanswered = attendanceRepository.countByGatheringIdAndStatus(gatheringId, AttendanceStatus.NOT_RESPONDED);
         return GatheringDTO.AttendanceSummary.builder()
                 .attending(attending)
                 .notAttending(notAttending)
-                .undecided(undecided)
                 .unanswered(unanswered)
-                .total(attending + notAttending + undecided + unanswered)
+                .total(attending + notAttending + unanswered)
                 .build();
     }
 }

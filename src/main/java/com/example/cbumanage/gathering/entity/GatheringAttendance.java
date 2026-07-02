@@ -38,10 +38,10 @@ public class GatheringAttendance {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    // 사용자가 명시적으로 투표한 시각. 자동 초기화(UNDECIDED)된 레코드는 null
+    // 사용자가 명시적으로 투표한 시각. 자동 초기화(NOT_RESPONDED)된 레코드는 null
     private LocalDateTime votedAt;
 
-    // 자동 초기화용 (allMembersTarget=true 시 UNDECIDED로 일괄 생성)
+    // 자동 초기화용 (allMembersTarget=true 시 NOT_RESPONDED로 일괄 생성)
     public static GatheringAttendance create(Gathering gathering, User member, AttendanceStatus status) {
         GatheringAttendance attendance = new GatheringAttendance();
         attendance.gathering = gathering;

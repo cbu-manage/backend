@@ -5,7 +5,6 @@ import com.example.cbumanage.gathering.service.GatheringService;
 import com.example.cbumanage.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -30,7 +29,8 @@ public class GatheringController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_EVENT_MANAGER')")
     @Operation(
             summary = "모임 일정 등록",
-            description = "**모임 유형(type)**\n" +
+            description = "**최고관리자(ADMIN) / 회장(PRESIDENT) / 부회장(VICE_PRESIDENT) / 행사관리(EVENT_MANAGER)** 계정만 사용할 수 있습니다.\n\n" +
+                    "**모임 유형(type)**\n" +
                     "| 값 | 이름 | 투표 방식 |\n" +
                     "|---|---|---|\n" +
                     "| `DINING` | 회식 | 전체 동아리원 자동 포함 (고정) |\n" +
@@ -82,7 +82,8 @@ public class GatheringController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_EVENT_MANAGER')")
     @Operation(
             summary = "모임 일정 수정",
-            description = "본인이 등록한 모임만 수정할 수 있습니다.\n" +
+            description = "**최고관리자(ADMIN) / 회장(PRESIDENT) / 부회장(VICE_PRESIDENT) / 행사관리(EVENT_MANAGER)** 계정만 사용할 수 있습니다.\n\n" +
+                    "본인이 등록한 모임만 수정할 수 있습니다.\n" +
                     "- 투표 마감을 연장하려면 `voteDeadline`을 미래 일시로 변경하면 됩니다."
     )
     public ApiResponse<GatheringDTO.GatheringResponse> updateGathering(
@@ -97,7 +98,8 @@ public class GatheringController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_EVENT_MANAGER')")
     @Operation(
             summary = "모임 투표 마감",
-            description = "본인이 등록한 모임만 수동으로 마감할 수 있습니다. 마감 후에는 투표할 수 없습니다."
+            description = "**최고관리자(ADMIN) / 회장(PRESIDENT) / 부회장(VICE_PRESIDENT) / 행사관리(EVENT_MANAGER)** 계정만 사용할 수 있습니다.\n\n" +
+                    "본인이 등록한 모임만 수동으로 마감할 수 있습니다. 마감 후에는 투표할 수 없습니다."
     )
     public ApiResponse<Void> closeGathering(
             @Parameter(description = "마감할 모임 ID", example = "1") @PathVariable Long gatheringId,
@@ -111,7 +113,8 @@ public class GatheringController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_EVENT_MANAGER')")
     @Operation(
             summary = "모임 일정 삭제",
-            description = "본인이 등록한 모임만 삭제할 수 있습니다. 삭제된 모임은 목록과 상세 조회에서 제외됩니다."
+            description = "**최고관리자(ADMIN) / 회장(PRESIDENT) / 부회장(VICE_PRESIDENT) / 행사관리(EVENT_MANAGER)** 계정만 사용할 수 있습니다.\n\n" +
+                    "본인이 등록한 모임만 삭제할 수 있습니다. 삭제된 모임은 목록과 상세 조회에서 제외됩니다."
     )
     public ApiResponse<Void> deleteGathering(
             @Parameter(description = "삭제할 모임 ID", example = "1") @PathVariable Long gatheringId,
@@ -129,8 +132,7 @@ public class GatheringController {
                     "| 값 | 의미 |\n" +
                     "|---|---|\n" +
                     "| `ATTENDING` | 참석 |\n" +
-                    "| `NOT_ATTENDING` | 불참 |\n" +
-                    "| `UNDECIDED` | 미정 |\n\n" +
+                    "| `NOT_ATTENDING` | 불참 |\n\n" +
                     "> `NOT_RESPONDED`는 시스템 전용 값입니다. 투표 요청에 사용하면 **400**을 반환합니다.\n\n" +
                     "- 이미 투표한 경우 재투표하면 이전 값이 덮어씌워집니다.\n" +
                     "- 투표 마감(`voteClosed: true`)된 모임에는 투표할 수 없습니다. (400 반환)"
@@ -150,7 +152,6 @@ public class GatheringController {
             description = "투표 결과를 상태별 멤버 목록으로 반환합니다. **이름·기수만 노출**됩니다.\n\n" +
                     "- `attendingMembers`: 참석(ATTENDING) 멤버 목록\n" +
                     "- `notAttendingMembers`: 불참(NOT_ATTENDING) 멤버 목록\n" +
-                    "- `undecidedMembers`: 미정(UNDECIDED) 멤버 목록\n" +
                     "- `summary.unanswered`: 미응답(NOT_RESPONDED) 인원 수 (목록은 미제공)\n\n"
     )
     public ApiResponse<GatheringDTO.AttendanceListResponse> getAttendanceList(
@@ -159,13 +160,13 @@ public class GatheringController {
     }
 
     @GetMapping("/{gatheringId}/attendance/admin")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_EVENT_MANAGER')")
     @Operation(
             summary = "참석 명단 조회 (관리자 전용)",
-            description = "관리자 전용. 학번·학과·학년·투표일시 및 미응답자 목록을 포함한 전체 명단을 반환합니다.\n\n" +
+            description = "**최고관리자(ADMIN) / 회장(PRESIDENT) / 부회장(VICE_PRESIDENT) / 행사관리(EVENT_MANAGER)** 계정만 사용할 수 있습니다.\n\n" +
+                    "학번·학과·학년·투표일시 및 미응답자 목록을 포함한 전체 명단을 반환합니다.\n\n" +
                     "- `attendingMembers`: 참석 멤버 목록\n" +
                     "- `notAttendingMembers`: 불참 멤버 목록\n" +
-                    "- `undecidedMembers`: 미정 멤버 목록\n" +
                     "- `unansweredMembers`: 미응답 멤버 목록 (allMembersTarget=true인 모임에서만 존재)\n" +
                     "- `votedAt`: 마지막 투표 변경 시각. 미응답자는 null"
     )
@@ -175,13 +176,14 @@ public class GatheringController {
     }
 
     @GetMapping("/{gatheringId}/attendance/export")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_EVENT_MANAGER')")
     @Operation(
-            summary = "참석 명단 엑셀 다운로드 (관리자 전용)",
-            description = "참석 명단을 xlsx 파일로 다운로드합니다.\n\n" +
+            summary = "참석 명단 엑셀 다운로드(관리자 전용)",
+            description = "**최고관리자(ADMIN) / 회장(PRESIDENT) / 부회장(VICE_PRESIDENT) / 행사관리(EVENT_MANAGER)** 계정만 사용할 수 있습니다.\n\n" +
+                    "참석 명단을 xlsx 파일로 다운로드합니다.\n\n" +
                     "- 컬럼: 이름 / 기수 / 학번 / 학과 / 학년 / 응답 / 투표일시\n" +
-                    "- 정렬: 참석 → 불참 → 미정 → 미응답 순\n" +
-                    "- 미응답자의 투표일시는 `--` 로 표시됩니다.\n\n" 
+                    "- 정렬: 참석 → 불참 → 미응답 순\n" +
+                    "- 미응답자의 투표일시는 `--` 로 표시됩니다.\n\n"
     )
     public ResponseEntity<byte[]> exportAttendanceToExcel(
             @Parameter(description = "조회할 모임 ID", example = "1") @PathVariable Long gatheringId) {
