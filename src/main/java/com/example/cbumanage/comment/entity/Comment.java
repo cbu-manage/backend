@@ -57,15 +57,24 @@ public class Comment {
 
     private boolean isDeleted = false;
 
+    private boolean isAnonymous = false;
+
     /**
      * Post에 대한 댓글 생성
      */
-    public Comment(Post post, Long userId,Comment parentComment, String content) {
+    public Comment(Post post, Long userId, Comment parentComment, String content) {
         this.post = post;
-//        this.problem = null;
         this.userId = userId;
         this.parentComment = parentComment;
         this.content = content;
+    }
+
+    public Comment(Post post, Long userId, Comment parentComment, String content, boolean isAnonymous) {
+        this.post = post;
+        this.userId = userId;
+        this.parentComment = parentComment;
+        this.content = content;
+        this.isAnonymous = isAnonymous;
     }
 
     /**

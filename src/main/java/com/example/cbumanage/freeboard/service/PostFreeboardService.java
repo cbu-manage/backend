@@ -37,11 +37,11 @@ public class PostFreeboardService {
         return postMapper.toPostFreeboardCreateResponseDTO(post, freeboard);
     }
 
-    public Page<PostDTO.PostFreeboardResponse> getFreeBoardList(Pageable pageable) {
+    public Page<PostDTO.PostFreeboardPreviewResponse> getFreeBoardList(Pageable pageable) {
         return postFreeboardRepository.findAllActive(pageable)
                 .map(fb -> fb.isAnonymous()
-                        ? postMapper.toPostFreeboardAnonymousInfoDTO(fb)
-                        : postMapper.toPostFreeboardInfoDTO(fb));
+                        ? postMapper.toPostFreeboardAnonymousPreviewDTO(fb)
+                        : postMapper.toPostFreeboardPreviewDTO(fb));
     }
 
     public PostDTO.PostFreeboardResponse getFreeBoard(Long postId) {

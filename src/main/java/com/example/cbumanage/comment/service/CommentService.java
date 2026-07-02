@@ -99,6 +99,26 @@ public class CommentService {
                 .toList();
     }
 
+    @Transactional
+    public CommentDTO.CommentCreateResponseDTO createFreeBoardComment(
+            CommentDTO.CommentCreateRequestDTO req, Long userId, Long postId, boolean isAnonymous) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Post not found"));
+        boolean anonymous = postFreeboardRepository.findByPostId(postId)
+                .map(fb -> fb.isAnonymous() || isAnonymous)
+                .orElse(isAnonymous);
+        Comment comment = new Comment(post, userId, null, req.content(), anonymous);
+        return commentMapper.toCommentCreateResponseDTO(commentRepository.save(comment));
+    }
+
+    public List<CommentDTO.FreeBoardCommentResponse> getFreeBoardComments(Long postId) {
+        postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Post not found"));
+        return commentRepository.findByPostId(postId).stream()
+                .map(commentMapper::toFreeBoardCommentDTO)
+                .toList();
+    }
+
     boolean isAuthor(Long userId,Comment comment){
         if (userId.equals(comment.getUserId())){
             return true;

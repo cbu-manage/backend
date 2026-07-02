@@ -1,5 +1,7 @@
 package com.example.cbumanage.freeboard.controller;
 
+import com.example.cbumanage.comment.dto.CommentDTO;
+import com.example.cbumanage.comment.service.CommentService;
 import com.example.cbumanage.freeboard.service.PostFreeboardService;
 import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.global.error.BaseException;
@@ -29,6 +31,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class PostFreeboardController {
 
     private final PostFreeboardService postFreeboardService;
+    private final CommentService commentService;
 
     @Operation(
             summary = "자유게시판 게시글 생성",
@@ -54,15 +57,44 @@ public class PostFreeboardController {
             summary = "자유게시판 목록 조회",
             description = """
                     자유게시판 게시글 목록을 최신순으로 페이징 조회합니다. 인증 없이 누구나 조회 가능합니다.
-                    삭제된 게시글(isDeleted=true)은 제외됩니다.
+                    삭제된 게시글(isDeleted=true)은 제외되며, content는 포함되지 않습니다.
 
                     **응답 스키마**: isAnonymous 값에 따라 두 가지 DTO 중 하나로 반환됩니다.
-                    - isAnonymous=false → PostFreeboardInfoDTO (작성자 정보 포함)
-                    - isAnonymous=true → PostFreeboardAnonymousInfoDTO (작성자 정보 미포함)
+                    - isAnonymous=false → PostFreeboardPreviewDTO (작성자 정보 포함, content 없음)
+                    - isAnonymous=true → PostFreeboardAnonymousPreviewDTO (작성자 정보 없음, content 없음)
                     """
     )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", content = @Content(
+            schema = @Schema(oneOf = {
+                    PostDTO.PostFreeboardPreviewDTO.class,
+                    PostDTO.PostFreeboardAnonymousPreviewDTO.class
+            }),
+            examples = {
+                    @ExampleObject(name = "실명 게시글 (isAnonymous=false)", value = """
+                            {
+                              "postId": 1,
+                              "title": "안녕하세요",
+                              "createdAt": "2025-01-01T12:00:00",
+                              "authorId": 42,
+                              "authorName": "김건우",
+                              "authorGeneration": 10,
+                              "viewCount": 15,
+                              "commentCount": 3,
+                              "isAnonymous": false
+                            }"""),
+                    @ExampleObject(name = "익명 게시글 (isAnonymous=true)", value = """
+                            {
+                              "postId": 2,
+                              "title": "익명으로 작성한 글",
+                              "createdAt": "2025-01-01T12:00:00",
+                              "viewCount": 5,
+                              "commentCount": 1,
+                              "isAnonymous": true
+                            }""")
+            }
+    ))
     @GetMapping
-    public ApiResponse<Page<PostDTO.PostFreeboardResponse>> getFreeBoardList(
+    public ApiResponse<Page<PostDTO.PostFreeboardPreviewResponse>> getFreeBoardList(
             @RequestParam int page,
             @RequestParam int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
@@ -117,6 +149,49 @@ public class PostFreeboardController {
         try {
             return ApiResponse.success(postFreeboardService.getFreeBoard(postId));
         } catch (EntityNotFoundException e) {
+            throw new BaseException(ErrorCode.NOT_FOUND);
+        }
+    }
+
+    @Operation(
+            summary = "자유게시판 댓글 작성",
+            description = """
+                    자유게시판 게시글에 댓글을 작성합니다. 로그인 상태에서만 작성 가능합니다.
+
+                    **익명 처리**: isAnonymous 파라미터로 익명 여부를 선택할 수 있습니다. (default: false)
+                    단, 게시글 자체가 익명(isAnonymous=true)이면 파라미터 값에 관계없이 댓글도 무조건 익명으로 생성됩니다.
+                    """
+    )
+    @PostMapping("/{postId}/comment")
+    public ApiResponse<CommentDTO.CommentCreateResponseDTO> createFreeBoardComment(
+            @PathVariable Long postId,
+            @RequestParam(defaultValue = "false") boolean isAnonymous,
+            @RequestBody CommentDTO.CommentCreateRequestDTO req,
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
+        try {
+            return ApiResponse.success(commentService.createFreeBoardComment(req, userId, postId, isAnonymous));
+        } catch (jakarta.persistence.EntityNotFoundException e) {
+            throw new BaseException(ErrorCode.NOT_FOUND);
+        }
+    }
+
+    @Operation(
+            summary = "자유게시판 댓글 목록 조회",
+            description = """
+                    자유게시판 게시글의 댓글 목록을 조회합니다. 인증 없이 누구나 조회 가능합니다.
+
+                    **응답 스키마**: 댓글별 isAnonymous 값에 따라 두 가지 DTO 중 하나로 반환됩니다.
+                    - isAnonymous=false → FreeBoardCommentInfoDTO (작성자 정보 포함)
+                    - isAnonymous=true → FreeBoardCommentAnonymousInfoDTO (작성자 정보 없음)
+                    """
+    )
+    @GetMapping("/{postId}/comment")
+    public ApiResponse<java.util.List<CommentDTO.FreeBoardCommentResponse>> getFreeBoardComments(
+            @PathVariable Long postId) {
+        try {
+            return ApiResponse.success(commentService.getFreeBoardComments(postId));
+        } catch (jakarta.persistence.EntityNotFoundException e) {
             throw new BaseException(ErrorCode.NOT_FOUND);
         }
     }

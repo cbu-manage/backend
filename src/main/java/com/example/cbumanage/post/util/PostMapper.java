@@ -395,6 +395,35 @@ public class PostMapper {
         );
     }
 
+    public PostDTO.PostFreeboardPreviewDTO toPostFreeboardPreviewDTO(PostFreeboard freeboard) {
+        Post post = freeboard.getPost();
+        User author = userRepository.findById(post.getAuthorId())
+                .orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        return new PostDTO.PostFreeboardPreviewDTO(
+                post.getId(),
+                post.getTitle(),
+                post.getCreatedAt(),
+                post.getAuthorId(),
+                author.getName(),
+                author.getGeneration(),
+                post.getViewCount(),
+                commentRepository.countByPostId(post.getId()),
+                freeboard.isAnonymous()
+        );
+    }
+
+    public PostDTO.PostFreeboardAnonymousPreviewDTO toPostFreeboardAnonymousPreviewDTO(PostFreeboard freeboard) {
+        Post post = freeboard.getPost();
+        return new PostDTO.PostFreeboardAnonymousPreviewDTO(
+                post.getId(),
+                post.getTitle(),
+                post.getCreatedAt(),
+                post.getViewCount(),
+                commentRepository.countByPostId(post.getId()),
+                freeboard.isAnonymous()
+        );
+    }
+
     public PostDTO.PostMyPageViewDTO  toPostMyPageViewDTO(Post post, User author) {
         return PostDTO.PostMyPageViewDTO.builder()
                 .postId(post.getId())
