@@ -890,6 +890,28 @@ public class PostDTO {
 
     //------------자유게시판 코드
 
+    @Schema(
+            description = "자유게시판 단건 조회 응답의 공통 타입입니다. isAnonymous 값에 따라 반환 스키마가 달라집니다.",
+            oneOf = {PostDTO.PostFreeboardInfoDTO.class, PostDTO.PostFreeboardAnonymousInfoDTO.class},
+            discriminatorProperty = "isAnonymous",
+            discriminatorMapping = {
+                    @io.swagger.v3.oas.annotations.media.DiscriminatorMapping(value = "false", schema = PostDTO.PostFreeboardInfoDTO.class),
+                    @io.swagger.v3.oas.annotations.media.DiscriminatorMapping(value = "true",  schema = PostDTO.PostFreeboardAnonymousInfoDTO.class)
+            }
+    )
+    public interface PostFreeboardResponse {}
+
+    @Schema(
+            description = "자유게시판 목록 조회 응답의 공통 타입입니다. isAnonymous 값에 따라 반환 스키마가 달라집니다.",
+            oneOf = {PostDTO.PostFreeboardPreviewDTO.class, PostDTO.PostFreeboardAnonymousPreviewDTO.class},
+            discriminatorProperty = "isAnonymous",
+            discriminatorMapping = {
+                    @io.swagger.v3.oas.annotations.media.DiscriminatorMapping(value = "false", schema = PostDTO.PostFreeboardPreviewDTO.class),
+                    @io.swagger.v3.oas.annotations.media.DiscriminatorMapping(value = "true",  schema = PostDTO.PostFreeboardAnonymousPreviewDTO.class)
+            }
+    )
+    public interface PostFreeboardPreviewResponse {}
+
     @Schema(description = "자유게시판 제작 요청 DTO입니다")
     public record PostFreeboardCreateRequestDTO(
             String title,
@@ -908,35 +930,53 @@ public class PostDTO {
             boolean isAnonymous
     ){}
 
-    @Schema(description = "자유게시판-실명 게시글 정보")
+    @Schema(description = "자유게시판 실명 게시글 단건 조회 정보 (content 포함)")
     public record PostFreeboardInfoDTO(
             Long postId,
             String title,
             String content,
             LocalDateTime createdAt,
-
             Long authorId,
             String authorName,
             Long authorGeneration,
-
             Long viewCount,
             Long commentCount,
-
             boolean isAnonymous
-    ){}
+    ) implements PostFreeboardResponse {}
 
-    @Schema(description = "자유게시판-익명게시글 정보 ")
+    @Schema(description = "자유게시판 익명 게시글 단건 조회 정보 (content 포함, 작성자 정보 없음)")
     public record PostFreeboardAnonymousInfoDTO(
             Long postId,
             String title,
             String content,
             LocalDateTime createdAt,
-
             Long viewCount,
             Long commentCount,
-
             boolean isAnonymous
-    ){}
+    ) implements PostFreeboardResponse {}
+
+    @Schema(description = "자유게시판 실명 게시글 목록 조회 정보 (content 미포함)")
+    public record PostFreeboardPreviewDTO(
+            Long postId,
+            String title,
+            LocalDateTime createdAt,
+            Long authorId,
+            String authorName,
+            Long authorGeneration,
+            Long viewCount,
+            Long commentCount,
+            boolean isAnonymous
+    ) implements PostFreeboardPreviewResponse {}
+
+    @Schema(description = "자유게시판 익명 게시글 목록 조회 정보 (content 미포함, 작성자 정보 없음)")
+    public record PostFreeboardAnonymousPreviewDTO(
+            Long postId,
+            String title,
+            LocalDateTime createdAt,
+            Long viewCount,
+            Long commentCount,
+            boolean isAnonymous
+    ) implements PostFreeboardPreviewResponse {}
 
 
 
