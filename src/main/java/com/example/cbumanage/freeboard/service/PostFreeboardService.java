@@ -37,14 +37,14 @@ public class PostFreeboardService {
         return postMapper.toPostFreeboardCreateResponseDTO(post, freeboard);
     }
 
-    public Page<Object> getFreeBoardList(Pageable pageable) {
+    public Page<PostDTO.PostFreeboardResponse> getFreeBoardList(Pageable pageable) {
         return postFreeboardRepository.findAllActive(pageable)
                 .map(fb -> fb.isAnonymous()
                         ? postMapper.toPostFreeboardAnonymousInfoDTO(fb)
                         : postMapper.toPostFreeboardInfoDTO(fb));
     }
 
-    public Object getFreeBoard(Long postId) {
+    public PostDTO.PostFreeboardResponse getFreeBoard(Long postId) {
         PostFreeboard freeboard = postFreeboardRepository.findByPostId(postId)
                 .orElseThrow(() -> new EntityNotFoundException("FreeBoard Not Found"));
         if (freeboard.isAnonymous()) {
@@ -63,7 +63,7 @@ public class PostFreeboardService {
         postService.updatePost(req, post);
     }
 
-    public Page<Object> getMyFreeboards(Pageable pageable, Long userId) {
+    public Page<PostDTO.PostFreeboardResponse> getMyFreeboards(Pageable pageable, Long userId) {
         return postFreeboardRepository.findByAuthorId(userId, pageable)
                 .map(fb -> fb.isAnonymous()
                         ? postMapper.toPostFreeboardAnonymousInfoDTO(fb)

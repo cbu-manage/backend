@@ -6,6 +6,9 @@ import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.post.dto.PostDTO;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
@@ -29,9 +32,15 @@ public class PostFreeboardController {
 
     @Operation(
             summary = "자유게시판 게시글 생성",
-            description = "자유게시판 게시글을 생성합니다. 로그인 상태에서만 작성 가능합니다.<br>" +
-                    "카테고리는 서버에서 8로 자동 주입되며 클라이언트 입력값은 무시됩니다.<br>" +
-                    "isAnonymous가 true이면 익명으로 등록됩니다."
+            description = """
+                    자유게시판 게시글을 생성합니다. 로그인 상태에서만 작성 가능합니다.
+
+                    **카테고리**: 서버에서 8로 자동 주입되며 클라이언트 입력값은 무시됩니다.
+
+                    **익명 여부**: isAnonymous가 true이면 익명 게시글로 등록됩니다.
+                    익명 게시글은 목록/단건 조회 시 작성자 정보(authorId, authorName, authorGeneration)가 반환되지 않습니다.
+                    isAnonymous는 생성 이후 수정할 수 없습니다.
+                    """
     )
     @PostMapping
     public ApiResponse<PostDTO.PostFreeboardCreateResponseDTO> createFreeBoard(
@@ -43,12 +52,17 @@ public class PostFreeboardController {
 
     @Operation(
             summary = "자유게시판 목록 조회",
-            description = "자유게시판 게시글 목록을 페이징으로 조회합니다.<br>" +
-                    "익명 게시글은 PostFreeboardAnonymousInfoDTO(작성자 정보 없음), " +
-                    "실명 게시글은 PostFreeboardInfoDTO로 반환됩니다."
+            description = """
+                    자유게시판 게시글 목록을 최신순으로 페이징 조회합니다. 인증 없이 누구나 조회 가능합니다.
+                    삭제된 게시글(isDeleted=true)은 제외됩니다.
+
+                    **응답 스키마**: isAnonymous 값에 따라 두 가지 DTO 중 하나로 반환됩니다.
+                    - isAnonymous=false → PostFreeboardInfoDTO (작성자 정보 포함)
+                    - isAnonymous=true → PostFreeboardAnonymousInfoDTO (작성자 정보 미포함)
+                    """
     )
     @GetMapping
-    public ApiResponse<Page<Object>> getFreeBoardList(
+    public ApiResponse<Page<PostDTO.PostFreeboardResponse>> getFreeBoardList(
             @RequestParam int page,
             @RequestParam int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
@@ -57,11 +71,49 @@ public class PostFreeboardController {
 
     @Operation(
             summary = "자유게시판 단건 조회",
-            description = "postId로 자유게시판 게시글을 단건 조회합니다.<br>" +
-                    "익명 여부에 따라 PostFreeboardAnonymousInfoDTO 또는 PostFreeboardInfoDTO로 반환됩니다."
+            description = """
+                    postId로 자유게시판 게시글을 단건 조회합니다. 인증 없이 누구나 조회 가능합니다.
+
+                    **응답 스키마**: isAnonymous 값에 따라 두 가지 DTO 중 하나로 반환됩니다.
+                    - isAnonymous=false → PostFreeboardInfoDTO (authorId, authorName, authorGeneration 포함)
+                    - isAnonymous=true → PostFreeboardAnonymousInfoDTO (작성자 정보 필드 없음)
+
+                    존재하지 않는 postId 요청 시 404를 반환합니다.
+                    """
     )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", content = @Content(
+            schema = @Schema(oneOf = {
+                    PostDTO.PostFreeboardInfoDTO.class,
+                    PostDTO.PostFreeboardAnonymousInfoDTO.class
+            }),
+            examples = {
+                    @ExampleObject(name = "실명 게시글 (isAnonymous=false)", value = """
+                            {
+                              "postId": 1,
+                              "title": "안녕하세요",
+                              "content": "게시글 내용입니다.",
+                              "createdAt": "2025-01-01T12:00:00",
+                              "authorId": 42,
+                              "authorName": "김건우",
+                              "authorGeneration": 10,
+                              "viewCount": 15,
+                              "commentCount": 3,
+                              "isAnonymous": false
+                            }"""),
+                    @ExampleObject(name = "익명 게시글 (isAnonymous=true)", value = """
+                            {
+                              "postId": 2,
+                              "title": "익명으로 작성한 글",
+                              "content": "익명 게시글 내용입니다.",
+                              "createdAt": "2025-01-01T12:00:00",
+                              "viewCount": 5,
+                              "commentCount": 1,
+                              "isAnonymous": true
+                            }""")
+            }
+    ))
     @GetMapping("/{postId}")
-    public ApiResponse<Object> getFreeBoard(@PathVariable Long postId) {
+    public ApiResponse<PostDTO.PostFreeboardResponse> getFreeBoard(@PathVariable Long postId) {
         try {
             return ApiResponse.success(postFreeboardService.getFreeBoard(postId));
         } catch (EntityNotFoundException e) {
@@ -71,8 +123,13 @@ public class PostFreeboardController {
 
     @Operation(
             summary = "자유게시판 게시글 수정",
-            description = "자유게시판 게시글의 제목과 내용을 수정합니다.<br>" +
-                    "작성자 본인만 수정 가능합니다. 익명 여부는 수정할 수 없습니다."
+            description = """
+                    자유게시판 게시글의 제목과 내용을 수정합니다.
+
+                    **권한**: 작성자 본인만 수정 가능합니다. 다른 사용자가 수정 시도 시 403을 반환합니다.
+
+                    **제약**: isAnonymous(익명 여부)는 수정할 수 없습니다. title과 content만 변경 가능합니다.
+                    """
     )
     @PatchMapping("/{postId}")
     public ApiResponse<Void> updateFreeBoard(

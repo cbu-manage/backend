@@ -895,6 +895,17 @@ public class PostDTO {
 
     //------------자유게시판 코드
 
+    @Schema(
+            description = "자유게시판 게시글 응답의 공통 타입입니다. isAnonymous 값에 따라 반환 스키마가 달라집니다.",
+            oneOf = {PostDTO.PostFreeboardInfoDTO.class, PostDTO.PostFreeboardAnonymousInfoDTO.class},
+            discriminatorProperty = "isAnonymous",
+            discriminatorMapping = {
+                    @io.swagger.v3.oas.annotations.media.DiscriminatorMapping(value = "false", schema = PostDTO.PostFreeboardInfoDTO.class),
+                    @io.swagger.v3.oas.annotations.media.DiscriminatorMapping(value = "true",  schema = PostDTO.PostFreeboardAnonymousInfoDTO.class)
+            }
+    )
+    public interface PostFreeboardResponse {}
+
     @Schema(description = "자유게시판 제작 요청 DTO입니다")
     public record PostFreeboardCreateRequestDTO(
             String title,
@@ -928,7 +939,7 @@ public class PostDTO {
             Long commentCount,
 
             boolean isAnonymous
-    ){}
+    ) implements PostFreeboardResponse {}
 
     @Schema(description = "자유게시판-익명게시글 정보 ")
     public record PostFreeboardAnonymousInfoDTO(
@@ -941,7 +952,7 @@ public class PostDTO {
             Long commentCount,
 
             boolean isAnonymous
-    ){}
+    ) implements PostFreeboardResponse {}
 
 
 
