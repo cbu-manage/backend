@@ -52,7 +52,7 @@ public class ApplicationApplicantController {
     }
 
     @PostMapping("/my")
-    @Operation(summary = "내 지원서 조회", description = "학번과 학교 이메일 인증코드 검증 후 본인이 작성한 지원서를 조회합니다.")
+    @Operation(summary = "내 지원서 조회", description = "학번과 신청서에 작성한 본인 닉네임 검증 후 본인이 작성한 지원서를 조회합니다.")
     public ApiResponse<ApplicantApplicationResponse> getMyApplication(
             @RequestBody @Valid ApplicationMyRequest request) {
         return ApiResponse.success(applicationApplicantService.getMyApplication(request));

@@ -89,10 +89,9 @@ public class ApplicationApplicantService {
 
     @Transactional(readOnly = true)
     public ApplicantApplicationResponse getMyApplication(ApplicationMyRequest request) {
-        validateTukoreaEmailAuth(request.email(), request.emailAuthCode(), false);
         MemberApplication application = memberApplicationRepository
-                .findFirstByStudentNumberAndEmailOrderBySubmittedAtDesc(
-                        request.studentNumber(), request.email())
+                .findFirstByStudentNumberAndNicknameOrderBySubmittedAtDesc(
+                        request.studentNumber(), request.nickname())
                 .orElseThrow(() -> new BaseException(ErrorCode.APPLICATION_NOT_FOUND));
         return toApplicantResponse(application);
     }
