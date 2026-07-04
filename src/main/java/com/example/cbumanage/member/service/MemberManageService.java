@@ -90,10 +90,16 @@ public class MemberManageService {
 	}
 
 	@Transactional
-	public void approvePayment(Long userId) {
+	public void approvePayment(Long userId, boolean newMember) {
 		User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
 				.orElseThrow(MemberNotExistsException::new);
 		user.changeMemberStatus(MemberStatus.ACTIVE);
+
+		// 신규 부원이 아니면 온보딩 메일 발송을 하지 않음
+		if (!newMember) {
+			return;
+		}
+
 		if (user.getEmail() == null || user.getEmail().isBlank()) {
 			return;
 		}
@@ -109,6 +115,11 @@ public class MemberManageService {
 				: ApplicationNotification.failed(user.getApplicationId(), user.getEmail(), MailNotiType.ONBOARDING,
 				result.getResponseMessage());
 		applicationNotificationRepository.save(notification);
+	}
+
+	@Transactional
+	public int deactivateAllActiveMembers() {
+		return userRepository.bulkUpdateMemberStatus(MemberStatus.ACTIVE, MemberStatus.INACTIVE);
 	}
 
 	private String hashPassword(String password) {
