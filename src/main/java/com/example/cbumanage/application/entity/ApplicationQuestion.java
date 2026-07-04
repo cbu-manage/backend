@@ -14,7 +14,9 @@ import java.util.UUID;
 
 @Schema(description = "기수별 신청서 질문 템플릿")
 @Entity
-@Table(name = "application_question")
+@Table(name = "application_question",
+        uniqueConstraints = @UniqueConstraint(name = "uk_question_generation_type",
+        columnNames={"generation","type"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ApplicationQuestion {
@@ -50,6 +52,10 @@ public class ApplicationQuestion {
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder;
 
+    @Schema(description = "질문 구분 타입(기수 내 유일)", example = "MOTIVATION")
+    @Column(name = "type", nullable = false, length = 40)
+    private String type;
+
     @Schema(description = "생성일시")
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -75,13 +81,14 @@ public class ApplicationQuestion {
      */
     @Builder
     public ApplicationQuestion(Long generation, String question,
-                               String description, Boolean isRequired, Integer sortOrder) {
+                               String description, Boolean isRequired, Integer sortOrder, String type) {
         this.questionUuid = UUID.randomUUID().toString();
         this.generation = generation;
         this.question = question;
         this.description = description;
         this.isRequired = isRequired != null ? isRequired : true;
         this.sortOrder = sortOrder;
+        this.type = type;
     }
 
     public void update(String question, String description, Boolean isRequired, Integer sortOrder) {
