@@ -24,7 +24,7 @@ public class GatheringDTO {
     ) {}
 
     @Builder
-    @Schema(description = "모임 수정 요청 (작성자만 가능)")
+    @Schema(description = "모임 수정 요청 (ADMIN/PRESIDENT/VICE_PRESIDENT/EVENT_MANAGER 역할이면 작성자 외에도 가능)")
     public record UpdateRequest(
             @Schema(description = "모임 제목", example = "신입생 환영 회식") String title,
             @Schema(description = "모임 유형 (DINING: 회식, FAIR: 박람회, OTHER: 기타)", example = "DINING") GatheringType type,
@@ -80,6 +80,7 @@ public class GatheringDTO {
             @Schema(description = "모임 장소", example = "학교 식당 1층") String location,
             @Schema(description = "투표 마감 일시. null이면 마감 없음", example = "2024-03-10T23:59:59", nullable = true) LocalDateTime voteDeadline,
             @Schema(description = "전체 동아리원 대상 여부. true면 전체 동아리원 포함, false면 오픈 투표", example = "true") Boolean allMembersTarget,
+            @Schema(description = "작성자 유저 ID", example = "5") Long authorId,
             @Schema(description = "작성자 기수", example = "15") Long authorGeneration,
             @Schema(description = "작성자 이름", example = "홍길동") String authorName,
             @Schema(description = "모임 등록 일시", example = "2024-03-01T10:00:00") LocalDateTime createdAt
@@ -97,6 +98,7 @@ public class GatheringDTO {
             @Schema(description = "투표 마감 일시. null이면 마감 없음", example = "2024-03-10T23:59:59", nullable = true) LocalDateTime voteDeadline,
             @Schema(description = "투표 마감 여부 (마감일이 지났으면 true)", example = "false") boolean voteClosed,
             @Schema(description = "전체 동아리원 대상 여부. true면 전체 동아리원 포함, false면 오픈 투표", example = "true") Boolean allMembersTarget,
+            @Schema(description = "작성자 유저 ID", example = "5") Long authorId,
             @Schema(description = "작성자 기수", example = "15") Long authorGeneration,
             @Schema(description = "작성자 이름", example = "홍길동") String authorName,
             @Schema(description = "참석 현황 요약") AttendanceSummary summary,
