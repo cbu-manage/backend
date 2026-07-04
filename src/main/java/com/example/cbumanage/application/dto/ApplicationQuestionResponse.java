@@ -4,6 +4,7 @@ import com.example.cbumanage.application.entity.ApplicationQuestion;
 
 public record ApplicationQuestionResponse(
         String questionUuid,
+        String type,
         String question,
         String description,
         Boolean isRequired,
@@ -12,6 +13,7 @@ public record ApplicationQuestionResponse(
     public static ApplicationQuestionResponse from(ApplicationQuestion question) {
         return new ApplicationQuestionResponse(
                 question.getQuestionUuid(),
+                question.getType(),
                 question.getQuestion(),
                 question.getDescription(),
                 question.getIsRequired(),
