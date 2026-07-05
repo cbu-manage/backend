@@ -6,6 +6,7 @@ import com.example.cbumanage.application.entity.enums.ApplicationStatus;
 import com.example.cbumanage.application.entity.enums.FinalDecision;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 신청서 목록.
@@ -19,7 +20,7 @@ public record ApplicationListItemResponse(
         String name,
         Long studentNumber,
         String major,
-        ApplicationField applicationField,
+        List<ApplicationField> applicationFields,
         LocalDateTime submittedAt,
         long voteProgress,
         long passCount,
@@ -45,7 +46,7 @@ public record ApplicationListItemResponse(
                 application.getName(),
                 application.getStudentNumber(),
                 application.getMajor(),
-                application.getApplicationField(),
+                List.copyOf(application.getApplicationFields()),
                 application.getSubmittedAt(),
                 passCount + failCount,
                 passCount,

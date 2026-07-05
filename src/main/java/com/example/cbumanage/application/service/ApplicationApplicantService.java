@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -65,7 +66,7 @@ public class ApplicationApplicantService {
                 .major(request.major())
                 .phoneNumber(request.phoneNumber())
                 .generation(generation)
-                .applicationField(request.applicationField())
+                .applicationFields(new LinkedHashSet<>(request.applicationFields()))
                 .portfolioUrl(resolvePrimaryPortfolioUrl(request))
                 .refSource(request.refSource())
                 .refLinkEtc(request.refLinkEtc())
