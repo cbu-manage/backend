@@ -48,7 +48,7 @@ public interface MemberApplicationRepository extends JpaRepository<MemberApplica
     @Query("""
            SELECT m FROM MemberApplication m
            WHERE m.generation = :generation
-             AND (:field IS NULL OR m.applicationField = :field)
+             AND (:field IS NULL OR :field MEMBER OF m.applicationFields)
              AND (:statuses IS NULL OR m.status IN :statuses)
              AND (:from IS NULL OR m.submittedAt >= :from)
              AND (:to IS NULL OR m.submittedAt <= :to)

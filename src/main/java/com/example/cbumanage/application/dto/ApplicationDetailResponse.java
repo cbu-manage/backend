@@ -26,7 +26,7 @@ public record ApplicationDetailResponse(
             Long studentNumber,
             String major,
             String phoneNumber,
-            ApplicationField applicationField,
+            List<ApplicationField> applicationFields,
             Boolean canOt,
             Boolean canWelcome,
             RefSource refSource,
