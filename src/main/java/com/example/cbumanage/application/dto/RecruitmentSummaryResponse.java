@@ -5,6 +5,7 @@ import com.example.cbumanage.application.entity.enums.ApplicationStatus;
 import com.example.cbumanage.application.entity.enums.FinalDecision;
 import org.springframework.data.domain.Slice;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,7 +33,7 @@ public record RecruitmentSummaryResponse(
             String name,
             Long studentNumber,
             String major,
-            ApplicationField applicationField,
+            List<ApplicationField> applicationFields,
             long passCount,
             long failCount,
             FinalDecision suggestedDecision   // 만장일치 집계를 통한 드롭다운 초기값

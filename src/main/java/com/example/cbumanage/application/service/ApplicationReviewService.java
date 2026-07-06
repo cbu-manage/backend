@@ -189,7 +189,7 @@ public class ApplicationReviewService {
                 application.getStudentNumber(),
                 application.getMajor(),
                 application.getPhoneNumber(),
-                application.getApplicationField(),
+                List.copyOf(application.getApplicationFields()),
                 application.getCanOt(),
                 application.getCanWelcome(),
                 application.getRefSource(),
@@ -311,7 +311,7 @@ public class ApplicationReviewService {
                     application.getName(),
                     application.getStudentNumber(),
                     application.getMajor(),
-                    application.getApplicationField(),
+                    List.copyOf(application.getApplicationFields()),
                     passFail[0],
                     passFail[1],
                     suggested);

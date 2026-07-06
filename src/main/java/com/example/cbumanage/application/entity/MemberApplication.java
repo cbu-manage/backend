@@ -9,9 +9,12 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Schema(description = "회원가입 지원서 엔티티")
@@ -70,10 +73,14 @@ public class MemberApplication {
     @Column(nullable = false)
     private Long generation;
 
-    @Schema(description = "희망하는 분야", example = "STUDY, DEV, DESIGN, PLAN")
+    @Schema(description = "희망하는 분야 (복수 선택)", example = "[\"STUDY\", \"DEV\"]")
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "member_application_field",
+            joinColumns = @JoinColumn(name = "application_id"))
     @Enumerated(EnumType.STRING)
     @Column(name = "application_field", nullable = false, length = 40)
-    private ApplicationField applicationField;
+    @BatchSize(size = 100)
+    private Set<ApplicationField> applicationFields = new LinkedHashSet<>();
 
     @Schema(description = "포트폴리오나 깃허브가 있다면 작성 (선택)")
     @Column(name = "portfolio_url", length = 500)
@@ -134,7 +141,7 @@ public class MemberApplication {
     @Builder
     private MemberApplication(Long studentNumber, String email, String name, String nickname,
                               AcademicStatus grade, String major, String phoneNumber,
-                              Long generation, ApplicationField applicationField,
+                              Long generation, Set<ApplicationField> applicationFields,
                               String portfolioUrl, RefSource refSource, String refLinkEtc,
                               Boolean canOt, Boolean canWelcome, Boolean privacyPolicy) {
         this.applicationUuid = UUID.randomUUID().toString();
@@ -146,7 +153,8 @@ public class MemberApplication {
         this.major = major;
         this.phoneNumber = phoneNumber;
         this.generation = generation;
-        this.applicationField = applicationField;
+        this.applicationFields = applicationFields == null
+                ? new LinkedHashSet<>() : new LinkedHashSet<>(applicationFields);
         this.portfolioUrl = portfolioUrl;
         this.refSource = refSource;
         this.refLinkEtc = refLinkEtc;
