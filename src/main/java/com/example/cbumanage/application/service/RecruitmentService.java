@@ -2,9 +2,12 @@ package com.example.cbumanage.application.service;
 
 import com.example.cbumanage.application.dto.RecruitmentCreateRequest;
 import com.example.cbumanage.application.dto.RecruitmentResponse;
+import com.example.cbumanage.application.dto.RecruitmentUpdateRequest;
 import com.example.cbumanage.application.dto.CurrentApplicationGenerationResponse;
 import com.example.cbumanage.application.entity.Recruitment;
 import com.example.cbumanage.application.entity.enums.RecruitmentStatus;
+import com.example.cbumanage.application.repository.ApplicationQuestionRepository;
+import com.example.cbumanage.application.repository.MemberApplicationRepository;
 import com.example.cbumanage.application.repository.RecruitmentRepository;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
@@ -26,6 +29,8 @@ public class RecruitmentService {
     private final RecruitmentRepository recruitmentRepository;
     private final UserRepository userRepository;
     private final RecruitmentGenerationPolicy generationPolicy;
+    private final ApplicationQuestionRepository applicationQuestionRepository;
+    private final MemberApplicationRepository memberApplicationRepository;
 
     /**
      * 모집 시작. 진행 중인 모집이 있으면 거부하고,
@@ -52,6 +57,31 @@ public class RecruitmentService {
             return request.generation();
         }
         return generationPolicy.currentGeneration();
+    }
+
+    /**
+     * 모집 회차 정보 수정 (기수·기간·발표일). 전달한 필드만 갱신됩니다.
+     * 기수를 바꾸면 연결된 지원서 질문·제출된 지원서의 generation도 함께 옮깁니다
+     * (FK가 아니라 값이 복제되어 있어 그대로 두면 참조가 끊깁니다).
+     */
+    @Transactional
+    public RecruitmentResponse update(String recruitmentUuid, RecruitmentUpdateRequest request) {
+        Recruitment recruitment = recruitmentRepository.findByRecruitmentUuid(recruitmentUuid)
+                .orElseThrow(() -> new BaseException(ErrorCode.RECRUITMENT_NOT_FOUND));
+
+        Long newGeneration = request.generation();
+        if (newGeneration != null && !newGeneration.equals(recruitment.getGeneration())) {
+            recruitmentRepository.findByGeneration(newGeneration).ifPresent(r -> {
+                throw new BaseException(ErrorCode.RECRUITMENT_DUPLICATED);
+            });
+            Long oldGeneration = recruitment.getGeneration();
+            applicationQuestionRepository.bulkUpdateGeneration(oldGeneration, newGeneration);
+            memberApplicationRepository.bulkUpdateGeneration(oldGeneration, newGeneration);
+            recruitment.changeGeneration(newGeneration);
+        }
+
+        recruitment.updateSchedule(request.plannedStartDate(), request.plannedEndDate(), request.announcementDate());
+        return RecruitmentResponse.from(recruitment);
     }
 
     /**
@@ -83,10 +113,11 @@ public class RecruitmentService {
      */
     @Transactional(readOnly = true)
     public CurrentApplicationGenerationResponse getCurrentApplicationGeneration() {
-        Long generation = recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)
-                .map(Recruitment::getGeneration)
-                .orElseGet(generationPolicy::currentGeneration);
-        return new CurrentApplicationGenerationResponse(generation);
+        return recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)
+                .map(r -> new CurrentApplicationGenerationResponse(
+                        r.getGeneration(), r.getPlannedStartDate(), r.getPlannedEndDate(), r.getAnnouncementDate()))
+                .orElseGet(() -> new CurrentApplicationGenerationResponse(
+                        generationPolicy.currentGeneration(), null, null, null));
     }
 
     /**
