@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -111,4 +112,8 @@ public interface MemberApplicationRepository extends JpaRepository<MemberApplica
            """)
     List<Object[]> countByStatusGroupedForGeneration(@Param("generation") Long generation);
 
+    // Recruitment의 기수 번호 변경 시 연결된 지원서의 generation을 함께 옮긴다 (FK 아니라 값 복제)
+    @Modifying
+    @Query("UPDATE MemberApplication m SET m.generation = :to WHERE m.generation = :from")
+    int bulkUpdateGeneration(@Param("from") Long from, @Param("to") Long to);
 }
