@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -49,6 +50,18 @@ public class Recruitment {
     @Column(name = "ended_at")
     private LocalDateTime endedAt;
 
+    @Schema(description = "모집 예정 시작일")
+    @Column(name = "planned_start_date")
+    private LocalDate plannedStartDate;
+
+    @Schema(description = "모집 예정 종료일")
+    @Column(name = "planned_end_date")
+    private LocalDate plannedEndDate;
+
+    @Schema(description = "합격 발표일")
+    @Column(name = "announcement_date")
+    private LocalDate announcementDate;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -78,5 +91,22 @@ public class Recruitment {
 
     public boolean isOpen() {
         return this.status == RecruitmentStatus.OPEN;
+    }
+
+    /**
+     * 기수 번호 변경. 연결된 다른 테이블(지원서 질문, 제출된 지원서)의 generation은
+     * 서비스 계층에서 함께 갱신해야 한다 (FK가 아니라 값이 복제되어 있음).
+     */
+    public void changeGeneration(Long generation) {
+        this.generation = generation;
+    }
+
+    /**
+     * 모집 기간·발표일 수정. 전달한 필드만 갱신되고 null인 필드는 기존 값이 유지된다.
+     */
+    public void updateSchedule(LocalDate plannedStartDate, LocalDate plannedEndDate, LocalDate announcementDate) {
+        if (plannedStartDate != null) this.plannedStartDate = plannedStartDate;
+        if (plannedEndDate != null) this.plannedEndDate = plannedEndDate;
+        if (announcementDate != null) this.announcementDate = announcementDate;
     }
 }

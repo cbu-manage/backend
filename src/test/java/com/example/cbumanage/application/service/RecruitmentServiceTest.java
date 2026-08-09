@@ -3,6 +3,8 @@ package com.example.cbumanage.application.service;
 import com.example.cbumanage.application.dto.RecruitmentCreateRequest;
 import com.example.cbumanage.application.entity.Recruitment;
 import com.example.cbumanage.application.entity.enums.RecruitmentStatus;
+import com.example.cbumanage.application.repository.ApplicationQuestionRepository;
+import com.example.cbumanage.application.repository.MemberApplicationRepository;
 import com.example.cbumanage.application.repository.RecruitmentRepository;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
@@ -32,8 +34,11 @@ class RecruitmentServiceTest {
             2026,
             RecruitmentGenerationPolicy.RecruitmentSeason.SUMMER_BREAK,
             29);
+    private final ApplicationQuestionRepository applicationQuestionRepository = mock(ApplicationQuestionRepository.class);
+    private final MemberApplicationRepository memberApplicationRepository = mock(MemberApplicationRepository.class);
     private final RecruitmentService recruitmentService =
-            new RecruitmentService(recruitmentRepository, userRepository, generationPolicy);
+            new RecruitmentService(recruitmentRepository, userRepository, generationPolicy,
+                    applicationQuestionRepository, memberApplicationRepository);
 
     @Test
     void openUsesOfficialVoterRolesWithoutDeveloperAdminForVoterCount() {

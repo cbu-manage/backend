@@ -83,7 +83,7 @@ public class GatheringController {
     @Operation(
             summary = "모임 일정 수정",
             description = "**최고관리자(ADMIN) / 회장(PRESIDENT) / 부회장(VICE_PRESIDENT) / 행사관리(EVENT_MANAGER)** 계정만 사용할 수 있습니다.\n\n" +
-                    "본인이 등록한 모임만 수정할 수 있습니다.\n" +
+                    "작성자 본인이 아니어도 위 역할이면 모든 모임을 수정할 수 있습니다.\n" +
                     "- 투표 마감을 연장하려면 `voteDeadline`을 미래 일시로 변경하면 됩니다."
     )
     public ApiResponse<GatheringDTO.GatheringResponse> updateGathering(
@@ -99,7 +99,7 @@ public class GatheringController {
     @Operation(
             summary = "모임 투표 마감",
             description = "**최고관리자(ADMIN) / 회장(PRESIDENT) / 부회장(VICE_PRESIDENT) / 행사관리(EVENT_MANAGER)** 계정만 사용할 수 있습니다.\n\n" +
-                    "본인이 등록한 모임만 수동으로 마감할 수 있습니다. 마감 후에는 투표할 수 없습니다."
+                    "작성자 본인이 아니어도 위 역할이면 모든 모임을 수동으로 마감할 수 있습니다. 마감 후에는 투표할 수 없습니다."
     )
     public ApiResponse<Void> closeGathering(
             @Parameter(description = "마감할 모임 ID", example = "1") @PathVariable Long gatheringId,
@@ -114,7 +114,7 @@ public class GatheringController {
     @Operation(
             summary = "모임 일정 삭제",
             description = "**최고관리자(ADMIN) / 회장(PRESIDENT) / 부회장(VICE_PRESIDENT) / 행사관리(EVENT_MANAGER)** 계정만 사용할 수 있습니다.\n\n" +
-                    "본인이 등록한 모임만 삭제할 수 있습니다. 삭제된 모임은 목록과 상세 조회에서 제외됩니다."
+                    "작성자 본인이 아니어도 위 역할이면 모든 모임을 삭제할 수 있습니다. 삭제된 모임은 목록과 상세 조회에서 제외됩니다."
     )
     public ApiResponse<Void> deleteGathering(
             @Parameter(description = "삭제할 모임 ID", example = "1") @PathVariable Long gatheringId,

@@ -137,19 +137,16 @@ public class ApplicationApplicantService {
         return request.portfolios().get(0).url();
     }
 
-    private void saveAnswers(MemberApplication application, List<ApplicationSubmitRequest.AnswerRequest> answers) {
+    private void saveAnswers(MemberApplication application, Map<String, String> answers) {
         List<ApplicationQuestion> questions = applicationQuestionService
                 .getQuestions(application.getGeneration());
-        Map<String, ApplicationQuestion> questionByUuid = questions.stream()
-                .collect(Collectors.toMap(ApplicationQuestion::getQuestionUuid, Function.identity()));
-        Map<String, String> answerByQuestionUuid = answers == null ? Map.of() : answers.stream()
-                .collect(Collectors.toMap(
-                        ApplicationSubmitRequest.AnswerRequest::questionUuid,
-                        ApplicationSubmitRequest.AnswerRequest::answer,
-                        (left, right) -> right));
+        Map<String, ApplicationQuestion> questionByType = questions.stream()
+                .collect(Collectors.toMap(ApplicationQuestion::getType, Function.identity()));
+        Map<String, String> answerByType = answers == null ? Map.of() : answers;
 
+        // 필수 질문에 답이 있는지 검사 (type 기준)
         for (ApplicationQuestion question : questions) {
-            String answer = answerByQuestionUuid.get(question.getQuestionUuid());
+            String answer = answerByType.get(question.getType());
             if (Boolean.TRUE.equals(question.getIsRequired()) && (answer == null || answer.isBlank())) {
                 throw new BaseException(ErrorCode.REQUIRED_ANSWER_MISSING);
             }
@@ -158,9 +155,11 @@ public class ApplicationApplicantService {
         if (answers == null || answers.isEmpty()) {
             return;
         }
-        List<ApplicationAnswer> entities = answers.stream()
-                .map(answer -> {
-                    ApplicationQuestion question = questionByUuid.get(answer.questionUuid());
+
+        // 각 (type → 답변)을 질문에 연결해 저장
+        List<ApplicationAnswer> entities = answers.entrySet().stream()
+                .map(entry -> {
+                    ApplicationQuestion question = questionByType.get(entry.getKey());
                     if (question == null) {
                         throw new BaseException(ErrorCode.QUESTION_NOT_FOUND);
                     }
@@ -168,7 +167,7 @@ public class ApplicationApplicantService {
                             .applicationId(application.getId())
                             .applicationQuestionId(question.getId())
                             .questionSnapshot(question.getQuestion())
-                            .answer(answer.answer())
+                            .answer(entry.getValue())
                             .build();
                 })
                 .toList();

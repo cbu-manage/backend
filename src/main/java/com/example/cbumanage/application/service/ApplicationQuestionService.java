@@ -1,6 +1,8 @@
 package com.example.cbumanage.application.service;
 
+import com.example.cbumanage.application.dto.ApplicationQuestionCreateRequest;
 import com.example.cbumanage.application.dto.ApplicationQuestionResponse;
+import com.example.cbumanage.application.dto.ApplicationQuestionUpdateRequest;
 import com.example.cbumanage.application.entity.ApplicationQuestion;
 import com.example.cbumanage.application.entity.Recruitment;
 import com.example.cbumanage.application.entity.enums.RecruitmentStatus;
@@ -35,5 +37,66 @@ public class ApplicationQuestionService {
     @Transactional(readOnly = true)
     public List<ApplicationQuestion> getQuestions(Long generation) {
         return applicationQuestionRepository.findByGenerationAndDeletedAtIsNullOrderBySortOrderAsc(generation);
+    }
+
+    /**
+     * 모집 회차에 새 질문 추가. sortOrder 미지정 시 해당 기수 마지막 순번 다음으로 자동 배정.
+     */
+    @Transactional
+    public ApplicationQuestionResponse createQuestion(String recruitmentUuid, ApplicationQuestionCreateRequest request) {
+        Long generation = resolveGeneration(recruitmentUuid);
+        if (applicationQuestionRepository.existsByGenerationAndType(generation, request.type())) {
+            throw new BaseException(ErrorCode.QUESTION_TYPE_DUPLICATED);
+        }
+        int sortOrder = request.sortOrder() != null
+                ? request.sortOrder()
+                : applicationQuestionRepository.findMaxSortOrderByGeneration(generation).orElse(0) + 1;
+
+        ApplicationQuestion question = ApplicationQuestion.builder()
+                .generation(generation)
+                .type(request.type())
+                .question(request.question())
+                .description(request.description())
+                .isRequired(request.isRequired())
+                .sortOrder(sortOrder)
+                .build();
+        return ApplicationQuestionResponse.from(applicationQuestionRepository.save(question));
+    }
+
+    /**
+     * 질문 수정. 전달한 필드만 갱신.
+     */
+    @Transactional
+    public ApplicationQuestionResponse updateQuestion(String recruitmentUuid, String questionUuid,
+                                                       ApplicationQuestionUpdateRequest request) {
+        ApplicationQuestion question = getQuestionInRecruitment(recruitmentUuid, questionUuid);
+        question.update(request.question(), request.description(), request.isRequired(), request.sortOrder());
+        return ApplicationQuestionResponse.from(question);
+    }
+
+    /**
+     * 질문 삭제 (soft delete). 이미 제출된 지원서의 답변(questionSnapshot)에는 영향 없음.
+     */
+    @Transactional
+    public void deleteQuestion(String recruitmentUuid, String questionUuid) {
+        ApplicationQuestion question = getQuestionInRecruitment(recruitmentUuid, questionUuid);
+        question.softDelete();
+    }
+
+    private Long resolveGeneration(String recruitmentUuid) {
+        return recruitmentRepository.findByRecruitmentUuid(recruitmentUuid)
+                .orElseThrow(() -> new BaseException(ErrorCode.RECRUITMENT_NOT_FOUND))
+                .getGeneration();
+    }
+
+    // recruitmentUuid가 가리키는 기수 소속의 질문인지까지 확인 (다른 회차 질문을 잘못된 uuid 조합으로 수정/삭제하는 것 방지)
+    private ApplicationQuestion getQuestionInRecruitment(String recruitmentUuid, String questionUuid) {
+        Long generation = resolveGeneration(recruitmentUuid);
+        ApplicationQuestion question = applicationQuestionRepository.findByQuestionUuid(questionUuid)
+                .orElseThrow(() -> new BaseException(ErrorCode.QUESTION_NOT_FOUND));
+        if (question.isDeleted() || !question.getGeneration().equals(generation)) {
+            throw new BaseException(ErrorCode.QUESTION_NOT_FOUND);
+        }
+        return question;
     }
 }

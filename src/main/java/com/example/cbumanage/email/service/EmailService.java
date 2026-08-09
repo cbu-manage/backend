@@ -89,13 +89,17 @@ public class EmailService {
         OnboardingLinksResponse links = systemSettingService.getOnboardingLinks();
         String content = """
                 <h3>%s님, CBU 홈페이지 사용 권한이 활성화되었습니다.</h3>
-                <p>아래 링크를 통해 공지방 및 디스코드에 참여해 주세요.</p>
+                <p>아래 링크를 통해 공지방·수다방 및 디스코드에 참여해 주세요.</p>
                 <ul>
+                    <li>공지방: <a href="%s">%s</a></li>
+                    <li>수다방: <a href="%s">%s</a></li>
                     <li>오픈채팅: <a href="%s">%s</a></li>
                     <li>디스코드: <a href="%s">%s</a></li>
                 </ul>
                 <p>홈페이지: <a href="%s">%s</a></p>
-                """.formatted(name, links.openChatUrl(), links.openChatUrl(),
+                """.formatted(name, links.kakaoNotiUrl(), links.kakaoNotiUrl(),
+                links.kakaoChatUrl(), links.kakaoChatUrl(),
+                links.openChatUrl(), links.openChatUrl(),
                 links.discordUrl(), links.discordUrl(), links.frontendUrl(), links.frontendUrl());
         return sendHtmlEmail(toEmail, "CBU 가입 승인 및 커뮤니티 링크 안내", content);
     }

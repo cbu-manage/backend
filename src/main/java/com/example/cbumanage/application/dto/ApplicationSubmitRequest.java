@@ -3,6 +3,7 @@ package com.example.cbumanage.application.dto;
 import com.example.cbumanage.application.entity.enums.AcademicStatus;
 import com.example.cbumanage.application.entity.enums.ApplicationField;
 import com.example.cbumanage.application.entity.enums.RefSource;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
@@ -11,6 +12,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
+import java.util.Map;
 
 public record ApplicationSubmitRequest(
         @NotNull Long studentNumber,
@@ -30,14 +32,16 @@ public record ApplicationSubmitRequest(
         @NotNull
         @AssertTrue(message = "개인정보 수집에 동의해야 합니다.")
         Boolean privacyPolicy,
-        @Valid List<AnswerRequest> answers,
+        @Schema(description = "질문 type → 답변 (예: MOTIVATE, START_REASON, PURPOSE)",
+                example = "{\"MOTIVATE\": \"답변1\", \"START_REASON\": \"답변2\", \"PURPOSE\": \"답변3\"}")
+        Map<String, String> answers,
         @Valid List<PortfolioRequest> portfolios
 ) {
-    public record AnswerRequest(
-            @NotBlank String questionUuid,
-            @NotBlank String answer
-    ) {
-    }
+//    public record AnswerRequest(
+//            @NotBlank String questionUuid,
+//            @NotBlank String answer
+//    ) {
+//    }
 
     public record PortfolioRequest(
             String label,

@@ -3,6 +3,7 @@ package com.example.cbumanage.application.dto;
 import com.example.cbumanage.application.entity.Recruitment;
 import com.example.cbumanage.application.entity.enums.RecruitmentStatus;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public record RecruitmentResponse(
@@ -11,7 +12,10 @@ public record RecruitmentResponse(
         int voterCount,
         RecruitmentStatus status,
         LocalDateTime startedAt,
-        LocalDateTime endedAt
+        LocalDateTime endedAt,
+        LocalDate plannedStartDate,
+        LocalDate plannedEndDate,
+        LocalDate announcementDate
 ) {
     public static RecruitmentResponse from(Recruitment recruitment) {
         return new RecruitmentResponse(
@@ -20,7 +24,10 @@ public record RecruitmentResponse(
                 recruitment.getVoterCount(),
                 recruitment.getStatus(),
                 recruitment.getStartedAt(),
-                recruitment.getEndedAt()
+                recruitment.getEndedAt(),
+                recruitment.getPlannedStartDate(),
+                recruitment.getPlannedEndDate(),
+                recruitment.getAnnouncementDate()
         );
     }
 }
