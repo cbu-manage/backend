@@ -26,6 +26,9 @@ public enum ErrorCode {
     MEMBER_NOT_APPROVED("E-AUTH-0006", "회비 확인 및 관리자 승인이 완료되지 않았습니다.", HttpStatus.FORBIDDEN),
     INVALID_EMAIL_DOMAIN("E-AUTH-0007", "학교 이메일(@tukorea.ac.kr)만 사용할 수 있습니다.", HttpStatus.BAD_REQUEST),
     EMAIL_AUTH_FAILED("E-AUTH-0008", "이메일 인증이 완료되지 않았습니다.", HttpStatus.UNAUTHORIZED),
+    DUPLICATE_EMAIL("E-AUTH-0009", "이미 사용 중인 이메일입니다.", HttpStatus.CONFLICT),
+    DUPLICATE_STUDENT_NUMBER("E-AUTH-0010", "이미 가입된 학번입니다.", HttpStatus.CONFLICT),
+    EMAIL_SEND_LIMIT_EXCEEDED("E-AUTH-0011", "인증번호 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.", HttpStatus.TOO_MANY_REQUESTS),
 
     //그룹 에러 코드
     GROUP_NOT_FOUND("E-GROUP-0001", "그룹을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),

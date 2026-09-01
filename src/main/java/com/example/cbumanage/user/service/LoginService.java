@@ -50,10 +50,10 @@ public class LoginService {
         MemberApplication application = findAcceptedApplication(request.studentNumber(), request.nickname());
 
         userRepository.findByStudentNumber(request.studentNumber()).ifPresent(u -> {
-            throw new BaseException(ErrorCode.ALREADY_JOINED_MEMBER);
+            throw new BaseException(ErrorCode.DUPLICATE_STUDENT_NUMBER);
         });
         userRepository.findByEmail(request.email()).ifPresent(u -> {
-            throw new BaseException(ErrorCode.DUPLICATE_RESOURCE);
+            throw new BaseException(ErrorCode.DUPLICATE_EMAIL);
         });
         if (!application.getEmail().equals(request.email())) {
             throw new BaseException(ErrorCode.UNAUTHORIZED);

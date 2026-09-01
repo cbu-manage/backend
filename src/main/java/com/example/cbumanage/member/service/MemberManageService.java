@@ -4,6 +4,7 @@ import com.example.cbumanage.dues.repository.DuesRepository;
 import com.example.cbumanage.application.entity.ApplicationNotification;
 import com.example.cbumanage.application.entity.enums.MailNotiType;
 import com.example.cbumanage.application.repository.ApplicationNotificationRepository;
+import com.example.cbumanage.application.service.RecruitmentService;
 import com.example.cbumanage.email.dto.EmailAuthResponseDTO;
 import com.example.cbumanage.email.service.EmailService;
 import com.example.cbumanage.member.dto.MemberCreateDTO;
@@ -39,6 +40,7 @@ public class MemberManageService {
 	private final MemberMapper memberMapper;
 	private final EmailService emailService;
 	private final ApplicationNotificationRepository applicationNotificationRepository;
+	private final RecruitmentService recruitmentService;
 
 	@Value("${cbu.login.salt}")
 	private String salt;
@@ -51,12 +53,14 @@ public class MemberManageService {
 								 DuesRepository duesRepository,
 								 MemberMapper memberMapper,
 								 EmailService emailService,
-								 ApplicationNotificationRepository applicationNotificationRepository) {
+								 ApplicationNotificationRepository applicationNotificationRepository,
+								 RecruitmentService recruitmentService) {
 		this.userRepository = userRepository;
 		this.duesRepository = duesRepository;
 		this.memberMapper = memberMapper;
 		this.emailService = emailService;
 		this.applicationNotificationRepository = applicationNotificationRepository;
+		this.recruitmentService = recruitmentService;
 	}
 
 	@Transactional(readOnly = true)
@@ -83,6 +87,9 @@ public class MemberManageService {
 		User user = userRepository.findByUserIdAndDeletedAtIsNull(memberUpdateDTO.getUserId())
 				.orElseThrow(MemberNotExistsException::new);
 		memberMapper.map(memberUpdateDTO, user);
+		if (memberUpdateDTO.getRole() != null) {
+			recruitmentService.refreshVoterCount();
+		}
 	}
 
 	@Transactional

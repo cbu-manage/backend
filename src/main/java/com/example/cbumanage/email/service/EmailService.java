@@ -1,6 +1,8 @@
 package com.example.cbumanage.email.service;
 
 import com.example.cbumanage.email.dto.EmailAuthResponseDTO;
+import com.example.cbumanage.global.error.BaseException;
+import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.global.setting.dto.OnboardingLinksResponse;
 import com.example.cbumanage.global.setting.service.SystemSettingService;
 import com.example.cbumanage.global.util.RedisUtil;
@@ -31,12 +33,26 @@ public class EmailService {
     @Value("${cbu.onboarding.discord-url:}")
     private String discordUrl;
 
+    /* 같은 주소로 연속 발송을 막는 쿨다운(초) */
+    private static final long SEND_COOLDOWN_SECONDS = 60L;
+    /* 같은 주소의 시간당 발송 한도 */
+    private static final long SEND_LIMIT_PER_HOUR = 10L;
+    private static final long SEND_LIMIT_WINDOW_SECONDS = 60 * 60L;
+    private static final String COOLDOWN_KEY_PREFIX = "mail:cooldown:";
+    private static final String SEND_COUNT_KEY_PREFIX = "mail:count:";
+
     private final JavaMailSender mailSender;
     private final RedisUtil redisUtil;
     private final UserRepository userRepository;
     private final SystemSettingService systemSettingService;
+    private final EmailManager emailManager;
 
     public EmailAuthResponseDTO sendEmail(String toEmail) {
+        if (!emailManager.validEmail(toEmail)) {
+            throw new BaseException(ErrorCode.INVALID_EMAIL_DOMAIN);
+        }
+        checkSendLimit(toEmail);
+
         if (redisUtil.existData(toEmail)) {
             redisUtil.deleteData(toEmail);
         }
@@ -44,9 +60,22 @@ public class EmailService {
         try {
             MimeMessage emailForm = createEmailForm(toEmail);
             mailSender.send(emailForm);
+            redisUtil.setDataExpire(COOLDOWN_KEY_PREFIX + toEmail, "1", SEND_COOLDOWN_SECONDS);
             return new EmailAuthResponseDTO(true, "인증번호가 메일로 전송되었습니다.");
         } catch (MessagingException | MailSendException e) {
             return new EmailAuthResponseDTO(false, e.getMessage());
+        }
+    }
+
+    /* 인증이 필요 없는 API라 주소 단위로 쿨다운과 시간당 한도를 확인한다. 쿨다운은 발송에 성공했을 때만 건다. */
+    private void checkSendLimit(String toEmail) {
+        String cooldownKey = COOLDOWN_KEY_PREFIX + toEmail;
+        if (redisUtil.existData(cooldownKey)) {
+            throw new BaseException(ErrorCode.EMAIL_SEND_LIMIT_EXCEEDED);
+        }
+        long sentCount = redisUtil.increaseWithExpire(SEND_COUNT_KEY_PREFIX + toEmail, SEND_LIMIT_WINDOW_SECONDS);
+        if (sentCount > SEND_LIMIT_PER_HOUR) {
+            throw new BaseException(ErrorCode.EMAIL_SEND_LIMIT_EXCEEDED);
         }
     }
 

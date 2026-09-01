@@ -22,13 +22,16 @@ public class EmailController {
     private final EmailService emailService;
 
     @PostMapping("/send")
-    @Operation(summary = "이메일 인증번호 전송", description = "요청한 이메일 주소로 인증번호를 전송합니다.")
+    @Operation(summary = "이메일 인증번호 전송",
+            description = "요청한 이메일 주소로 인증번호를 전송합니다. 인증번호는 발송 후 10분간 유효합니다. " +
+                    "학교 이메일(@tukorea.ac.kr)만 허용하며, 같은 주소로는 60초 쿨다운·시간당 10회까지 발송할 수 있습니다.")
     public ApiResponse<EmailAuthResponseDTO> sendAuthCode(@RequestParam String address) {
         return ApiResponse.success(emailService.sendEmail(address));
     }
 
     @PostMapping("/verify")
-    @Operation(summary = "이메일 인증번호 검증", description = "이메일 주소와 인증번호가 일치하는지 검증합니다.")
+    @Operation(summary = "이메일 인증번호 검증",
+            description = "이메일 주소와 인증번호가 일치하는지 검증합니다. 인증번호 유효시간은 발송 후 10분입니다.")
     public ApiResponse<EmailAuthResponseDTO> checkAuthCode(@RequestParam String address, @RequestParam String authCode) {
         return ApiResponse.success(emailService.validateAuthCode(address, authCode));
     }

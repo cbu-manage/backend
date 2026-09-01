@@ -32,4 +32,15 @@ public class RedisUtil {
         redisTemplate.delete(key);
     }
 
+    /* 키를 1 증가시키고, 최초 생성일 때만 만료 시간을 건다. 반환값은 증가 후 값. */
+    public long increaseWithExpire(String key, long duration) {
+        ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
+        Long count = valueOperations.increment(key);
+        if (count == null) return 0L;
+        if (count == 1L) {
+            redisTemplate.expire(key, Duration.ofSeconds(duration));
+        }
+        return count;
+    }
+
 }
