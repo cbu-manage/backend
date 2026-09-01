@@ -16,6 +16,11 @@ public record ApplicationQuestionUpdateRequest(
 
         @Schema(description = "질문 노출 순서", example = "1")
         @Positive(message = "순서는 1 이상이어야 합니다.")
-        Integer sortOrder
+        Integer sortOrder,
+
+        @Schema(description = """
+                화면에 불러올 때 받은 version. 같이 보내면 그 사이 다른 사람이 저장한 경우 409(E-COMMON-0010)로 막는다.
+                생략하면 검사하지 않고 그대로 덮어쓴다.""", example = "0")
+        Long version
 ) {
 }

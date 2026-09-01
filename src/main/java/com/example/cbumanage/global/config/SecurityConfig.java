@@ -29,6 +29,7 @@ import java.util.List;
 public class SecurityConfig {
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
+    private final SecurityErrorResponder securityErrorResponder;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -59,6 +60,10 @@ public class SecurityConfig {
                                 "/swagger-resources/**", "/webjars/**"
                         ).permitAll()
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(handling -> handling
+                        .authenticationEntryPoint(securityErrorResponder.authenticationEntryPoint())
+                        .accessDeniedHandler(securityErrorResponder.accessDeniedHandler())
                 )
                 .addFilterBefore(new JwtFilter(jwtProvider, userRepository), UsernamePasswordAuthenticationFilter.class);
 
