@@ -1,6 +1,7 @@
 package com.example.cbumanage.global.error;
 
 import com.example.cbumanage.global.common.ApiResponse;
+import com.example.cbumanage.member.exception.MemberNotExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -20,6 +21,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
                 .body(new ApiResponse<>(errorCode.getCode(), e.getMessage(), null));
+    }
+
+    @ExceptionHandler(MemberNotExistsException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleMemberNotExistsException(MemberNotExistsException e) {
+        return ResponseEntity
+                .status(ErrorCode.USER_NOT_FOUND.getHttpStatus())
+                .body(ApiResponse.error(ErrorCode.USER_NOT_FOUND));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

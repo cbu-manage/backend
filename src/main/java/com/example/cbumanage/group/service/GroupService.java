@@ -235,7 +235,10 @@ public class GroupService {
     //개설되어 있는 그룹 전체를 조회하는 기능입니다. (관리자 전용)
     @Transactional(readOnly = true)
     public Page<GroupDTO.GroupListDTO> getAllGroups(Long userId, GroupStatus groupStatus, Pageable pageable) {
-        Page<Group> groups = groupRepository.findByGroupStatus(groupStatus, GroupRecruitmentStatus.CLOSED, pageable);
+        // 반려된 그룹은 인원을 더 받도록 모집이 OPEN 으로 되돌아가므로 CLOSED 조건을 적용하지 않는다.
+        GroupRecruitmentStatus recruitmentStatus =
+                groupStatus == GroupStatus.REJECTED ? null : GroupRecruitmentStatus.CLOSED;
+        Page<Group> groups = groupRepository.findByGroupStatus(groupStatus, recruitmentStatus, pageable);
         return groups.map(groupUtil::toGroupListDTO);
     }
 

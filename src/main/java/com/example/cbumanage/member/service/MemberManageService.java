@@ -32,6 +32,8 @@ import java.util.List;
 @Service
 public class MemberManageService {
 
+	private static final int MAX_MEMBER_PAGE_SIZE = 100;
+
 	private final UserRepository userRepository;
 	private final DuesRepository duesRepository;
 	private final MemberMapper memberMapper;
@@ -58,8 +60,9 @@ public class MemberManageService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<User> getMembers(int page) {
-		Page<User> memberPage = userRepository.findByDeletedAtIsNull(PageRequest.of(page, 10));
+	public List<User> getMembers(int page, int size) {
+		int pageSize = Math.min(Math.max(size, 1), MAX_MEMBER_PAGE_SIZE);
+		Page<User> memberPage = userRepository.findByDeletedAtIsNull(PageRequest.of(page, pageSize));
 		return memberPage.getContent();
 	}
 

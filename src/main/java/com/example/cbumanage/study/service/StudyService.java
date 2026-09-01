@@ -62,7 +62,7 @@ public class StudyService {
 
     public Study createStudy(PostDTO.StudyCreateDTO req, Group group) {
         Post post = postRepository.findById(req.getPostId())
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
         List<String> tags = (req.getStudyTags() != null) ? req.getStudyTags() : new ArrayList<>();
         Study study = Study.create(post, tags, req.getStudyName(), req.getMaxMembers(), req.isRecruiting(), group);
         return studyRepository.save(study);
@@ -169,9 +169,9 @@ public class StudyService {
     @Transactional
     public void updatePostStudy(PostDTO.PostStudyUpdateRequestDTO req, Long postId, Long userId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
         if (post.isDeleted()) {
-            throw new CustomException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+            throw new CustomException(ErrorCode.POST_NOT_FOUND);
         }
         validateStudyOwner(post, userId);
         PostDTO.PostUpdateDTO postUpdateDTO = postMapper.toPostUpdateDTO(req);
@@ -186,9 +186,9 @@ public class StudyService {
     @Transactional
     public void softDeletePost(Long postId, Long userId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
         if (post.isDeleted()) {
-            throw new CustomException(ErrorCode.NOT_FOUND, "이미 삭제된 게시글입니다.");
+            throw new CustomException(ErrorCode.POST_NOT_FOUND);
         }
         validateStudyOwner(post, userId);
         post.delete();
@@ -218,7 +218,7 @@ public class StudyService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "스터디를 찾을 수 없습니다."));
 
         if (study.getPost().isDeleted()) {
-            throw new CustomException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+            throw new CustomException(ErrorCode.POST_NOT_FOUND);
         }
 
         validateStudyOwner(study.getPost(), userId);
@@ -249,7 +249,7 @@ public class StudyService {
         Study study = studyRepository.findByPostId(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "스터디를 찾을 수 없습니다."));
         if (study.getPost().isDeleted()) {
-            throw new CustomException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+            throw new CustomException(ErrorCode.POST_NOT_FOUND);
         }
         return study;
     }
