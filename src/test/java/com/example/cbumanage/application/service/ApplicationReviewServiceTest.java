@@ -156,7 +156,7 @@ class ApplicationReviewServiceTest {
                 .major("컴퓨터공학과")
                 .phoneNumber("010-1234-5678")
                 .generation(generation)
-                .applicationField(ApplicationField.DEV)
+                .applicationFields(java.util.Set.of(ApplicationField.DEV))
                 .portfolioUrl("https://github.com/cbu")
                 .refSource(RefSource.FRIEND)
                 .refLinkEtc(null)
