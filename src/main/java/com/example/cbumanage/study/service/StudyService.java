@@ -232,7 +232,7 @@ public class StudyService {
         int activeCount = groupMemberRepository
                 .findByGroupIdAndGroupMemberStatus(groupId, GroupMemberStatus.ACTIVE).size();
         if (activeCount <= 1) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST, "최소 1명 이상의 수락된 멤버가 있어야 합니다.");
+            throw new CustomException(ErrorCode.GROUP_CLOSE_MEMBER_REQUIRED);
         }
 
         // PENDING 일괄 거절

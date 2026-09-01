@@ -107,6 +107,8 @@ public class GroupService {
         if (recruiting) {
             group.openRecruitment();
         } else {
+            // 마감 조건은 경로와 무관하게 여기 하나로 판정한다 (모집 마감 API, 스터디/프로젝트 수정 폼 공통)
+            assertClosableGroup(groupId);
             // 모집 마감 시 대기(PENDING) 신청자는 전원 거절(REJECTED) 처리
             rejectAllPendingMembers(groupId);
             // 관리자가 반려(REJECTED)했던 그룹은 리더가 모집 마감(CLOSED)을 다시 누르면 재요청(RESUBMITTED)로 전환
@@ -117,6 +119,14 @@ public class GroupService {
         }
         projectRepository.findByGroupId(groupId).ifPresent(project -> project.updateRecruiting(recruiting));
         studyRepository.findByGroupId(groupId).ifPresent(study -> study.updateRecruiting(recruiting));
+    }
+
+    /* 팀장 외 수락된 팀원이 1명 이상이어야 마감할 수 있다 (ACTIVE에 팀장이 포함되므로 2명 기준) */
+    private void assertClosableGroup(Long groupId) {
+        int activeCount = groupRepository.countByGroupIdAndStatus(groupId, GroupMemberStatus.ACTIVE);
+        if (activeCount <= 1) {
+            throw new BaseException(ErrorCode.GROUP_CLOSE_MEMBER_REQUIRED);
+        }
     }
 
     /**
