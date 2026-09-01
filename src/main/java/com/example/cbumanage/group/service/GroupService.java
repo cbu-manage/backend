@@ -73,6 +73,10 @@ public class GroupService {
         GroupMember existing = groupMemberRepository.findByGroupIdAndUserUserId(groupId, memberId);
         if (existing != null) {
             if (existing.getGroupMemberStatus() == GroupMemberStatus.REJECTED) {
+                // 팀장이 실수로 거절했을 수 있어 바로 막지 않는다. 다만 반복되면 더 받지 않는다
+                if (existing.getRejectedCount() >= MAX_REJECT_BEFORE_BLOCK) {
+                    throw new BaseException(ErrorCode.GROUP_REAPPLY_LIMIT_EXCEEDED);
+                }
                 existing.pending();
                 return groupUtil.toGroupMemberInfoDTO(existing);
             }
@@ -121,6 +125,9 @@ public class GroupService {
         studyRepository.findByGroupId(groupId).ifPresent(study -> study.updateRecruiting(recruiting));
     }
 
+    /* 같은 팀에서 이 횟수만큼 거절되면 재신청을 받지 않는다 */
+    private static final int MAX_REJECT_BEFORE_BLOCK = 3;
+
     /* 팀장 외 수락된 팀원이 1명 이상이어야 마감할 수 있다 (ACTIVE에 팀장이 포함되므로 2명 기준) */
     private void assertClosableGroup(Long groupId) {
         int activeCount = groupRepository.countByGroupIdAndStatus(groupId, GroupMemberStatus.ACTIVE);
@@ -148,7 +155,7 @@ public class GroupService {
                 studyRepository.findByGroupId(group.getId()).ifPresent(study -> study.updateRecruiting(false));
             }
         }else{
-            groupMember.reject(reason);
+            groupMember.rejectByLeader(reason);
         }
     }
 
@@ -166,7 +173,7 @@ public class GroupService {
     public void rejectAllPendingMembers(Long groupId) {
         String reason="모집이 마감되어 자동으로 거절되었습니다.";
         List<GroupMember> pending = groupMemberRepository.findByGroupIdAndGroupMemberStatus(groupId, GroupMemberStatus.PENDING);
-        pending.forEach(member -> member.reject(reason));
+        pending.forEach(member -> member.rejectOnRecruitmentClose(reason));
     }
 
 
