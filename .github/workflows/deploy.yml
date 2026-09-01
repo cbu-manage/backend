@@ -38,7 +38,7 @@ jobs:
       - name: Build jar
         run: |
           chmod +x ./gradlew
-          ./gradlew clean build -x test --no-daemon
+          ./gradlew clean build --no-daemon
 
       - name: Image tag
         id: meta
