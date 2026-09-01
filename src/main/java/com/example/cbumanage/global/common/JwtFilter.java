@@ -41,9 +41,12 @@ public class JwtFilter extends OncePerRequestFilter {
             String role = claims.get("role", String.class);
             if (uuidStr != null && role != null) {
                 User user = userRepository.findByUserUuidAndDeletedAtIsNull(UUID.fromString(uuidStr)).orElse(null);
-                if (user != null) {
+                // 권한은 토큰의 role claim이 아니라 DB의 현재 role로 판정한다.
+                // claim을 쓰면 역할이 바뀌어도 토큰이 만료될 때까지 이전 권한이 유지된다.
+                if (user != null && user.getRole() != null) {
                     UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                            String.valueOf(user.getUserId()), null, List.of(new SimpleGrantedAuthority(role)));
+                            String.valueOf(user.getUserId()), null,
+                            List.of(new SimpleGrantedAuthority(user.getRole().name())));
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
             }
