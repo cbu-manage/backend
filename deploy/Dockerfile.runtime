@@ -1,0 +1,10 @@
+FROM eclipse-temurin:17-jre
+
+WORKDIR /app
+
+# CI(GitHub Actions)에서 빌드한 jar만 담는 실행 전용 이미지.
+# 서버에서는 절대 빌드하지 않는다 (램 1~2GB 서버에서 Gradle 빌드 시 OOM).
+COPY build/libs/cbuManage-0.0.1-SNAPSHOT.jar app.jar
+
+EXPOSE 8080
+ENTRYPOINT ["java", "-Xms256m", "-Xmx640m", "-XX:MaxMetaspaceSize=192m", "-jar", "app.jar"]
