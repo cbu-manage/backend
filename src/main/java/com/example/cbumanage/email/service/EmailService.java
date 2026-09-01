@@ -132,7 +132,7 @@ public class EmailService {
                 <ul>
                     <li>공지방: <a href="%s">%s</a></li>
                     <li>수다방: <a href="%s">%s</a></li>
-                    <li>오픈채팅: <a href="%s">%s</a></li>
+                    <li>회비 확인 및 문의 방: <a href="%s">%s</a></li>
                     <li>디스코드: <a href="%s">%s</a></li>
                 </ul>
                 <p>홈페이지: <a href="%s">%s</a></p>
