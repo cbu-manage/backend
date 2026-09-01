@@ -70,6 +70,11 @@ public class ApplicationQuestion {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Schema(description = "수정 횟수. 저장할 때 이 값을 같이 보내면 그 사이 남이 고친 경우 409로 막는다")
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
 
     /**
      *
