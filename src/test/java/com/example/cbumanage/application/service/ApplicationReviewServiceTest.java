@@ -99,7 +99,8 @@ class ApplicationReviewServiceTest {
         when(memberApplicationRepository.searchForAdmin(
                 40L, null, null, null, null, null, PageRequest.of(0, 10)))
                 .thenReturn(new PageImpl<>(List.of(current), PageRequest.of(0, 10), 1));
-        when(applicationVoteRepository.countByApplicationIdsGroupByDecision(List.of(10L)))
+        when(applicationVoteRepository.countByApplicationIdsGroupByDecision(
+                List.of(10L), Role.applicationVoterRoles()))
                 .thenReturn(List.of(
                         new Object[]{10L, VoteResult.PASS, 2L},
                         new Object[]{10L, VoteResult.FAIL, 1L}
