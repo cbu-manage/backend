@@ -17,6 +17,7 @@ public enum ErrorCode {
     FILE_SIZE_EXCEEDED("E-COMMON-0006","파일 크기가 제한을 초과했습니다 (최대 10MB)", HttpStatus.BAD_REQUEST),
     FILE_PROCESS_FAILED("E-COMMON-0007","파일 처리에 실패했습니다. 파일이 손상되었거나 올바르지 않습니다.", HttpStatus.BAD_REQUEST),
     UPLOAD_SIZE_EXCEEDED("E-COMMON-0008","업로드 가능한 파일 크기를 초과했습니다.", HttpStatus.BAD_REQUEST),
+    METHOD_NOT_ALLOWED("E-COMMON-0009", "허용되지 않은 요청 방식입니다.", HttpStatus.METHOD_NOT_ALLOWED),
     ALREADY_JOINED_MEMBER("E-COMMON-0005","이미 가입된 멤버",HttpStatus.CONFLICT),
 
     UNAUTHORIZED("E-AUTH-0001", "인증이 필요합니다. ", HttpStatus.UNAUTHORIZED),
@@ -26,6 +27,9 @@ public enum ErrorCode {
     MEMBER_NOT_APPROVED("E-AUTH-0006", "회비 확인 및 관리자 승인이 완료되지 않았습니다.", HttpStatus.FORBIDDEN),
     INVALID_EMAIL_DOMAIN("E-AUTH-0007", "학교 이메일(@tukorea.ac.kr)만 사용할 수 있습니다.", HttpStatus.BAD_REQUEST),
     EMAIL_AUTH_FAILED("E-AUTH-0008", "이메일 인증이 완료되지 않았습니다.", HttpStatus.UNAUTHORIZED),
+    DUPLICATE_EMAIL("E-AUTH-0009", "이미 사용 중인 이메일입니다.", HttpStatus.CONFLICT),
+    DUPLICATE_STUDENT_NUMBER("E-AUTH-0010", "이미 가입된 학번입니다.", HttpStatus.CONFLICT),
+    EMAIL_SEND_LIMIT_EXCEEDED("E-AUTH-0011", "인증번호 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.", HttpStatus.TOO_MANY_REQUESTS),
 
     //그룹 에러 코드
     GROUP_NOT_FOUND("E-GROUP-0001", "그룹을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
@@ -33,6 +37,8 @@ public enum ErrorCode {
     NOT_GROUP_LEADER("E-GROUP-0003", "그룹 리더가 아닙니다.", HttpStatus.FORBIDDEN),
     GROUP_NOT_RECRUITING("E-GROUP-0004", "모집 중인 그룹이 아닙니다.", HttpStatus.BAD_REQUEST),
     REPORT_MEMBER_NOT_IN_GROUP("E-GROUP-0005", "보고서 참여 멤버는 해당 그룹의 활성 멤버여야 합니다.", HttpStatus.BAD_REQUEST),
+    GROUP_CLOSE_MEMBER_REQUIRED("E-GROUP-0006", "수락된 팀원이 1명 이상이어야 모집을 마감할 수 있습니다.", HttpStatus.BAD_REQUEST),
+    GROUP_REAPPLY_LIMIT_EXCEEDED("E-GROUP-0007", "이 팀에서 3번 거절되어 다시 신청할 수 없습니다.", HttpStatus.BAD_REQUEST),
 
     //POST 공용
     POST_NOT_FOUND("E-POST-0001", "게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),

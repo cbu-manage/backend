@@ -126,7 +126,7 @@ class LoginServiceTest {
                 studentNumber,
                 nickname)))
                 .isInstanceOfSatisfying(BaseException.class,
-                        e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.ALREADY_JOINED_MEMBER));
+                        e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_STUDENT_NUMBER));
 
         verify(userRepository, never()).save(any(User.class));
         assertThat(application.getStatus()).isEqualTo(ApplicationStatus.ADMIN_ACCEPTED);
@@ -152,7 +152,7 @@ class LoginServiceTest {
                 studentNumber,
                 nickname)))
                 .isInstanceOfSatisfying(BaseException.class,
-                        e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_RESOURCE));
+                        e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_EMAIL));
 
         verify(userRepository, never()).save(any(User.class));
         assertThat(application.getStatus()).isEqualTo(ApplicationStatus.ADMIN_ACCEPTED);
@@ -210,7 +210,7 @@ class LoginServiceTest {
                 .major("컴퓨터공학과")
                 .phoneNumber("010-1234-5678")
                 .generation(39L)
-                .applicationField(ApplicationField.DEV)
+                .applicationFields(java.util.Set.of(ApplicationField.DEV))
                 .portfolioUrl("https://github.com/cbu")
                 .refSource(RefSource.FRIEND)
                 .refLinkEtc(null)

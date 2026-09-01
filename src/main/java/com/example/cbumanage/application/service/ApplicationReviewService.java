@@ -164,7 +164,7 @@ public class ApplicationReviewService {
             return Map.of();
         }
         Map<Long, Long> result = new HashMap<>();
-        for (Object[] row : applicationVoteRepository.countByApplicationIdsGroupByDecision(applicationIds)) {
+        for (Object[] row : applicationVoteRepository.countByApplicationIdsGroupByDecision(applicationIds, VOTER_ROLES)) {
             Long applicationId = (Long) row[0];
             long count = (Long) row[2];
             result.merge(applicationId, count, Long::sum);
@@ -403,7 +403,7 @@ public class ApplicationReviewService {
 
     private void sendResultEmail(MemberApplication application, boolean accepted) {
         EmailAuthResponseDTO result = emailService.sendApplicationResultEmail(
-                application.getEmail(), application.getName(), accepted);
+                application.getEmail(), application.getName(), accepted, application.getApplicationUuid());
         if (result == null) {
             result = new EmailAuthResponseDTO(false, "메일 발송 결과를 확인할 수 없습니다.");
         }
@@ -426,7 +426,7 @@ public class ApplicationReviewService {
         if (applicationIds.isEmpty()) {
             return result;
         }
-        for (Object[] row : applicationVoteRepository.countByApplicationIdsGroupByDecision(applicationIds)) {
+        for (Object[] row : applicationVoteRepository.countByApplicationIdsGroupByDecision(applicationIds, VOTER_ROLES)) {
             Long applicationId = (Long) row[0];
             VoteResult decision = (VoteResult) row[1];
             long count = (Long) row[2];

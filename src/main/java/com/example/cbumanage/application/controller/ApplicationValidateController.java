@@ -1,5 +1,6 @@
 package com.example.cbumanage.application.controller;
 
+import com.example.cbumanage.application.dto.ApplicationResultResponse;
 import com.example.cbumanage.application.dto.ApplicationValidateRequest;
 import com.example.cbumanage.application.dto.ApplicationValidateResponse;
 import com.example.cbumanage.application.service.ApplicationValidateService;
@@ -24,5 +25,14 @@ public class ApplicationValidateController {
             description = "학번과 지원 시 닉네임이 최종 승인된 지원서와 일치하는지 확인합니다.")
     public ApplicationValidateResponse validate(@Valid @RequestBody ApplicationValidateRequest request) {
         return applicationValidateService.validate(request);
+    }
+
+    @GetMapping("/applications/{applicationUuid}/result")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "합격 안내 정보 조회",
+            description = "합격 안내 메일 링크로 여는 화면에서 본인 확인용으로 사용합니다. "
+                    + "학번은 가운데를 가려서 내려주며, 합격한 지원서가 아니면 404입니다.")
+    public ApplicationResultResponse getResult(@PathVariable String applicationUuid) {
+        return applicationValidateService.getAcceptedResult(applicationUuid);
     }
 }
