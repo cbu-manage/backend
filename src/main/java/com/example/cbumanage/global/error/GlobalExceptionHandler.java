@@ -1,6 +1,7 @@
 package com.example.cbumanage.global.error;
 
 import com.example.cbumanage.global.common.ApiResponse;
+import com.example.cbumanage.member.exception.MemberDoesntHavePermissionException;
 import com.example.cbumanage.member.exception.MemberNotExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ErrorCode.USER_NOT_FOUND.getHttpStatus())
                 .body(ApiResponse.error(ErrorCode.USER_NOT_FOUND));
+    }
+
+    @ExceptionHandler(MemberDoesntHavePermissionException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleMemberDoesntHavePermissionException(MemberDoesntHavePermissionException e) {
+        return ResponseEntity
+                .status(ErrorCode.FORBIDDEN.getHttpStatus())
+                .body(new ApiResponse<>(ErrorCode.FORBIDDEN.getCode(), e.getMessage(), null));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
