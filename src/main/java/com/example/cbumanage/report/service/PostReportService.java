@@ -40,6 +40,9 @@ import org.springframework.data.domain.PageRequest;
 @RequiredArgsConstructor
 public class PostReportService {
 
+    /* 조회 가능한 그룹이 하나도 없을 때 in 절을 유지하기 위한 값. 어떤 그룹과도 맞지 않는다. */
+    private static final List<Long> NO_GROUP_IDS = List.of(-1L);
+
     private final PostService postService;
     private final PostRepository postRepository;
     private final PostReportRepository postReportRepository;
@@ -110,6 +113,10 @@ fetch join -> 해결
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
         boolean isAdmin = user.getRole().canViewAllReports();
 
+        // 소속 그룹 보고서에 더해 본인이 작성한 보고서도 보여준다(팀을 나가도 자기 글은 남는다).
+        // 카테고리로 좁혀 보는 중이면 그 범위를 벗어난 자기 글까지 끌려 나오지 않도록 적용하지 않는다.
+        Long authorId = (isAdmin || groupCategory != null) ? null : userId;
+
         List<Long> categoryGroupIds = groupCategory != null
                 ? groupRepository.findIdsByCategory(groupCategory)
                 : null;
@@ -129,13 +136,18 @@ fetch join -> 해결
         }
 
         if (effectiveGroupIds != null && effectiveGroupIds.isEmpty()) {
-            PostDTO.ReportSearchInfoDTO searchInfo = (keyword != null && !keyword.isBlank())
-                    ? PostDTO.ReportSearchInfoDTO.of(keyword) : PostDTO.ReportSearchInfoDTO.none();
-            return new PostDTO.PostReportPreviewSearchDTO(Page.empty(pageable), searchInfo);
+            if (authorId == null) {
+                PostDTO.ReportSearchInfoDTO searchInfo = (keyword != null && !keyword.isBlank())
+                        ? PostDTO.ReportSearchInfoDTO.of(keyword) : PostDTO.ReportSearchInfoDTO.none();
+                return new PostDTO.PostReportPreviewSearchDTO(Page.empty(pageable), searchInfo);
+            }
+            // 소속 그룹이 하나도 없어도 본인이 쓴 보고서는 나와야 한다.
+            // 빈 목록을 그대로 넘기면 in 절이 깨지므로 존재하지 않는 그룹 id를 넣는다.
+            effectiveGroupIds = NO_GROUP_IDS;
         }
 
         if (keyword != null && !keyword.isBlank()) {
-            Page<PostDTO.PostReportPreviewDTO> result = searchPostReportPreviews(pageable, effectiveGroupIds, startDate, endDate, keyword);
+            Page<PostDTO.PostReportPreviewDTO> result = searchPostReportPreviews(pageable, effectiveGroupIds, authorId, startDate, endDate, keyword);
             return new PostDTO.PostReportPreviewSearchDTO(result, PostDTO.ReportSearchInfoDTO.of(keyword));
         }
 
@@ -144,7 +156,7 @@ fetch join -> 해결
             return new PostDTO.PostReportPreviewSearchDTO(result, PostDTO.ReportSearchInfoDTO.none());
         }
 
-        Page<PostDTO.PostReportPreviewDTO> result = postReportRepository.findPostReportPreviewsByGroupIds(pageable, 7, effectiveGroupIds, startDate, endDate);
+        Page<PostDTO.PostReportPreviewDTO> result = postReportRepository.findPostReportPreviewsByGroupIds(pageable, 7, effectiveGroupIds, authorId, startDate, endDate);
         return new PostDTO.PostReportPreviewSearchDTO(result, PostDTO.ReportSearchInfoDTO.none());
     }
 
@@ -167,7 +179,7 @@ fetch join -> 해결
     }
 
     private Page<PostDTO.PostReportPreviewDTO> searchPostReportPreviews(
-            Pageable pageable, List<Long> effectiveGroupIds,
+            Pageable pageable, List<Long> effectiveGroupIds, Long authorId,
             LocalDateTime startDate, LocalDateTime endDate, String keyword) {
 
         String pattern = Arrays.stream(keyword.trim().split("\\s+"))
@@ -182,7 +194,7 @@ fetch join -> 해결
         if (effectiveGroupIds == null) {
             postIds = postReportRepository.searchPostIdsByKeyword(7, startDate, endDate, pattern, searchPageable);
         } else {
-            postIds = postReportRepository.searchPostIdsByKeywordAndGroupIds(7, effectiveGroupIds, startDate, endDate, pattern, searchPageable);
+            postIds = postReportRepository.searchPostIdsByKeywordAndGroupIds(7, effectiveGroupIds, authorId, startDate, endDate, pattern, searchPageable);
         }
 
         List<Long> ids = postIds.getContent();
@@ -212,7 +224,7 @@ fetch join -> 해결
                     .collect(Collectors.joining());
 
             Pageable searchPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-            Page<Long> postIds = postReportRepository.searchPostIdsByKeywordAndGroupIds(7, List.of(groupId), startDate, endDate, pattern, searchPageable);
+            Page<Long> postIds = postReportRepository.searchPostIdsByKeywordAndGroupIds(7, List.of(groupId), null, startDate, endDate, pattern, searchPageable);
 
             List<Long> ids = postIds.getContent();
             if (ids.isEmpty()) return new PostDTO.PostReportPreviewSearchDTO(new PageImpl<>(List.of(), pageable, 0), PostDTO.ReportSearchInfoDTO.of(keyword));
