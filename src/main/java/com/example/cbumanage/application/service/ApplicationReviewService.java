@@ -403,7 +403,7 @@ public class ApplicationReviewService {
 
     private void sendResultEmail(MemberApplication application, boolean accepted) {
         EmailAuthResponseDTO result = emailService.sendApplicationResultEmail(
-                application.getEmail(), application.getName(), accepted);
+                application.getEmail(), application.getName(), accepted, application.getApplicationUuid());
         if (result == null) {
             result = new EmailAuthResponseDTO(false, "메일 발송 결과를 확인할 수 없습니다.");
         }

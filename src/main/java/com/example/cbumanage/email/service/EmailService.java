@@ -121,9 +121,11 @@ public class EmailService {
         return "<h4>인증 코드를 입력하세요.</h4>" + "<h2>[" + authCode + "]</h2>";
     }
 
-    public EmailAuthResponseDTO sendApplicationResultEmail(String toEmail, String applicantName, boolean accepted) {
+    public EmailAuthResponseDTO sendApplicationResultEmail(String toEmail, String applicantName, boolean accepted,
+                                                           String applicationUuid) {
         OnboardingLinksResponse links = systemSettingService.getOnboardingLinks();
-        String passedUrl = joinUrl(links.frontendUrl(), APPLICATION_PASSED_PATH);
+        // 링크로 여는 화면이라 본인 확인 정보를 채우려면 지원서를 식별할 값이 필요하다
+        String passedUrl = joinUrl(links.frontendUrl(), APPLICATION_PASSED_PATH) + "?a=" + applicationUuid;
         String subject = accepted ? "CBU 신규 부원 합격 안내" : "CBU 신규 부원 선발 결과 안내";
         String content = accepted
                 ? """
