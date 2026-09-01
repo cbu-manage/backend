@@ -38,6 +38,8 @@ public class EmailService {
     /* 같은 주소의 시간당 발송 한도 */
     private static final long SEND_LIMIT_PER_HOUR = 10L;
     private static final long SEND_LIMIT_WINDOW_SECONDS = 60 * 60L;
+    /* 합격 안내 메일이 여는 화면 */
+    private static final String APPLICATION_PASSED_PATH = "/apply/passed";
     private static final String COOLDOWN_KEY_PREFIX = "mail:cooldown:";
     private static final String SEND_COUNT_KEY_PREFIX = "mail:count:";
 
@@ -93,12 +95,20 @@ public class EmailService {
         return message;
     }
 
+    private String joinUrl(String baseUrl, String path) {
+        if (baseUrl == null || baseUrl.isBlank()) return path;
+        return baseUrl.endsWith("/")
+                ? baseUrl.substring(0, baseUrl.length() - 1) + path
+                : baseUrl + path;
+    }
+
     private String setContext(String authCode) {
         return "<h4>인증 코드를 입력하세요.</h4>" + "<h2>[" + authCode + "]</h2>";
     }
 
     public EmailAuthResponseDTO sendApplicationResultEmail(String toEmail, String applicantName, boolean accepted) {
         OnboardingLinksResponse links = systemSettingService.getOnboardingLinks();
+        String passedUrl = joinUrl(links.frontendUrl(), APPLICATION_PASSED_PATH);
         String subject = accepted ? "CBU 신규 부원 합격 안내" : "CBU 신규 부원 선발 결과 안내";
         String content = accepted
                 ? """
@@ -106,7 +116,7 @@ public class EmailService {
                 <p>아래 링크에서 회원가입을 진행한 뒤 회비를 납부해 주세요.</p>
                 <p><a href="%s">%s</a></p>
                 <p>회비 확인 후 홈페이지 사용 권한이 활성화됩니다.</p>
-                """.formatted(applicantName, links.frontendUrl(), links.frontendUrl())
+                """.formatted(applicantName, passedUrl, passedUrl)
                 : """
                 <h3>%s님, CBU 신규 부원 선발 결과를 안내드립니다.</h3>
                 <p>아쉽게도 이번 모집에서는 함께하지 못하게 되었습니다.</p>
