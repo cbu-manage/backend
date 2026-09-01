@@ -265,7 +265,10 @@ fetch join -> 해결
                         GroupMemberStatus.ACTIVE
                 );
 
-        if (!(isAdmin || isActiveMember)) {
+        // 목록에는 작성자 본인의 보고서가 항상 뜬다. 그룹을 나갔다고 상세만 403이면 열리지 않는 항목이 남는다
+        boolean isAuthor = post.getAuthorId() != null && post.getAuthorId().equals(userId);
+
+        if (!(isAdmin || isActiveMember || isAuthor)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         return postMapper.toPostReportViewDTO(post, report);
