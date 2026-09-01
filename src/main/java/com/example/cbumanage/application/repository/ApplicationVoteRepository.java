@@ -2,10 +2,12 @@ package com.example.cbumanage.application.repository;
 
 import com.example.cbumanage.application.entity.ApplicationVote;
 import com.example.cbumanage.application.entity.enums.VoteResult;
+import com.example.cbumanage.user.entity.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,13 +32,20 @@ public interface ApplicationVoteRepository extends JpaRepository<ApplicationVote
 
     /**
      * 여러 신청서의 PASS/FAIL 집계.
+     * 투표 자격을 잃은(강등·탈퇴) 운영진의 표는 제외한다.
+     * 남겨두면 집계 수가 voterCount(N)를 넘어 최종처리가 영구히 막히고 추천 판정도 흔들린다.
      * 결과 형식: [applicationId, decision, count]
      */
     @Query("""
            SELECT v.memberApplicationId, v.decision, COUNT(v)
            FROM ApplicationVote v
            WHERE v.memberApplicationId IN :applicationIds
+             AND v.voterId IN (
+                 SELECT u.userId FROM User u
+                 WHERE u.deletedAt IS NULL AND u.role IN :voterRoles
+             )
            GROUP BY v.memberApplicationId, v.decision
            """)
-    List<Object[]> countByApplicationIdsGroupByDecision(@Param("applicationIds") List<Long> applicationIds);
+    List<Object[]> countByApplicationIdsGroupByDecision(@Param("applicationIds") List<Long> applicationIds,
+                                                       @Param("voterRoles") Collection<Role> voterRoles);
 }

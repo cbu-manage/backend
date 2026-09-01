@@ -52,6 +52,18 @@ public class RecruitmentService {
         return RecruitmentResponse.from(recruitment);
     }
 
+    /**
+     * 진행 중인 모집의 투표 자격자 수를 현재 운영진 수로 다시 맞춘다.
+     * 운영진이 바뀌어도 N이 고정되면 정원 0명에 1표 같은 상태가 남는다.
+     */
+    @Transactional
+    public void refreshVoterCount() {
+        recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN).ifPresent(recruitment -> {
+            int voterCount = (int) userRepository.countByRoleInAndDeletedAtIsNull(VOTER_ROLES);
+            recruitment.updateVoterCount(voterCount);
+        });
+    }
+
     private Long resolveGeneration(RecruitmentCreateRequest request) {
         if (request != null && request.generation() != null) {
             return request.generation();

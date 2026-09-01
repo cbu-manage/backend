@@ -54,6 +54,10 @@ public class GroupMember {
     @Comment("가입 거절 사유")
     private String memberRejectReason;
 
+    @Column(nullable = false)
+    @Comment("팀장이 이 회원의 신청을 거절한 횟수 (재신청 제한 기준). 모집 마감 일괄 거절은 세지 않는다")
+    private int rejectedCount = 0;
+
     @Enumerated(EnumType.STRING)
     @Comment("그룹 내 멤버 권한 (LEADER, MEMBER)")
     private GroupMemberRole groupMemberRole;
@@ -77,7 +81,18 @@ public class GroupMember {
         this.groupMemberStatus = GroupMemberStatus.ACTIVE;
         this.memberRejectReason = null;
     }
-    public void reject(String reason) {
+    /** 팀장이 직접 거절. 실수로 눌렀을 수 있으니 바로 막지 않고 횟수만 센다 */
+    public void rejectByLeader(String reason) {
+        reject(reason);
+        this.rejectedCount++;
+    }
+
+    /** 모집 마감으로 대기자를 정리. 팀장의 거절 의사가 아니므로 횟수에 넣지 않는다 */
+    public void rejectOnRecruitmentClose(String reason) {
+        reject(reason);
+    }
+
+    private void reject(String reason) {
         this.groupMemberStatus = GroupMemberStatus.REJECTED;
         this.memberRejectReason = reason;
     }

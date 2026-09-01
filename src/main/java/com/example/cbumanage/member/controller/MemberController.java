@@ -23,6 +23,8 @@ import java.util.List;
 @Tag(name = "회원 관리", description = "동아리 회원 정보를 조회·등록·수정·삭제하고 회비 승인 상태를 관리합니다.")
 @RequiredArgsConstructor
 public class MemberController {
+    private static final int DEFAULT_MEMBER_PAGE_SIZE = 10;
+
     private final MemberManageService memberManageService;
     private final UserRepository userRepository;
     private final MemberMapper memberMapper;
@@ -81,9 +83,11 @@ public class MemberController {
 
     @GetMapping("members")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MEMBER_MANAGER', 'ROLE_TREASURER')")
-    @Operation(summary = "회원 목록 조회", description = "회원 목록을 페이지 단위로 조회합니다.")
-    public ApiResponse<List<MemberDTO>> getMembers(@RequestParam(name = "page", required = false) Integer page) {
+    @Operation(summary = "회원 목록 조회", description = "회원 목록을 페이지 단위로 조회합니다. size는 최대 100까지 지정할 수 있습니다.")
+    public ApiResponse<List<MemberDTO>> getMembers(@RequestParam(name = "page", required = false) Integer page,
+                                                   @RequestParam(name = "size", required = false) Integer size) {
         if (page == null) page = 0;
-        return ApiResponse.success(memberMapper.map(memberManageService.getMembers(page)));
+        if (size == null) size = DEFAULT_MEMBER_PAGE_SIZE;
+        return ApiResponse.success(memberMapper.map(memberManageService.getMembers(page, size)));
     }
 }

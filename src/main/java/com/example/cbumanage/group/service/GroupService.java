@@ -73,6 +73,10 @@ public class GroupService {
         GroupMember existing = groupMemberRepository.findByGroupIdAndUserUserId(groupId, memberId);
         if (existing != null) {
             if (existing.getGroupMemberStatus() == GroupMemberStatus.REJECTED) {
+                // 팀장이 실수로 거절했을 수 있어 바로 막지 않는다. 다만 반복되면 더 받지 않는다
+                if (existing.getRejectedCount() >= MAX_REJECT_BEFORE_BLOCK) {
+                    throw new BaseException(ErrorCode.GROUP_REAPPLY_LIMIT_EXCEEDED);
+                }
                 existing.pending();
                 return groupUtil.toGroupMemberInfoDTO(existing);
             }
@@ -107,6 +111,8 @@ public class GroupService {
         if (recruiting) {
             group.openRecruitment();
         } else {
+            // 마감 조건은 경로와 무관하게 여기 하나로 판정한다 (모집 마감 API, 스터디/프로젝트 수정 폼 공통)
+            assertClosableGroup(groupId);
             // 모집 마감 시 대기(PENDING) 신청자는 전원 거절(REJECTED) 처리
             rejectAllPendingMembers(groupId);
             // 관리자가 반려(REJECTED)했던 그룹은 리더가 모집 마감(CLOSED)을 다시 누르면 재요청(RESUBMITTED)로 전환
@@ -117,6 +123,17 @@ public class GroupService {
         }
         projectRepository.findByGroupId(groupId).ifPresent(project -> project.updateRecruiting(recruiting));
         studyRepository.findByGroupId(groupId).ifPresent(study -> study.updateRecruiting(recruiting));
+    }
+
+    /* 같은 팀에서 이 횟수만큼 거절되면 재신청을 받지 않는다 */
+    private static final int MAX_REJECT_BEFORE_BLOCK = 3;
+
+    /* 팀장 외 수락된 팀원이 1명 이상이어야 마감할 수 있다 (ACTIVE에 팀장이 포함되므로 2명 기준) */
+    private void assertClosableGroup(Long groupId) {
+        int activeCount = groupRepository.countByGroupIdAndStatus(groupId, GroupMemberStatus.ACTIVE);
+        if (activeCount <= 1) {
+            throw new BaseException(ErrorCode.GROUP_CLOSE_MEMBER_REQUIRED);
+        }
     }
 
     /**
@@ -138,7 +155,7 @@ public class GroupService {
                 studyRepository.findByGroupId(group.getId()).ifPresent(study -> study.updateRecruiting(false));
             }
         }else{
-            groupMember.reject(reason);
+            groupMember.rejectByLeader(reason);
         }
     }
 
@@ -156,7 +173,7 @@ public class GroupService {
     public void rejectAllPendingMembers(Long groupId) {
         String reason="모집이 마감되어 자동으로 거절되었습니다.";
         List<GroupMember> pending = groupMemberRepository.findByGroupIdAndGroupMemberStatus(groupId, GroupMemberStatus.PENDING);
-        pending.forEach(member -> member.reject(reason));
+        pending.forEach(member -> member.rejectOnRecruitmentClose(reason));
     }
 
 
@@ -235,7 +252,10 @@ public class GroupService {
     //개설되어 있는 그룹 전체를 조회하는 기능입니다. (관리자 전용)
     @Transactional(readOnly = true)
     public Page<GroupDTO.GroupListDTO> getAllGroups(Long userId, GroupStatus groupStatus, Pageable pageable) {
-        Page<Group> groups = groupRepository.findByGroupStatus(groupStatus, GroupRecruitmentStatus.CLOSED, pageable);
+        // 반려된 그룹은 인원을 더 받도록 모집이 OPEN 으로 되돌아가므로 CLOSED 조건을 적용하지 않는다.
+        GroupRecruitmentStatus recruitmentStatus =
+                groupStatus == GroupStatus.REJECTED ? null : GroupRecruitmentStatus.CLOSED;
+        Page<Group> groups = groupRepository.findByGroupStatus(groupStatus, recruitmentStatus, pageable);
         return groups.map(groupUtil::toGroupListDTO);
     }
 

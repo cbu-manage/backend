@@ -24,13 +24,13 @@ public class SystemSettingAdminController {
     private final SystemSettingService systemSettingService;
 
     @GetMapping("/onboarding-links")
-    @Operation(summary = "온보딩 링크 조회", description = "합격/승인 안내 메일에 사용되는 홈페이지·오픈채팅·디스코드·공지방·수다방 링크를 조회합니다.")
+    @Operation(summary = "온보딩 링크 조회", description = "합격/승인 안내 메일에 사용되는 홈페이지·공지방·수다방·회비 문의방·디스코드 링크를 조회합니다.")
     public ApiResponse<OnboardingLinksResponse> getOnboardingLinks() {
         return ApiResponse.success(systemSettingService.getOnboardingLinks());
     }
 
     @PutMapping("/onboarding-links")
-    @Operation(summary = "온보딩 링크 수정", description = "합격/승인 안내 메일에 사용되는 홈페이지·오픈채팅·디스코드·공지방·수다방 링크를 DB에 저장합니다.")
+    @Operation(summary = "온보딩 링크 수정", description = "합격/승인 안내 메일에 사용되는 홈페이지·공지방·수다방·회비 문의방·디스코드 링크를 저장합니다. 보내지 않은 항목은 기존 값을 유지합니다.")
     public ApiResponse<OnboardingLinksResponse> updateOnboardingLinks(
             @RequestBody OnboardingLinksRequest request) {
         return ApiResponse.success(systemSettingService.updateOnboardingLinks(request));
