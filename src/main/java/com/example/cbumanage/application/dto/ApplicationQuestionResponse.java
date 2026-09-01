@@ -8,7 +8,8 @@ public record ApplicationQuestionResponse(
         String question,
         String description,
         Boolean isRequired,
-        Integer sortOrder
+        Integer sortOrder,
+        Long version
 ) {
     public static ApplicationQuestionResponse from(ApplicationQuestion question) {
         return new ApplicationQuestionResponse(
@@ -17,7 +18,8 @@ public record ApplicationQuestionResponse(
                 question.getQuestion(),
                 question.getDescription(),
                 question.getIsRequired(),
-                question.getSortOrder()
+                question.getSortOrder(),
+                question.getVersion()
         );
     }
 }

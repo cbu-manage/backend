@@ -19,6 +19,7 @@ public enum ErrorCode {
     UPLOAD_SIZE_EXCEEDED("E-COMMON-0008","업로드 가능한 파일 크기를 초과했습니다.", HttpStatus.BAD_REQUEST),
     METHOD_NOT_ALLOWED("E-COMMON-0009", "허용되지 않은 요청 방식입니다.", HttpStatus.METHOD_NOT_ALLOWED),
     ALREADY_JOINED_MEMBER("E-COMMON-0005","이미 가입된 멤버",HttpStatus.CONFLICT),
+    CONCURRENT_MODIFICATION("E-COMMON-0010", "다른 사람이 먼저 저장했습니다. 최신 내용을 불러온 뒤 다시 시도해 주세요.", HttpStatus.CONFLICT),
 
     UNAUTHORIZED("E-AUTH-0001", "인증이 필요합니다. ", HttpStatus.UNAUTHORIZED),
     FORBIDDEN("E-AUTH-0002", "권한이 없습니다. ", HttpStatus.FORBIDDEN),

@@ -3,12 +3,14 @@ package com.example.cbumanage.global.error;
 import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.member.exception.MemberDoesntHavePermissionException;
 import com.example.cbumanage.member.exception.MemberNotExistsException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -16,6 +18,7 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -102,6 +105,31 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ErrorCode.NOT_FOUND.getHttpStatus())
                 .body(ApiResponse.error(ErrorCode.NOT_FOUND));
+    }
+
+    /* 필수 파라미터 누락도 아래 Exception 핸들러로 떨어지면 500이 나가 실제 장애와 구분되지 않는다 */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleMissingRequestParameter(MissingServletRequestParameterException e) {
+        String message = e.getParameterName() + ": 필수 요청 파라미터입니다.";
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>(ErrorCode.INVALID_REQUEST.getCode(), message, null));
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleMissingRequestPart(MissingServletRequestPartException e) {
+        String message = e.getRequestPartName() + ": 필수 요청 항목입니다.";
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>(ErrorCode.INVALID_REQUEST.getCode(), message, null));
+    }
+
+    /* 두 사람이 같은 자료를 동시에 저장하면 나중 요청이 조용히 덮어쓰지 않도록 409로 알린다 */
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleOptimisticLockingFailure(OptimisticLockingFailureException e) {
+        return ResponseEntity
+                .status(ErrorCode.CONCURRENT_MODIFICATION.getHttpStatus())
+                .body(ApiResponse.error(ErrorCode.CONCURRENT_MODIFICATION));
     }
 
     @ExceptionHandler(Exception.class)

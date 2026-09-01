@@ -70,6 +70,10 @@ public class ApplicationQuestionService {
     public ApplicationQuestionResponse updateQuestion(String recruitmentUuid, String questionUuid,
                                                        ApplicationQuestionUpdateRequest request) {
         ApplicationQuestion question = getQuestionInRecruitment(recruitmentUuid, questionUuid);
+        // 화면에서 불러온 뒤 남이 먼저 저장했으면 덮어쓰지 않고 되돌려준다
+        if (request.version() != null && !request.version().equals(question.getVersion())) {
+            throw new BaseException(ErrorCode.CONCURRENT_MODIFICATION);
+        }
         question.update(request.question(), request.description(), request.isRequired(), request.sortOrder());
         return ApplicationQuestionResponse.from(question);
     }
