@@ -40,8 +40,11 @@ public class EmailService {
     private static final long SEND_LIMIT_WINDOW_SECONDS = 60 * 60L;
     /* 합격 안내 메일이 여는 화면 */
     private static final String APPLICATION_PASSED_PATH = "/apply/passed";
+    /* 같은 요청자의 시간당 발송 한도. 주소만 바꿔가며 대량 발송하는 것을 막는다 */
+    private static final long SEND_LIMIT_PER_IP_HOURLY = 20L;
     private static final String COOLDOWN_KEY_PREFIX = "mail:cooldown:";
     private static final String SEND_COUNT_KEY_PREFIX = "mail:count:";
+    private static final String IP_COUNT_KEY_PREFIX = "mail:ip:";
 
     private final JavaMailSender mailSender;
     private final RedisUtil redisUtil;
@@ -49,11 +52,12 @@ public class EmailService {
     private final SystemSettingService systemSettingService;
     private final EmailManager emailManager;
 
-    public EmailAuthResponseDTO sendEmail(String toEmail) {
+    public EmailAuthResponseDTO sendEmail(String toEmail, String clientIp) {
         if (!emailManager.validEmail(toEmail)) {
             throw new BaseException(ErrorCode.INVALID_EMAIL_DOMAIN);
         }
         checkSendLimit(toEmail);
+        checkClientLimit(clientIp);
 
         if (redisUtil.existData(toEmail)) {
             redisUtil.deleteData(toEmail);
@@ -77,6 +81,17 @@ public class EmailService {
         }
         long sentCount = redisUtil.increaseWithExpire(SEND_COUNT_KEY_PREFIX + toEmail, SEND_LIMIT_WINDOW_SECONDS);
         if (sentCount > SEND_LIMIT_PER_HOUR) {
+            throw new BaseException(ErrorCode.EMAIL_SEND_LIMIT_EXCEEDED);
+        }
+    }
+
+    /* 주소별 제한만으로는 주소를 바꿔가며 보내는 것을 막지 못해 요청자 단위로도 센다. */
+    private void checkClientLimit(String clientIp) {
+        if (clientIp == null || clientIp.isBlank()) {
+            return;
+        }
+        long sentCount = redisUtil.increaseWithExpire(IP_COUNT_KEY_PREFIX + clientIp, SEND_LIMIT_WINDOW_SECONDS);
+        if (sentCount > SEND_LIMIT_PER_IP_HOURLY) {
             throw new BaseException(ErrorCode.EMAIL_SEND_LIMIT_EXCEEDED);
         }
     }

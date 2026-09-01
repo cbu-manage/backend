@@ -3,9 +3,11 @@ package com.example.cbumanage.email.controller;
 import com.example.cbumanage.email.dto.EmailAuthResponseDTO;
 import com.example.cbumanage.email.service.EmailService;
 import com.example.cbumanage.global.common.ApiResponse;
+import com.example.cbumanage.global.util.ClientIpResolver;
 import com.example.cbumanage.member.dto.MemberMailUpdateDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,13 +22,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class EmailController {
 
     private final EmailService emailService;
+    private final ClientIpResolver clientIpResolver;
 
     @PostMapping("/send")
     @Operation(summary = "이메일 인증번호 전송",
             description = "요청한 이메일 주소로 인증번호를 전송합니다. 인증번호는 발송 후 10분간 유효합니다. " +
-                    "학교 이메일(@tukorea.ac.kr)만 허용하며, 같은 주소로는 60초 쿨다운·시간당 10회까지 발송할 수 있습니다.")
-    public ApiResponse<EmailAuthResponseDTO> sendAuthCode(@RequestParam String address) {
-        return ApiResponse.success(emailService.sendEmail(address));
+                    "학교 이메일(@tukorea.ac.kr)만 허용하며, 같은 주소로는 60초 쿨다운·시간당 10회, " +
+                    "같은 요청자는 시간당 20회까지 발송할 수 있습니다.")
+    public ApiResponse<EmailAuthResponseDTO> sendAuthCode(@RequestParam String address,
+                                                          HttpServletRequest request) {
+        return ApiResponse.success(emailService.sendEmail(address, clientIpResolver.resolve(request)));
     }
 
     @PostMapping("/verify")
