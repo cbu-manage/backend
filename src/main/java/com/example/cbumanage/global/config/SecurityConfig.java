@@ -48,6 +48,7 @@ public class SecurityConfig {
                                 "/api/v1/applications/*"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET,
+                                "/api/v1/applications/*/result",
                                 "/api/v1/applications/questions/current",
                                 "/api/v1/applications/generation/current",
                                 "/api/v1/fee-info",

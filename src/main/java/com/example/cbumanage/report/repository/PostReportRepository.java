@@ -140,7 +140,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     left join Group g on r.groupId = g.id
     left join User m on m.userId = p.authorId
     where p.category = :category
-    and r.groupId in :groupIds
+    and (r.groupId in :groupIds or p.authorId = :authorId)
     and p.isDeleted = false
     and (:startDate is null or r.date >= :startDate)
     and (:endDate is null or r.date <= :endDate)
@@ -151,13 +151,14 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     from Post p
     join PostReport r on r.post = p
     where p.category = :category
-    and r.groupId in :groupIds
+    and (r.groupId in :groupIds or p.authorId = :authorId)
     and p.isDeleted = false
     and (:startDate is null or r.date >= :startDate)
     and (:endDate is null or r.date <= :endDate)
 """)
     Page<PostDTO.PostReportPreviewDTO> findPostReportPreviewsByGroupIds(Pageable pageable, @Param("category") int category,
                                                                         @Param("groupIds") Collection<Long> groupIds,
+                                                                        @Param("authorId") Long authorId,
                                                                         @Param("startDate") LocalDateTime startDate,
                                                                         @Param("endDate") LocalDateTime endDate);
 
@@ -202,7 +203,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
             JOIN post_report r ON r.post_id = p.post_id
             JOIN user m ON m.user_id = p.author_id
             WHERE p.category = :category
-              AND r.group_id IN :groupIds
+              AND (r.group_id IN :groupIds OR p.author_id = :authorId)
               AND p.is_deleted = false
               AND (:startDate IS NULL OR r.`date` >= :startDate)
               AND (:endDate IS NULL OR r.`date` <= :endDate)
@@ -215,7 +216,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
             JOIN post_report r ON r.post_id = p.post_id
             JOIN user m ON m.user_id = p.author_id
             WHERE p.category = :category
-              AND r.group_id IN :groupIds
+              AND (r.group_id IN :groupIds OR p.author_id = :authorId)
               AND p.is_deleted = false
               AND (:startDate IS NULL OR r.`date` >= :startDate)
               AND (:endDate IS NULL OR r.`date` <= :endDate)
@@ -226,6 +227,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     Page<Long> searchPostIdsByKeywordAndGroupIds(
             @Param("category") int category,
             @Param("groupIds") Collection<Long> groupIds,
+            @Param("authorId") Long authorId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
             @Param("pattern") String pattern,

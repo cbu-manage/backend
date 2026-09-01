@@ -34,7 +34,7 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
     from Group g
     where g.isDeleted = false
       and (:groupStatus is null or g.status = :groupStatus)
-      and g.recruitmentStatus = :recruitmentStatus
+      and (:recruitmentStatus is null or g.recruitmentStatus = :recruitmentStatus)
     """)
     Page<Group> findByGroupStatus(@Param("groupStatus") GroupStatus groupStatus,
                                   @Param("recruitmentStatus") GroupRecruitmentStatus recruitmentStatus,

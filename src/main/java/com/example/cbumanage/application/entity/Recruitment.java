@@ -82,6 +82,13 @@ public class Recruitment {
     }
 
     /**
+     * 투표 자격자 수 갱신. 모집 진행 중 운영진이 바뀌면 판정 기준 N을 다시 맞춘다.
+     */
+    public void updateVoterCount(int voterCount) {
+        this.voterCount = voterCount;
+    }
+
+    /**
      * 모집 마감함황
      */
     public void close() {

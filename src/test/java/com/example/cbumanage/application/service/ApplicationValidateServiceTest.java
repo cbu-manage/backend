@@ -55,19 +55,37 @@ class ApplicationValidateServiceTest {
     }
 
     @Test
-    void validateRejectsAlreadyJoinedStudentNumberBeforeApplicationLookup() {
+    void validateHidesJoinStatusWhenNicknameDoesNotMatch() {
         Long studentNumber = 2024000001L;
 
+        when(memberApplicationRepository.findByStudentNumberAndNicknameAndStatus(
+                studentNumber, "wrong", ApplicationStatus.ADMIN_ACCEPTED))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> applicationValidateService.validate(
+                new ApplicationValidateRequest(studentNumber, "wrong")))
+                .isInstanceOfSatisfying(BaseException.class,
+                        e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.ACCEPTED_APPLICATION_NOT_FOUND));
+
+        // 가입 여부를 아예 보지 않아야 학번만 바꿔가며 회원 여부를 훑을 수 없다
+        verify(userRepository, never()).findByStudentNumber(studentNumber);
+    }
+
+    @Test
+    void validateTellsAlreadyJoinedOnlyWhenNicknameMatches() {
+        Long studentNumber = 2024000001L;
+        String nickname = "cbu";
+
+        when(memberApplicationRepository.findByStudentNumberAndNicknameAndStatus(
+                studentNumber, nickname, ApplicationStatus.ADMIN_ACCEPTED))
+                .thenReturn(Optional.of(acceptedApplication(studentNumber, nickname)));
         when(userRepository.findByStudentNumber(studentNumber))
                 .thenReturn(Optional.of(new User("user@example.com", studentNumber, "encoded-password")));
 
         assertThatThrownBy(() -> applicationValidateService.validate(
-                new ApplicationValidateRequest(studentNumber, "cbu")))
+                new ApplicationValidateRequest(studentNumber, nickname)))
                 .isInstanceOfSatisfying(BaseException.class,
                         e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.ALREADY_JOINED_MEMBER));
-
-        verify(memberApplicationRepository, never()).findByStudentNumberAndNicknameAndStatus(
-                studentNumber, "cbu", ApplicationStatus.ADMIN_ACCEPTED);
     }
 
     @Test
@@ -104,7 +122,7 @@ class ApplicationValidateServiceTest {
                 .major("컴퓨터공학과")
                 .phoneNumber("010-1234-5678")
                 .generation(39L)
-                .applicationField(ApplicationField.DEV)
+                .applicationFields(java.util.Set.of(ApplicationField.DEV))
                 .portfolioUrl("https://github.com/cbu")
                 .refSource(RefSource.FRIEND)
                 .refLinkEtc(null)

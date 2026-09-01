@@ -75,7 +75,7 @@ class ApplicationApplicantServiceTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
         when(applicationQuestionService.getQuestions(40L)).thenReturn(List.of(question));
 
-        assertThatThrownBy(() -> applicationApplicantService.submit(submitRequest(List.of())))
+        assertThatThrownBy(() -> applicationApplicantService.submit(submitRequest(java.util.Map.of())))
                 .isInstanceOfSatisfying(BaseException.class,
                         e -> org.assertj.core.api.Assertions.assertThat(e.getErrorCode())
                                 .isEqualTo(ErrorCode.REQUIRED_ANSWER_MISSING));
@@ -99,9 +99,7 @@ class ApplicationApplicantServiceTest {
         when(applicationPortfolioUrlRepository.findByMemberApplicationIdOrderBySortOrderAsc(null))
                 .thenReturn(List.of());
 
-        applicationApplicantService.submit(submitRequest(List.of(
-                new ApplicationSubmitRequest.AnswerRequest(question.getQuestionUuid(), "답변입니다.")
-        )));
+        applicationApplicantService.submit(submitRequest(java.util.Map.of(question.getType(), "답변입니다.")));
 
         verify(redisUtil).deleteData("applicant@tukorea.ac.kr");
     }
@@ -121,9 +119,7 @@ class ApplicationApplicantServiceTest {
         when(applicationPortfolioUrlRepository.findByMemberApplicationIdOrderBySortOrderAsc(null))
                 .thenReturn(List.of());
 
-        var response = applicationApplicantService.submit(submitRequest(List.of(
-                new ApplicationSubmitRequest.AnswerRequest(question.getQuestionUuid(), "답변입니다.")
-        )));
+        var response = applicationApplicantService.submit(submitRequest(java.util.Map.of(question.getType(), "답변입니다.")));
 
         assertThat(response.generation()).isEqualTo(29L);
     }
@@ -163,7 +159,7 @@ class ApplicationApplicantServiceTest {
         verify(redisUtil, never()).deleteData("other@tukorea.ac.kr");
     }
 
-    private ApplicationSubmitRequest submitRequest(List<ApplicationSubmitRequest.AnswerRequest> answers) {
+    private ApplicationSubmitRequest submitRequest(java.util.Map<String, String> answers) {
         return new ApplicationSubmitRequest(
                 2024000001L,
                 "applicant@tukorea.ac.kr",
@@ -173,7 +169,7 @@ class ApplicationApplicantServiceTest {
                 AcademicStatus.JUNIOR,
                 "컴퓨터공학과",
                 "010-1234-5678",
-                ApplicationField.DEV,
+                List.of(ApplicationField.DEV),
                 null,
                 RefSource.FRIEND,
                 null,
@@ -191,6 +187,7 @@ class ApplicationApplicantServiceTest {
                 .question(question)
                 .isRequired(true)
                 .sortOrder(sortOrder)
+                .type("Q" + sortOrder)
                 .build();
     }
 
@@ -204,7 +201,7 @@ class ApplicationApplicantServiceTest {
                 .major("컴퓨터공학과")
                 .phoneNumber("010-1234-5678")
                 .generation(40L)
-                .applicationField(ApplicationField.DEV)
+                .applicationFields(java.util.Set.of(ApplicationField.DEV))
                 .refSource(RefSource.FRIEND)
                 .canOt(true)
                 .canWelcome(true)

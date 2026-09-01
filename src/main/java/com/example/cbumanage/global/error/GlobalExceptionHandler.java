@@ -1,6 +1,8 @@
 package com.example.cbumanage.global.error;
 
 import com.example.cbumanage.global.common.ApiResponse;
+import com.example.cbumanage.member.exception.MemberDoesntHavePermissionException;
+import com.example.cbumanage.member.exception.MemberNotExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -8,7 +10,10 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
@@ -20,6 +25,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
                 .body(new ApiResponse<>(errorCode.getCode(), e.getMessage(), null));
+    }
+
+    @ExceptionHandler(MemberNotExistsException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleMemberNotExistsException(MemberNotExistsException e) {
+        return ResponseEntity
+                .status(ErrorCode.USER_NOT_FOUND.getHttpStatus())
+                .body(ApiResponse.error(ErrorCode.USER_NOT_FOUND));
+    }
+
+    @ExceptionHandler(MemberDoesntHavePermissionException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleMemberDoesntHavePermissionException(MemberDoesntHavePermissionException e) {
+        return ResponseEntity
+                .status(ErrorCode.FORBIDDEN.getHttpStatus())
+                .body(new ApiResponse<>(ErrorCode.FORBIDDEN.getCode(), e.getMessage(), null));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -68,6 +87,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ErrorCode.UPLOAD_SIZE_EXCEEDED.getHttpStatus())
                 .body(ApiResponse.error(ErrorCode.UPLOAD_SIZE_EXCEEDED));
+    }
+
+    /* 라우팅 오류까지 아래 Exception 핸들러로 떨어지면 오타 하나에도 500이 나간다 */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(HttpRequestMethodNotSupportedException e) {
+        return ResponseEntity
+                .status(ErrorCode.METHOD_NOT_ALLOWED.getHttpStatus())
+                .body(ApiResponse.error(ErrorCode.METHOD_NOT_ALLOWED));
+    }
+
+    @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class})
+    protected ResponseEntity<ApiResponse<Void>> handleNoHandlerFound(Exception e) {
+        return ResponseEntity
+                .status(ErrorCode.NOT_FOUND.getHttpStatus())
+                .body(ApiResponse.error(ErrorCode.NOT_FOUND));
     }
 
     @ExceptionHandler(Exception.class)

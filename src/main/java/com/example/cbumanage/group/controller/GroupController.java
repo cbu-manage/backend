@@ -32,7 +32,9 @@ public class GroupController {
      * [ 일반 유저 및 본인 관련 API ]
      * ============================================================ */
     @Operation(summary = "그룹 가입 신청",
-            description = "로그인한 유저가 그룹에 가입 신청을 합니다. 초기 상태는 PENDING입니다.")
+            description = "로그인한 유저가 그룹에 가입 신청을 합니다. 초기 상태는 PENDING입니다. "
+                    + "거절된 뒤에도 다시 신청할 수 있지만, 같은 팀에서 팀장이 3번 거절하면 더 이상 신청할 수 없습니다(E-GROUP-0007). "
+                    + "모집 마감으로 일괄 거절된 것은 횟수에 포함하지 않습니다.")
     @PostMapping("/{groupId}/members")
     public ApiResponse<GroupDTO.GroupMemberInfoDTO> applyGroupMember(
             @Parameter(description = "가입할 그룹의 ID", example = "1")

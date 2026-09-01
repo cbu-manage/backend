@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/onboarding-links")
 @RequiredArgsConstructor
-@Tag(name = "온보딩 링크", description = "합격자 등 누구나 홈페이지·오픈채팅·디스코드·공지방·수다방 링크를 조회합니다.")
+@Tag(name = "온보딩 링크", description = "합격자 등 누구나 홈페이지·공지방·수다방·회비 문의방·디스코드 링크를 조회합니다.")
 public class OnboardingLinksController {
 
     private final SystemSettingService systemSettingService;

@@ -61,7 +61,9 @@ public class SystemSettingService {
                 .orElse(defaultValue);
     }
 
+    /* 요청에 없는 항목(null)은 기존 값을 유지한다. 일부만 보내는 화면이 나머지를 지우면 안 된다. */
     private void upsert(String key, String value) {
+        if (value == null) return;
         SystemSetting setting = systemSettingRepository.findById(key)
                 .orElseGet(() -> new SystemSetting(key, value));
         setting.update(value);
