@@ -12,6 +12,7 @@ import com.example.cbumanage.member.dto.MemberUpdateDTO;
 import com.example.cbumanage.member.exception.MemberNotExistsException;
 import com.example.cbumanage.member.util.MemberMapper;
 import com.example.cbumanage.user.entity.MemberStatus;
+import com.example.cbumanage.user.entity.Role;
 import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,6 +80,10 @@ public class MemberManageService {
 	public User createMember(final MemberCreateDTO memberCreateDTO) {
 		User member = memberMapper.map(memberCreateDTO, hashPassword(defaultLoginPassword));
 		userRepository.save(member);
+		// 운영진으로 바로 만들면 진행 중인 모집의 N이 모자란 채로 남아 그 사람 없이도 최종처리가 된다
+		if (isVoter(member)) {
+			recruitmentService.refreshVoterCount();
+		}
 		return member;
 	}
 
@@ -96,7 +101,16 @@ public class MemberManageService {
 	public void deleteMember(final Long studentNumber) {
 		User user = userRepository.findByStudentNumberAndDeletedAtIsNull(studentNumber)
 				.orElseThrow(MemberNotExistsException::new);
+		boolean wasVoter = isVoter(user);
 		user.delete();
+		// 운영진이 빠지면 N이 남아 있어 아무리 투표해도 최종처리가 되지 않는다
+		if (wasVoter) {
+			recruitmentService.refreshVoterCount();
+		}
+	}
+
+	private boolean isVoter(User user) {
+		return user.getRole() != null && Role.applicationVoterRoles().contains(user.getRole());
 	}
 
 	@Transactional
