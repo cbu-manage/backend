@@ -56,8 +56,9 @@ public class EmailService {
         if (!emailManager.validEmail(toEmail)) {
             throw new BaseException(ErrorCode.INVALID_EMAIL_DOMAIN);
         }
-        checkSendLimit(toEmail);
+        // 요청자 한도를 먼저 본다. 쿨다운은 여기서 선점하므로, 못 보낼 요청이 먼저 걸러져야 헛되이 잠기지 않는다
         checkClientLimit(clientIp);
+        checkSendLimit(toEmail);
 
         if (redisUtil.existData(toEmail)) {
             redisUtil.deleteData(toEmail);
@@ -66,21 +67,27 @@ public class EmailService {
         try {
             MimeMessage emailForm = createEmailForm(toEmail);
             mailSender.send(emailForm);
-            redisUtil.setDataExpire(COOLDOWN_KEY_PREFIX + toEmail, "1", SEND_COOLDOWN_SECONDS);
             return new EmailAuthResponseDTO(true, "인증번호가 메일로 전송되었습니다.");
         } catch (MessagingException | MailSendException e) {
+            // 실제로 못 보냈으면 쿨다운을 풀어 60초를 기다리지 않고 다시 시도할 수 있게 한다
+            redisUtil.deleteData(COOLDOWN_KEY_PREFIX + toEmail);
             return new EmailAuthResponseDTO(false, e.getMessage());
         }
     }
 
-    /* 인증이 필요 없는 API라 주소 단위로 쿨다운과 시간당 한도를 확인한다. 쿨다운은 발송에 성공했을 때만 건다. */
+    /*
+     * 인증이 필요 없는 API라 주소 단위로 쿨다운과 시간당 한도를 확인한다.
+     * 있는지 보고 발송 뒤에 거는 방식이면 동시 요청이 모두 통과해 한 번에 시간당 한도까지 나가고,
+     * 저장되는 인증번호도 서로 덮어써 대부분 못 쓰게 된다. 그래서 보내기 전에 SET NX로 선점한다.
+     */
     private void checkSendLimit(String toEmail) {
         String cooldownKey = COOLDOWN_KEY_PREFIX + toEmail;
-        if (redisUtil.existData(cooldownKey)) {
+        if (!redisUtil.setIfAbsentExpire(cooldownKey, "1", SEND_COOLDOWN_SECONDS)) {
             throw new BaseException(ErrorCode.EMAIL_SEND_LIMIT_EXCEEDED);
         }
         long sentCount = redisUtil.increaseWithExpire(SEND_COUNT_KEY_PREFIX + toEmail, SEND_LIMIT_WINDOW_SECONDS);
         if (sentCount > SEND_LIMIT_PER_HOUR) {
+            redisUtil.deleteData(cooldownKey);
             throw new BaseException(ErrorCode.EMAIL_SEND_LIMIT_EXCEEDED);
         }
     }
