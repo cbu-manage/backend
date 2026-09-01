@@ -1,4 +1,4 @@
-﻿name: Deploy Backend
+name: Deploy Backend
 
 on:
   push:
@@ -10,15 +10,19 @@ concurrency:
   group: backend-deploy-main
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  packages: write
+
 env:
-  APP_DIR: ${{ secrets.SERVER_APP_DIR || '/root/TUK-cbu-manage/backend' }}
-  COMPOSE_DIR: deploy
+  IMAGE: ghcr.io/cbu-manage/backend
 
 jobs:
-  deploy:
-    name: Deploy on main push
-    environment: "SERVER CI/CD"
+  build:
+    name: Build & push image
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
 
     steps:
       - name: Checkout source
@@ -29,51 +33,102 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
-      - name: Validate backend build
+      - name: Build jar
         run: |
           chmod +x ./gradlew
-          ./gradlew clean build -x test --no-daemon
+          ./gradlew clean build --no-daemon
 
+      - name: Image tag
+        id: meta
+        run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push runtime image
+        run: |
+          docker build -f deploy/Dockerfile.runtime \
+            -t "$IMAGE:${{ steps.meta.outputs.tag }}" \
+            -t "$IMAGE:latest" .
+          docker push "$IMAGE:${{ steps.meta.outputs.tag }}"
+          docker push "$IMAGE:latest"
+
+  deploy:
+    name: Deploy to server
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Validate deployment secrets
         run: |
           test -n "${{ secrets.SERVER_IP }}" || (echo "Missing secret: SERVER_IP" && exit 1)
           test -n "${{ secrets.SERVER_USER }}" || (echo "Missing secret: SERVER_USER" && exit 1)
           test -n "${{ secrets.SERVER_SSH_KEY }}" || (echo "Missing secret: SERVER_SSH_KEY" && exit 1)
-      - name: Deploy to server
+
+      - name: Pull & restart on server
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          APP_DIR: ${{ secrets.SERVER_APP_DIR || '/home/ubuntu/cbu' }}
+          IMAGE_REF: ghcr.io/cbu-manage/backend:${{ needs.build.outputs.tag }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script_stop: true
-          envs: APP_DIR,COMPOSE_DIR
+          envs: APP_DIR,IMAGE_REF,GHCR_TOKEN,GHCR_USER
           script: |
             set -e
             cd "$APP_DIR"
-            git fetch origin main
-            git checkout main
-            git reset --hard origin/main
-            cd "$COMPOSE_DIR"
-            if docker compose version >/dev/null 2>&1; then
-              COMPOSE="docker compose"
-            elif command -v docker-compose >/dev/null 2>&1; then
-              COMPOSE="docker-compose"
-            else
-              echo "Docker Compose is not installed. Install docker-compose-plugin or docker-compose." >&2
+
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            docker pull "$IMAGE_REF"
+
+            # 실패 시 되돌릴 직전 이미지. compose 기본값과 같은 값을 폴백으로 둔다.
+            PREV=$(grep -m1 '^BACKEND_IMAGE=' .env 2>/dev/null | cut -d= -f2- || true)
+            [ -n "$PREV" ] || PREV="cbu-backend:migr1"
+            echo "previous image: $PREV"
+
+            grep -v '^BACKEND_IMAGE=' .env 2>/dev/null > .env.tmp || true
+            echo "BACKEND_IMAGE=$IMAGE_REF" >> .env.tmp
+            mv .env.tmp .env
+
+            docker compose up -d backend
+            docker compose ps
+
+            # 헬스체크: 백엔드가 응답할 때까지 최대 60초
+            HEALTHY=0
+            for i in $(seq 1 12); do
+              if docker run --rm --network cbu-net curlimages/curl:8.10.1 \
+                   -fs -o /dev/null http://backend:8080/api/v1/onboarding-links; then
+                HEALTHY=1; echo "health OK"; break
+              fi
+              sleep 5
+            done
+
+            # 실패하면 직전 이미지로 되돌린다. 여기서 멈추면 dev 서버가 내려간 채로 남는다.
+            if [ "$HEALTHY" != "1" ]; then
+              echo "health check FAILED - rolling back to $PREV"
+              docker logs backend --tail 50 || true
+              sed -i "s#^BACKEND_IMAGE=.*#BACKEND_IMAGE=$PREV#" .env
+              docker compose up -d backend
+              docker logout ghcr.io || true
               exit 1
             fi
-            $COMPOSE down --remove-orphans
-            $COMPOSE up --build -d
-            $COMPOSE ps
 
-            # Keep running containers intact, but remove unused images/build cache
-            # that accumulate after repeated --build deployments.
-            docker image prune -af
-            docker builder prune -af --filter until=24h || true
+            docker logout ghcr.io
 
-
-
-
-
-
+            # 옛 이미지 정리. 직전 이미지와 latest, 수동 롤백본(cbu-backend:migr1)은 남긴다.
+            CUR_TAG="${IMAGE_REF##*:}"
+            PREV_TAG="${PREV##*:}"
+            docker images --filter "reference=ghcr.io/cbu-manage/backend" --format '{{.Repository}}:{{.Tag}}' \
+              | grep -v ":${CUR_TAG}$" | grep -v ":${PREV_TAG}$" | grep -v ':latest$' \
+              | xargs -r docker rmi || true
+            docker image prune -f
