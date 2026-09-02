@@ -35,6 +35,13 @@ public class ApplicationQuestionService {
     }
 
     @Transactional(readOnly = true)
+    public List<ApplicationQuestionResponse> getQuestionsInRecruitment(String recruitmentUuid) {
+        return getQuestions(resolveGeneration(recruitmentUuid)).stream()
+                .map(ApplicationQuestionResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<ApplicationQuestion> getQuestions(Long generation) {
         return applicationQuestionRepository.findByGenerationAndDeletedAtIsNullOrderBySortOrderAsc(generation);
     }
@@ -51,6 +58,7 @@ public class ApplicationQuestionService {
         int sortOrder = request.sortOrder() != null
                 ? request.sortOrder()
                 : applicationQuestionRepository.findMaxSortOrderByGeneration(generation).orElse(0) + 1;
+        assertSortOrderFree(generation, sortOrder, null);
 
         ApplicationQuestion question = ApplicationQuestion.builder()
                 .generation(generation)
@@ -74,6 +82,9 @@ public class ApplicationQuestionService {
         if (request.version() != null && !request.version().equals(question.getVersion())) {
             throw new BaseException(ErrorCode.CONCURRENT_MODIFICATION);
         }
+        if (request.sortOrder() != null) {
+            assertSortOrderFree(question.getGeneration(), request.sortOrder(), question.getQuestionUuid());
+        }
         question.update(request.question(), request.description(), request.isRequired(), request.sortOrder());
         // flush 전에는 version이 증가 전 값이라, 응답을 그대로 들고 다음 저장을 하면 바로 409가 난다
         applicationQuestionRepository.flush();
@@ -87,6 +98,19 @@ public class ApplicationQuestionService {
     public void deleteQuestion(String recruitmentUuid, String questionUuid) {
         ApplicationQuestion question = getQuestionInRecruitment(recruitmentUuid, questionUuid);
         question.softDelete();
+    }
+
+    /**
+     * 같은 순서를 둘이 쓰면 지원자 화면의 문항 차례가 매번 달라질 수 있다.
+     * 화면에는 이미 막아뒀지만 API를 직접 부르면 통과했다.
+     */
+    private void assertSortOrderFree(Long generation, int sortOrder, String selfUuid) {
+        boolean taken = getQuestions(generation).stream()
+                .anyMatch(other -> other.getSortOrder() == sortOrder
+                        && !other.getQuestionUuid().equals(selfUuid));
+        if (taken) {
+            throw new BaseException(ErrorCode.QUESTION_SORT_ORDER_DUPLICATED);
+        }
     }
 
     private Long resolveGeneration(String recruitmentUuid) {

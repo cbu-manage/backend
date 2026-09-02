@@ -9,6 +9,7 @@ import com.example.cbumanage.application.entity.ApplicationAnswer;
 import com.example.cbumanage.application.entity.ApplicationPortfolioUrl;
 import com.example.cbumanage.application.entity.ApplicationQuestion;
 import com.example.cbumanage.application.entity.MemberApplication;
+import com.example.cbumanage.application.entity.Recruitment;
 import com.example.cbumanage.application.entity.enums.RecruitmentStatus;
 import com.example.cbumanage.application.repository.ApplicationAnswerRepository;
 import com.example.cbumanage.application.repository.ApplicationPortfolioUrlRepository;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +53,7 @@ public class ApplicationApplicantService {
             throw new BaseException(ErrorCode.ALREADY_JOINED_MEMBER);
         });
 
-        Long generation = currentApplicationGeneration();
+        Long generation = assertAcceptingAndGetGeneration();
         memberApplicationRepository.findByStudentNumberAndGeneration(
                 request.studentNumber(), generation).ifPresent(application -> {
             throw new BaseException(ErrorCode.APPLICATION_DUPLICATED);
@@ -82,19 +84,47 @@ public class ApplicationApplicantService {
         return toApplicantResponse(application);
     }
 
-    private Long currentApplicationGeneration() {
-        return recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)
-                .map(recruitment -> recruitment.getGeneration())
-                .orElseGet(generationPolicy::currentGeneration);
+    /**
+     * 접수 가능한지 확인하고 기수를 돌려준다.
+     * 진행 중인 모집이 없어도 정책 기수로 폴백해 그냥 접수됐고, 모집 기간 밖에서도 받았다.
+     */
+    private Long assertAcceptingAndGetGeneration() {
+        Recruitment recruitment = recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)
+                .orElseThrow(() -> new BaseException(ErrorCode.RECRUITMENT_NOT_ACCEPTING));
+        LocalDate today = LocalDate.now();
+        if (recruitment.getPlannedStartDate() != null && today.isBefore(recruitment.getPlannedStartDate())) {
+            throw new BaseException(ErrorCode.RECRUITMENT_NOT_ACCEPTING);
+        }
+        if (recruitment.getPlannedEndDate() != null && today.isAfter(recruitment.getPlannedEndDate())) {
+            throw new BaseException(ErrorCode.RECRUITMENT_NOT_ACCEPTING);
+        }
+        return recruitment.getGeneration();
     }
+
+    /* 학번+닉네임만 맞으면 지원서 전문이 나가므로 학번 단위로 시도 횟수를 제한한다 */
+    private static final long LOOKUP_WINDOW_SECONDS = 60 * 60L;
+    private static final long LOOKUP_MAX_PER_WINDOW = 10L;
 
     @Transactional(readOnly = true)
     public ApplicantApplicationResponse getMyApplication(ApplicationMyRequest request) {
+        String lookupKey = "application:lookup:" + request.studentNumber();
+        if (redisUtil.increaseWithExpire(lookupKey, LOOKUP_WINDOW_SECONDS) > LOOKUP_MAX_PER_WINDOW) {
+            throw new BaseException(ErrorCode.APPLICATION_LOOKUP_LIMIT_EXCEEDED);
+        }
         MemberApplication application = memberApplicationRepository
                 .findFirstByStudentNumberAndNicknameOrderBySubmittedAtDesc(
                         request.studentNumber(), request.nickname())
                 .orElseThrow(() -> new BaseException(ErrorCode.APPLICATION_NOT_FOUND));
-        return toApplicantResponse(application);
+        ApplicantApplicationResponse response = toApplicantResponse(application);
+        return isBeforeAnnouncement(application.getGeneration()) ? response.hideResult() : response;
+    }
+
+    /** 발표일이 지나지 않았으면 결과를 감춘다. 발표일이 없으면 아직 안 정해진 것으로 본다. */
+    private boolean isBeforeAnnouncement(Long generation) {
+        return recruitmentRepository.findByGeneration(generation)
+                .map(recruitment -> recruitment.getAnnouncementDate() == null
+                        || LocalDate.now().isBefore(recruitment.getAnnouncementDate()))
+                .orElse(false);
     }
 
     @Transactional

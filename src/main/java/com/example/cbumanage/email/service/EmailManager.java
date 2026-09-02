@@ -13,7 +13,8 @@ public class EmailManager {
 	public boolean validEmail(final String email) {
 		String[] split = email.split("@");
 		if (split.length != 2) return false;
-		String domain = split[1];
+		// 대문자로 적어도 같은 학교 메일이다
+		String domain = split[1].toLowerCase();
 		return possibleDomains.contains(domain);
 	}
 }

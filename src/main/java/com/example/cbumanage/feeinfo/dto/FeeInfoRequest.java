@@ -1,6 +1,7 @@
 package com.example.cbumanage.feeinfo.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -33,4 +34,8 @@ public record FeeInfoRequest(
         @NotNull(message = "납부 마감일은 필수입니다.")
         LocalDate paymentDeadline
 ) {
+    @AssertTrue(message = "감면 금액은 회비 금액을 넘을 수 없습니다.")
+    public boolean isDiscountWithinFee() {
+        return discountAmount <= feeAmount;
+    }
 }

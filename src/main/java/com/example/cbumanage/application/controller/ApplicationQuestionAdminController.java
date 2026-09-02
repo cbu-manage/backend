@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/admin/recruitments/{recruitmentUuid}/questions")
 @RequiredArgsConstructor
@@ -21,6 +23,19 @@ import org.springframework.web.bind.annotation.*;
 public class ApplicationQuestionAdminController {
 
     private final ApplicationQuestionService applicationQuestionService;
+
+    @GetMapping
+    @Operation(summary = "지원서 질문 목록 조회",
+            description = """
+                    해당 모집 회차의 질문을 노출 순서대로 반환합니다.
+
+                    공개 조회(`GET /api/v1/applications/questions/current`)는 현재 진행 중인 모집만 볼 수 있어,
+                    지난 회차나 아직 시작하지 않은 회차의 질문을 관리자 화면에서 확인할 수 없었습니다.
+                    응답의 `version`은 수정 저장 시 되돌려 보내면 동시 저장 충돌을 막는 데 쓰입니다.
+                    """)
+    public ApiResponse<List<ApplicationQuestionResponse>> list(@PathVariable String recruitmentUuid) {
+        return ApiResponse.success(applicationQuestionService.getQuestionsInRecruitment(recruitmentUuid));
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
