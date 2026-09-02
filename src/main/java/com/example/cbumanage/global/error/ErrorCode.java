@@ -72,12 +72,16 @@ public enum ErrorCode {
     UNDECIDED_APPLICATION_EXISTS("E-APP-0013", "최종 결정되지 않은(보류) 신청서가 있습니다.", HttpStatus.BAD_REQUEST),
     REQUIRED_ANSWER_MISSING("E-APP-0014", "필수 답변이 누락되었습니다.", HttpStatus.BAD_REQUEST),
     QUESTION_TYPE_DUPLICATED("E-APP-0015", "해당 기수에 이미 사용 중인 질문 타입입니다.", HttpStatus.CONFLICT),
+    APPLICATION_LOOKUP_LIMIT_EXCEEDED("E-APP-0016", "조회 시도가 너무 많습니다. 잠시 후 다시 시도해 주세요.", HttpStatus.TOO_MANY_REQUESTS),
+    QUESTION_SORT_ORDER_DUPLICATED("E-APP-0017", "해당 기수에 이미 사용 중인 노출 순서입니다.", HttpStatus.CONFLICT),
 
     // 모집(Recruitment) 에러 코드
     RECRUITMENT_NOT_FOUND("E-REC-0001", "모집 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     RECRUITMENT_ALREADY_OPEN("E-REC-0002", "이미 진행 중인 모집이 있습니다.", HttpStatus.CONFLICT),
     RECRUITMENT_DUPLICATED("E-REC-0003", "이미 존재하는 모집 기수입니다.", HttpStatus.CONFLICT),
     RECRUITMENT_ALREADY_CLOSED("E-REC-0004", "이미 마감된 모집입니다.", HttpStatus.BAD_REQUEST),
+    RECRUITMENT_NOT_ACCEPTING("E-REC-0005", "지금은 모집 기간이 아닙니다.", HttpStatus.BAD_REQUEST),
+    RECRUITMENT_DATE_INVALID("E-REC-0006", "모집 종료일은 시작일 이후, 발표일은 종료일 이후여야 합니다.", HttpStatus.BAD_REQUEST),
 
     // 회비 안내 에러 코드
     FEE_INFO_NOT_FOUND("E-FEE-0001", "회비 안내 정보가 아직 등록되지 않았습니다.", HttpStatus.NOT_FOUND);

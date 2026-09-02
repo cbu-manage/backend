@@ -32,6 +32,23 @@ public record ApplicantApplicationResponse(
         List<ApplicationDetailResponse.AnswerItem> answers,
         List<ApplicationDetailResponse.PortfolioItem> portfolios
 ) {
+    /**
+     * 발표일 전에는 합불과 사유를 감춘다.
+     * 지원자 본인 조회에도 status·finalDecisionReason·decidedAt이 그대로 실려
+     * 발표 전에 결과를 먼저 알 수 있었다. 취소는 본인이 한 것이므로 그대로 둔다.
+     */
+    public ApplicantApplicationResponse hideResult() {
+        if (status == ApplicationStatus.SUBMITTED || status == ApplicationStatus.CANCELLED) {
+            return this;
+        }
+        return new ApplicantApplicationResponse(
+                applicationUuid, studentNumber, email, name, nickname, grade, major, phoneNumber,
+                generation, applicationFields, portfolioUrl, refSource, refLinkEtc,
+                canOt, canWelcome,
+                ApplicationStatus.SUBMITTED, null, submittedAt, null,
+                answers, portfolios);
+    }
+
     public static ApplicantApplicationResponse of(
             MemberApplication application,
             List<ApplicationDetailResponse.AnswerItem> answers,

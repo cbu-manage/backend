@@ -181,16 +181,23 @@ public class EmailService {
         }
     }
 
+    /* 발송에만 제한이 있어 검증은 무제한으로 찍어볼 수 있었다 */
+    private static final long VERIFY_WINDOW_SECONDS = 10 * 60L;
+    private static final long VERIFY_MAX_PER_WINDOW = 10L;
+
     public EmailAuthResponseDTO validateAuthCode(String email, String authCode) {
-        String findAuthCode = redisUtil.getData(email);
-        if (findAuthCode == null) {
-            return new EmailAuthResponseDTO(false, "인증번호가 만료되었습니다. 다시 시도해주세요.");
+        // 실패·성공 여부와 무관하게 문구를 하나로 둔다. 갈리면 코드가 살아 있는지 알려주는 셈이 된다
+        String invalidMessage = "인증번호가 올바르지 않거나 만료되었습니다. 다시 시도해주세요.";
+
+        if (redisUtil.increaseWithExpire("mail:verify:" + email, VERIFY_WINDOW_SECONDS) > VERIFY_MAX_PER_WINDOW) {
+            return new EmailAuthResponseDTO(false, "인증 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.");
         }
 
-        if (findAuthCode.equals(authCode)) {
-            return new EmailAuthResponseDTO(true, "인증에 성공했습니다.");
+        String findAuthCode = redisUtil.getData(email);
+        if (findAuthCode == null || !findAuthCode.equals(authCode)) {
+            return new EmailAuthResponseDTO(false, invalidMessage);
         }
-        return new EmailAuthResponseDTO(false, "인증번호가 일치하지 않습니다.");
+        return new EmailAuthResponseDTO(true, "인증에 성공했습니다.");
     }
 
     @Transactional
