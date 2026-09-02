@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -171,7 +172,7 @@ public class GroupController {
     @PatchMapping("/members/{groupMemberId}/applicant")
     public ApiResponse<Void> handleApplicantAction(
             @Parameter(description = "그룹 멤버 고유 식별자(groupMemberId)", example = "50") @PathVariable Long groupMemberId,
-            @RequestBody GroupDTO.ApplicantActionRequestDTO req, Authentication authentication) {
+            @RequestBody @Valid GroupDTO.ApplicantActionRequestDTO req, Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         GroupMemberStatus targetStatus = (req.action() == MemberApprovalAction.ACCEPT)
                 ? GroupMemberStatus.ACTIVE
@@ -215,7 +216,7 @@ public class GroupController {
     @PatchMapping("/{groupId}/admin/status")
     public ApiResponse<Void> changeGroupStatus(
             @PathVariable Long groupId ,
-            @Parameter(description = "APPROVE,REJECT 구분되며 원하는 상태를 보냅니다") @RequestBody GroupDTO.GroupReviewRequestDTO req,
+            @Parameter(description = "APPROVE,REJECT 구분되며 원하는 상태를 보냅니다") @RequestBody @Valid GroupDTO.GroupReviewRequestDTO req,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         groupService.updateGroupStatusAdmin(groupId, userId, req);
