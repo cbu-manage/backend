@@ -27,6 +27,10 @@ import java.util.List;
 import java.util.Optional;
 import java.time.ZoneId;
 
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.time.LocalDate;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
@@ -105,23 +109,39 @@ class ApplicationApplicantServiceTest {
     }
 
     @Test
-    void submitUsesSeasonGenerationWhenRecruitmentIsNotOpened() {
+    void 진행_중인_모집이_없으면_접수하지_않는다() {
+        // 이전에는 정책 기수로 폴백해 모집이 없어도 그냥 받았다
         ApplicationQuestion question = requiredQuestion("몰입 경험", 1);
         when(emailManager.validEmail("applicant@tukorea.ac.kr")).thenReturn(true);
         when(redisUtil.getData("applicant@tukorea.ac.kr")).thenReturn("123456");
         when(recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)).thenReturn(Optional.empty());
-        when(memberApplicationRepository.findByStudentNumberAndGeneration(2024000001L, 29L))
-                .thenReturn(Optional.empty());
-        when(memberApplicationRepository.save(org.mockito.ArgumentMatchers.any(MemberApplication.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-        when(applicationQuestionService.getQuestions(29L)).thenReturn(List.of(question));
-        when(applicationAnswerRepository.findByApplicationId(null)).thenReturn(List.of());
-        when(applicationPortfolioUrlRepository.findByMemberApplicationIdOrderBySortOrderAsc(null))
-                .thenReturn(List.of());
 
-        var response = applicationApplicantService.submit(submitRequest(java.util.Map.of(question.getType(), "답변입니다.")));
+        assertThatThrownBy(() -> applicationApplicantService.submit(
+                submitRequest(java.util.Map.of(question.getType(), "답변입니다."))))
+                .isInstanceOf(BaseException.class)
+                .extracting(e -> ((BaseException) e).getErrorCode())
+                .isEqualTo(ErrorCode.RECRUITMENT_NOT_ACCEPTING);
 
-        assertThat(response.generation()).isEqualTo(29L);
+        verify(memberApplicationRepository, never())
+                .save(org.mockito.ArgumentMatchers.any(MemberApplication.class));
+    }
+
+    @Test
+    void 모집_기간이_지났으면_접수하지_않는다() {
+        ApplicationQuestion question = requiredQuestion("몰입 경험", 1);
+        when(emailManager.validEmail("applicant@tukorea.ac.kr")).thenReturn(true);
+        when(redisUtil.getData("applicant@tukorea.ac.kr")).thenReturn("123456");
+        Recruitment closedWindow = Recruitment.open(31L, 0);
+        ReflectionTestUtils.setField(closedWindow, "plannedStartDate", LocalDate.now().minusDays(30));
+        ReflectionTestUtils.setField(closedWindow, "plannedEndDate", LocalDate.now().minusDays(1));
+        when(recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN))
+                .thenReturn(Optional.of(closedWindow));
+
+        assertThatThrownBy(() -> applicationApplicantService.submit(
+                submitRequest(java.util.Map.of(question.getType(), "답변입니다."))))
+                .isInstanceOf(BaseException.class)
+                .extracting(e -> ((BaseException) e).getErrorCode())
+                .isEqualTo(ErrorCode.RECRUITMENT_NOT_ACCEPTING);
     }
 
     @Test

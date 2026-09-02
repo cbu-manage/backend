@@ -5,6 +5,7 @@ import com.example.cbumanage.global.setting.dto.OnboardingLinksRequest;
 import com.example.cbumanage.global.setting.dto.OnboardingLinksResponse;
 import com.example.cbumanage.global.setting.service.SystemSettingService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,7 +33,7 @@ public class SystemSettingAdminController {
     @PutMapping("/onboarding-links")
     @Operation(summary = "온보딩 링크 수정", description = "합격/승인 안내 메일에 사용되는 홈페이지·공지방·수다방·회비 문의방·디스코드 링크를 저장합니다. 보내지 않은 항목은 기존 값을 유지합니다.")
     public ApiResponse<OnboardingLinksResponse> updateOnboardingLinks(
-            @RequestBody OnboardingLinksRequest request) {
+            @RequestBody @Valid OnboardingLinksRequest request) {
         return ApiResponse.success(systemSettingService.updateOnboardingLinks(request));
     }
 }
