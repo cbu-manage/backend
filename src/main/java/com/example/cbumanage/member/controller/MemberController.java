@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,8 +43,9 @@ public class MemberController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MEMBER_MANAGER')")
     @Operation(summary = "회원 등록", description = "관리자가 회원 정보를 등록합니다.")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<Long> postMember(@RequestBody @Valid MemberCreateDTO memberCreateDTO) {
-        User member = memberManageService.createMember(memberCreateDTO);
+    public ApiResponse<Long> postMember(@RequestBody @Valid MemberCreateDTO memberCreateDTO,
+                                        Authentication authentication) {
+        User member = memberManageService.createMember(memberCreateDTO, authentication);
         return ApiResponse.success(member.getUserId());
     }
 
@@ -51,8 +53,9 @@ public class MemberController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_MEMBER_MANAGER')")
     @Operation(summary = "회원 정보 수정", description = "관리자가 회원 정보를 수정합니다.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ApiResponse<Void> patchMember(@RequestBody MemberUpdateDTO memberDTO) {
-        memberManageService.updateUser(memberDTO);
+    public ApiResponse<Void> patchMember(@RequestBody MemberUpdateDTO memberDTO,
+                                         Authentication authentication) {
+        memberManageService.updateUser(memberDTO, authentication);
         return ApiResponse.success();
     }
 

@@ -75,6 +75,8 @@ public class ApplicationQuestionService {
             throw new BaseException(ErrorCode.CONCURRENT_MODIFICATION);
         }
         question.update(request.question(), request.description(), request.isRequired(), request.sortOrder());
+        // flush 전에는 version이 증가 전 값이라, 응답을 그대로 들고 다음 저장을 하면 바로 409가 난다
+        applicationQuestionRepository.flush();
         return ApplicationQuestionResponse.from(question);
     }
 

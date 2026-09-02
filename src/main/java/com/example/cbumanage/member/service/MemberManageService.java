@@ -11,6 +11,8 @@ import com.example.cbumanage.member.dto.MemberCreateDTO;
 import com.example.cbumanage.member.dto.MemberUpdateDTO;
 import com.example.cbumanage.member.exception.MemberNotExistsException;
 import com.example.cbumanage.member.util.MemberMapper;
+import com.example.cbumanage.global.error.BaseException;
+import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.user.entity.MemberStatus;
 import com.example.cbumanage.user.entity.Role;
 import com.example.cbumanage.user.entity.User;
@@ -19,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +31,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 회원 CRUD 및 관련 기능을 제공하는 서비스 클래스입니다.
@@ -77,7 +83,11 @@ public class MemberManageService {
 	}
 
 	@Transactional
-	public User createMember(final MemberCreateDTO memberCreateDTO) {
+	public User createMember(final MemberCreateDTO memberCreateDTO, final Authentication auth) {
+		// 등록 단계에서 역할을 지정하면 그게 곧 역할 부여다. 수정 경로와 같은 기준으로 막는다.
+		if (memberCreateDTO.getRole() != null && memberCreateDTO.getRole() != Role.ROLE_USER) {
+			assertCanAssignRole(memberCreateDTO.getRole(), auth);
+		}
 		User member = memberMapper.map(memberCreateDTO, hashPassword(defaultLoginPassword));
 		userRepository.save(member);
 		// 운영진으로 바로 만들면 진행 중인 모집의 N이 모자란 채로 남아 그 사람 없이도 최종처리가 된다
@@ -88,12 +98,48 @@ public class MemberManageService {
 	}
 
 	@Transactional
-	public void updateUser(MemberUpdateDTO memberUpdateDTO) {
+	public void updateUser(MemberUpdateDTO memberUpdateDTO, Authentication auth) {
 		User user = userRepository.findByUserIdAndDeletedAtIsNull(memberUpdateDTO.getUserId())
 				.orElseThrow(MemberNotExistsException::new);
+		// 역할이 실제로 바뀔 때만 검사한다. 인원관리가 이름·연락처만 고치며 기존 role을 그대로
+		// 재전송하는 정상 요청까지 막으면 안 되므로, 대상의 현재 role을 알 수 있는 여기에 둔다.
+		if (memberUpdateDTO.getRole() != null && memberUpdateDTO.getRole() != user.getRole()) {
+			assertCanAssignRole(memberUpdateDTO.getRole(), auth);
+		}
 		memberMapper.map(memberUpdateDTO, user);
 		if (memberUpdateDTO.getRole() != null) {
 			recruitmentService.refreshVoterCount();
+		}
+	}
+
+	/**
+	 * 역할 부여 권한.
+	 *
+	 * PATCH/POST /member 는 회원 정보 수정과 역할 지정을 한 엔드포인트에서 처리한다.
+	 * 인원관리(ROLE_MEMBER_MANAGER)도 명단 관리를 위해 이 엔드포인트에 접근해야 하는데,
+	 * role 필드에 검사가 없어 role 만 실어 보내면 자기 자신을 회장으로 올릴 수 있었다.
+	 * 프론트 permissions.ts 의 staff.assign / staff.assignLeader 구분과 같은 기준으로 맞춘다.
+	 */
+	private void assertCanAssignRole(Role newRole, Authentication auth) {
+		Set<String> caller = auth == null
+				? Set.of()
+				: auth.getAuthorities().stream()
+						.map(GrantedAuthority::getAuthority)
+						.collect(Collectors.toSet());
+
+		boolean leaderOrAdmin = caller.contains(Role.ROLE_ADMIN.name())
+				|| caller.contains(Role.ROLE_PRESIDENT.name())
+				|| caller.contains(Role.ROLE_VICE_PRESIDENT.name());
+		if (!leaderOrAdmin) {
+			throw new BaseException(ErrorCode.FORBIDDEN, "역할을 지정할 권한이 없습니다.");
+		}
+
+		// 회장·부회장·개발자 계정 임명은 개발자 계정만
+		boolean assigningLeader = newRole == Role.ROLE_PRESIDENT
+				|| newRole == Role.ROLE_VICE_PRESIDENT
+				|| newRole == Role.ROLE_ADMIN;
+		if (assigningLeader && !caller.contains(Role.ROLE_ADMIN.name())) {
+			throw new BaseException(ErrorCode.FORBIDDEN, "회장·부회장 임명은 개발자 계정만 할 수 있습니다.");
 		}
 	}
 
