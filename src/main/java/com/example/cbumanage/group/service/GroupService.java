@@ -146,16 +146,25 @@ public class GroupService {
                 .orElseThrow(() -> new BaseException(ErrorCode.GROUP_MEMBER_NOT_FOUND));
         Group group = groupMember.getGroup();
         assertIsGroupLeader(group.getId(), userId);
-        if (targetStatus == GroupMemberStatus.ACTIVE) {
-            groupMember.active();
-            int activeCount = groupRepository.countByGroupIdAndStatus(group.getId(), GroupMemberStatus.ACTIVE);
-            if (activeCount >= group.getMaxActiveMembers()) {
-                group.closeRecruitment();
-                projectRepository.findByGroupId(group.getId()).ifPresent(project -> project.updateRecruiting(false));
-                studyRepository.findByGroupId(group.getId()).ifPresent(study -> study.updateRecruiting(false));
+        // 팀장이 자기 row를 거절하면 팀장 없는 그룹이 남는다
+        if (groupMember.getGroupMemberRole() == GroupMemberRole.LEADER) {
+            throw new BaseException(ErrorCode.GROUP_LEADER_STATUS_IMMUTABLE);
+        }
+        // ACTIVE 외 전부를 거절로 처리하면 활동중단·대기 전환이 거절로 저장되고
+        // 재신청 횟수까지 올라간다. 상태별로 나눈다.
+        switch (targetStatus) {
+            case ACTIVE -> {
+                groupMember.active();
+                int activeCount = groupRepository.countByGroupIdAndStatus(group.getId(), GroupMemberStatus.ACTIVE);
+                if (activeCount >= group.getMaxActiveMembers()) {
+                    group.closeRecruitment();
+                    projectRepository.findByGroupId(group.getId()).ifPresent(project -> project.updateRecruiting(false));
+                    studyRepository.findByGroupId(group.getId()).ifPresent(study -> study.updateRecruiting(false));
+                }
             }
-        }else{
-            groupMember.rejectByLeader(reason);
+            case INACTIVE -> groupMember.inactive();
+            case PENDING -> groupMember.pending();
+            case REJECTED -> groupMember.rejectByLeader(reason);
         }
     }
 
@@ -177,12 +186,18 @@ public class GroupService {
     }
 
 
-    /* 신청 취소: PENDING 상태인 본인 신청만 삭제 */
+    /* 신청 취소: PENDING 상태인 본인 신청만 */
     @Transactional
     public void cancelApplication(Long groupId, Long userId) {
         GroupMember gm = groupMemberRepository.findByGroupIdAndUserUserId(groupId, userId);
         if (gm == null || gm.getGroupMemberStatus() != GroupMemberStatus.PENDING) {
-            throw new BaseException(ErrorCode.INVALID_REQUEST,"PENDING 상태가 아닙니다.");
+            throw new BaseException(ErrorCode.GROUP_APPLICATION_NOT_PENDING);
+        }
+        // 거절 이력이 이 row에 있으므로 지우면 재신청 3회 제한이 취소 한 번으로 초기화된다.
+        // 거절된 적이 있으면 row를 남겨 횟수를 보존하고, 없으면 흔적 없이 지운다.
+        if (gm.getRejectedCount() > 0) {
+            gm.rejectOnRecruitmentClose("신청자가 취소했습니다.");
+            return;
         }
         groupMemberRepository.delete(gm);
     }
