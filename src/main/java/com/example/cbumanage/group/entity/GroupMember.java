@@ -98,6 +98,13 @@ public class GroupMember {
     }
     public void pending(){
         this.groupMemberStatus = GroupMemberStatus.PENDING;
+        // 재신청인데 지난 거절 사유가 남아 있으면 팀장 화면에 그게 그대로 붙어 보인다
+        this.memberRejectReason = null;
+    }
+
+    /** 활동 중단. 거절이 아니므로 사유도 재신청 횟수도 건드리지 않는다 */
+    public void inactive(){
+        this.groupMemberStatus = GroupMemberStatus.INACTIVE;
     }
 
     public void changeRole(GroupMemberRole groupMemberRole) {

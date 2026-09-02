@@ -40,6 +40,8 @@ public enum ErrorCode {
     REPORT_MEMBER_NOT_IN_GROUP("E-GROUP-0005", "보고서 참여 멤버는 해당 그룹의 활성 멤버여야 합니다.", HttpStatus.BAD_REQUEST),
     GROUP_CLOSE_MEMBER_REQUIRED("E-GROUP-0006", "수락된 팀원이 1명 이상이어야 모집을 마감할 수 있습니다.", HttpStatus.BAD_REQUEST),
     GROUP_REAPPLY_LIMIT_EXCEEDED("E-GROUP-0007", "이 팀에서 3번 거절되어 다시 신청할 수 없습니다.", HttpStatus.BAD_REQUEST),
+    GROUP_APPLICATION_NOT_PENDING("E-GROUP-0008", "취소할 수 있는 가입 신청이 없습니다.", HttpStatus.BAD_REQUEST),
+    GROUP_LEADER_STATUS_IMMUTABLE("E-GROUP-0009", "팀장의 상태는 변경할 수 없습니다.", HttpStatus.BAD_REQUEST),
 
     //POST 공용
     POST_NOT_FOUND("E-POST-0001", "게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),

@@ -2,6 +2,7 @@ package com.example.cbumanage.group.dto;
 
 import com.example.cbumanage.group.entity.enums.*;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -39,6 +40,7 @@ public class GroupDTO {
     @Schema(description = "그룹 승인 여부 요청 DTO")
     public record GroupReviewRequestDTO (
         @Schema(description = "그룹 승인 여부 (APPROVE: 승인, REJECT: 반려)", example = "REJECT")
+        @NotNull(message = "승인 여부(action)는 필수입니다.")
         GroupApprovalAction action,
         @Schema(description = "반려시 사유", example="너무 많이 개설해서")
         String reason
@@ -191,6 +193,7 @@ public class GroupDTO {
     @Schema(description = "신청 수락/거절 요청 DTO")
     public record ApplicantActionRequestDTO(
         @Schema(description = "처리 액션 (ACCEPT: 수락, REJECT: 거절)", example = "REJECT", allowableValues = {"ACCEPT", "REJECT"})
+        @NotNull(message = "처리 액션(action)은 필수입니다.")
         MemberApprovalAction action,
         @Schema(description = "가입 거절 사유(ACCEPT 시 NULL)")
         String memberRejectReason
