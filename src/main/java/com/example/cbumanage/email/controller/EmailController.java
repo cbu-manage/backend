@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,9 +43,13 @@ public class EmailController {
     }
 
     @PostMapping("/update")
-    @Operation(summary = "회원 이메일 등록", description = "인증이 완료된 이메일 주소를 회원 정보에 반영합니다.")
-    public ApiResponse<Void> updateMail(@RequestBody MemberMailUpdateDTO memberMailUpdateDTO) {
-        emailService.updateUserMail(memberMailUpdateDTO);
+    @Operation(summary = "회원 이메일 등록",
+            description = "로그인한 **본인**의 이메일을 변경합니다. 대상은 요청 본문이 아니라 인증 토큰에서 정하며, "
+                    + "바꾸려는 주소로 /mail/send 에서 받은 인증번호(authCode)를 함께 보내야 합니다.")
+    public ApiResponse<Void> updateMail(@RequestBody MemberMailUpdateDTO memberMailUpdateDTO,
+                                        Authentication authentication) {
+        Long callerUserId = Long.parseLong(authentication.getName());
+        emailService.updateUserMail(callerUserId, memberMailUpdateDTO);
         return ApiResponse.success();
     }
 }
