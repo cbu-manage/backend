@@ -200,10 +200,37 @@ public class EmailService {
         return new EmailAuthResponseDTO(true, "인증에 성공했습니다.");
     }
 
+    /**
+     * 로그인한 본인의 이메일만 바꾼다.
+     *
+     * 이전에는 요청 본문의 studentNumber로 대상을 찾아 소유권·인증코드 검증 없이 이메일을 바꿨다.
+     * 그래서 로그인한 부원 아무나 남의 학번만 알면 대상 이메일을 자기 것으로 바꾼 뒤
+     * /mail/send 로 코드를 받아 /login/password/reset 으로 그 계정을 통째로 가져갈 수 있었다.
+     * 대상은 호출자(JWT)에서만 잡고, 바꾸려는 주소로 실제 인증코드를 받았는지 확인한 뒤에만 반영한다.
+     */
     @Transactional
-    public void updateUserMail(MemberMailUpdateDTO memberMailUpdateDTO) {
-        User user = userRepository.findByStudentNumber(memberMailUpdateDTO.getStudentNumber())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-        user.changeEmail(memberMailUpdateDTO.getEmail());
+    public void updateUserMail(Long callerUserId, MemberMailUpdateDTO memberMailUpdateDTO) {
+        User user = userRepository.findByUserIdAndDeletedAtIsNull(callerUserId)
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        // 본문에 학번을 실어 보내던 기존 호출 형태를 유지하되, 본인 것이 아니면 거부한다
+        Long requested = memberMailUpdateDTO.getStudentNumber();
+        if (requested != null && !requested.equals(user.getStudentNumber())) {
+            throw new BaseException(ErrorCode.FORBIDDEN, "본인의 이메일만 변경할 수 있습니다.");
+        }
+
+        String email = memberMailUpdateDTO.getEmail();
+        if (email == null || !emailManager.validEmail(email)) {
+            throw new BaseException(ErrorCode.INVALID_EMAIL_DOMAIN);
+        }
+
+        // 그 주소로 발급된 인증코드가 살아 있어야 소유를 증명한 것으로 본다. 확인 후 소진한다.
+        String storedAuthCode = redisUtil.getData(email);
+        if (storedAuthCode == null || !storedAuthCode.equals(memberMailUpdateDTO.getAuthCode())) {
+            throw new BaseException(ErrorCode.UNAUTHORIZED, "이메일 인증이 필요합니다.");
+        }
+        redisUtil.deleteData(email);
+
+        user.changeEmail(email);
     }
 }

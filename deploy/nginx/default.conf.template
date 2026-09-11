@@ -14,6 +14,9 @@ server {
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
+    # 업로드 본문 상한. 미설정 시 nginx 기본값 1MB 로 앱(10~20MB 허용)보다 먼저 413 을 낸다.
+    client_max_body_size 25m;
+
     # Backend API 요청 처리
     location /api/v1/ {
         proxy_pass http://backend:8080/api/v1/;
