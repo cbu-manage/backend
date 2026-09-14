@@ -8,8 +8,10 @@ import com.example.cbumanage.application.entity.enums.ApplicationField;
 import com.example.cbumanage.application.entity.enums.ApplicationStatus;
 import com.example.cbumanage.application.entity.enums.RefSource;
 import com.example.cbumanage.application.repository.MemberApplicationRepository;
+import com.example.cbumanage.application.repository.RecruitmentRepository;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
+import com.example.cbumanage.global.util.RedisUtil;
 import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.user.repository.UserRepository;
 import jakarta.validation.Validation;
@@ -29,9 +31,11 @@ import static org.mockito.Mockito.when;
 class ApplicationValidateServiceTest {
 
     private final MemberApplicationRepository memberApplicationRepository = mock(MemberApplicationRepository.class);
+    private final RecruitmentRepository recruitmentRepository = mock(RecruitmentRepository.class);
     private final UserRepository userRepository = mock(UserRepository.class);
+    private final RedisUtil redisUtil = mock(RedisUtil.class);
     private final ApplicationValidateService applicationValidateService =
-            new ApplicationValidateService(memberApplicationRepository, userRepository);
+            new ApplicationValidateService(memberApplicationRepository, recruitmentRepository, userRepository, redisUtil);
 
     @Test
     void validateReturnsApplicationInfoWhenAcceptedApplicationMatches() {
