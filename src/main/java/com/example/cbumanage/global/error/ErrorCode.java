@@ -13,7 +13,9 @@ public enum ErrorCode {
     INVALID_REQUEST("E-COMMON-0001", "잘못된 요청입니다. ", HttpStatus.BAD_REQUEST),
     NOT_FOUND("E-COMMON-0002", "리소스를 찾을 수 없음", HttpStatus.NOT_FOUND),
     DUPLICATE_RESOURCE("E-COMMON-0003", "중복 리소스", HttpStatus.CONFLICT),
-    NOT_ALLOWED_FILETYPE("E-COMMON-0004","잘못된 파일 타입", HttpStatus.CONFLICT),
+    NOT_ALLOWED_FILETYPE("E-COMMON-0004","잘못된 파일 타입", HttpStatus.BAD_REQUEST),
+    FILE_EMPTY("E-COMMON-0011","업로드할 파일이 비어 있습니다.", HttpStatus.BAD_REQUEST),
+    SELF_FLAG_NOT_ALLOWED("E-COMMON-0012","자신이 쓴 글이나 댓글은 신고할 수 없습니다.", HttpStatus.BAD_REQUEST),
     FILE_SIZE_EXCEEDED("E-COMMON-0006","파일 크기가 제한을 초과했습니다 (최대 10MB)", HttpStatus.BAD_REQUEST),
     FILE_PROCESS_FAILED("E-COMMON-0007","파일 처리에 실패했습니다. 파일이 손상되었거나 올바르지 않습니다.", HttpStatus.BAD_REQUEST),
     UPLOAD_SIZE_EXCEEDED("E-COMMON-0008","업로드 가능한 파일 크기를 초과했습니다.", HttpStatus.BAD_REQUEST),
@@ -42,6 +44,8 @@ public enum ErrorCode {
     GROUP_REAPPLY_LIMIT_EXCEEDED("E-GROUP-0007", "이 팀에서 3번 거절되어 다시 신청할 수 없습니다.", HttpStatus.BAD_REQUEST),
     GROUP_APPLICATION_NOT_PENDING("E-GROUP-0008", "취소할 수 있는 가입 신청이 없습니다.", HttpStatus.BAD_REQUEST),
     GROUP_LEADER_STATUS_IMMUTABLE("E-GROUP-0009", "팀장의 상태는 변경할 수 없습니다.", HttpStatus.BAD_REQUEST),
+    GROUP_CAPACITY_EXCEEDED("E-GROUP-0010", "최대 모집 인원을 초과해 수락할 수 없습니다.", HttpStatus.BAD_REQUEST),
+    GROUP_NOT_ACTIVATED("E-GROUP-0011", "활동이 종료된 그룹입니다.", HttpStatus.BAD_REQUEST),
 
     //POST 공용
     POST_NOT_FOUND("E-POST-0001", "게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
