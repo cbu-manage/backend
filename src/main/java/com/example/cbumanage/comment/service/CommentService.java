@@ -33,7 +33,8 @@ public class CommentService {
     public CommentDTO.CommentCreateResponseDTO createComment(CommentDTO.CommentCreateRequestDTO req,
                                                              Long userId,
                                                              Long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post not found"));
+        // 지운 글에는 더 달지 않는다. 목록에서 사라진 글에 댓글이 계속 쌓이고 있었다.
+        Post post = postRepository.findByIdAndIsDeletedFalse(postId).orElseThrow(() -> new EntityNotFoundException("Post not found"));
         Comment comment = new Comment(post, userId, null, req.content());
         Comment saved = commentRepository.save(comment);
         return commentMapper.toCommentCreateResponseDTO(saved);
@@ -51,6 +52,10 @@ public class CommentService {
                                                          Long commentId) {
 
         Comment target = commentRepository.findById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment not found"));
+        // 삭제된 댓글에는 답글을 달 수 없다(화면에는 "삭제된 댓글입니다" 자리만 남아 있다)
+        if (target.isDeleted()) {
+            throw new EntityNotFoundException("Comment not found");
+        }
         Comment reply = new Comment(target.getPost(), userId, target, req.content());
         target.addReply(reply);
         Comment saved = commentRepository.save(reply);

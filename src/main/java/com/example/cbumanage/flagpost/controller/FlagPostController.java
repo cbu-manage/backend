@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import com.example.cbumanage.global.common.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,7 +30,7 @@ public class FlagPostController {
     public ApiResponse<Page<FlagPostDTO.FlagPostPreviewDTO>> getFlagPostPreviews(
             @RequestParam int page,
             @RequestParam int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
+        Pageable pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
         return ApiResponse.success(flagPostService.getFlagPostPreviews(pageable));
     }
 

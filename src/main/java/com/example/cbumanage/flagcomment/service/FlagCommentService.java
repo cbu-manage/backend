@@ -1,5 +1,6 @@
 package com.example.cbumanage.flagcomment.service;
 
+import com.example.cbumanage.comment.entity.Comment;
 import com.example.cbumanage.comment.repository.CommentRepository;
 import com.example.cbumanage.flagcomment.dto.CommentDTO;
 import com.example.cbumanage.flagcomment.entity.FlagComment;
@@ -24,8 +25,12 @@ public class FlagCommentService {
 
     @Transactional
     public CommentDTO.FlagCommentCreateResponse createFlagComment(Long commentId, CommentDTO.FlagCommentCreateRequest req, Long userId) {
-        commentRepository.findByIdAndIsDeletedFalse(commentId)
+        Comment comment = commentRepository.findByIdAndIsDeletedFalse(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Comment Not Found"));
+        // 자기 댓글 신고도 같은 이유로 막는다.
+        if (userId.equals(comment.getUserId())) {
+            throw new BaseException(ErrorCode.SELF_FLAG_NOT_ALLOWED);
+        }
         if (flagCommentRepository.existsByAuthorIdAndCommentIdAndIsDeletedFalse(userId, commentId)) {
             throw new BaseException(ErrorCode.DUPLICATE_RESOURCE);
         }

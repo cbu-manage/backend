@@ -45,6 +45,8 @@ public class Comment {
     @JoinColumn(name="parent_comment_id",nullable = true)
     private Comment parentComment;
 
+    /* 길이를 안 주면 VARCHAR(255) 로 잡혀 256자째부터 DB 예외가 났고, 그게 409 "중복 리소스" 로 나갔다 */
+    @Column(length = 1000)
     private String content;
 
     @CreatedDate
