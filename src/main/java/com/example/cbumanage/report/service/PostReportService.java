@@ -178,15 +178,28 @@ fetch join -> 해결
                 .toList();
     }
 
+    /* 정규식에서 뜻이 있는 글자들. 검색어에 이게 들어오면 패턴이 깨지거나(500) 전건 매칭이 된다 */
+    private static final java.util.regex.Pattern REGEX_META =
+            java.util.regex.Pattern.compile("[\\\\.\\[\\]{}()*+?^$|/-]");
+
+    /**
+     * 검색어를 REGEXP 패턴으로 만든다.
+     * 검색어는 글자 그대로 찾아야 하므로 정규식 기호를 전부 이스케이프한다.
+     * 이걸 안 하면 "(" 한 글자에 500 이 나고 "." 한 글자로 전건이 매칭됐다.
+     */
+    private String toKeywordPattern(String keyword) {
+        return Arrays.stream(keyword.trim().split("\\s+"))
+                .filter(t -> !t.isBlank())
+                .distinct()
+                .map(t -> "(?=.*" + REGEX_META.matcher(t).replaceAll("\\\\$0") + ")")
+                .collect(Collectors.joining());
+    }
+
     private Page<PostDTO.PostReportPreviewDTO> searchPostReportPreviews(
             Pageable pageable, List<Long> effectiveGroupIds, Long authorId,
             LocalDateTime startDate, LocalDateTime endDate, String keyword) {
 
-        String pattern = Arrays.stream(keyword.trim().split("\\s+"))
-                .filter(t -> !t.isBlank())
-                .distinct()
-                .map(t -> "(?=.*" + t + ")")
-                .collect(Collectors.joining());
+        String pattern = toKeywordPattern(keyword);
 
         Pageable searchPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         Page<Long> postIds;
@@ -217,11 +230,7 @@ fetch join -> 해결
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
         if (!user.getRole().canViewAllReports()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         if (keyword != null && !keyword.isBlank()) {
-            String pattern = Arrays.stream(keyword.trim().split("\\s+"))
-                    .filter(t -> !t.isBlank())
-                    .distinct()
-                    .map(t -> "(?=.*" + t + ")")
-                    .collect(Collectors.joining());
+            String pattern = toKeywordPattern(keyword);
 
             Pageable searchPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
             Page<Long> postIds = postReportRepository.searchPostIdsByKeywordAndGroupIds(7, List.of(groupId), null, startDate, endDate, pattern, searchPageable);
