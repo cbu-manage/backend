@@ -39,7 +39,8 @@ public class PostService {
 
 
     public PostDTO.PostInfoDTO getPostById(Long postId){
-        Post post=postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        // 목록은 isDeleted 를 걸렀지만 상세는 안 걸러서, 지운 글을 id 로 직접 부르면 본문이 그대로 나왔다.
+        Post post=postRepository.findByIdAndIsDeletedFalse(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         return postMapper.toPostInfoDTO(post);
     }
 

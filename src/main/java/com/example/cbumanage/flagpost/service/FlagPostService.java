@@ -6,6 +6,7 @@ import com.example.cbumanage.flagpost.repository.FlagPostRepository;
 import com.example.cbumanage.flagpost.util.FlagPostMapper;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
+import com.example.cbumanage.post.entity.Post;
 import com.example.cbumanage.post.repository.PostRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -24,8 +25,12 @@ public class FlagPostService {
 
     @Transactional
     public FlagPostDTO.FlagPostCreateResponse createFlagPost(Long postId, FlagPostDTO.FlagPostCreateRequest req, Long userId) {
-        postRepository.findByIdAndIsDeletedFalse(postId)
+        Post post = postRepository.findByIdAndIsDeletedFalse(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        // 자기 글 신고는 신고 큐만 채운다. 지우고 싶으면 삭제하면 된다.
+        if (userId.equals(post.getAuthorId())) {
+            throw new BaseException(ErrorCode.SELF_FLAG_NOT_ALLOWED);
+        }
         if (flagPostRepository.existsByAuthorIdAndPostIdAndIsDeletedFalse(userId, postId)) {
             throw new BaseException(ErrorCode.DUPLICATE_RESOURCE);
         }

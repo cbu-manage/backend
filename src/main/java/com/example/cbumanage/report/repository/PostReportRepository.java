@@ -43,7 +43,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     where p.category = :category
     and p.isDeleted = false
     and (:startDate is null or r.date >= :startDate)
-    and (:endDate is null or r.date <= :endDate)
+    and (:endDate is null or r.date < :endDate)
     order by p.createdAt desc, p.id desc
 """,
     countQuery = """
@@ -53,7 +53,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     where p.category =:category
     and p.isDeleted = false
     and (:startDate is null or r.date >= :startDate)
-    and (:endDate is null or r.date <= :endDate)
+    and (:endDate is null or r.date < :endDate)
 """)
     Page<PostDTO.PostReportPreviewDTO> findPostReportPreviews(Pageable pageable, @Param("category") int category,
                                                               @Param("startDate") LocalDateTime startDate,
@@ -107,7 +107,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     where p.category = :category and r.groupId = :groupId
     and p.isDeleted = false
     and (:startDate is null or r.date >= :startDate)
-    and (:endDate is null or r.date <= :endDate)
+    and (:endDate is null or r.date < :endDate)
     order by p.createdAt desc, p.id desc
 """,
             countQuery = """
@@ -117,7 +117,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     where p.category =:category
     and p.isDeleted = false and r.groupId = :groupId
     and (:startDate is null or r.date >= :startDate)
-    and (:endDate is null or r.date <= :endDate)
+    and (:endDate is null or r.date < :endDate)
 """)
     Page<PostDTO.PostReportPreviewDTO> findPostReportPreviewsByGroupId(Pageable pageable, @Param("category") int category, @Param("groupId") Long groupId,
                                                                        @Param("startDate") LocalDateTime startDate,
@@ -143,7 +143,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     and (r.groupId in :groupIds or p.authorId = :authorId)
     and p.isDeleted = false
     and (:startDate is null or r.date >= :startDate)
-    and (:endDate is null or r.date <= :endDate)
+    and (:endDate is null or r.date < :endDate)
     order by p.createdAt desc, p.id desc
 """,
     countQuery = """
@@ -154,7 +154,7 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     and (r.groupId in :groupIds or p.authorId = :authorId)
     and p.isDeleted = false
     and (:startDate is null or r.date >= :startDate)
-    and (:endDate is null or r.date <= :endDate)
+    and (:endDate is null or r.date < :endDate)
 """)
     Page<PostDTO.PostReportPreviewDTO> findPostReportPreviewsByGroupIds(Pageable pageable, @Param("category") int category,
                                                                         @Param("groupIds") Collection<Long> groupIds,

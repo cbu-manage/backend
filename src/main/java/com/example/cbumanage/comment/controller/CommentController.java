@@ -6,6 +6,7 @@ import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.comment.service.CommentService;
+import jakarta.validation.Valid;
 import jakarta.persistence.EntityNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,7 +28,7 @@ public class CommentController {
 
     @Operation(summary = "댓글 작성", description = "게시글에 댓글을 작성합니다.")
     @PostMapping("post/{postId}/comment")
-    public ApiResponse<CommentDTO.CommentCreateResponseDTO> createComment(@RequestBody CommentDTO.CommentCreateRequestDTO req,
+    public ApiResponse<CommentDTO.CommentCreateResponseDTO> createComment(@RequestBody @Valid CommentDTO.CommentCreateRequestDTO req,
                                                                           @PathVariable Long postId,
                                                                           Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
@@ -58,7 +59,7 @@ public class CommentController {
 
     @Operation(summary = "답글 작성", description = "댓글에 답글을 작성합니다.")
     @PostMapping("comment/{commentId}/reply")
-    public ApiResponse<CommentDTO.ReplyCreateResponseDTO> createReply(@RequestBody CommentDTO.ReplyCreateRequestDTO req,
+    public ApiResponse<CommentDTO.ReplyCreateResponseDTO> createReply(@RequestBody @Valid CommentDTO.ReplyCreateRequestDTO req,
                                                                       @Parameter(description = "답글을 추가할 댓글의 ID") @PathVariable Long commentId,
                                                                       Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
@@ -67,7 +68,7 @@ public class CommentController {
 
     @Operation(summary = "댓글 수정", description = "작성자 본인의 댓글 내용을 수정합니다.")
     @PatchMapping("comment/{commentId}")
-    public ApiResponse<Void> updateComment(@RequestBody CommentDTO.CommentUpdateRequestDTO req,
+    public ApiResponse<Void> updateComment(@RequestBody @Valid CommentDTO.CommentUpdateRequestDTO req,
                                            @PathVariable Long commentId, Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         try {
@@ -94,7 +95,7 @@ public class CommentController {
     @PostMapping("comment/{commentId}/flag")
     public ApiResponse<com.example.cbumanage.flagcomment.dto.CommentDTO.FlagCommentCreateResponse> createFlagComment(
             @PathVariable Long commentId,
-            @RequestBody com.example.cbumanage.flagcomment.dto.CommentDTO.FlagCommentCreateRequest req,
+            @RequestBody @Valid com.example.cbumanage.flagcomment.dto.CommentDTO.FlagCommentCreateRequest req,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         try {

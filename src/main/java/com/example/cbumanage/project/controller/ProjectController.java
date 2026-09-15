@@ -14,7 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import com.example.cbumanage.global.common.Pageables;
 import org.springframework.data.domain.Pageable;
 import lombok.RequiredArgsConstructor;
 
@@ -57,7 +57,7 @@ public class ProjectController {
             @RequestParam int category,
             @RequestParam(required = false) Boolean recruiting
     ){
-        Pageable pageable= PageRequest.of(
+        Pageable pageable= Pageables.of(
                 page,size, Sort.by(Sort.Order.desc("post.createdAt"))
         );
         Page<PostDTO.ProjectListDTO> posts=projectService.getPostsByCategory(pageable,recruiting,category);
@@ -80,7 +80,7 @@ public class ProjectController {
             @RequestParam int category,
             Authentication authentication
     ){
-        Pageable pageable= PageRequest.of(
+        Pageable pageable= Pageables.of(
                 page,size, Sort.by(Sort.Order.desc("post.createdAt"))
         );
         Long userId = Long.parseLong(authentication.getName());
@@ -142,7 +142,7 @@ public class ProjectController {
             @Parameter(description = "필터링할 모집 분야", schema = @Schema(implementation = ProjectFieldType.class))
             @RequestParam(name = "fields") ProjectFieldType fields,
             @RequestParam(required = false) Boolean recruiting) {
-        Pageable pageable= PageRequest.of(page,size, Sort.by(Sort.Order.desc("id")));
+        Pageable pageable= Pageables.of(page,size, Sort.by(Sort.Order.desc("id")));
         Page<PostDTO.ProjectListDTO> result = projectService.searchByField(fields, recruiting, pageable);
         return ApiResponse.success(result);
     }

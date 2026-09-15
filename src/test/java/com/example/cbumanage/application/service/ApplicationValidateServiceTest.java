@@ -3,6 +3,7 @@ package com.example.cbumanage.application.service;
 import com.example.cbumanage.application.dto.ApplicationValidateRequest;
 import com.example.cbumanage.application.dto.ApplicationValidateResponse;
 import com.example.cbumanage.application.entity.MemberApplication;
+import com.example.cbumanage.application.entity.Recruitment;
 import com.example.cbumanage.application.entity.enums.AcademicStatus;
 import com.example.cbumanage.application.entity.enums.ApplicationField;
 import com.example.cbumanage.application.entity.enums.ApplicationStatus;
@@ -19,6 +20,7 @@ import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,12 +39,23 @@ class ApplicationValidateServiceTest {
     private final ApplicationValidateService applicationValidateService =
             new ApplicationValidateService(memberApplicationRepository, recruitmentRepository, userRepository, redisUtil);
 
+    /**
+     * 발표가 끝난 31기 모집. 발표 전 은닉 게이트는 모집 정보를 못 찾으면 감추는 쪽(fail-closed)이라,
+     * 결과가 나와야 하는 테스트는 이 stub 이 깔려 있어야 한다.
+     */
+    private void givenAnnouncementPassed(Long generation) {
+        Recruitment recruitment = Recruitment.open(generation, 0);
+        recruitment.updateSchedule(null, null, LocalDate.now().minusDays(1));
+        when(recruitmentRepository.findByGeneration(generation)).thenReturn(Optional.of(recruitment));
+    }
+
     @Test
     void validateReturnsApplicationInfoWhenAcceptedApplicationMatches() {
         Long studentNumber = 2024000001L;
         String nickname = "cbu";
         MemberApplication application = acceptedApplication(studentNumber, nickname);
 
+        givenAnnouncementPassed(39L);
         when(userRepository.findByStudentNumber(studentNumber)).thenReturn(Optional.empty());
         when(memberApplicationRepository.findByStudentNumberAndNicknameAndStatus(
                 studentNumber, nickname, ApplicationStatus.ADMIN_ACCEPTED))
@@ -80,6 +93,7 @@ class ApplicationValidateServiceTest {
         Long studentNumber = 2024000001L;
         String nickname = "cbu";
 
+        givenAnnouncementPassed(39L);
         when(memberApplicationRepository.findByStudentNumberAndNicknameAndStatus(
                 studentNumber, nickname, ApplicationStatus.ADMIN_ACCEPTED))
                 .thenReturn(Optional.of(acceptedApplication(studentNumber, nickname)));

@@ -1,10 +1,15 @@
 package com.example.cbumanage.flagcomment.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 import java.time.LocalDateTime;
 
 public class CommentDTO {
 
     public record FlagCommentCreateRequest(
+        @NotBlank(message = "신고 사유는 필수입니다.")
+        @Size(max = 500, message = "신고 사유는 500자를 넘을 수 없습니다.")
         String content
     ){}
 
