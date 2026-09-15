@@ -91,7 +91,7 @@ public class ApplicationApplicantService {
     private Long assertAcceptingAndGetGeneration() {
         Recruitment recruitment = recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)
                 .orElseThrow(() -> new BaseException(ErrorCode.RECRUITMENT_NOT_ACCEPTING));
-        LocalDate today = LocalDate.now();
+        LocalDate today = ApplicationAnnouncementPolicy.today();
         if (recruitment.getPlannedStartDate() != null && today.isBefore(recruitment.getPlannedStartDate())) {
             throw new BaseException(ErrorCode.RECRUITMENT_NOT_ACCEPTING);
         }
@@ -115,16 +115,13 @@ public class ApplicationApplicantService {
                 .findFirstByStudentNumberAndNicknameOrderBySubmittedAtDesc(
                         request.studentNumber(), request.nickname())
                 .orElseThrow(() -> new BaseException(ErrorCode.APPLICATION_NOT_FOUND));
-        ApplicantApplicationResponse response = toApplicantResponse(application);
+        ApplicantApplicationResponse response = toApplicantResponse(application).maskContacts();
         return isBeforeAnnouncement(application.getGeneration()) ? response.hideResult() : response;
     }
 
-    /** 발표일이 지나지 않았으면 결과를 감춘다. 발표일이 없으면 아직 안 정해진 것으로 본다. */
+    /** 발표일이 지나지 않았으면 결과를 감춘다. 판정은 ApplicationAnnouncementPolicy 하나로 모았다. */
     private boolean isBeforeAnnouncement(Long generation) {
-        return recruitmentRepository.findByGeneration(generation)
-                .map(recruitment -> recruitment.getAnnouncementDate() == null
-                        || LocalDate.now().isBefore(recruitment.getAnnouncementDate()))
-                .orElse(false);
+        return ApplicationAnnouncementPolicy.isBeforeAnnouncement(recruitmentRepository, generation);
     }
 
     @Transactional
