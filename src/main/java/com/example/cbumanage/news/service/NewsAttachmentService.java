@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -84,6 +85,20 @@ public class NewsAttachmentService {
         newsAttachmentRepository.delete(attachment);
         // DB 삭제가 커밋된 뒤에만 S3 객체를 지워, 롤백 시 실제 파일이 사라지는 불일치를 막는다
         deleteObjectAfterCommit(attachment.getS3Key());
+    }
+
+    /**
+     * 소식이 삭제될 때 딸린 첨부를 함께 정리한다.
+     * 소식만 지우면 첨부를 지울 API 경로가 404 가 되어 DB 행과 S3 객체가 영구히 남았다.
+     */
+    @Transactional
+    public void deleteAttachmentsOfNews(Long newsId) {
+        List<NewsAttachment> attachments = newsAttachmentRepository.findByNews_NewsIdOrderByAttachmentIdAsc(newsId);
+        if (attachments.isEmpty()) {
+            return;
+        }
+        newsAttachmentRepository.deleteAll(attachments);
+        attachments.forEach(attachment -> deleteObjectAfterCommit(attachment.getS3Key()));
     }
 
     public NewsDTO.AttachmentDownloadDTO getDownloadUrl(Long newsId, Long attachmentId) {

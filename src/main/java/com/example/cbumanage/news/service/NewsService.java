@@ -15,7 +15,6 @@ import com.example.cbumanage.post.repository.PostRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -37,6 +36,7 @@ public class NewsService {
 
     private final NewsRepository newsRepository;
     private final NewsAttachmentRepository newsAttachmentRepository;
+    private final NewsAttachmentService newsAttachmentService;
     private final PostRepository postRepository;
     private final EntityManager entityManager;
 
@@ -50,6 +50,15 @@ public class NewsService {
         if (!searchTokens.isEmpty()) {
             return searchNewsList(pageable, categoryFilter, includeNullCategory, filterByNewsletterType, newsletterTypeFilter, keyword, searchTokens);
         }
+        // 기호만 넣으면 토큰이 0개가 되는데, 그걸 "검색어 없음"으로 보면 전체 목록이 나온다.
+        // 검색을 하긴 했으므로 결과 없음으로 답한다.
+        if (keyword != null && !keyword.isBlank()) {
+            return NewsDTO.NewsListResponseDTO.of(
+                    List.of(),
+                    Page.empty(pageable),
+                    new NewsDTO.NewsSearchInfoDTO(keyword, NewsDTO.NewsSearchMode.AND, false)
+            );
+        }
 
         List<News> pinned = newsRepository.findPinnedNews(categoryFilter, includeNullCategory, filterByNewsletterType, newsletterTypeFilter);
         Page<News> regular = newsRepository.findRegularNews(categoryFilter, includeNullCategory, filterByNewsletterType, newsletterTypeFilter, pageable);
@@ -58,8 +67,9 @@ public class NewsService {
         pinned.forEach(news -> items.add(NewsDTO.NewsListItemDTO.from(news)));
         regular.forEach(news -> items.add(NewsDTO.NewsListItemDTO.from(news)));
 
-        return NewsDTO.NewsListResponseDTO.from(
-                new PageImpl<>(items, pageable, regular.getTotalElements()),
+        return NewsDTO.NewsListResponseDTO.of(
+                items,
+                regular,
                 NewsDTO.NewsSearchInfoDTO.none(keyword)
         );
     }
@@ -98,6 +108,8 @@ public class NewsService {
     @Transactional
     public void deleteNews(Long newsId) {
         News news = findNewsOrThrow(newsId);
+        // 첨부를 먼저 정리한다. 소식이 사라지면 첨부 삭제 API 가 404 라 지울 방법이 없어진다.
+        newsAttachmentService.deleteAttachmentsOfNews(newsId);
         news.softDelete();
         newsRepository.delete(news);
     }
@@ -155,8 +167,9 @@ public class NewsService {
         pinned.forEach(news -> items.add(NewsDTO.NewsListItemDTO.from(news)));
         regular.forEach(news -> items.add(NewsDTO.NewsListItemDTO.from(news)));
 
-        return NewsDTO.NewsListResponseDTO.from(
-                new PageImpl<>(items, pageable, regularIds.getTotalElements()),
+        return NewsDTO.NewsListResponseDTO.of(
+                items,
+                regularIds,
                 new NewsDTO.NewsSearchInfoDTO(keyword, mode, fallbackApplied)
         );
     }
