@@ -27,7 +27,7 @@ public class FileController {
             return ApiResponse.success(fileService.uploadImage(file));
         } catch (IllegalArgumentException e) {
             String msg = e.getMessage();
-            if ("FILE_EMPTY".equals(msg)) throw new BaseException(ErrorCode.NOT_FOUND);
+            if ("FILE_EMPTY".equals(msg)) throw new BaseException(ErrorCode.FILE_EMPTY);
             if ("INVALID_FILE_TYPE".equals(msg)) throw new BaseException(ErrorCode.NOT_ALLOWED_FILETYPE);
             throw new BaseException(ErrorCode.INVALID_REQUEST);
         } catch (IOException e) {
@@ -42,7 +42,7 @@ public class FileController {
             return ApiResponse.success(fileService.uploadPdf(file));
         } catch (IllegalArgumentException e) {
             String msg = e.getMessage();
-            if ("FILE_EMPTY".equals(msg)) throw new BaseException(ErrorCode.NOT_FOUND);
+            if ("FILE_EMPTY".equals(msg)) throw new BaseException(ErrorCode.FILE_EMPTY);
             if ("INVALID_FILE_TYPE".equals(msg)) throw new BaseException(ErrorCode.NOT_ALLOWED_FILETYPE);
             if ("FILE_SIZE_EXCEEDED".equals(msg)) throw new BaseException(ErrorCode.FILE_SIZE_EXCEEDED);
             throw new BaseException(ErrorCode.INVALID_REQUEST);

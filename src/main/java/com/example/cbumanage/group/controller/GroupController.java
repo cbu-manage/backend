@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import com.example.cbumanage.global.common.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -88,7 +88,7 @@ public class GroupController {
             Authentication authentication
     ) {
         Long userId = Long.parseLong(authentication.getName());
-        Pageable pageable = PageRequest.of(
+        Pageable pageable = Pageables.of(
                 page, size, Sort.by(Sort.Order.desc("createdAt"))
         );
         Page<GroupDTO.MyGroupApplicationListDTO> list =
@@ -203,7 +203,7 @@ public class GroupController {
             @RequestParam(required = false) GroupStatus groupStatus,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
+        Pageable pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
         Page<GroupDTO.GroupListDTO> groupAllList = groupService.getAllGroups(userId, groupStatus, pageable);
         return ApiResponse.success(groupAllList);
     }

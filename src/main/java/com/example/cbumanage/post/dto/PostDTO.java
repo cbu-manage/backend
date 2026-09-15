@@ -300,7 +300,9 @@ public class PostDTO {
         @FutureOrPresent(message = "마감일은 과거일 수 없습니다.")
         LocalDate deadline,
 
-        @Min(1)
+        // 값이 없으면 그룹 생성에서 언박싱되며 500 이 났다. 스터디와 같은 하한(본인 포함 2명)으로 맞춘다.
+        @NotNull(message = "최대 모집 인원은 필수 입력값입니다.")
+        @Min(value = 2, message = "최대 모집 인원은 본인을 포함해 최소 2명 이상이어야 합니다.")
         @Schema(description = "최대 모집 인원",example="10")
         Integer maxMembers,
 

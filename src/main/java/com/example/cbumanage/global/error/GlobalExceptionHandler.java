@@ -7,6 +7,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -162,6 +163,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ErrorCode.NOT_FOUND.getHttpStatus())
                 .body(ApiResponse.error(ErrorCode.NOT_FOUND));
+    }
+
+    /*
+     * 정렬 기준으로 없는 필드를 넘긴 경우다(예: ?sort=bogus,DESC). 잘못된 요청이지 장애가 아니다.
+     */
+    @ExceptionHandler(PropertyReferenceException.class)
+    protected ResponseEntity<ApiResponse<Void>> handlePropertyReference(PropertyReferenceException e,
+                                                                        HttpServletRequest request) {
+        log.info("잘못된 정렬 기준 {} {} — {}", request.getMethod(), request.getRequestURI(), e.getMessage());
+        return ResponseEntity
+                .status(ErrorCode.INVALID_REQUEST.getHttpStatus())
+                .body(new ApiResponse<>(ErrorCode.INVALID_REQUEST.getCode(),
+                        "정렬 기준이 올바르지 않습니다.", null));
     }
 
     /*

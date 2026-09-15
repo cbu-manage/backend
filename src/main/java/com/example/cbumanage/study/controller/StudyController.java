@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import com.example.cbumanage.global.common.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
@@ -51,7 +51,7 @@ public class StudyController {
             @RequestParam int page,
             @RequestParam int size,
             @RequestParam int category) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
+        Pageable pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
         Page<PostDTO.StudyListDTO> studies = studyService.getPostsByCategory(pageable, category);
         return ApiResponse.success(studies);
     }
@@ -71,7 +71,7 @@ public class StudyController {
             @RequestParam int size,
             @RequestParam int category,
             Authentication authentication) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
+        Pageable pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
         Long userId = Long.parseLong(authentication.getName());
         Page<PostDTO.StudyListDTO> studies = studyService.getMyStudiesByUserId(pageable, userId, category);
         return ApiResponse.success(studies);
@@ -134,7 +134,7 @@ public class StudyController {
             @RequestParam int page,
             @RequestParam int size,
             @RequestParam(name = "tag") String tag) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("id")));
+        Pageable pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("id")));
         Page<PostDTO.StudyListDTO> result = studyService.searchByTag(tag, pageable);
         return ApiResponse.success(result);
     }
