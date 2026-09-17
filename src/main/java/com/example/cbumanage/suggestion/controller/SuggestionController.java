@@ -10,7 +10,6 @@ import com.example.cbumanage.suggestion.entity.enums.SuggestionType;
 import com.example.cbumanage.suggestion.service.SuggestionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,6 +31,7 @@ import java.util.List;
 @Tag(name = "건의 게시판", description = "버그 리포트·기능 건의를 익명으로 올리고 운영진이 해결/미해결로 관리합니다.")
 public class SuggestionController {
 
+    /** 운영진 전부(일반 부원 제외). 권한 판정은 여기 한 곳 — 서비스는 다시 검사하지 않는다 */
     private static final String STAFF = "hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', "
             + "'ROLE_MANAGER', 'ROLE_TREASURER', 'ROLE_MEMBER_MANAGER', 'ROLE_EVENT_MANAGER', "
             + "'ROLE_PROMOTION_MANAGER', 'ROLE_SECRETARY')";
@@ -55,7 +55,7 @@ public class SuggestionController {
             @RequestParam(required = false) SuggestionStatus status,
             Authentication authentication) {
         Pageable pageable = Pageables.of(page, size,
-                Sort.by(Sort.Order.desc("isPinned"), Sort.Order.desc("post.createdAt")));
+                Sort.by(Sort.Order.desc("isPinned"), Sort.Order.desc("pinnedAt"), Sort.Order.desc("post.createdAt")));
         return ApiResponse.success(suggestionService.getList(pageable, type, status, userId(authentication)));
     }
 
@@ -68,11 +68,7 @@ public class SuggestionController {
     @Operation(summary = "건의 단건", description = "조회수가 1 오릅니다. 없거나 삭제된 글은 404.")
     @GetMapping("/{postId}")
     public ApiResponse<SuggestionDTO.SuggestionInfoDTO> get(@PathVariable Long postId, Authentication authentication) {
-        try {
-            return ApiResponse.success(suggestionService.get(postId, userId(authentication)));
-        } catch (EntityNotFoundException e) {
-            throw new BaseException(ErrorCode.NOT_FOUND);
-        }
+        return ApiResponse.success(suggestionService.get(postId, userId(authentication)));
     }
 
     @Operation(summary = "건의 수정", description = "작성자 본인만. 제목·내용·종류 중 넘긴 것만 바뀝니다.")
@@ -81,12 +77,8 @@ public class SuggestionController {
             @PathVariable Long postId,
             @RequestBody @Valid SuggestionDTO.SuggestionUpdateRequest req,
             Authentication authentication) {
-        try {
-            suggestionService.update(postId, req, userId(authentication));
-            return ApiResponse.success();
-        } catch (EntityNotFoundException e) {
-            throw new BaseException(ErrorCode.NOT_FOUND);
-        }
+        suggestionService.update(postId, req, userId(authentication));
+        return ApiResponse.success();
     }
 
     @Operation(summary = "건의 상태 변경", description = "운영진 전부 가능. OPEN ↔ RESOLVED.")
@@ -96,12 +88,8 @@ public class SuggestionController {
             @PathVariable Long postId,
             @RequestBody @Valid SuggestionDTO.SuggestionStatusUpdateRequest req,
             Authentication authentication) {
-        try {
-            suggestionService.updateStatus(postId, req.status(), userId(authentication));
-            return ApiResponse.success();
-        } catch (EntityNotFoundException e) {
-            throw new BaseException(ErrorCode.NOT_FOUND);
-        }
+        suggestionService.updateStatus(postId, req.status());
+        return ApiResponse.success();
     }
 
     @Operation(summary = "건의 상단 고정/해제", description = "ADMIN(루트) 전용. 고정 글은 목록 맨 위에 온다.")
@@ -111,12 +99,8 @@ public class SuggestionController {
             @PathVariable Long postId,
             @RequestBody @Valid SuggestionDTO.SuggestionPinRequest req,
             Authentication authentication) {
-        try {
-            suggestionService.updatePinned(postId, req.pinned(), userId(authentication));
-            return ApiResponse.success();
-        } catch (EntityNotFoundException e) {
-            throw new BaseException(ErrorCode.NOT_FOUND);
-        }
+        suggestionService.updatePinned(postId, req.pinned());
+        return ApiResponse.success();
     }
 
     @Operation(summary = "건의 삭제", description = "작성자 또는 관리자(ADMIN·회장·부회장·MANAGER). 소프트 삭제.")
@@ -125,35 +109,25 @@ public class SuggestionController {
         try {
             suggestionService.delete(postId, userId(authentication));
             return ApiResponse.success();
-        } catch (EntityNotFoundException e) {
-            throw new BaseException(ErrorCode.NOT_FOUND);
         } catch (org.springframework.web.server.ResponseStatusException e) {
             throw new BaseException(ErrorCode.FORBIDDEN);
         }
     }
 
-    @Operation(summary = "건의 댓글·답글 작성", description = "항상 익명. parentCommentId 를 주면 그 댓글의 답글(1단계만).")
+    @Operation(summary = "건의 댓글·답글 작성", description = "항상 익명. parentCommentId 를 주면 그 댓글의 답글(자유게시판처럼 중첩 가능).")
     @PostMapping("/{postId}/comment")
     public ApiResponse<SuggestionDTO.SuggestionCommentCreateResponse> createComment(
             @PathVariable Long postId,
             @RequestBody @Valid SuggestionDTO.SuggestionCommentCreateRequest req,
             Authentication authentication) {
-        try {
-            return ApiResponse.success(suggestionService.createComment(postId, req, userId(authentication)));
-        } catch (EntityNotFoundException e) {
-            throw new BaseException(ErrorCode.NOT_FOUND);
-        }
+        return ApiResponse.success(suggestionService.createComment(postId, req, userId(authentication)));
     }
 
     @Operation(summary = "건의 댓글 목록", description = "작성 순, 답글 포함(parentCommentId 로 묶기). 작성자 정보 없음, isAuthor 만.")
     @GetMapping("/{postId}/comment")
     public ApiResponse<List<SuggestionDTO.SuggestionCommentDTO>> getComments(
             @PathVariable Long postId, Authentication authentication) {
-        try {
-            return ApiResponse.success(suggestionService.getComments(postId, userId(authentication)));
-        } catch (EntityNotFoundException e) {
-            throw new BaseException(ErrorCode.NOT_FOUND);
-        }
+        return ApiResponse.success(suggestionService.getComments(postId, userId(authentication)));
     }
 
     private static Long userId(Authentication authentication) {

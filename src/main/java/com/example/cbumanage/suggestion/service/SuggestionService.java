@@ -7,14 +7,13 @@ import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.post.dto.PostDTO;
 import com.example.cbumanage.post.entity.Post;
 import com.example.cbumanage.post.entity.enums.PostCategory;
+import com.example.cbumanage.post.repository.PostRepository;
 import com.example.cbumanage.post.service.PostService;
 import com.example.cbumanage.suggestion.dto.SuggestionDTO;
 import com.example.cbumanage.suggestion.entity.PostSuggestion;
 import com.example.cbumanage.suggestion.entity.enums.SuggestionStatus;
 import com.example.cbumanage.suggestion.entity.enums.SuggestionType;
 import com.example.cbumanage.suggestion.repository.PostSuggestionRepository;
-import com.example.cbumanage.user.entity.User;
-import com.example.cbumanage.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,8 +21,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+/**
+ * 건의 게시판. 권한(운영진·ADMIN)은 컨트롤러 @PreAuthorize 가 유일한 판정 지점이고,
+ * 여기서는 "작성자 본인" 규칙만 본다.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -31,7 +36,7 @@ public class SuggestionService {
 
     private final PostSuggestionRepository suggestionRepository;
     private final CommentRepository commentRepository;
-    private final UserRepository userRepository;
+    private final PostRepository postRepository;
     private final PostService postService;
 
     @Transactional
@@ -41,7 +46,7 @@ public class SuggestionService {
         );
         Post post = postService.createPost(postCreateDTO);
         PostSuggestion suggestion = suggestionRepository.save(PostSuggestion.create(post, req.type()));
-        return toInfo(suggestion, userId);
+        return toInfo(suggestion, userId, 0L);
     }
 
     public Page<SuggestionDTO.SuggestionPreviewDTO> getList(
@@ -56,7 +61,12 @@ public class SuggestionService {
         } else {
             page = suggestionRepository.findByPost_IsDeletedFalse(pageable);
         }
-        return page.map(s -> toPreview(s, userId));
+        return toPreviewPage(page, userId);
+    }
+
+    /** 마이페이지 — 내가 쓴 건의. 전부 본인 글이므로 isAuthor 는 항상 true */
+    public Page<SuggestionDTO.SuggestionPreviewDTO> getMy(Pageable pageable, Long userId) {
+        return toPreviewPage(suggestionRepository.findByPost_AuthorIdAndPost_IsDeletedFalse(userId, pageable), userId);
     }
 
     public SuggestionDTO.SuggestionSummaryDTO getSummary() {
@@ -66,17 +76,23 @@ public class SuggestionService {
         );
     }
 
-    /** 단건 조회. 조회수는 여기서만 올린다 */
+    /** 단건 조회. 조회수는 atomic UPDATE 로 먼저 올리고, 그 뒤에 읽어 방금 올린 값이 응답에 실리게 한다 */
     @Transactional
     public SuggestionDTO.SuggestionInfoDTO get(Long postId, Long userId) {
+        suggestionRepository.findActiveByPostId(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Suggestion Not Found"));
+        postRepository.incrementViewCount(postId);
         PostSuggestion suggestion = findActive(postId);
-        suggestion.getPost().upViewCount();
-        return toInfo(suggestion, userId);
+        return toInfo(suggestion, userId, commentRepository.countByPostId(postId));
     }
 
-    /** 제목·내용·종류 수정 — 작성자 본인만 */
+    /** 제목·내용·종류 수정 — 작성자 본인만. 넘긴 필드는 비어 있으면 안 된다(생성 규칙과 동일) */
     @Transactional
     public void update(Long postId, SuggestionDTO.SuggestionUpdateRequest req, Long userId) {
+        if ((req.title() != null && req.title().isBlank())
+                || (req.content() != null && req.content().isBlank())) {
+            throw new BaseException(ErrorCode.INVALID_REQUEST);
+        }
         PostSuggestion suggestion = findActive(postId);
         Post post = suggestion.getPost();
         if (!post.getAuthorId().equals(userId)) {
@@ -88,25 +104,15 @@ public class SuggestionService {
         }
     }
 
-    /** 해결/미해결 전환 — 운영진 전부 */
+    /** 해결/미해결 전환 — 운영진(컨트롤러 @PreAuthorize) */
     @Transactional
-    public void updateStatus(Long postId, SuggestionStatus status, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        if (!user.getRole().isStaff()) {
-            throw new BaseException(ErrorCode.FORBIDDEN);
-        }
+    public void updateStatus(Long postId, SuggestionStatus status) {
         findActive(postId).changeStatus(status);
     }
 
-    /** 상단 고정 토글 — 개발자 ADMIN(루트) 계정만 */
+    /** 상단 고정 토글 — ADMIN(컨트롤러 @PreAuthorize) */
     @Transactional
-    public void updatePinned(Long postId, boolean pinned, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User Not Found"));
-        if (!user.getRole().isDeveloperAdmin()) {
-            throw new BaseException(ErrorCode.FORBIDDEN);
-        }
+    public void updatePinned(Long postId, boolean pinned) {
         findActive(postId).pin(pinned);
     }
 
@@ -118,8 +124,8 @@ public class SuggestionService {
     }
 
     /**
-     * 댓글·답글 작성. 무조건 익명. parentCommentId 가 있으면 같은 글의 살아 있는 댓글이어야 한다.
-     * (CommentService 의 일반 댓글·답글 경로도 SUGGESTION 글이면 익명을 강제하므로 어느 길로 와도 같다)
+     * 댓글·답글 작성. 무조건 익명. parentCommentId 가 있으면 같은 글의 살아 있는 댓글이어야 한다(답글의 답글도 자유게시판처럼 허용).
+     * (CommentService 의 일반 댓글·답글·자유게시판 경로도 SUGGESTION 글이면 익명을 강제하므로 어느 길로 와도 같다)
      */
     @Transactional
     public SuggestionDTO.SuggestionCommentCreateResponse createComment(
@@ -130,10 +136,6 @@ public class SuggestionService {
             parent = commentRepository.findByIdAndIsDeletedFalse(req.parentCommentId())
                     .orElseThrow(() -> new EntityNotFoundException("Comment Not Found"));
             if (!parent.getPost().getId().equals(postId)) {
-                throw new BaseException(ErrorCode.INVALID_REQUEST);
-            }
-            // 답글에 답글은 받지 않는다 — 화면이 1단계 답글만 그린다
-            if (parent.getParentComment() != null) {
                 throw new BaseException(ErrorCode.INVALID_REQUEST);
             }
         }
@@ -170,7 +172,19 @@ public class SuggestionService {
                 .orElseThrow(() -> new EntityNotFoundException("Suggestion Not Found"));
     }
 
-    private SuggestionDTO.SuggestionPreviewDTO toPreview(PostSuggestion s, Long userId) {
+    /** 한 페이지의 댓글 수를 GROUP BY 한 번으로 모아 붙인다 */
+    private Page<SuggestionDTO.SuggestionPreviewDTO> toPreviewPage(Page<PostSuggestion> page, Long userId) {
+        List<Long> postIds = page.getContent().stream().map(s -> s.getPost().getId()).toList();
+        Map<Long, Long> counts = new HashMap<>();
+        if (!postIds.isEmpty()) {
+            for (Object[] row : commentRepository.countByPostIds(postIds)) {
+                counts.put((Long) row[0], (Long) row[1]);
+            }
+        }
+        return page.map(s -> toPreview(s, userId, counts.getOrDefault(s.getPost().getId(), 0L)));
+    }
+
+    private SuggestionDTO.SuggestionPreviewDTO toPreview(PostSuggestion s, Long userId, Long commentCount) {
         Post post = s.getPost();
         return new SuggestionDTO.SuggestionPreviewDTO(
                 post.getId(),
@@ -180,12 +194,12 @@ public class SuggestionService {
                 s.isPinned(),
                 post.getCreatedAt(),
                 post.getViewCount(),
-                commentRepository.countByPostId(post.getId()),
+                commentCount,
                 post.getAuthorId().equals(userId)
         );
     }
 
-    private SuggestionDTO.SuggestionInfoDTO toInfo(PostSuggestion s, Long userId) {
+    private SuggestionDTO.SuggestionInfoDTO toInfo(PostSuggestion s, Long userId, Long commentCount) {
         Post post = s.getPost();
         return new SuggestionDTO.SuggestionInfoDTO(
                 post.getId(),
@@ -197,7 +211,7 @@ public class SuggestionService {
                 post.getCreatedAt(),
                 s.getResolvedAt(),
                 post.getViewCount(),
-                commentRepository.countByPostId(post.getId()),
+                commentCount,
                 post.getAuthorId().equals(userId)
         );
     }

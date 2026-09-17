@@ -48,11 +48,6 @@ public enum Role {
         return APPLICATION_VOTER_ROLES;
     }
 
-    /** 운영진 전부(일반 부원만 제외). 건의 상태 변경처럼 "운영진이면 누구나"인 권한에 쓴다 */
-    public boolean isStaff() {
-        return this != ROLE_USER;
-    }
-
     public boolean isDeveloperAdmin() {
         return this == ROLE_ADMIN;
     }

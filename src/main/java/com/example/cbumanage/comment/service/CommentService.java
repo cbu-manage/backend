@@ -5,8 +5,6 @@ import com.example.cbumanage.comment.entity.Comment;
 import com.example.cbumanage.freeboard.repository.PostFreeboardRepository;
 import com.example.cbumanage.post.entity.Post;
 import com.example.cbumanage.post.entity.enums.PostCategory;
-import com.example.cbumanage.global.error.BaseException;
-import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.comment.repository.CommentRepository;
 import com.example.cbumanage.post.repository.PostRepository;
 import com.example.cbumanage.comment.util.CommentMapper;
@@ -84,10 +82,6 @@ public class CommentService {
      */
     public List<CommentDTO.CommentInfoDTO> getComments(Long postId) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post not found"));
-        // 실명 DTO 만 내려주는 엔드포인트라, 익명이 강제된 글은 전용 댓글 API 로만 읽게 한다
-        if (isForcedAnonymous(post)) {
-            throw new BaseException(ErrorCode.INVALID_REQUEST);
-        }
         List<Comment> comments = commentRepository.findByPostId(postId);
         return comments.stream().map(comment -> commentMapper.toCommentInfoDTO(comment)).toList();
     }
@@ -129,9 +123,8 @@ public class CommentService {
             CommentDTO.CommentCreateRequestDTO req, Long userId, Long postId, boolean isAnonymous) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post not found"));
-        boolean anonymous = postFreeboardRepository.findByPostId(postId)
-                .map(fb -> fb.isAnonymous() || isAnonymous)
-                .orElse(isAnonymous);
+        // 자유게시판 경로로 들어와도 건의 글·익명 글이면 실명 저장이 되지 않게 같은 규칙을 탄다
+        boolean anonymous = isForcedAnonymous(post) || isAnonymous;
         Comment comment = new Comment(post, userId, null, req.content(), anonymous);
         return commentMapper.toCommentCreateResponseDTO(commentRepository.save(comment));
     }
