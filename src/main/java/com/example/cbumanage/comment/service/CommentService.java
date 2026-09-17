@@ -4,6 +4,9 @@ import com.example.cbumanage.comment.dto.CommentDTO;
 import com.example.cbumanage.comment.entity.Comment;
 import com.example.cbumanage.freeboard.repository.PostFreeboardRepository;
 import com.example.cbumanage.post.entity.Post;
+import com.example.cbumanage.post.entity.enums.PostCategory;
+import com.example.cbumanage.global.error.BaseException;
+import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.comment.repository.CommentRepository;
 import com.example.cbumanage.post.repository.PostRepository;
 import com.example.cbumanage.comment.util.CommentMapper;
@@ -35,9 +38,22 @@ public class CommentService {
                                                              Long postId) {
         // 지운 글에는 더 달지 않는다. 목록에서 사라진 글에 댓글이 계속 쌓이고 있었다.
         Post post = postRepository.findByIdAndIsDeletedFalse(postId).orElseThrow(() -> new EntityNotFoundException("Post not found"));
-        Comment comment = new Comment(post, userId, null, req.content());
+        Comment comment = new Comment(post, userId, null, req.content(), isForcedAnonymous(post));
         Comment saved = commentRepository.save(comment);
         return commentMapper.toCommentCreateResponseDTO(saved);
+    }
+
+    /**
+     * 글 단위로 댓글 익명이 강제되는지. 건의 게시판은 전부, 자유게시판은 글이 익명일 때.
+     * 어느 엔드포인트로 들어오든(일반 댓글·답글·게시판 전용) 같은 규칙을 타야 실명이 새지 않는다.
+     */
+    boolean isForcedAnonymous(Post post) {
+        if (post.getCategory() == PostCategory.SUGGESTION.getValue()) {
+            return true;
+        }
+        return postFreeboardRepository.findByPostId(post.getId())
+                .map(fb -> fb.isAnonymous())
+                .orElse(false);
     }
 
     /*
@@ -56,7 +72,7 @@ public class CommentService {
         if (target.isDeleted()) {
             throw new EntityNotFoundException("Comment not found");
         }
-        Comment reply = new Comment(target.getPost(), userId, target, req.content());
+        Comment reply = new Comment(target.getPost(), userId, target, req.content(), isForcedAnonymous(target.getPost()));
         target.addReply(reply);
         Comment saved = commentRepository.save(reply);
         return commentMapper.toReplyCreateResponseDTO(saved);
@@ -68,6 +84,10 @@ public class CommentService {
      */
     public List<CommentDTO.CommentInfoDTO> getComments(Long postId) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post not found"));
+        // 실명 DTO 만 내려주는 엔드포인트라, 익명이 강제된 글은 전용 댓글 API 로만 읽게 한다
+        if (isForcedAnonymous(post)) {
+            throw new BaseException(ErrorCode.INVALID_REQUEST);
+        }
         List<Comment> comments = commentRepository.findByPostId(postId);
         return comments.stream().map(comment -> commentMapper.toCommentInfoDTO(comment)).toList();
     }

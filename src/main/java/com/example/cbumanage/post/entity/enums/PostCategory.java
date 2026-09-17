@@ -26,6 +26,9 @@ public enum PostCategory {
     @Schema(description = "자유(익명) 게시판")
     FREEBOARD(8),
 
+    @Schema(description = "건의 게시판(대나무숲) — 글·댓글 전부 강제 익명")
+    SUGGESTION(9),
+
     @Schema(description = "소식 게시판")
     NEWS(11);
 
