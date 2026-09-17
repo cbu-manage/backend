@@ -99,6 +99,17 @@ public class SuggestionService {
         findActive(postId).changeStatus(status);
     }
 
+    /** 상단 고정 토글 — 개발자 ADMIN(루트) 계정만 */
+    @Transactional
+    public void updatePinned(Long postId, boolean pinned, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User Not Found"));
+        if (!user.getRole().isDeveloperAdmin()) {
+            throw new BaseException(ErrorCode.FORBIDDEN);
+        }
+        findActive(postId).pin(pinned);
+    }
+
     /** 삭제는 PostService.softDeletePost(작성자 또는 관리자) 규칙을 그대로 쓴다 */
     @Transactional
     public void delete(Long postId, Long userId) {
@@ -166,6 +177,7 @@ public class SuggestionService {
                 post.getTitle(),
                 s.getType(),
                 s.getStatus(),
+                s.isPinned(),
                 post.getCreatedAt(),
                 post.getViewCount(),
                 commentRepository.countByPostId(post.getId()),
@@ -181,6 +193,7 @@ public class SuggestionService {
                 post.getContent(),
                 s.getType(),
                 s.getStatus(),
+                s.isPinned(),
                 post.getCreatedAt(),
                 s.getResolvedAt(),
                 post.getViewCount(),

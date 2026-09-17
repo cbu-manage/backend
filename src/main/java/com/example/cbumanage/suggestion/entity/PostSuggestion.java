@@ -45,6 +45,13 @@ public class PostSuggestion {
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
 
+    /** 상단 고정. 운영진이 "[진행 중] …" 공지성 글을 올려 맨 위에 두는 용도. ADMIN 만 토글 */
+    @Column(name = "is_pinned", nullable = false)
+    private boolean isPinned = false;
+
+    @Column(name = "pinned_at")
+    private LocalDateTime pinnedAt;
+
     private PostSuggestion(Post post, SuggestionType type) {
         this.post = post;
         this.type = type;
@@ -56,6 +63,12 @@ public class PostSuggestion {
 
     public void changeType(SuggestionType type) {
         this.type = type;
+    }
+
+    public void pin(boolean pinned) {
+        if (this.isPinned == pinned) return;
+        this.isPinned = pinned;
+        this.pinnedAt = pinned ? LocalDateTime.now() : null;
     }
 
     /** 상태 전환. 해결로 바뀌는 순간만 resolvedAt 을 찍고, 다시 열면 지운다 */

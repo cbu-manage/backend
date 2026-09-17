@@ -46,7 +46,7 @@ public class SuggestionController {
         return ApiResponse.success(suggestionService.create(req, userId(authentication)));
     }
 
-    @Operation(summary = "건의 목록", description = "최신순. type·status 는 선택 필터. 삭제된 글 제외, content 미포함.")
+    @Operation(summary = "건의 목록", description = "고정 글 먼저, 그다음 최신순. type·status 는 선택 필터. 삭제된 글 제외, content 미포함.")
     @GetMapping
     public ApiResponse<Page<SuggestionDTO.SuggestionPreviewDTO>> getList(
             @RequestParam int page,
@@ -54,7 +54,8 @@ public class SuggestionController {
             @RequestParam(required = false) SuggestionType type,
             @RequestParam(required = false) SuggestionStatus status,
             Authentication authentication) {
-        Pageable pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
+        Pageable pageable = Pageables.of(page, size,
+                Sort.by(Sort.Order.desc("isPinned"), Sort.Order.desc("post.createdAt")));
         return ApiResponse.success(suggestionService.getList(pageable, type, status, userId(authentication)));
     }
 
@@ -97,6 +98,21 @@ public class SuggestionController {
             Authentication authentication) {
         try {
             suggestionService.updateStatus(postId, req.status(), userId(authentication));
+            return ApiResponse.success();
+        } catch (EntityNotFoundException e) {
+            throw new BaseException(ErrorCode.NOT_FOUND);
+        }
+    }
+
+    @Operation(summary = "건의 상단 고정/해제", description = "ADMIN(루트) 전용. 고정 글은 목록 맨 위에 온다.")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PatchMapping("/{postId}/pin")
+    public ApiResponse<Void> updatePinned(
+            @PathVariable Long postId,
+            @RequestBody @Valid SuggestionDTO.SuggestionPinRequest req,
+            Authentication authentication) {
+        try {
+            suggestionService.updatePinned(postId, req.pinned(), userId(authentication));
             return ApiResponse.success();
         } catch (EntityNotFoundException e) {
             throw new BaseException(ErrorCode.NOT_FOUND);

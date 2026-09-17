@@ -41,12 +41,19 @@ public class SuggestionDTO {
             SuggestionStatus status
     ) {}
 
+    public record SuggestionPinRequest(
+            @NotNull(message = "pinned 는 필수입니다.")
+            Boolean pinned
+    ) {}
+
     @Schema(description = "건의 목록 행 (content 미포함, 작성자 정보 없음)")
     public record SuggestionPreviewDTO(
             Long postId,
             String title,
             SuggestionType type,
             SuggestionStatus status,
+            @Schema(description = "상단 고정 여부 — 목록은 고정 글이 먼저 온다")
+            boolean isPinned,
             LocalDateTime createdAt,
             Long viewCount,
             Long commentCount,
@@ -61,6 +68,7 @@ public class SuggestionDTO {
             String content,
             SuggestionType type,
             SuggestionStatus status,
+            boolean isPinned,
             LocalDateTime createdAt,
             LocalDateTime resolvedAt,
             Long viewCount,
