@@ -2,6 +2,7 @@ package com.example.cbumanage.post.controller;
 
 import com.example.cbumanage.flagpost.dto.FlagPostDTO;
 import com.example.cbumanage.flagpost.service.FlagPostService;
+import com.example.cbumanage.suggestion.service.SuggestionService;
 import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
@@ -43,6 +44,7 @@ public class PostController {
     private final PostFreeboardService postFreeboardService;
     private final NewsService newsService;
     private final FlagPostService flagPostService;
+    private final SuggestionService suggestionService;
 
     @Operation(summary = "게시글 목록 조회", description = "카테고리별 게시글 목록을 페이지 단위로 조회합니다.")
     @GetMapping("post")
@@ -102,6 +104,8 @@ public class PostController {
             } else if (category == PostCategory.NEWS.getValue()) {
                 pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
                 return ApiResponse.success(newsService.getMyNews(pageable, userId));
+            } else if (category == PostCategory.SUGGESTION.getValue()) {
+                return ApiResponse.success(suggestionService.getMy(pageable, userId));
             } else {
                 throw new BaseException(ErrorCode.INVALID_REQUEST);
             }

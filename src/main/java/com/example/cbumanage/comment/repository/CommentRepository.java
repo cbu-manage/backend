@@ -32,4 +32,13 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     @Query("SELECT COUNT(c) FROM Comment c WHERE c.post.id = :postId AND c.isDeleted = false")
     Long countByPostId(Long postId);
+
+    /** 목록 한 페이지의 댓글 수를 한 번에 — [postId, count] 행. 행마다 count 쿼리를 날리지 않기 위해 */
+    @Query("""
+    select c.post.id, count(c)
+    from Comment c
+    where c.post.id in :postIds and c.isDeleted = false
+    group by c.post.id
+""")
+    List<Object[]> countByPostIds(@Param("postIds") List<Long> postIds);
 }
