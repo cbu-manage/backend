@@ -37,6 +37,8 @@ public class FlagPostDTO {
             String targetPostTitle,
             @Schema(description = "신고 대상 게시글 내용")
             String targetPostContent,
+            @Schema(description = "신고 대상 게시글 카테고리(PostCategory value) — 원문 링크용")
+            int targetPostCategory,
 
             @Schema(description = "신고 대상 게시글 작성 유저ID")
             Long targetUserId,
@@ -64,6 +66,8 @@ public class FlagPostDTO {
             Long targetPostId,
             @Schema(description = "신고대상게시글이름")
             String targetPostTitle,
+            @Schema(description = "신고 대상 게시글 카테고리(PostCategory value) — 원문 링크용")
+            int targetPostCategory,
 
             @Schema(description = "신고자ID")
             Long authorId,
