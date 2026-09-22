@@ -14,6 +14,7 @@ import com.example.cbumanage.suggestion.entity.PostSuggestion;
 import com.example.cbumanage.suggestion.entity.enums.SuggestionStatus;
 import com.example.cbumanage.suggestion.entity.enums.SuggestionType;
 import com.example.cbumanage.suggestion.repository.PostSuggestionRepository;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -38,6 +39,7 @@ public class SuggestionService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final PostService postService;
+    private final EntityManager entityManager;
 
     @Transactional
     public SuggestionDTO.SuggestionInfoDTO create(SuggestionDTO.SuggestionCreateRequest req, Long userId) {
@@ -82,6 +84,9 @@ public class SuggestionService {
         suggestionRepository.findActiveByPostId(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Suggestion Not Found"));
         postRepository.incrementViewCount(postId);
+        // 벌크 UPDATE 는 영속성 컨텍스트를 건드리지 않는다. 비우지 않으면 아래 재조회가 캐시를 읽어
+        // 방금 올린 조회수가 응답에 안 실린다(NewsService 와 같은 처리).
+        entityManager.clear();
         PostSuggestion suggestion = findActive(postId);
         return toInfo(suggestion, userId, commentRepository.countByPostId(postId));
     }
