@@ -36,9 +36,10 @@ public class FlagCommentMapper {
                 .orElseThrow(() -> new EntityNotFoundException("Author Not Found"));
 
         // 익명 댓글은 작성자를 내려주지 않는다.
-        boolean anonymous = anonymityResolver.isAnonymous(targetComment);
-        User targetUser = anonymous ? null : userRepository.findById(targetComment.getUserId())
-                .orElseThrow(() -> new EntityNotFoundException("Target User Not Found"));
+        User targetUser = anonymityResolver.isAnonymous(targetComment)
+                ? null
+                : userRepository.findById(targetComment.getUserId())
+                        .orElseThrow(() -> new EntityNotFoundException("Target User Not Found"));
 
         return new CommentDTO.FlagCommentInfoDTO(
                 flagComment.getId(),
@@ -46,9 +47,9 @@ public class FlagCommentMapper {
                 flagComment.getCreatedAt(),
                 targetComment.getId(),
                 targetComment.getContent(),
-                anonymous ? null : targetUser.getUserId(),
-                anonymous ? null : targetUser.getName(),
-                anonymous ? null : targetUser.getGeneration(),
+                targetUser == null ? null : targetUser.getUserId(),
+                targetUser == null ? null : targetUser.getName(),
+                targetUser == null ? null : targetUser.getGeneration(),
                 author.getUserId(),
                 author.getName(),
                 author.getGeneration()

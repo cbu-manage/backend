@@ -36,9 +36,10 @@ public class FlagPostMapper {
                 .orElseThrow(() -> new EntityNotFoundException("Author Not Found"));
 
         // 익명 글은 작성자를 내려주지 않는다.
-        boolean anonymous = anonymityResolver.isAnonymous(targetPost);
-        User targetUser = anonymous ? null : userRepository.findById(targetPost.getAuthorId())
-                .orElseThrow(() -> new EntityNotFoundException("Target User Not Found"));
+        User targetUser = anonymityResolver.isAnonymous(targetPost)
+                ? null
+                : userRepository.findById(targetPost.getAuthorId())
+                        .orElseThrow(() -> new EntityNotFoundException("Target User Not Found"));
 
         return new FlagPostDTO.FlagPostInfoDTO(
                 flagPost.getId(),
@@ -48,9 +49,9 @@ public class FlagPostMapper {
                 targetPost.getTitle(),
                 targetPost.getContent(),
                 targetPost.getCategory(),
-                anonymous ? null : targetUser.getUserId(),
-                anonymous ? null : targetUser.getName(),
-                anonymous ? null : targetUser.getGeneration(),
+                targetUser == null ? null : targetUser.getUserId(),
+                targetUser == null ? null : targetUser.getName(),
+                targetUser == null ? null : targetUser.getGeneration(),
                 author.getUserId(),
                 author.getName(),
                 author.getGeneration()
