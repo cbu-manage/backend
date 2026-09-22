@@ -21,6 +21,7 @@ public class CommentDTO {
             LocalDateTime createdAt
     ){}
 
+    /** targetUser* 는 익명 댓글이면 null 이다. */
     public record FlagCommentInfoDTO(
             Long flagCommentId,
             String content,
