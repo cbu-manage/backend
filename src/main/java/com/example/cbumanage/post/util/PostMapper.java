@@ -57,6 +57,20 @@ public class PostMapper {
         );
     }
 
+    /** 익명이 강제된 글(건의·익명 자게)의 공통 DTO — 작성자 이름·기수·id 를 싣지 않는다 */
+    public PostDTO.PostInfoDTO toAnonymousPostInfoDTO(Post post) {
+        return new PostDTO.PostInfoDTO(
+                post.getId(),
+                null,
+                null,
+                null,
+                post.getTitle(),
+                post.getContent(),
+                post.getCreatedAt(),
+                post.getUpdatedAt()
+        );
+    }
+
     public PostDTO.ReportInfoDTO toReportInfoDTO(PostReport report) {
         Group group = groupRepository.findById(report.getGroupId()).orElseThrow(EntityNotFoundException::new);
         List<ReportMemberDTO.ReportMemberInfoDTO> reportMembers = toReportMemberInfoDTOList(report.getId());

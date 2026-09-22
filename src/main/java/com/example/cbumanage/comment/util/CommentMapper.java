@@ -19,6 +19,19 @@ public class CommentMapper {
     }
 
     public CommentDTO.CommentInfoDTO toCommentInfoDTO(Comment comment) {
+        // 익명 댓글은 어느 경로로 조회돼도 작성자를 싣지 않는다
+        if (comment.isAnonymous()) {
+            return new CommentDTO.CommentInfoDTO(
+                    comment.getId(),
+                    null,
+                    null,
+                    null,
+                    comment.isDeleted() ? "삭제된 댓글입니다" : comment.getContent(),
+                    comment.getParentComment() != null ? comment.getParentComment().getId() : null,
+                    comment.getCreatedAt(),
+                    comment.getUpdatedAt()
+            );
+        }
         User user = userRepository.findById(comment.getUserId()).orElseThrow(() -> new EntityNotFoundException("user Not Found"));
         return new CommentDTO.CommentInfoDTO(
                 comment.getId(),
