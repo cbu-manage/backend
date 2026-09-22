@@ -40,11 +40,11 @@ public class FlagPostDTO {
             @Schema(description = "신고 대상 게시글 카테고리(PostCategory value) — 원문 링크용")
             int targetPostCategory,
 
-            @Schema(description = "신고 대상 게시글 작성 유저ID")
+            @Schema(description = "신고 대상 게시글 작성 유저ID — 익명 글이면 null")
             Long targetUserId,
-            @Schema(description = "신고 대상 게시글 작성 유저 이름")
+            @Schema(description = "신고 대상 게시글 작성 유저 이름 — 익명 글이면 null")
             String targetUserName,
-            @Schema(description = "신고 대상 게시글 작성 유저 기수")
+            @Schema(description = "신고 대상 게시글 작성 유저 기수 — 익명 글이면 null")
             Long targetUserGeneration,
 
             @Schema(description = "신고자 Id")
