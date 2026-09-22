@@ -70,6 +70,12 @@ public class GroupService {
             throw new BaseException(ErrorCode.GROUP_NOT_RECRUITING);
         }
 
+        // 활동이 끝난 그룹은 모집 상태와 무관하게 더 받지 않는다.
+        // 반려(REJECTED)는 인원을 더 모아 재심사를 받는 흐름이라 여기서 막지 않는다.
+        if (group.getStatus() == GroupStatus.INACTIVE) {
+            throw new BaseException(ErrorCode.GROUP_NOT_ACTIVATED);
+        }
+
         GroupMember existing = groupMemberRepository.findByGroupIdAndUserUserId(groupId, memberId);
         if (existing != null) {
             if (existing.getGroupMemberStatus() == GroupMemberStatus.REJECTED) {
@@ -154,8 +160,13 @@ public class GroupService {
         // 재신청 횟수까지 올라간다. 상태별로 나눈다.
         switch (targetStatus) {
             case ACTIVE -> {
+                // 정원을 먼저 확인한다. 수락한 뒤에 세면 정원을 넘긴 채로 저장된다.
+                int activeBefore = groupRepository.countByGroupIdAndStatus(group.getId(), GroupMemberStatus.ACTIVE);
+                if (activeBefore >= group.getMaxActiveMembers()) {
+                    throw new BaseException(ErrorCode.GROUP_CAPACITY_EXCEEDED);
+                }
                 groupMember.active();
-                int activeCount = groupRepository.countByGroupIdAndStatus(group.getId(), GroupMemberStatus.ACTIVE);
+                int activeCount = activeBefore + 1;
                 if (activeCount >= group.getMaxActiveMembers()) {
                     group.closeRecruitment();
                     projectRepository.findByGroupId(group.getId()).ifPresent(project -> project.updateRecruiting(false));
@@ -267,10 +278,10 @@ public class GroupService {
     //개설되어 있는 그룹 전체를 조회하는 기능입니다. (관리자 전용)
     @Transactional(readOnly = true)
     public Page<GroupDTO.GroupListDTO> getAllGroups(Long userId, GroupStatus groupStatus, Pageable pageable) {
-        // 반려된 그룹은 인원을 더 받도록 모집이 OPEN 으로 되돌아가므로 CLOSED 조건을 적용하지 않는다.
-        GroupRecruitmentStatus recruitmentStatus =
-                groupStatus == GroupStatus.REJECTED ? null : GroupRecruitmentStatus.CLOSED;
-        Page<Group> groups = groupRepository.findByGroupStatus(groupStatus, recruitmentStatus, pageable);
+        // 모집 상태로는 거르지 않는다. CLOSED 만 넘기면 상태 미지정(전체) 조회가
+        // groupStatus 를 지정한 조회보다 적게 나오고, 모집이 OPEN 인 반려·대기 그룹이 심사 목록에서 빠진다.
+        // 심사 대상(모집 마감 또는 반려) 추림은 화면에서 한다.
+        Page<Group> groups = groupRepository.findByGroupStatus(groupStatus, null, pageable);
         return groups.map(groupUtil::toGroupListDTO);
     }
 

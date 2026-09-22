@@ -49,6 +49,45 @@ public record ApplicantApplicationResponse(
                 answers, portfolios);
     }
 
+    /**
+     * 비로그인으로 받을 수 있는 응답이라 연락처를 가린다.
+     * 이 조회는 학번+닉네임만 맞히면 통과하므로, 원문을 실으면 지원자 연락처가 그대로 나간다.
+     * 본인이 방금 제출한 응답(submit)은 본인이 입력한 값이므로 여기 대상이 아니다.
+     */
+    public ApplicantApplicationResponse maskContacts() {
+        return new ApplicantApplicationResponse(
+                applicationUuid, studentNumber, maskEmail(email), name, nickname, grade, major,
+                maskPhoneNumber(phoneNumber),
+                generation, applicationFields, portfolioUrl, refSource, refLinkEtc,
+                canOt, canWelcome,
+                status, finalDecisionReason, submittedAt, decidedAt,
+                answers, portfolios);
+    }
+
+    private static String maskPhoneNumber(String phoneNumber) {
+        if (phoneNumber == null) return null;
+
+        String digits = phoneNumber.replaceAll("\\D", "");
+        if (digits.length() < 7) {
+            return "***";
+        }
+        return digits.substring(0, 3) + "-****-" + digits.substring(digits.length() - 4);
+    }
+
+    private static String maskEmail(String email) {
+        if (email == null) return null;
+
+        int at = email.indexOf('@');
+        if (at <= 0) return "***";
+
+        String local = email.substring(0, at);
+        String domain = email.substring(at);
+        if (local.length() <= 2) {
+            return local.charAt(0) + "***" + domain;
+        }
+        return local.substring(0, 2) + "***" + domain;
+    }
+
     public static ApplicantApplicationResponse of(
             MemberApplication application,
             List<ApplicationDetailResponse.AnswerItem> answers,

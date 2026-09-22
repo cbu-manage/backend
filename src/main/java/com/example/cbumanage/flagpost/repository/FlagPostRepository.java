@@ -26,7 +26,7 @@ public interface FlagPostRepository extends JpaRepository<FlagPost, Long> {
     @Query(value = """
             select new com.example.cbumanage.flagpost.dto.FlagPostDTO$FlagPostPreviewDTO(
                 f.id, f.content, f.createdAt,
-                p.id, p.title,
+                p.id, p.title, p.category,
                 u.userId, u.name, u.generation
             )
             from FlagPost f

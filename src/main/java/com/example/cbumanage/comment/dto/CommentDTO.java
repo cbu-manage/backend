@@ -1,5 +1,7 @@
 package com.example.cbumanage.comment.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 public class CommentDTO {
@@ -14,7 +16,13 @@ public class CommentDTO {
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {}
-    public record CommentCreateRequestDTO(String content) {}
+    /* 댓글 본문 길이 한도. 엔티티 컬럼 길이와 같아야 한다 — 넘치면 DB 예외가 409 로 둔갑한다 */
+    public static final int CONTENT_MAX_LENGTH = 1000;
+
+    public record CommentCreateRequestDTO(
+            @NotBlank(message = "댓글 내용은 필수입니다.")
+            @Size(max = CONTENT_MAX_LENGTH, message = "댓글은 1,000자를 넘을 수 없습니다.")
+            String content) {}
 
     public record CommentCreateResponseDTO(
             Long commentId,
@@ -24,9 +32,15 @@ public class CommentDTO {
             LocalDateTime createdAt
     ) {}
 
-    public record CommentUpdateRequestDTO(String content) {}
+    public record CommentUpdateRequestDTO(
+            @NotBlank(message = "댓글 내용은 필수입니다.")
+            @Size(max = CONTENT_MAX_LENGTH, message = "댓글은 1,000자를 넘을 수 없습니다.")
+            String content) {}
 
-    public record ReplyCreateRequestDTO(String content) {}
+    public record ReplyCreateRequestDTO(
+            @NotBlank(message = "답글 내용은 필수입니다.")
+            @Size(max = CONTENT_MAX_LENGTH, message = "답글은 1,000자를 넘을 수 없습니다.")
+            String content) {}
 
     public record ReplyCreateResponseDTO(
             Long replyId,

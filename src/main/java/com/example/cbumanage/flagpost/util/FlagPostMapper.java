@@ -42,6 +42,7 @@ public class FlagPostMapper {
                 targetPost.getId(),
                 targetPost.getTitle(),
                 targetPost.getContent(),
+                targetPost.getCategory(),
                 targetUser.getUserId(),
                 targetUser.getName(),
                 targetUser.getGeneration(),

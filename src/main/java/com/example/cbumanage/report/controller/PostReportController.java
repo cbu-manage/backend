@@ -13,7 +13,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import com.example.cbumanage.global.common.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ContentDisposition;
@@ -28,7 +28,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
@@ -89,9 +88,11 @@ public class PostReportController {
             @Parameter(description = "그룹 카테고리 필터 (1=스터디, 2=프로젝트). 미입력 시 전체 조회. 다른 필터와 AND로 적용됩니다.") @RequestParam(required = false) Integer groupCategory,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
+        Pageable pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
         LocalDateTime start = startDate != null ? startDate.atStartOfDay() : null;
-        LocalDateTime end   = endDate   != null ? endDate.atTime(LocalTime.MAX) : null;
+        // LocalTime.MAX(나노초)는 DATETIME 비교에서 다음날 0시로 반올림돼 종료일 +1일 00:00 자료까지 딸려왔다.
+        // 종료일 다음날 0시 "미만"으로 조회한다(쿼리 조건도 < 로 맞춰져 있다).
+        LocalDateTime end   = endDate   != null ? endDate.plusDays(1).atStartOfDay() : null;
         PostDTO.PostReportPreviewSearchDTO result = postReportService.getPostReportPreviewDTOList(pageable, userId, start, end, keyword, groupIds, groupCategory);
         return ApiResponse.success(result);
     }
@@ -120,9 +121,11 @@ public class PostReportController {
             @Parameter(description = "제목 또는 작성자 이름 키워드 (공백으로 구분 시 각 단어를 개별 검색)") @RequestParam(required = false) String keyword,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
+        Pageable pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
         LocalDateTime start = startDate != null ? startDate.atStartOfDay() : null;
-        LocalDateTime end   = endDate   != null ? endDate.atTime(LocalTime.MAX) : null;
+        // LocalTime.MAX(나노초)는 DATETIME 비교에서 다음날 0시로 반올림돼 종료일 +1일 00:00 자료까지 딸려왔다.
+        // 종료일 다음날 0시 "미만"으로 조회한다(쿼리 조건도 < 로 맞춰져 있다).
+        LocalDateTime end   = endDate   != null ? endDate.plusDays(1).atStartOfDay() : null;
         try {
             PostDTO.PostReportPreviewSearchDTO result = postReportService.getGroupPostReportPreviewDTOList(pageable, groupId, start, end, keyword, userId);
             return ApiResponse.success(result);

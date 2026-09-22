@@ -2,6 +2,7 @@ package com.example.cbumanage.post.controller;
 
 import com.example.cbumanage.flagpost.dto.FlagPostDTO;
 import com.example.cbumanage.flagpost.service.FlagPostService;
+import com.example.cbumanage.suggestion.service.SuggestionService;
 import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
@@ -18,10 +19,11 @@ import com.example.cbumanage.resource.service.ResourceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import com.example.cbumanage.global.common.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
@@ -42,13 +44,14 @@ public class PostController {
     private final PostFreeboardService postFreeboardService;
     private final NewsService newsService;
     private final FlagPostService flagPostService;
+    private final SuggestionService suggestionService;
 
     @Operation(summary = "게시글 목록 조회", description = "카테고리별 게시글 목록을 페이지 단위로 조회합니다.")
     @GetMapping("post")
     public ApiResponse<Page<PostDTO.PostInfoDTO>> getPosts(@Parameter(description = "페이지 번호(0부터 시작)") @RequestParam int page,
                                                             @Parameter(description = "페이지당 조회 개수") @RequestParam int size,
                                                             @Parameter(description = "게시글 카테고리 번호") @RequestParam int category) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
+        Pageable pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
         return ApiResponse.success(postService.getPostsByCategory(pageable, category));
     }
 
@@ -78,11 +81,11 @@ public class PostController {
                                            @RequestParam(required = false) Integer category,
                                            Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
+        Pageable pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
 
         try {
             if (category == null) {
-                pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
+                pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
                 return ApiResponse.success(postService.getMyPosts(pageable, userId));
             } else if (category == 1) {
                 return ApiResponse.success(studyService.getMyStudiesByUserId(pageable, userId, category));
@@ -93,14 +96,16 @@ public class PostController {
             } else if (category == 6) {
                 return ApiResponse.success(resourceService.getMyResources(userId, pageable));
             } else if (category == 7) {
-                pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
+                pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
                 return ApiResponse.success(postReportService.getMyPostReportPreviewDTOList(pageable, userId));
             } else if (category == 8) {
-                pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
+                pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
                 return ApiResponse.success(postFreeboardService.getMyFreeboards(pageable, userId));
             } else if (category == PostCategory.NEWS.getValue()) {
-                pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
+                pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
                 return ApiResponse.success(newsService.getMyNews(pageable, userId));
+            } else if (category == PostCategory.SUGGESTION.getValue()) {
+                return ApiResponse.success(suggestionService.getMy(pageable, userId));
             } else {
                 throw new BaseException(ErrorCode.INVALID_REQUEST);
             }
@@ -115,7 +120,7 @@ public class PostController {
     @PostMapping("post/{postId}/flag")
     public ApiResponse<FlagPostDTO.FlagPostCreateResponse> createFlagPost(
             @PathVariable Long postId,
-            @RequestBody FlagPostDTO.FlagPostCreateRequest req,
+            @RequestBody @Valid FlagPostDTO.FlagPostCreateRequest req,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         try {

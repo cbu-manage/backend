@@ -1,12 +1,16 @@
 package com.example.cbumanage.flagpost.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
 public class FlagPostDTO {
 
     public record FlagPostCreateRequest(
+            @NotBlank(message = "신고 사유는 필수입니다.")
+            @Size(max = 500, message = "신고 사유는 500자를 넘을 수 없습니다.")
             String content
     ){}
 
@@ -33,6 +37,8 @@ public class FlagPostDTO {
             String targetPostTitle,
             @Schema(description = "신고 대상 게시글 내용")
             String targetPostContent,
+            @Schema(description = "신고 대상 게시글 카테고리(PostCategory value) — 원문 링크용")
+            int targetPostCategory,
 
             @Schema(description = "신고 대상 게시글 작성 유저ID")
             Long targetUserId,
@@ -60,6 +66,8 @@ public class FlagPostDTO {
             Long targetPostId,
             @Schema(description = "신고대상게시글이름")
             String targetPostTitle,
+            @Schema(description = "신고 대상 게시글 카테고리(PostCategory value) — 원문 링크용")
+            int targetPostCategory,
 
             @Schema(description = "신고자ID")
             Long authorId,

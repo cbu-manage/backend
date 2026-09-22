@@ -47,6 +47,18 @@ public class NewsDTO {
                     search
             );
         }
+
+        /**
+         * 고정 소식을 앞에 얹은 목록을 만든다. 페이지 정보는 고정 소식을 뺀 일반 소식 페이지에서 그대로 가져온다.
+         * 합친 목록으로 Page 를 다시 만들면 마지막 페이지에서 총계가 고정 소식 수만큼 부풀려진다.
+         */
+        public static NewsListResponseDTO of(List<NewsListItemDTO> content, Page<?> regularPage, NewsSearchInfoDTO search) {
+            return new NewsListResponseDTO(
+                    content,
+                    PageInfoDTO.from(regularPage),
+                    search
+            );
+        }
     }
 
     @Schema(description = "목록 페이지네이션 정보")

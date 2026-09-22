@@ -1,7 +1,9 @@
 package com.example.cbumanage.post.service;
 
+import com.example.cbumanage.freeboard.repository.PostFreeboardRepository;
 import com.example.cbumanage.post.dto.PostDTO;
 import com.example.cbumanage.post.entity.Post;
+import com.example.cbumanage.post.entity.enums.PostCategory;
 import com.example.cbumanage.post.repository.PostRepository;
 import com.example.cbumanage.post.util.PostMapper;
 import com.example.cbumanage.user.entity.Role;
@@ -23,6 +25,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final PostMapper postMapper;
     private final UserRepository userRepository;
+    private final PostFreeboardRepository postFreeboardRepository;
 
     public Post createPost(PostDTO.PostCreateDTO postCreateDTO) {
         User author = userRepository.findById(postCreateDTO.authorId()).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
@@ -34,13 +37,31 @@ public class PostService {
 
     public Page<PostDTO.PostInfoDTO> getPostsByCategory(Pageable pageable,int category){
         Page<Post> posts=postRepository.findByCategoryAndIsDeletedFalse(category,pageable);
-        return posts.map(post->postMapper.toPostInfoDTO(post));
+        return posts.map(this::toPostInfoDTO);
     }
 
 
     public PostDTO.PostInfoDTO getPostById(Long postId){
-        Post post=postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
-        return postMapper.toPostInfoDTO(post);
+        // 목록은 isDeleted 를 걸렀지만 상세는 안 걸러서, 지운 글을 id 로 직접 부르면 본문이 그대로 나왔다.
+        Post post=postRepository.findByIdAndIsDeletedFalse(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+        return toPostInfoDTO(post);
+    }
+
+    /** 공통 DTO. 익명이 강제된 글이면 작성자 필드를 비워서 어느 경로로도 이름이 새지 않게 한다 */
+    private PostDTO.PostInfoDTO toPostInfoDTO(Post post) {
+        return isAuthorHidden(post)
+                ? postMapper.toAnonymousPostInfoDTO(post)
+                : postMapper.toPostInfoDTO(post);
+    }
+
+    /** 작성자를 숨겨야 하는 글 — 건의 글 전부, 익명 자유게시판 글 */
+    private boolean isAuthorHidden(Post post) {
+        if (post.getCategory() == PostCategory.SUGGESTION.getValue()) {
+            return true;
+        }
+        return postFreeboardRepository.findByPostId(post.getId())
+                .map(fb -> fb.isAnonymous())
+                .orElse(false);
     }
 
     /*

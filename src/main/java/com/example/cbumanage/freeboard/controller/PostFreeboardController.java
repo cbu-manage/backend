@@ -16,7 +16,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import com.example.cbumanage.global.common.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -97,7 +97,7 @@ public class PostFreeboardController {
     public ApiResponse<Page<PostDTO.PostFreeboardPreviewResponse>> getFreeBoardList(
             @RequestParam int page,
             @RequestParam int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
+        Pageable pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
         return ApiResponse.success(postFreeboardService.getFreeBoardList(pageable));
     }
 
@@ -166,7 +166,7 @@ public class PostFreeboardController {
     public ApiResponse<CommentDTO.CommentCreateResponseDTO> createFreeBoardComment(
             @PathVariable Long postId,
             @RequestParam(defaultValue = "false") boolean isAnonymous,
-            @RequestBody CommentDTO.CommentCreateRequestDTO req,
+            @RequestBody @Valid CommentDTO.CommentCreateRequestDTO req,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         try {
