@@ -1,6 +1,8 @@
 package com.example.cbumanage.post.service;
 
 import com.example.cbumanage.freeboard.repository.PostFreeboardRepository;
+import com.example.cbumanage.group.entity.Group;
+import com.example.cbumanage.group.repository.GroupRepository;
 import com.example.cbumanage.post.dto.PostDTO;
 import com.example.cbumanage.post.entity.Post;
 import com.example.cbumanage.post.entity.enums.PostCategory;
@@ -26,6 +28,7 @@ public class PostService {
     private final PostMapper postMapper;
     private final UserRepository userRepository;
     private final PostFreeboardRepository postFreeboardRepository;
+    private final GroupRepository groupRepository;
 
     public Post createPost(PostDTO.PostCreateDTO postCreateDTO) {
         User author = userRepository.findById(postCreateDTO.authorId()).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
@@ -87,6 +90,10 @@ public class PostService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         post.delete();
+
+        // 스터디·프로젝트 모집 글에는 그룹이 딸려 있다. 글만 지우면 그룹이 살아남아
+        // 보고서 작성의 그룹 선택 목록에 없어진 모집이 계속 보인다.
+        groupRepository.findByPostIdAndIsDeletedFalse(post.getId()).ifPresent(Group::delete);
     }
 
     public Page<PostDTO.PostMyPageViewDTO>  getMyPosts(Pageable pageable,Long userId) {
