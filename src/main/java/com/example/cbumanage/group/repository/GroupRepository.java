@@ -25,6 +25,8 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 
     //soft delete 안된 값만 조회
     Optional<Group> findByIdAndIsDeletedFalse(Long id);
+    //모집 글로 만들어진 그룹. 글을 지울 때 함께 닫으려고 쓴다
+    Optional<Group> findByPostIdAndIsDeletedFalse(Long postId);
 
     List<Group> findByGroupNameContaining(String groupName);
 
