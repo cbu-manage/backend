@@ -71,6 +71,74 @@ jobs:
           test -n "${{ secrets.SERVER_USER }}" || (echo "Missing secret: SERVER_USER" && exit 1)
           test -n "${{ secrets.SERVER_SSH_KEY }}" || (echo "Missing secret: SERVER_SSH_KEY" && exit 1)
 
+      - name: Checkout source for migrations
+        uses: actions/checkout@v4
+
+      - name: Copy migrations to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "deploy/sql/*.sql"
+          target: ${{ secrets.SERVER_APP_DIR || '/home/ubuntu/cbu' }}/migrations-incoming
+          strip_components: 2
+          overwrite: true
+
+      # 스키마를 먼저 맞추고 앱을 띄운다. 순서가 바뀌면 새 코드가 옛 스키마를 만난다.
+      - name: Apply DB migrations
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          APP_DIR: ${{ secrets.SERVER_APP_DIR || '/home/ubuntu/cbu' }}
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script_stop: true
+          envs: APP_DIR
+          script: |
+            set -e
+            cd "$APP_DIR"
+
+            # 접속 정보는 서버의 설정 파일에서 읽는다. 시크릿을 새로 만들지 않는다.
+            CONF=config/application.properties
+            DB_USER=$(grep -m1 '^spring.datasource.username=' "$CONF" | cut -d= -f2-)
+            DB_PASS=$(grep -m1 '^spring.datasource.password=' "$CONF" | cut -d= -f2-)
+            DB_NAME=$(grep -m1 '^spring.datasource.url=' "$CONF" | sed -E 's#.*/([A-Za-z0-9_]+)\?.*#\1#')
+
+            run_sql() { docker exec -i mysql mysql -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" "$@"; }
+
+            run_sql -e "CREATE TABLE IF NOT EXISTS schema_migration (
+              filename VARCHAR(255) NOT NULL PRIMARY KEY,
+              applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )"
+
+            # 기록이 비어 있으면 첫 도입이다. 기존 파일은 이미 손으로 적용된 것으로 보고
+            # 표시만 남긴다. 여기서 전부 실행하면 이미 반영된 DDL 이 다시 돌아 실패한다.
+            APPLIED_COUNT=$(run_sql -N -e "SELECT COUNT(*) FROM schema_migration")
+            if [ "$APPLIED_COUNT" = "0" ]; then
+              echo "첫 도입: 기존 마이그레이션을 적용 완료로 표시만 합니다"
+              for f in migrations-incoming/*.sql; do
+                [ -e "$f" ] || continue
+                run_sql -e "INSERT IGNORE INTO schema_migration (filename) VALUES ('$(basename "$f")')"
+                echo "  baseline  $(basename "$f")"
+              done
+              exit 0
+            fi
+
+            for f in $(ls migrations-incoming/*.sql 2>/dev/null | sort); do
+              name=$(basename "$f")
+              DONE=$(run_sql -N -e "SELECT COUNT(*) FROM schema_migration WHERE filename='$name'")
+              if [ "$DONE" != "0" ]; then
+                echo "  건너뜀    $name"
+                continue
+              fi
+              echo "  적용      $name"
+              run_sql < "$f"
+              run_sql -e "INSERT INTO schema_migration (filename) VALUES ('$name')"
+            done
+            echo "마이그레이션 완료"
+
       - name: Pull & restart on server
         uses: appleboy/ssh-action@v1.2.0
         env:
