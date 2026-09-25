@@ -53,7 +53,10 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
     int countByGroupIdAndStatus(long groupId, GroupMemberStatus groupMemberStatus);
 
     /*
-    그룹 멤버의 id와 현재  통해 현재 멤버가 가입되어 있는 그룹의 리스트를 뽑아냅니다
+    내가 속한 그룹 목록. 보고서 작성의 그룹 선택도 이 결과를 쓰므로
+    운영진 승인이 끝난(ACTIVE) 그룹만 내려준다. 글을 올린 팀장은 그 즉시
+    LEADER·ACTIVE 멤버가 되지만 그룹은 PENDING 이라, 멤버 상태만 보면
+    승인 전에도 목록에 떠서 쓸 수 없는 보고서를 쓰게 된다.
      */
     @Query("""
     select m.group
@@ -61,8 +64,9 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
     where m.user.userId = :userId
     and m.groupMemberStatus = :memberStatus
     and m.group.isDeleted = false
+    and m.group.status = :groupStatus
 """)
-    List<Group> findByUserId(Long userId, GroupMemberStatus memberStatus);
+    List<Group> findByUserId(Long userId, GroupMemberStatus memberStatus, GroupStatus groupStatus);
 
     @Query("select g.id from Group g where g.category = :category and g.isDeleted = false")
     List<Long> findIdsByCategory(@Param("category") int category);
