@@ -37,18 +37,18 @@ public class PostFreeboardService {
         return postMapper.toPostFreeboardCreateResponseDTO(post, freeboard);
     }
 
-    public Page<PostDTO.PostFreeboardPreviewResponse> getFreeBoardList(Pageable pageable) {
+    public Page<PostDTO.PostFreeboardPreviewResponse> getFreeBoardList(Pageable pageable, Long userId) {
         return postFreeboardRepository.findAllActive(pageable)
                 .map(fb -> fb.isAnonymous()
-                        ? postMapper.toPostFreeboardAnonymousPreviewDTO(fb)
+                        ? postMapper.toPostFreeboardAnonymousPreviewDTO(fb, userId)
                         : postMapper.toPostFreeboardPreviewDTO(fb));
     }
 
-    public PostDTO.PostFreeboardResponse getFreeBoard(Long postId) {
+    public PostDTO.PostFreeboardResponse getFreeBoard(Long postId, Long userId) {
         PostFreeboard freeboard = postFreeboardRepository.findByPostId(postId)
                 .orElseThrow(() -> new EntityNotFoundException("FreeBoard Not Found"));
         if (freeboard.isAnonymous()) {
-            return postMapper.toPostFreeboardAnonymousInfoDTO(freeboard);
+            return postMapper.toPostFreeboardAnonymousInfoDTO(freeboard, userId);
         }
         return postMapper.toPostFreeboardInfoDTO(freeboard);
     }
@@ -63,10 +63,11 @@ public class PostFreeboardService {
         postService.updatePost(req, post);
     }
 
+    /** 마이페이지 — 내가 쓴 글이므로 isAuthor 는 항상 true 가 된다 */
     public Page<PostDTO.PostFreeboardResponse> getMyFreeboards(Pageable pageable, Long userId) {
         return postFreeboardRepository.findByAuthorId(userId, pageable)
                 .map(fb -> fb.isAnonymous()
-                        ? postMapper.toPostFreeboardAnonymousInfoDTO(fb)
+                        ? postMapper.toPostFreeboardAnonymousInfoDTO(fb, userId)
                         : postMapper.toPostFreeboardInfoDTO(fb));
     }
 }

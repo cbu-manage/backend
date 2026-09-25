@@ -96,9 +96,11 @@ public class PostFreeboardController {
     @GetMapping
     public ApiResponse<Page<PostDTO.PostFreeboardPreviewResponse>> getFreeBoardList(
             @RequestParam int page,
-            @RequestParam int size) {
+            @RequestParam int size,
+            Authentication authentication) {
         Pageable pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
-        return ApiResponse.success(postFreeboardService.getFreeBoardList(pageable));
+        Long userId = Long.parseLong(authentication.getName());
+        return ApiResponse.success(postFreeboardService.getFreeBoardList(pageable, userId));
     }
 
     @Operation(
@@ -145,9 +147,12 @@ public class PostFreeboardController {
             }
     ))
     @GetMapping("/{postId}")
-    public ApiResponse<PostDTO.PostFreeboardResponse> getFreeBoard(@PathVariable Long postId) {
+    public ApiResponse<PostDTO.PostFreeboardResponse> getFreeBoard(
+            @PathVariable Long postId,
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
         try {
-            return ApiResponse.success(postFreeboardService.getFreeBoard(postId));
+            return ApiResponse.success(postFreeboardService.getFreeBoard(postId, userId));
         } catch (EntityNotFoundException e) {
             throw new BaseException(ErrorCode.NOT_FOUND);
         }
@@ -188,9 +193,11 @@ public class PostFreeboardController {
     )
     @GetMapping("/{postId}/comment")
     public ApiResponse<java.util.List<CommentDTO.FreeBoardCommentResponse>> getFreeBoardComments(
-            @PathVariable Long postId) {
+            @PathVariable Long postId,
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
         try {
-            return ApiResponse.success(commentService.getFreeBoardComments(postId));
+            return ApiResponse.success(commentService.getFreeBoardComments(postId, userId));
         } catch (jakarta.persistence.EntityNotFoundException e) {
             throw new BaseException(ErrorCode.NOT_FOUND);
         }
