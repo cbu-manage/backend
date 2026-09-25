@@ -1,6 +1,7 @@
 package com.example.cbumanage.report.service;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.example.cbumanage.global.setting.service.SystemSettingService;
 import com.example.cbumanage.global.util.ImageCompressUtil;
 import com.example.cbumanage.group.entity.Group;
 import com.example.cbumanage.group.repository.GroupRepository;
@@ -64,6 +65,7 @@ public class PostReportHWPService {
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private final AmazonS3 amazonS3;
+    private final SystemSettingService systemSettingService;
 
     @Value("${aws_bucket}")
     private String awsBucket;
@@ -224,6 +226,20 @@ public class PostReportHWPService {
         return generateHWP(dto, imageBytes);
     }
 
+    /** 설정에 등록된 서명 이미지를 S3 에서 받아 온다. 없거나 실패하면 템플릿 기본 서명을 그대로 둔다. */
+    private byte[] loadSignature() {
+        String url = systemSettingService.getValue(SystemSettingService.PRESIDENT_SIGNATURE_URL, "");
+        if (url == null || url.isBlank()) return null;
+        try {
+            String key = extractS3Key(url);
+            try (InputStream in = amazonS3.getObject(awsBucket, key).getObjectContent()) {
+                return ImageCompressUtil.compressToJpeg(in, 600, 400, 0.9f);
+            }
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
     private String sanitizeFileName(String name) {
         if (name == null || name.isBlank()) return "untitled";
         // 파일명으로 쓸 수 없는 문자 제거
@@ -265,6 +281,15 @@ public class PostReportHWPService {
             }
         }
 
+        // 표 밖 그림 = 대표자 서명. 설정에 올려둔 것이 있으면 바꾼다.
+        byte[] signatureBytes = loadSignature();
+        if (signatureBytes != null && signatureBytes.length > 0) {
+            int signatureBinId = findPictureOutsideTable(hwpFile);
+            if (signatureBinId >= 0) {
+                replaceImageByBinItemId(hwpFile, signatureBinId, signatureBytes);
+            }
+        }
+
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         HWPWriter.toStream(hwpFile, out);
         return out.toByteArray();
@@ -282,6 +307,8 @@ public class PostReportHWPService {
         map.put("{location}", dto.location() != null ? dto.location() : "");
         map.put("{content}", dto.content() != null ? dto.content() : "");
         map.put("{membercount}", String.valueOf(dto.memberCount()));
+        // 대표자 이름은 설정에서 온다. 회장이 바뀔 때 템플릿을 고치지 않게 한다.
+        map.put("{president}", systemSettingService.getValue(SystemSettingService.PRESIDENT_NAME, ""));
 
         List<ReportMemberDTO.ReportMemberInfoDTO> members = dto.reportMembers();
         for (int i = 0; i < 30; i++) {
@@ -364,6 +391,27 @@ public class PostReportHWPService {
     // -----------------------------------------------------------------------
     // 이미지 교체
     // -----------------------------------------------------------------------
+
+    /**
+     * 표 밖 본문에 놓인 그림 = 대표자 서명.
+     * 활동 사진은 표 안에 있으므로 이 둘은 위치로 구분한다.
+     */
+    private int findPictureOutsideTable(HWPFile hwpFile) {
+        for (Section section : hwpFile.getBodyText().getSectionList()) {
+            for (Paragraph para : section) {
+                ArrayList<Control> controls = para.getControlList();
+                if (controls == null) continue;
+                for (Control ctrl : controls) {
+                    if (ctrl instanceof GsoControl gso
+                            && gso.getGsoType() == GsoControlType.Picture
+                            && gso instanceof ControlPicture picture) {
+                        return picture.getShapeComponentPicture().getPictureInfo().getBinItemID();
+                    }
+                }
+            }
+        }
+        return -1;
+    }
 
     private int findPictureInsideTableOnly(HWPFile hwpFile) {
         for (Section section : hwpFile.getBodyText().getSectionList()) {
