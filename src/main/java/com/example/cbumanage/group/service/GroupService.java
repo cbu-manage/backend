@@ -288,7 +288,7 @@ public class GroupService {
     //자신이 속한 그룹들을 조회하기 위한 메서드 입니다.
     @Transactional(readOnly = true)
     public List<GroupDTO.GroupListDTO> getJoinedGroups(Long userId){
-        List<Group> groups = groupRepository.findByUserId(userId,GroupMemberStatus.ACTIVE);
+        List<Group> groups = groupRepository.findByUserId(userId, GroupMemberStatus.ACTIVE, GroupStatus.ACTIVE);
         return groups.stream().map(group -> groupUtil.toGroupListDTO(group)).toList();
     }
 

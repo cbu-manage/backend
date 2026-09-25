@@ -46,6 +46,7 @@ public enum ErrorCode {
     GROUP_LEADER_STATUS_IMMUTABLE("E-GROUP-0009", "팀장의 상태는 변경할 수 없습니다.", HttpStatus.BAD_REQUEST),
     GROUP_CAPACITY_EXCEEDED("E-GROUP-0010", "최대 모집 인원을 초과해 수락할 수 없습니다.", HttpStatus.BAD_REQUEST),
     GROUP_NOT_ACTIVATED("E-GROUP-0011", "활동이 종료된 그룹입니다.", HttpStatus.BAD_REQUEST),
+    GROUP_NOT_APPROVED("E-GROUP-0012", "운영진 승인이 끝난 그룹에만 보고서를 쓸 수 있습니다.", HttpStatus.BAD_REQUEST),
 
     //POST 공용
     POST_NOT_FOUND("E-POST-0001", "게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),

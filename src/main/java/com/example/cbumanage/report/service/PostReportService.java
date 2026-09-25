@@ -6,6 +6,8 @@ import com.example.cbumanage.global.error.BaseException;
 import com.example.cbumanage.global.error.ErrorCode;
 import com.example.cbumanage.report.entity.PostReport;
 import com.example.cbumanage.group.entity.enums.GroupMemberStatus;
+import com.example.cbumanage.group.entity.enums.GroupStatus;
+import com.example.cbumanage.group.entity.Group;
 import com.example.cbumanage.user.entity.Role;
 import com.example.cbumanage.user.entity.User;
 import com.example.cbumanage.user.repository.UserRepository;
@@ -63,10 +65,26 @@ public class PostReportService {
     public PostDTO.PostReportCreateResponseDTO createPostReport(PostDTO.PostReportCreateRequestDTO req,Long userId) {
         PostDTO.PostCreateDTO postCreateDTO = postMapper.toPostCreateDTO(req,userId);
         Post post = postService.createPost(postCreateDTO);
+        validateGroupApproved(req.groupId());
         PostDTO.ReportCreateDTO reportCreateDTO = postMapper.toReportCreateDTO(req, post.getId());
         PostReport report = createReport(reportCreateDTO);
         saveReportMembers(report.getId(), req.groupId(), req.memberIds());
         return postMapper.toPostReportCreateResponseDTO(post, report);
+    }
+
+    /**
+     * 보고서는 승인된 그룹에만 쓸 수 있다.
+     * 화면에서 그룹 선택 목록을 걸러도 요청을 직접 보내면 통과하므로 서버에서도 막는다.
+     */
+    private void validateGroupApproved(Long groupId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new BaseException(ErrorCode.GROUP_NOT_FOUND));
+        if (group.getStatus() != GroupStatus.ACTIVE) {
+            throw new BaseException(
+                    ErrorCode.GROUP_NOT_APPROVED,
+                    "groupId=" + groupId + ", status=" + group.getStatus()
+            );
+        }
     }
 
     private void saveReportMembers(Long reportId, Long groupId, List<Long> memberIds) {
