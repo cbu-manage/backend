@@ -129,11 +129,11 @@ public class CommentService {
         return commentMapper.toCommentCreateResponseDTO(commentRepository.save(comment));
     }
 
-    public List<CommentDTO.FreeBoardCommentResponse> getFreeBoardComments(Long postId) {
+    public List<CommentDTO.FreeBoardCommentResponse> getFreeBoardComments(Long postId, Long requesterId) {
         postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post not found"));
         return commentRepository.findByPostId(postId).stream()
-                .map(commentMapper::toFreeBoardCommentDTO)
+                .map(c -> commentMapper.toFreeBoardCommentDTO(c, requesterId))
                 .toList();
     }
 

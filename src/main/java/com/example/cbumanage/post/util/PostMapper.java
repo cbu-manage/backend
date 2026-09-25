@@ -386,7 +386,11 @@ public class PostMapper {
         );
     }
 
-    public PostDTO.PostFreeboardAnonymousInfoDTO toPostFreeboardAnonymousInfoDTO(PostFreeboard freeboard) {
+    /**
+     * 익명 글에는 작성자 식별 정보를 넣지 않는다. 본인 여부는 서버가 계산한 isAuthor 한 비트로만 알린다.
+     * authorId 를 내려주면 개발자 도구로 누가 썼는지 역추적할 수 있다.
+     */
+    public PostDTO.PostFreeboardAnonymousInfoDTO toPostFreeboardAnonymousInfoDTO(PostFreeboard freeboard, Long userId) {
         Post post = freeboard.getPost();
         return new PostDTO.PostFreeboardAnonymousInfoDTO(
                 post.getId(),
@@ -395,7 +399,8 @@ public class PostMapper {
                 post.getCreatedAt(),
                 post.getViewCount(),
                 commentRepository.countByPostId(post.getId()),
-                freeboard.isAnonymous()
+                freeboard.isAnonymous(),
+                userId != null && userId.equals(post.getAuthorId())
         );
     }
 
@@ -412,11 +417,12 @@ public class PostMapper {
                 author.getGeneration(),
                 post.getViewCount(),
                 commentRepository.countByPostId(post.getId()),
-                freeboard.isAnonymous()
+                freeboard.isAnonymous(),
+                post.getCategory()
         );
     }
 
-    public PostDTO.PostFreeboardAnonymousPreviewDTO toPostFreeboardAnonymousPreviewDTO(PostFreeboard freeboard) {
+    public PostDTO.PostFreeboardAnonymousPreviewDTO toPostFreeboardAnonymousPreviewDTO(PostFreeboard freeboard, Long userId) {
         Post post = freeboard.getPost();
         return new PostDTO.PostFreeboardAnonymousPreviewDTO(
                 post.getId(),
@@ -424,7 +430,9 @@ public class PostMapper {
                 post.getCreatedAt(),
                 post.getViewCount(),
                 commentRepository.countByPostId(post.getId()),
-                freeboard.isAnonymous()
+                freeboard.isAnonymous(),
+                post.getCategory(),
+                userId != null && userId.equals(post.getAuthorId())
         );
     }
 

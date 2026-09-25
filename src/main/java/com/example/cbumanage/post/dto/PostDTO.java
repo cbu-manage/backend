@@ -954,7 +954,9 @@ public class PostDTO {
             LocalDateTime createdAt,
             Long viewCount,
             Long commentCount,
-            boolean isAnonymous
+            boolean isAnonymous,
+            @Schema(description = "요청자가 작성자인지. 익명 글에서 수정·삭제 노출을 판단하는 유일한 근거다.")
+            boolean isAuthor
     ) implements PostFreeboardResponse {}
 
     @Schema(description = "자유게시판 실명 게시글 목록 조회 정보 (content 미포함)")
@@ -967,7 +969,8 @@ public class PostDTO {
             Long authorGeneration,
             Long viewCount,
             Long commentCount,
-            boolean isAnonymous
+            boolean isAnonymous,
+            int category
     ) implements PostFreeboardPreviewResponse {}
 
     @Schema(description = "자유게시판 익명 게시글 목록 조회 정보 (content 미포함, 작성자 정보 없음)")
@@ -977,7 +980,10 @@ public class PostDTO {
             LocalDateTime createdAt,
             Long viewCount,
             Long commentCount,
-            boolean isAnonymous
+            boolean isAnonymous,
+            int category,
+            @Schema(description = "요청자가 작성자인지. 익명 글에서 수정·삭제 노출을 판단하는 유일한 근거다.")
+            boolean isAuthor
     ) implements PostFreeboardPreviewResponse {}
 
 
