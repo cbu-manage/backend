@@ -86,6 +86,9 @@ public class CommentDTO {
             String content,
             Long parentCommentId,
             LocalDateTime createdAt,
-            boolean isAnonymous
+            boolean isAnonymous,
+            @io.swagger.v3.oas.annotations.media.Schema(
+                    description = "요청자가 작성자인지. 익명 댓글에서 수정·삭제 노출을 판단하는 유일한 근거다.")
+            boolean isAuthor
     ) implements FreeBoardCommentResponse {}
 }

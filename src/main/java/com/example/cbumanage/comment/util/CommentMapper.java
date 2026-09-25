@@ -74,14 +74,19 @@ public class CommentMapper {
         );
     }
 
-    public CommentDTO.FreeBoardCommentResponse toFreeBoardCommentDTO(Comment comment) {
+    /**
+     * 익명 댓글에는 작성자 식별 정보를 넣지 않는다. 본인 여부는 isAuthor 한 비트로만 알린다.
+     * userId 를 내려주면 개발자 도구로 누가 썼는지 역추적할 수 있다.
+     */
+    public CommentDTO.FreeBoardCommentResponse toFreeBoardCommentDTO(Comment comment, Long requesterId) {
         if (comment.isAnonymous()) {
             return new CommentDTO.FreeBoardCommentAnonymousInfoDTO(
                     comment.getId(),
                     comment.isDeleted() ? "삭제된 댓글입니다" : comment.getContent(),
                     comment.getParentComment() != null ? comment.getParentComment().getId() : null,
                     comment.getCreatedAt(),
-                    true
+                    true,
+                    requesterId != null && requesterId.equals(comment.getUserId())
             );
         }
         User user = userRepository.findById(comment.getUserId())
