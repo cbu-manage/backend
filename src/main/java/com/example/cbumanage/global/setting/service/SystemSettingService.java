@@ -2,6 +2,8 @@ package com.example.cbumanage.global.setting.service;
 
 import com.example.cbumanage.global.setting.dto.OnboardingLinksRequest;
 import com.example.cbumanage.global.setting.dto.OnboardingLinksResponse;
+import com.example.cbumanage.global.setting.dto.PresidentInfoRequest;
+import com.example.cbumanage.global.setting.dto.PresidentInfoResponse;
 import com.example.cbumanage.global.setting.entity.SystemSetting;
 import com.example.cbumanage.global.setting.repository.SystemSettingRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,10 @@ public class SystemSettingService {
     public static final String KAKAO_NOTI_URL = "cbu.onboarding.kakao-noti-url";
     public static final String KAKAO_CHAT_URL = "cbu.onboarding.kakao-chat-url";
 
+    /** 활동 내역서(HWP) 하단 대표자. 회장이 바뀔 때 템플릿 대신 여기를 고친다. */
+    public static final String PRESIDENT_NAME = "cbu.president.name";
+    public static final String PRESIDENT_SIGNATURE_URL = "cbu.president.signature-url";
+
     @Value("${cbu.frontend.url:https://cbu-manage.com}")
     private String defaultFrontendUrl;
     @Value("${cbu.onboarding.open-chat-url:}")
@@ -29,6 +35,10 @@ public class SystemSettingService {
     private String defaultKakaoNotiUrl;
     @Value("${cbu.onboarding.kakao-chat-url:}")
     private String defaultKakaoChatUrl;
+    @Value("${cbu.president.name:}")
+    private String defaultPresidentName;
+    @Value("${cbu.president.signature-url:}")
+    private String defaultPresidentSignatureUrl;
 
     private final SystemSettingRepository systemSettingRepository;
 
@@ -51,6 +61,21 @@ public class SystemSettingService {
         upsert(KAKAO_NOTI_URL, request.kakaoNotiUrl());
         upsert(KAKAO_CHAT_URL, request.kakaoChatUrl());
         return getOnboardingLinks();
+    }
+
+    @Transactional(readOnly = true)
+    public PresidentInfoResponse getPresidentInfo() {
+        return new PresidentInfoResponse(
+                getValue(PRESIDENT_NAME, defaultPresidentName),
+                getValue(PRESIDENT_SIGNATURE_URL, defaultPresidentSignatureUrl)
+        );
+    }
+
+    @Transactional
+    public PresidentInfoResponse updatePresidentInfo(PresidentInfoRequest request) {
+        upsert(PRESIDENT_NAME, request.presidentName());
+        upsert(PRESIDENT_SIGNATURE_URL, request.signatureImageUrl());
+        return getPresidentInfo();
     }
 
     @Transactional(readOnly = true)
