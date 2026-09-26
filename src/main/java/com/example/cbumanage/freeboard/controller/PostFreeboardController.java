@@ -2,6 +2,7 @@ package com.example.cbumanage.freeboard.controller;
 
 import com.example.cbumanage.comment.dto.CommentDTO;
 import com.example.cbumanage.comment.service.CommentService;
+import com.example.cbumanage.freeboard.entity.enums.FreeboardTopic;
 import com.example.cbumanage.freeboard.service.PostFreeboardService;
 import com.example.cbumanage.global.common.ApiResponse;
 import com.example.cbumanage.global.error.BaseException;
@@ -40,6 +41,8 @@ public class PostFreeboardController {
 
                     **카테고리**: 서버에서 8로 자동 주입되며 클라이언트 입력값은 무시됩니다.
 
+                    **말머리(topic)**: DAILY/QUESTION/CHAT/PROMOTION 중 하나. 생략하면 말머리 없이 저장됩니다.
+
                     **익명 여부**: isAnonymous가 true이면 익명 게시글로 등록됩니다.
                     익명 게시글은 목록/단건 조회 시 작성자 정보(authorId, authorName, authorGeneration)가 반환되지 않습니다.
                     isAnonymous는 생성 이후 수정할 수 없습니다.
@@ -58,6 +61,9 @@ public class PostFreeboardController {
             description = """
                     자유게시판 게시글 목록을 최신순으로 페이징 조회합니다. 인증 없이 누구나 조회 가능합니다.
                     삭제된 게시글(isDeleted=true)은 제외되며, content는 포함되지 않습니다.
+
+                    **말머리 필터**: topic 파라미터로 DAILY/QUESTION/CHAT/PROMOTION 중 하나를 넘기면 해당 말머리만 조회합니다.
+                    생략하면 전체를 조회합니다. 말머리가 없는 기존 글은 topic 을 지정하면 제외됩니다.
 
                     **응답 스키마**: isAnonymous 값에 따라 두 가지 DTO 중 하나로 반환됩니다.
                     - isAnonymous=false → PostFreeboardPreviewDTO (작성자 정보 포함, content 없음)
@@ -97,10 +103,11 @@ public class PostFreeboardController {
     public ApiResponse<Page<PostDTO.PostFreeboardPreviewResponse>> getFreeBoardList(
             @RequestParam int page,
             @RequestParam int size,
+            @RequestParam(required = false) FreeboardTopic topic,
             Authentication authentication) {
         Pageable pageable = Pageables.of(page, size, Sort.by(Sort.Order.desc("post.createdAt")));
         Long userId = Long.parseLong(authentication.getName());
-        return ApiResponse.success(postFreeboardService.getFreeBoardList(pageable, userId));
+        return ApiResponse.success(postFreeboardService.getFreeBoardList(pageable, userId, topic));
     }
 
     @Operation(
@@ -210,13 +217,14 @@ public class PostFreeboardController {
 
                     **권한**: 작성자 본인만 수정 가능합니다. 다른 사용자가 수정 시도 시 403을 반환합니다.
 
-                    **제약**: isAnonymous(익명 여부)는 수정할 수 없습니다. title과 content만 변경 가능합니다.
+                    **제약**: isAnonymous(익명 여부)는 수정할 수 없습니다. title, content, topic 만 변경 가능합니다.
+                    topic 을 생략하면 기존 말머리를 그대로 둡니다.
                     """
     )
     @PatchMapping("/{postId}")
     public ApiResponse<Void> updateFreeBoard(
             @PathVariable Long postId,
-            @RequestBody PostDTO.PostUpdateDTO req,
+            @RequestBody PostDTO.PostFreeboardUpdateDTO req,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         try {

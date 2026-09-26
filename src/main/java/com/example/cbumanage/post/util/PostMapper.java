@@ -364,7 +364,8 @@ public class PostMapper {
                 post.getContent(),
                 post.getCreatedAt(),
                 post.getCategory(),
-                freeboard.isAnonymous()
+                freeboard.isAnonymous(),
+                freeboard.getTopic()
         );
     }
 
@@ -382,7 +383,8 @@ public class PostMapper {
                 author.getGeneration(),
                 post.getViewCount(),
                 commentRepository.countByPostId(post.getId()),
-                freeboard.isAnonymous()
+                freeboard.isAnonymous(),
+                freeboard.getTopic()
         );
     }
 
@@ -400,6 +402,7 @@ public class PostMapper {
                 post.getViewCount(),
                 commentRepository.countByPostId(post.getId()),
                 freeboard.isAnonymous(),
+                freeboard.getTopic(),
                 userId != null && userId.equals(post.getAuthorId())
         );
     }
@@ -418,7 +421,8 @@ public class PostMapper {
                 post.getViewCount(),
                 commentRepository.countByPostId(post.getId()),
                 freeboard.isAnonymous(),
-                post.getCategory()
+                post.getCategory(),
+                freeboard.getTopic()
         );
     }
 
@@ -432,6 +436,7 @@ public class PostMapper {
                 commentRepository.countByPostId(post.getId()),
                 freeboard.isAnonymous(),
                 post.getCategory(),
+                freeboard.getTopic(),
                 userId != null && userId.equals(post.getAuthorId())
         );
     }

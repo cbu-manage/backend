@@ -1,6 +1,7 @@
 package com.example.cbumanage.freeboard.repository;
 
 import com.example.cbumanage.freeboard.entity.PostFreeboard;
+import com.example.cbumanage.freeboard.entity.enums.FreeboardTopic;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +18,9 @@ public interface PostFreeboardRepository extends JpaRepository<PostFreeboard, Lo
 
     @Query("SELECT pf FROM PostFreeboard pf WHERE pf.post.isDeleted = false")
     Page<PostFreeboard> findAllActive(Pageable pageable);
+
+    @Query("SELECT pf FROM PostFreeboard pf WHERE pf.post.isDeleted = false AND pf.topic = :topic")
+    Page<PostFreeboard> findAllActiveByTopic(@Param("topic") FreeboardTopic topic, Pageable pageable);
 
     @Query("SELECT pf FROM PostFreeboard pf WHERE pf.post.authorId = :authorId AND pf.post.isDeleted = false")
     Page<PostFreeboard> findByAuthorId(@Param("authorId") Long authorId, Pageable pageable);

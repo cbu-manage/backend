@@ -1,6 +1,7 @@
 package com.example.cbumanage.freeboard.service;
 
 import com.example.cbumanage.freeboard.entity.PostFreeboard;
+import com.example.cbumanage.freeboard.entity.enums.FreeboardTopic;
 import com.example.cbumanage.freeboard.repository.PostFreeboardRepository;
 import com.example.cbumanage.post.dto.PostDTO;
 import com.example.cbumanage.post.entity.Post;
@@ -34,13 +35,16 @@ public class PostFreeboardService {
                 userId, req.title(), req.content(), PostCategory.FREEBOARD.getValue()
         );
         Post post = postService.createPost(postCreateDTO);
-        PostFreeboard freeboard = PostFreeboard.create(post, req.isAnonymous());
+        PostFreeboard freeboard = PostFreeboard.create(post, req.isAnonymous(), req.topic());
         postFreeboardRepository.save(freeboard);
         return postMapper.toPostFreeboardCreateResponseDTO(post, freeboard);
     }
 
-    public Page<PostDTO.PostFreeboardPreviewResponse> getFreeBoardList(Pageable pageable, Long userId) {
-        return postFreeboardRepository.findAllActive(pageable)
+    public Page<PostDTO.PostFreeboardPreviewResponse> getFreeBoardList(Pageable pageable, Long userId, FreeboardTopic topic) {
+        Page<PostFreeboard> page = topic == null
+                ? postFreeboardRepository.findAllActive(pageable)
+                : postFreeboardRepository.findAllActiveByTopic(topic, pageable);
+        return page
                 .map(fb -> fb.isAnonymous()
                         ? postMapper.toPostFreeboardAnonymousPreviewDTO(fb, userId)
                         : postMapper.toPostFreeboardPreviewDTO(fb));
@@ -63,13 +67,18 @@ public class PostFreeboardService {
     }
 
     @Transactional
-    public void updateFreeBoard(PostDTO.PostUpdateDTO req, Long postId, Long userId) {
+    public void updateFreeBoard(PostDTO.PostFreeboardUpdateDTO req, Long postId, Long userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         if (!post.getAuthorId().equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "NOT POST OWNER");
         }
-        postService.updatePost(req, post);
+        postService.updatePost(new PostDTO.PostUpdateDTO(req.title(), req.content()), post);
+        if (req.topic() != null) {
+            PostFreeboard freeboard = postFreeboardRepository.findByPostId(postId)
+                    .orElseThrow(() -> new EntityNotFoundException("FreeBoard Not Found"));
+            freeboard.changeTopic(req.topic());
+        }
     }
 
     /** 마이페이지 — 내가 쓴 글이므로 isAuthor 는 항상 true 가 된다 */
