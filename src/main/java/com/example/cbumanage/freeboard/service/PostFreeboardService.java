@@ -8,6 +8,7 @@ import com.example.cbumanage.post.entity.enums.PostCategory;
 import com.example.cbumanage.post.repository.PostRepository;
 import com.example.cbumanage.post.service.PostService;
 import com.example.cbumanage.post.util.PostMapper;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class PostFreeboardService {
     private final PostRepository postRepository;
     private final PostService postService;
     private final PostMapper postMapper;
+    private final EntityManager entityManager;
 
     @Transactional
     public PostDTO.PostFreeboardCreateResponseDTO createFreeBoard(PostDTO.PostFreeboardCreateRequestDTO req, Long userId) {
@@ -44,7 +46,14 @@ public class PostFreeboardService {
                         : postMapper.toPostFreeboardPreviewDTO(fb));
     }
 
+    @Transactional
     public PostDTO.PostFreeboardResponse getFreeBoard(Long postId, Long userId) {
+        postFreeboardRepository.findByPostId(postId)
+                .orElseThrow(() -> new EntityNotFoundException("FreeBoard Not Found"));
+        postRepository.incrementViewCount(postId);
+        // 벌크 UPDATE 는 영속성 컨텍스트를 건드리지 않는다. 비우지 않으면 아래 재조회가 캐시를 읽어
+        // 방금 올린 조회수가 응답에 안 실린다(건의·소식과 같은 처리).
+        entityManager.clear();
         PostFreeboard freeboard = postFreeboardRepository.findByPostId(postId)
                 .orElseThrow(() -> new EntityNotFoundException("FreeBoard Not Found"));
         if (freeboard.isAnonymous()) {

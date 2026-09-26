@@ -19,6 +19,7 @@ import com.example.cbumanage.group.repository.GroupRepository;
 import com.example.cbumanage.post.util.PostMapper;
 import com.example.cbumanage.reportmember.entity.ReportMember;
 import com.example.cbumanage.reportmember.repository.ReportMemberRepository;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,7 @@ public class PostReportService {
     private static final List<Long> NO_GROUP_IDS = List.of(-1L);
 
     private final PostService postService;
+    private final EntityManager entityManager;
     private final PostRepository postRepository;
     private final PostReportRepository postReportRepository;
     private final PostMapper postMapper;
@@ -279,9 +281,13 @@ fetch join -> 해결
     /*
 보고서 포스트 자세히 보기 메소드입니다. post와 report를 한번에 가져옵니다
  */
+    @Transactional
     public PostDTO.PostReportViewDTO getPostReportViewDTO(Long postId,Long userId){
         PostReport report = postReportRepository.findByPostId(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Report Not Found"));
+        postRepository.incrementViewCount(postId);
+        // 벌크 UPDATE 는 영속성 컨텍스트를 건드리지 않아, 비우지 않으면 방금 올린 값이 응답에 안 실린다
+        entityManager.clear();
         Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User Not Found"));
         boolean isAdmin = user.getRole().canViewAllReports();
