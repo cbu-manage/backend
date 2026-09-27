@@ -1,5 +1,6 @@
 package com.example.cbumanage.post.dto;
 
+import com.example.cbumanage.freeboard.entity.enums.FreeboardTopic;
 import com.example.cbumanage.group.dto.GroupDTO;
 import com.example.cbumanage.group.entity.enums.GroupRecruitmentStatus;
 import com.example.cbumanage.reportmember.dto.ReportMemberDTO;
@@ -16,6 +17,8 @@ import java.util.List;
 /*
 Post 에 관한 DTO 들은 전부 여기서 관리하고자 합니다
  */
+import com.example.cbumanage.freeboard.entity.enums.FreeboardTopic;
+
 public class PostDTO {
 
 
@@ -914,12 +917,22 @@ public class PostDTO {
     )
     public interface PostFreeboardPreviewResponse {}
 
+    @Schema(description = "자유게시판 수정 요청 DTO입니다. 익명 여부는 바꿀 수 없습니다.")
+    public record PostFreeboardUpdateDTO(
+            String title,
+            String content,
+            @Schema(description = "말머리. 생략하면 기존 말머리를 그대로 둡니다.")
+            FreeboardTopic topic
+    ){}
+
     @Schema(description = "자유게시판 제작 요청 DTO입니다")
     public record PostFreeboardCreateRequestDTO(
             String title,
             String content,
             @Schema(description = "게시글의 익명 여부를 기록합니다 참이면 익명으로 테이블이 생성됩니다")
-            boolean isAnonymous
+            boolean isAnonymous,
+            @Schema(description = "말머리. DAILY/QUESTION/CHAT/PROMOTION 중 하나이며 생략하면 말머리 없음으로 저장됩니다.")
+            FreeboardTopic topic
     ){}
 
     public record PostFreeboardCreateResponseDTO(
@@ -929,7 +942,8 @@ public class PostDTO {
             String content,
             LocalDateTime createdAt,
             int category,
-            boolean isAnonymous
+            boolean isAnonymous,
+            FreeboardTopic topic
     ){}
 
     @Schema(description = "자유게시판 실명 게시글 단건 조회 정보 (content 포함)")
@@ -943,7 +957,8 @@ public class PostDTO {
             Long authorGeneration,
             Long viewCount,
             Long commentCount,
-            boolean isAnonymous
+            boolean isAnonymous,
+            FreeboardTopic topic
     ) implements PostFreeboardResponse {}
 
     @Schema(description = "자유게시판 익명 게시글 단건 조회 정보 (content 포함, 작성자 정보 없음)")
@@ -955,6 +970,7 @@ public class PostDTO {
             Long viewCount,
             Long commentCount,
             boolean isAnonymous,
+            FreeboardTopic topic,
             @Schema(description = "요청자가 작성자인지. 익명 글에서 수정·삭제 노출을 판단하는 유일한 근거다.")
             boolean isAuthor
     ) implements PostFreeboardResponse {}
@@ -970,7 +986,8 @@ public class PostDTO {
             Long viewCount,
             Long commentCount,
             boolean isAnonymous,
-            int category
+            int category,
+            FreeboardTopic topic
     ) implements PostFreeboardPreviewResponse {}
 
     @Schema(description = "자유게시판 익명 게시글 목록 조회 정보 (content 미포함, 작성자 정보 없음)")
@@ -982,6 +999,7 @@ public class PostDTO {
             Long commentCount,
             boolean isAnonymous,
             int category,
+            FreeboardTopic topic,
             @Schema(description = "요청자가 작성자인지. 익명 글에서 수정·삭제 노출을 판단하는 유일한 근거다.")
             boolean isAuthor
     ) implements PostFreeboardPreviewResponse {}
