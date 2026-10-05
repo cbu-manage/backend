@@ -204,6 +204,57 @@ public class PostReportController {
     }
 
     @Operation(
+            summary = "보고서 일괄 ZIP 다운로드 (필터)",
+            description = "목록 조회(GET /api/v1/report)와 같은 필터(기간·검색어·그룹·카테고리)에 걸리는 보고서를 전부 HWP 로 만들어 ZIP 으로 묶어 다운로드합니다.<br>" +
+                    "화면에 보이는 목록과 받는 파일이 같도록 필터 해석은 목록 조회와 동일합니다.<br>" +
+                    "ZIP 안 파일명은 개별 다운로드와 같은 규칙 `[팀명]_작성자_활동일(yyMMdd).hwp` 입니다.<br>" +
+                    "한 번에 최대 " + PostReportHWPService.MAX_BULK_EXPORT + "건까지 묶습니다. 넘으면 400 과 함께 `message` 로 안내합니다.<br>" +
+                    "조건에 맞는 보고서가 없으면 404 입니다.<br>" +
+                    "클라이언트에서는 responseType: 'blob' 으로 받아 Blob 처리 후 다운로드해야 합니다.<br>" +
+                    "**권한**: ADMIN / 회장 / 부회장 / 서기"
+    )
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRESIDENT', 'ROLE_VICE_PRESIDENT', 'ROLE_SECRETARY')")
+    @GetMapping("/export")
+    public ResponseEntity<?> exportFilteredReportsToZip(
+            @Parameter(description = "활동 시작일 (포함, yyyy-MM-dd)", example = "2025-01-01") @RequestParam(required = false) LocalDate startDate,
+            @Parameter(description = "활동 종료일 (포함, yyyy-MM-dd)", example = "2025-12-31") @RequestParam(required = false) LocalDate endDate,
+            @Parameter(description = "제목 또는 작성자 이름 키워드 (공백으로 구분 시 각 단어를 개별 검색)") @RequestParam(required = false) String keyword,
+            @Parameter(description = "그룹 ID 필터 (여러 개 전달 가능, OR 조건)") @RequestParam(required = false) List<Long> groupIds,
+            @Parameter(description = "그룹 카테고리 필터 (1=스터디, 2=프로젝트). 미입력 시 전체") @RequestParam(required = false) Integer groupCategory,
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
+        LocalDateTime start = startDate != null ? startDate.atStartOfDay() : null;
+        LocalDateTime end   = endDate   != null ? endDate.plusDays(1).atStartOfDay() : null;
+        try {
+            PostReportHWPService.ZipExportResult result =
+                    postReportHWPService.exportFilteredToZip(userId, start, end, keyword, groupIds, groupCategory);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDisposition(
+                    ContentDisposition.attachment()
+                            .filename(result.fileName(), StandardCharsets.UTF_8)
+                            .build()
+            );
+            headers.setContentType(MediaType.parseMediaType("application/zip"));
+            headers.setContentLength(result.zipBytes().length);
+
+            return ResponseEntity.ok().headers(headers).body(result.zipBytes());
+        } catch (PostReportHWPService.TooManyReportsException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", e.getMessage(), "count", e.getCount(), "max", PostReportHWPService.MAX_BULK_EXPORT));
+        } catch (PostReportHWPService.ZipPartialFailureException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("failedReports", e.getFailedReports()));
+        } catch (ResponseStatusException e) {
+            throw new BaseException(ErrorCode.FORBIDDEN);
+        } catch (EntityNotFoundException e) {
+            throw new BaseException(ErrorCode.NOT_FOUND);
+        } catch (Exception e) {
+            throw new BaseException(ErrorCode.INVALID_REQUEST);
+        }
+    }
+
+    @Operation(
             summary = "그룹 보고서 ZIP 다운로드",
             description = "특정 그룹의 보고서를 모두 HWP 파일로 생성하여 ZIP으로 묶어 다운로드합니다.<br>" +
                     "클라이언트에서는 responseType: 'blob' 으로 받아 Blob 처리 후 다운로드해야 합니다.<br>" +
