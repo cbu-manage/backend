@@ -41,6 +41,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -274,12 +276,12 @@ public class PostReportHWPService {
             }
         }
 
-        // 표 안 이미지 교체 — 미리 준비된 imageBytes 사용
+        // 표 안 이미지 교체 — 미리 준비된 imageBytes 사용. 틀은 사진 비율로 셀 안에 최대 크기로 다시 잡는다.
         if (imageBytes != null && imageBytes.length > 0) {
-            ControlPicture photo = findPictureInsideTableOnly(hwpFile);
+            HwpPictureFrame.Slot photo = HwpPictureFrame.findInTable(hwpFile);
             if (photo != null) {
-                int oldBinItemId = photo.getShapeComponentPicture().getPictureInfo().getBinItemID();
-                replaceImageByBinItemId(hwpFile, oldBinItemId, fitToFrame(photo, imageBytes));
+                fitPhotoFrame(photo, imageBytes);
+                replaceImageByBinItemId(hwpFile, photo.binItemId(), imageBytes);
             }
         }
 
@@ -415,65 +417,12 @@ public class PostReportHWPService {
         return -1;
     }
 
-    /** 표 안 첫 그림 = 활동 사진 자리. 없으면 null. */
-    private ControlPicture findPictureInsideTableOnly(HWPFile hwpFile) {
-        for (Section section : hwpFile.getBodyText().getSectionList()) {
-            for (Paragraph para : section) {
-                ArrayList<Control> controls = para.getControlList();
-                if (controls == null) continue;
-                for (Control ctrl : controls) {
-                    if (!(ctrl instanceof ControlTable tableControl)) continue;
-                    ControlPicture picture = findPictureInCells(tableControl);
-                    if (picture != null) return picture;
-                }
-            }
-        }
-        return null;
-    }
-
-    private ControlPicture findPictureInCells(ControlTable tableControl) {
-        for (Row row : tableControl.getRowList()) {
-            for (Cell cell : row.getCellList()) {
-                ParagraphList pl = cell.getParagraphList();
-                for (int i = 0; i < pl.getParagraphCount(); i++) {
-                    ArrayList<Control> controls = pl.getParagraph(i).getControlList();
-                    if (controls == null) continue;
-                    for (Control ctrl : controls) {
-                        if (ctrl instanceof GsoControl gso
-                                && gso.getGsoType() == GsoControlType.Picture
-                                && gso instanceof ControlPicture picture) {
-                            return picture;
-                        }
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * 그림 틀은 템플릿에 고정 크기로 박혀 있어 사진을 그대로 넣으면 틀 비율로 늘어난다.
-     * 틀과 같은 비율의 흰 캔버스에 사진을 비율 유지로 가운데 맞춰 넣어, 틀 크기는 건드리지 않고
-     * 사진만 원본 비율로 보이게 한다. 실패하면 원본 바이트를 그대로 쓴다.
-     */
-    private byte[] fitToFrame(ControlPicture picture, byte[] imageBytes) {
+    /** 사진 크기를 읽어 틀을 사진 비율로 맞춘다. 못 읽으면 틀은 템플릿 그대로 둔다. */
+    private void fitPhotoFrame(HwpPictureFrame.Slot slot, byte[] imageBytes) {
         try {
-            long frameW = picture.getHeader().getWidth();
-            long frameH = picture.getHeader().getHeight();
-            if (frameW <= 0 || frameH <= 0) return imageBytes;
-            final int longSide = 1200;
-            int canvasW, canvasH;
-            if (frameW >= frameH) {
-                canvasW = longSide;
-                canvasH = (int) Math.round(longSide * (double) frameH / frameW);
-            } else {
-                canvasH = longSide;
-                canvasW = (int) Math.round(longSide * (double) frameW / frameH);
-            }
-            return ImageCompressUtil.fitToCanvasJpeg(new ByteArrayInputStream(imageBytes), canvasW, canvasH, 0.85f);
-        } catch (Exception e) {
-            return imageBytes;
-        }
+            BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
+            if (img != null) HwpPictureFrame.fitToCell(slot, img.getWidth(), img.getHeight());
+        } catch (Exception ignored) {}
     }
 
     private void replaceImageByBinItemId(HWPFile hwpFile, int oldBinItemId, byte[] imageBytes) {

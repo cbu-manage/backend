@@ -1,6 +1,7 @@
 package tools;
 
 import com.example.cbumanage.global.util.ImageCompressUtil;
+import com.example.cbumanage.report.service.HwpPictureFrame;
 import kr.dogfoot.hwplib.object.HWPFile;
 import kr.dogfoot.hwplib.object.bodytext.Section;
 import kr.dogfoot.hwplib.object.bodytext.control.Control;
@@ -21,6 +22,8 @@ import kr.dogfoot.hwplib.reader.HWPReader;
 import kr.dogfoot.hwplib.writer.HWPWriter;
 import org.junit.jupiter.api.Test;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -30,7 +33,7 @@ import java.util.List;
 
 /**
  * 서버 없이 템플릿 + 사진 + 서명으로 활동 내역서 예시를 뽑는 로컬 도구.
- * PostReportHWPService 의 그림 교체·비율 맞춤 로직을 그대로 옮겨 적용한다 (텍스트 치환은 대표자 이름만).
+ * PostReportHWPService 의 그림 교체·틀 맞춤 로직을 그대로 적용한다 (텍스트 치환은 대표자 이름만).
  *
  *   GENERATE_SAMPLE=true SAMPLE_PHOTO=/path/photo.jpg SAMPLE_SIGN=/path/sign.png SAMPLE_OUT=/path/out.hwp \
  *   ./gradlew test --tests tools.GenerateSampleHwpTest --rerun-tasks
@@ -57,22 +60,19 @@ class GenerateSampleHwpTest {
             }
         }
 
-        // 활동 사진: 서비스와 같은 1차 축소(1200×900) → 틀 비율 캔버스에 비율 유지로 맞춤
+        // 활동 사진: 서비스와 같은 1차 축소(1200×900) → 틀을 사진 비율로 셀에 맞춤 → 교체
         byte[] photoBytes;
         try (InputStream in = Files.newInputStream(photo)) {
             photoBytes = ImageCompressUtil.compressToJpeg(in, 1200, 900, 0.85f);
         }
-        ControlPicture photoCtrl = findPictureInsideTableOnly(hwp);
-        if (photoCtrl == null) throw new IllegalStateException("표 안 사진 틀을 못 찾음");
-        long frameW = photoCtrl.getHeader().getWidth();
-        long frameH = photoCtrl.getHeader().getHeight();
-        int longSide = 1200;
-        int cw, ch;
-        if (frameW >= frameH) { cw = longSide; ch = (int) Math.round(longSide * (double) frameH / frameW); }
-        else { ch = longSide; cw = (int) Math.round(longSide * (double) frameW / frameH); }
-        byte[] fitted = ImageCompressUtil.fitToCanvasJpeg(new ByteArrayInputStream(photoBytes), cw, ch, 0.85f);
-        System.out.println("틀 " + frameW + "x" + frameH + " → 캔버스 " + cw + "x" + ch);
-        replaceImage(hwp, photoCtrl.getShapeComponentPicture().getPictureInfo().getBinItemID(), fitted);
+        HwpPictureFrame.Slot slot = HwpPictureFrame.findInTable(hwp);
+        if (slot == null) throw new IllegalStateException("표 안 사진 틀을 못 찾음");
+        BufferedImage img = ImageIO.read(new ByteArrayInputStream(photoBytes));
+        long beforeW = slot.picture().getHeader().getWidth(), beforeH = slot.picture().getHeader().getHeight();
+        HwpPictureFrame.fitToCell(slot, img.getWidth(), img.getHeight());
+        System.out.println("사진 " + img.getWidth() + "x" + img.getHeight() + " / 틀 " + beforeW + "x" + beforeH
+                + " → " + slot.picture().getHeader().getWidth() + "x" + slot.picture().getHeader().getHeight());
+        replaceImage(hwp, slot.binItemId(), photoBytes);
 
         // 서명: 서비스와 같은 600×400 축소
         byte[] signBytes;
@@ -88,32 +88,6 @@ class GenerateSampleHwpTest {
     }
 
     // ---- 아래는 PostReportHWPService 와 같은 로직 ----
-
-    private ControlPicture findPictureInsideTableOnly(HWPFile hwpFile) {
-        for (Section section : hwpFile.getBodyText().getSectionList()) {
-            for (Paragraph para : section) {
-                ArrayList<Control> controls = para.getControlList();
-                if (controls == null) continue;
-                for (Control ctrl : controls) {
-                    if (!(ctrl instanceof ControlTable table)) continue;
-                    for (Row row : table.getRowList()) {
-                        for (Cell cell : row.getCellList()) {
-                            ParagraphList pl = cell.getParagraphList();
-                            for (int i = 0; i < pl.getParagraphCount(); i++) {
-                                ArrayList<Control> cs = pl.getParagraph(i).getControlList();
-                                if (cs == null) continue;
-                                for (Control c : cs) {
-                                    if (c instanceof GsoControl gso && gso.getGsoType() == GsoControlType.Picture
-                                            && gso instanceof ControlPicture p) return p;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return null;
-    }
 
     private int findPictureOutsideTable(HWPFile hwpFile) {
         for (Section section : hwpFile.getBodyText().getSectionList()) {
