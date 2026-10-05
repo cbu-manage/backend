@@ -41,6 +41,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -273,11 +276,12 @@ public class PostReportHWPService {
             }
         }
 
-        // 표 안 이미지 교체 — 미리 준비된 imageBytes 사용
+        // 표 안 이미지 교체 — 미리 준비된 imageBytes 사용. 틀은 사진 비율로 셀 안에 최대 크기로 다시 잡는다.
         if (imageBytes != null && imageBytes.length > 0) {
-            int oldBinItemId = findPictureInsideTableOnly(hwpFile);
-            if (oldBinItemId >= 0) {
-                replaceImageByBinItemId(hwpFile, oldBinItemId, imageBytes);
+            HwpPictureFrame.Slot photo = HwpPictureFrame.findInTable(hwpFile);
+            if (photo != null) {
+                fitPhotoFrame(photo, imageBytes);
+                replaceImageByBinItemId(hwpFile, photo.binItemId(), imageBytes);
             }
         }
 
@@ -413,43 +417,12 @@ public class PostReportHWPService {
         return -1;
     }
 
-    private int findPictureInsideTableOnly(HWPFile hwpFile) {
-        for (Section section : hwpFile.getBodyText().getSectionList()) {
-            for (Paragraph para : section) {
-                ArrayList<Control> controls = para.getControlList();
-                if (controls == null) continue;
-                for (Control ctrl : controls) {
-                    if (!(ctrl instanceof ControlTable tableControl)) continue;
-                    int id = findPictureInCells(tableControl);
-                    if (id >= 0) return id;
-                }
-            }
-        }
-        return -1;
-    }
-
-    private int findPictureInCells(ControlTable tableControl) {
-        for (Row row : tableControl.getRowList()) {
-            for (Cell cell : row.getCellList()) {
-                ParagraphList pl = cell.getParagraphList();
-                for (int i = 0; i < pl.getParagraphCount(); i++) {
-                    ArrayList<Control> controls = pl.getParagraph(i).getControlList();
-                    if (controls == null) continue;
-                    for (Control ctrl : controls) {
-                        if (ctrl instanceof GsoControl gso
-                                && gso.getGsoType() == GsoControlType.Picture) {
-                            try {
-                                return ((ControlPicture) gso)
-                                        .getShapeComponentPicture()
-                                        .getPictureInfo()
-                                        .getBinItemID();
-                            } catch (Exception ignored) {}
-                        }
-                    }
-                }
-            }
-        }
-        return -1;
+    /** 사진 크기를 읽어 틀을 사진 비율로 맞춘다. 못 읽으면 틀은 템플릿 그대로 둔다. */
+    private void fitPhotoFrame(HwpPictureFrame.Slot slot, byte[] imageBytes) {
+        try {
+            BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
+            if (img != null) HwpPictureFrame.fitToCell(slot, img.getWidth(), img.getHeight());
+        } catch (Exception ignored) {}
     }
 
     private void replaceImageByBinItemId(HWPFile hwpFile, int oldBinItemId, byte[] imageBytes) {
