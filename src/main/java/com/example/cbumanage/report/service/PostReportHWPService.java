@@ -475,17 +475,37 @@ public class PostReportHWPService {
         } catch (Exception ignored) {}
     }
 
+    /**
+     * oldId 를 가리키는 그림의 BinItemID 를 newId 로 바꾼다.
+     * 활동 사진은 표 안에, 대표자 서명은 표 밖 본문에 있으므로 두 위치를 모두 본다.
+     * 표 안만 보면 서명은 새 BinData 가 추가만 되고 그림은 여전히 템플릿 서명을 가리킨다.
+     */
     private void updatePictureBinItemId(HWPFile hwpFile, int oldId, int newId) {
         for (Section section : hwpFile.getBodyText().getSectionList()) {
             for (Paragraph para : section) {
                 ArrayList<Control> controls = para.getControlList();
                 if (controls == null) continue;
                 for (Control ctrl : controls) {
-                    if (!(ctrl instanceof ControlTable tableControl)) continue;
-                    if (updateInTable(tableControl, oldId, newId)) return;
+                    if (ctrl instanceof ControlTable tableControl) {
+                        if (updateInTable(tableControl, oldId, newId)) return;
+                    } else if (updatePictureControl(ctrl, oldId, newId)) {
+                        return;
+                    }
                 }
             }
         }
+    }
+
+    private boolean updatePictureControl(Control ctrl, int oldId, int newId) {
+        if (!(ctrl instanceof GsoControl gso) || gso.getGsoType() != GsoControlType.Picture) return false;
+        try {
+            var picInfo = ((ControlPicture) gso).getShapeComponentPicture().getPictureInfo();
+            if (picInfo.getBinItemID() == oldId) {
+                picInfo.setBinItemID(newId);
+                return true;
+            }
+        } catch (Exception ignored) {}
+        return false;
     }
 
     private boolean updateInTable(ControlTable tableControl, int oldId, int newId) {
