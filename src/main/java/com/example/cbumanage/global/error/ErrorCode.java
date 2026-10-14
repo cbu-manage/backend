@@ -33,6 +33,9 @@ public enum ErrorCode {
     DUPLICATE_EMAIL("E-AUTH-0009", "이미 사용 중인 이메일입니다.", HttpStatus.CONFLICT),
     DUPLICATE_STUDENT_NUMBER("E-AUTH-0010", "이미 가입된 학번입니다.", HttpStatus.CONFLICT),
     EMAIL_SEND_LIMIT_EXCEEDED("E-AUTH-0011", "인증번호 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.", HttpStatus.TOO_MANY_REQUESTS),
+    PASSWORD_RESET_EMAIL_MISMATCH("E-AUTH-0012", "등록된 이메일과 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
+    PASSWORD_RESET_CODE_MISSING("E-AUTH-0013", "인증번호가 없거나 만료되었습니다. 다시 받아주세요.", HttpStatus.UNAUTHORIZED),
+    PASSWORD_RESET_CODE_MISMATCH("E-AUTH-0014", "인증번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
 
     //그룹 에러 코드
     GROUP_NOT_FOUND("E-GROUP-0001", "그룹을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
