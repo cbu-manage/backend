@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -127,9 +128,22 @@ public class RecruitmentService {
     public CurrentApplicationGenerationResponse getCurrentApplicationGeneration() {
         return recruitmentRepository.findFirstByStatus(RecruitmentStatus.OPEN)
                 .map(r -> new CurrentApplicationGenerationResponse(
-                        r.getGeneration(), r.getPlannedStartDate(), r.getPlannedEndDate(), r.getAnnouncementDate()))
+                        r.getGeneration(), r.getPlannedStartDate(), r.getPlannedEndDate(), r.getAnnouncementDate(),
+                        isAccepting(r)))
                 .orElseGet(() -> new CurrentApplicationGenerationResponse(
-                        generationPolicy.currentGeneration(), null, null, null));
+                        generationPolicy.currentGeneration(), null, null, null, false));
+    }
+
+    /**
+     * 오늘이 모집 기간 안인지. 시작·종료 예정일이 비어 있으면 그 쪽은 제한하지 않는다
+     * (지원서 제출의 접수 판정과 같은 기준).
+     */
+    private static boolean isAccepting(Recruitment recruitment) {
+        LocalDate today = ApplicationAnnouncementPolicy.today();
+        if (recruitment.getPlannedStartDate() != null && today.isBefore(recruitment.getPlannedStartDate())) {
+            return false;
+        }
+        return recruitment.getPlannedEndDate() == null || !today.isAfter(recruitment.getPlannedEndDate());
     }
 
     /**
