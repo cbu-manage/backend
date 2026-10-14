@@ -1,6 +1,7 @@
 package com.example.cbumanage.report.service;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.example.cbumanage.global.common.Pageables;
 import com.example.cbumanage.global.setting.service.SystemSettingService;
 import com.example.cbumanage.global.util.ImageCompressUtil;
 import com.example.cbumanage.group.entity.Group;
@@ -37,13 +38,20 @@ import kr.dogfoot.hwplib.reader.HWPReader;
 import kr.dogfoot.hwplib.writer.HWPWriter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,14 +74,34 @@ public class PostReportHWPService {
     private final GroupRepository groupRepository;
     private final AmazonS3 amazonS3;
     private final SystemSettingService systemSettingService;
+    private final PostReportService postReportService;
 
     @Value("${aws_bucket}")
     private String awsBucket;
 
+    /** 일괄 추출 한 번에 묶는 보고서 상한. HWP 한 장이 200KB 안팎이라 메모리에서 묶을 수 있는 선에서 자른다. */
+    public static final int MAX_BULK_EXPORT = 300;
+
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일");
+    private static final DateTimeFormatter ENTRY_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyMMdd");
+    private static final DateTimeFormatter ZIP_STAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd_HHmm");
 
     public record HWPExportResult(String title, byte[] hwpBytes) {}
     public record ZipExportResult(String fileName, byte[] zipBytes) {}
+
+    /** 필터에 걸린 보고서가 {@link #MAX_BULK_EXPORT} 를 넘을 때. 기간이나 그룹을 좁혀 다시 요청해야 한다. */
+    public static class TooManyReportsException extends RuntimeException {
+        private final long count;
+
+        public TooManyReportsException(long count) {
+            super("보고서가 " + count + "건이라 한 번에 묶을 수 없습니다. 기간이나 그룹을 좁혀 주세요 (최대 " + MAX_BULK_EXPORT + "건).");
+            this.count = count;
+        }
+
+        public long getCount() {
+            return count;
+        }
+    }
 
     public static class ZipPartialFailureException extends RuntimeException {
         private final List<String> failedReports;
@@ -136,32 +164,96 @@ public class PostReportHWPService {
         }
 
         // 2단계: 전부 성공한 경우에만 ZIP 생성
+        List<ZipItem> items = new ArrayList<>();
+        for (Object[] item : built) {
+            Post post = (Post) item[0];
+            items.add(new ZipItem(sanitizeFileName(post.getTitle()), (byte[]) item[1]));
+        }
+
+        String zipFileName = sanitizeFileName(group.getGroupName()) + "_report.zip";
+        return new ZipExportResult(zipFileName, zipOf(items));
+    }
+
+    /**
+     * 목록 화면과 같은 필터(기간·검색어·그룹·카테고리)에 걸리는 보고서를 전부 HWP 로 만들어 ZIP 으로 묶는다.
+     * 어떤 보고서가 걸리는지는 목록 조회({@link PostReportService#getPostReportPreviewDTOList})에 그대로 맡겨
+     * 화면에서 보이는 것과 받는 것이 어긋나지 않게 한다.
+     *
+     * 항목 이름은 개별 다운로드와 같은 규칙 "[팀명]_작성자_활동일(yyMMdd).hwp" 를 쓴다.
+     */
+    public ZipExportResult exportFilteredToZip(Long userId, LocalDateTime startDate, LocalDateTime endDate,
+                                               String keyword, List<Long> groupIds, Integer groupCategory) throws Exception {
+        checkAdminOrManager(userId);
+
+        List<PostDTO.PostReportPreviewDTO> previews = new ArrayList<>();
+        Sort sort = Sort.by(Sort.Order.desc("createdAt"));
+        for (int page = 0; ; page++) {
+            Pageable pageable = Pageables.of(page, Pageables.MAX_SIZE, sort);
+            Page<PostDTO.PostReportPreviewDTO> result = postReportService
+                    .getPostReportPreviewDTOList(pageable, userId, startDate, endDate, keyword, groupIds, groupCategory)
+                    .reports();
+            if (page == 0 && result.getTotalElements() > MAX_BULK_EXPORT) {
+                throw new TooManyReportsException(result.getTotalElements());
+            }
+            previews.addAll(result.getContent());
+            if (!result.hasNext()) break;
+        }
+        if (previews.isEmpty()) {
+            throw new EntityNotFoundException("조건에 맞는 보고서가 없습니다.");
+        }
+
+        List<String> failedReports = new ArrayList<>();
+        List<ZipItem> items = new ArrayList<>();
+        for (PostDTO.PostReportPreviewDTO preview : previews) {
+            try {
+                Post post = postRepository.findById(preview.postId())
+                        .orElseThrow(() -> new EntityNotFoundException("Post Not Found"));
+                PostReport report = postReportRepository.findByPostId(preview.postId())
+                        .orElseThrow(() -> new EntityNotFoundException("Report Not Found"));
+                items.add(new ZipItem(bulkEntryBaseName(preview), buildHWPBytes(post, report)));
+            } catch (Exception e) {
+                failedReports.add(preview.title() + ": " + e.getMessage());
+            }
+        }
+        if (!failedReports.isEmpty()) {
+            throw new ZipPartialFailureException(failedReports);
+        }
+
+        String zipFileName = "보고서_일괄_" + LocalDateTime.now().format(ZIP_STAMP_FORMATTER) + ".zip";
+        return new ZipExportResult(zipFileName, zipOf(items));
+    }
+
+    /** ZIP 항목 하나: 확장자 없는 기본 이름 + HWP 바이트. 이름이 겹치면 _1, _2 를 붙인다. */
+    private record ZipItem(String baseName, byte[] hwpBytes) {}
+
+    private String bulkEntryBaseName(PostDTO.PostReportPreviewDTO preview) {
+        String team = preview.groupName() != null && !preview.groupName().isBlank() ? preview.groupName() : "팀없음";
+        String author = preview.authorName() != null && !preview.authorName().isBlank() ? preview.authorName() : "작성자없음";
+        String date = preview.date() != null ? preview.date().format(ENTRY_DATE_FORMATTER) : "날짜없음";
+        return sanitizeFileName("[" + team + "]_" + author + "_" + date);
+    }
+
+    private byte[] zipOf(List<ZipItem> items) throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos, StandardCharsets.UTF_8)) {
             Set<String> usedNames = new HashSet<>();
-            for (Object[] item : built) {
-                Post post = (Post) item[0];
-                byte[] hwpBytes = (byte[]) item[1];
-
-                String baseName = sanitizeFileName(post.getTitle());
-                String entryName = baseName + ".hwp";
+            for (ZipItem item : items) {
+                String entryName = item.baseName() + ".hwp";
                 if (usedNames.contains(entryName)) {
                     int counter = 1;
                     do {
-                        entryName = baseName + "_" + counter + ".hwp";
+                        entryName = item.baseName() + "_" + counter + ".hwp";
                         counter++;
                     } while (usedNames.contains(entryName));
                 }
                 usedNames.add(entryName);
 
                 zos.putNextEntry(new ZipEntry(entryName));
-                zos.write(hwpBytes);
+                zos.write(item.hwpBytes());
                 zos.closeEntry();
             }
         }
-
-        String zipFileName = sanitizeFileName(group.getGroupName()) + "_report.zip";
-        return new ZipExportResult(zipFileName, baos.toByteArray());
+        return baos.toByteArray();
     }
 
     // -----------------------------------------------------------------------
@@ -273,11 +365,12 @@ public class PostReportHWPService {
             }
         }
 
-        // 표 안 이미지 교체 — 미리 준비된 imageBytes 사용
+        // 표 안 이미지 교체 — 미리 준비된 imageBytes 사용. 틀은 사진 비율로 셀 안에 최대 크기로 다시 잡는다.
         if (imageBytes != null && imageBytes.length > 0) {
-            int oldBinItemId = findPictureInsideTableOnly(hwpFile);
-            if (oldBinItemId >= 0) {
-                replaceImageByBinItemId(hwpFile, oldBinItemId, imageBytes);
+            HwpPictureFrame.Slot photo = HwpPictureFrame.findInTable(hwpFile);
+            if (photo != null) {
+                fitPhotoFrame(photo, imageBytes);
+                replaceImageByBinItemId(hwpFile, photo.binItemId(), imageBytes);
             }
         }
 
@@ -413,43 +506,12 @@ public class PostReportHWPService {
         return -1;
     }
 
-    private int findPictureInsideTableOnly(HWPFile hwpFile) {
-        for (Section section : hwpFile.getBodyText().getSectionList()) {
-            for (Paragraph para : section) {
-                ArrayList<Control> controls = para.getControlList();
-                if (controls == null) continue;
-                for (Control ctrl : controls) {
-                    if (!(ctrl instanceof ControlTable tableControl)) continue;
-                    int id = findPictureInCells(tableControl);
-                    if (id >= 0) return id;
-                }
-            }
-        }
-        return -1;
-    }
-
-    private int findPictureInCells(ControlTable tableControl) {
-        for (Row row : tableControl.getRowList()) {
-            for (Cell cell : row.getCellList()) {
-                ParagraphList pl = cell.getParagraphList();
-                for (int i = 0; i < pl.getParagraphCount(); i++) {
-                    ArrayList<Control> controls = pl.getParagraph(i).getControlList();
-                    if (controls == null) continue;
-                    for (Control ctrl : controls) {
-                        if (ctrl instanceof GsoControl gso
-                                && gso.getGsoType() == GsoControlType.Picture) {
-                            try {
-                                return ((ControlPicture) gso)
-                                        .getShapeComponentPicture()
-                                        .getPictureInfo()
-                                        .getBinItemID();
-                            } catch (Exception ignored) {}
-                        }
-                    }
-                }
-            }
-        }
-        return -1;
+    /** 사진 크기를 읽어 틀을 사진 비율로 맞춘다. 못 읽으면 틀은 템플릿 그대로 둔다. */
+    private void fitPhotoFrame(HwpPictureFrame.Slot slot, byte[] imageBytes) {
+        try {
+            BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
+            if (img != null) HwpPictureFrame.fitToCell(slot, img.getWidth(), img.getHeight());
+        } catch (Exception ignored) {}
     }
 
     private void replaceImageByBinItemId(HWPFile hwpFile, int oldBinItemId, byte[] imageBytes) {
@@ -475,17 +537,37 @@ public class PostReportHWPService {
         } catch (Exception ignored) {}
     }
 
+    /**
+     * oldId 를 가리키는 그림의 BinItemID 를 newId 로 바꾼다.
+     * 활동 사진은 표 안에, 대표자 서명은 표 밖 본문에 있으므로 두 위치를 모두 본다.
+     * 표 안만 보면 서명은 새 BinData 가 추가만 되고 그림은 여전히 템플릿 서명을 가리킨다.
+     */
     private void updatePictureBinItemId(HWPFile hwpFile, int oldId, int newId) {
         for (Section section : hwpFile.getBodyText().getSectionList()) {
             for (Paragraph para : section) {
                 ArrayList<Control> controls = para.getControlList();
                 if (controls == null) continue;
                 for (Control ctrl : controls) {
-                    if (!(ctrl instanceof ControlTable tableControl)) continue;
-                    if (updateInTable(tableControl, oldId, newId)) return;
+                    if (ctrl instanceof ControlTable tableControl) {
+                        if (updateInTable(tableControl, oldId, newId)) return;
+                    } else if (updatePictureControl(ctrl, oldId, newId)) {
+                        return;
+                    }
                 }
             }
         }
+    }
+
+    private boolean updatePictureControl(Control ctrl, int oldId, int newId) {
+        if (!(ctrl instanceof GsoControl gso) || gso.getGsoType() != GsoControlType.Picture) return false;
+        try {
+            var picInfo = ((ControlPicture) gso).getShapeComponentPicture().getPictureInfo();
+            if (picInfo.getBinItemID() == oldId) {
+                picInfo.setBinItemID(newId);
+                return true;
+            }
+        } catch (Exception ignored) {}
+        return false;
     }
 
     private boolean updateInTable(ControlTable tableControl, int oldId, int newId) {
