@@ -190,12 +190,15 @@ public class LoginService {
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getEmail() == null || !user.getEmail().equals(request.email())) {
-            throw new BaseException(ErrorCode.UNAUTHORIZED);
+            throw new BaseException(ErrorCode.PASSWORD_RESET_EMAIL_MISMATCH);
         }
 
         String storedAuthCode = redisUtil.getData(request.email());
-        if (storedAuthCode == null || !storedAuthCode.equals(request.authCode())) {
-            throw new BaseException(ErrorCode.UNAUTHORIZED);
+        if (storedAuthCode == null) {
+            throw new BaseException(ErrorCode.PASSWORD_RESET_CODE_MISSING);
+        }
+        if (!storedAuthCode.equals(request.authCode())) {
+            throw new BaseException(ErrorCode.PASSWORD_RESET_CODE_MISMATCH);
         }
 
         user.changePassword(hashPassword(request.newPassword()));
