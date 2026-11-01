@@ -1,0 +1,5 @@
+# 서버 실물: /home/ubuntu/cbu/mysql-conf/low-mem.cnf (mysql 컨테이너 /etc/mysql/conf.d 마운트). 램 2GB 서버용.
+[mysqld]
+innodb_buffer_pool_size = 256M
+max_connections = 60
+performance_schema = OFF
