@@ -1,0 +1,6 @@
+# ~/.ssh/config 에 추가. 키 파일은 민주에게 따로 받거나, 본인 공개키를 서버 authorized_keys 에 등록.
+Host cbu-new
+  HostName 54.116.11.192
+  User ubuntu
+  IdentityFile ~/.ssh/lightsail-cbu.pem
+  StrictHostKeyChecking accept-new

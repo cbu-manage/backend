@@ -10,3 +10,5 @@ config/*
 # nginx generated/runtime files.
 nginx/default.conf
 nginx/ssl/
+secrets/
+config/application.properties
