@@ -43,12 +43,12 @@
 | Framework | Spring Boot 3.3.5 |
 | ORM | Spring Data JPA (Hibernate) |
 | Auth | Spring Security + JWT (jjwt 0.12.6) |
-| DB | MySQL (AWS RDS) |
+| DB | MySQL 8.4 (서버 내 Docker 컨테이너) |
 | Cache / Token Store | Redis |
 | Storage | AWS S3 |
 | API Docs | SpringDoc OpenAPI (Swagger UI) |
 | Build | Gradle |
-| Deploy | Docker |
+| Deploy | GitHub Actions → GHCR → Lightsail Docker Compose ([deploy/README.md](deploy/README.md)) |
 
 ---
 
@@ -65,7 +65,7 @@
 │       → Service → JPA       │
 └──────┬────────────┬─────────┘
        │            │
-   MySQL(RDS)     Redis
+   MySQL(Docker)  Redis
                    (RefreshToken)
                    
        └──── AWS S3 (이미지)
@@ -319,7 +319,7 @@ axios.get('/api/v1/login/me', { withCredentials: true });
 ## 환경변수 설정
 
 `src/main/resources/application.properties` 에서 관리합니다.  
-운영 배포 시에는 환경변수 또는 외부 설정으로 주입하세요.
+운영 서버에서는 `~/cbu/config/application.properties` 로 주입한다. 전체 키 목록은 [deploy/config/application.properties.example](deploy/config/application.properties.example), 서버·배포·백업은 [deploy/README.md](deploy/README.md).
 
 | 키 | 설명 | 예시 |
 |----|------|------|
@@ -340,6 +340,8 @@ axios.get('/api/v1/login/me', { withCredentials: true });
 | `spring.mail.username` | Gmail 발신 계정 | `example@gmail.com` |
 | `spring.mail.password` | Gmail 앱 비밀번호 | - |
 | `google.spreadSheet.id` | 구글 시트 ID (멤버 관리용) | - |
+| `cbu.proxy.secret` | 프론트 BFF와 공유하는 비밀값 (Vercel `PROXY_SECRET`과 동일) | - |
+| `cbu.cors.allowed-origins` | 쿠키 인증 허용 origin (쉼표 구분) | `https://www.tukcbu.com` |
 
 ---
 

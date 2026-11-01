@@ -1,41 +1,39 @@
-﻿services:
+# 서버 실물: /home/ubuntu/cbu/compose.yml (2026-08-29 작성본 그대로)
+# mysql 은 이 compose 밖의 standalone 컨테이너다. README "서버 구성" 참고.
+services:
   backend:
-    build:
-      context: ..
-      dockerfile: Dockerfile
+    image: ${BACKEND_IMAGE:-cbu-backend:migr1}
     container_name: backend
-    ports:
-      - "8080:8080"
-    env_file:
-      - .env.dev
+    restart: unless-stopped
     volumes:
       - ./config/application.properties:/app/config/application.properties:ro
     depends_on:
       - redis
-    networks:
-      - cbu-net
+    networks: [cbu-net]
+    mem_limit: 900m
 
   redis:
-    image: redis:latest
+    image: redis:7-alpine
     container_name: redis
-    networks:
-      - cbu-net
+    restart: unless-stopped
+    networks: [cbu-net]
+    mem_limit: 60m
 
   nginx:
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
+    image: nginx:stable-alpine
     container_name: nginx
-    ports:
-      - "443:443"
-      - "80:80"
-    depends_on:
-      - backend
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
     volumes:
+      - ./nginx:/etc/nginx/conf.d:ro
+      - certbot-www:/var/www/certbot
       - /etc/letsencrypt:/etc/letsencrypt:ro
-    networks:
-      - cbu-net
+    depends_on: [backend]
+    networks: [cbu-net]
+
+volumes:
+  certbot-www:
 
 networks:
   cbu-net:
-    driver: bridge
+    external: true
